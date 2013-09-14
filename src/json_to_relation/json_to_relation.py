@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+'''
+Created on Sep 14, 2013
+
+@author: paepcke
+'''
+
 from collections import OrderedDict
 from urllib import urlopen
 import StringIO
@@ -7,6 +13,13 @@ import ijson
 import math
 import os
 import re
+
+from output_disposition import OutputFormat
+from output_disposition import OutputMySQLTable, OutputFile, OutputPipe
+
+#>>> with open('/home/paepcke/tmp/trash.csv', 'wab') as fd:
+#...     writer = csv.writer(fd, delimiter=",", dialect="excel")
+#...     writer.writerow(info)
 
 
 class JSONToRelation(object):
@@ -28,17 +41,51 @@ class JSONToRelation(object):
     #, i.e. alphanumeric plus underscore plus dollar sign:
     LEGAL_MYSQL_ATTRIBUTE_PATTERN = re.compile("^[$\w]+$")
     
-    def __init__(self, urlOrFileName, schemaHints={}):
+    def __init__(self, jsonSource, destination, outputFormat=OutputFormat.CSV, schemaHints={}):
         '''
+        Create a JSON-to-Relation converter. The JSON source can be
+        a file with JSON objects, StringIO.StringIO string pseudo file,
+        stdin, or a MongoDB
         
-        @param urlOrFileName: A file name containing JSON structures, or a URL to such a source
-        @type urlOrFileName: String
+        The destination can be a file, where CSV is written in Excel-readable
+        form, stdout, or a MySQL table specification, where the ouput rows
+        will be inserted.
+        
+        SchemaHints optionally specify the SQL types of particular columns.
+        By default the processJSONObs() method will be conservative, and
+        specify numeric columns as DOUBLE. Even though all encountered values
+        for one column could be examined, and a more appropriate type chosen,
+        such as INT when only 4-byte integers are ever seen, future additions
+        to the table might exceed the INT capacity for that column.
+        
+        If schemaHints is provided, it is a Dict mapping column names to ColDataType.
+        The column names in schemaHints must match the corresponding (fully nested)
+        key names in the JSON objects.
+        
+        @param jsonSource: A file name containing JSON structures, or a URL to such a source
+        @type jsonSource: {String | StringIO}
+        @param destination: instruction to were resulting rows are to be directed
+        @type destination: {OutputPipe | OutputFile | OutputMySQLTable}
+        @param outputFormat: format of output. Can be CSV or SQL INSERT statements
+        @type outputFormat: OutputFormat
         @param schemaHints: Dict mapping col names to data types (optional)
         @type schemaHints: Map<String,ColDataTYpe>
         '''
-        
-        self.fileHandle = urlopen(urlOrFileName)
+        if isinstance(jsonSource, StringIO.StringIO):
+            self.fileHandle = jsonSource
+        else:
+            self.fileHandle = urlopen(jsonSource)
+        self.destination = destination
+        self.outputFormat = outputFormat
         self.schemaHints = schemaHints
+        
+        #************ Unimplemented Options **************
+        if isinstance(self.destination, OutputMySQLTable):
+            raise NotImplementedError("Output to MySQL table not yet implemented")
+        if isinstance(self.outputFormat, OutputFormat.SQL_INSERT_STATEMENTS):
+            raise NotImplementedError("Output as MySQL statements not yet implemented")
+        #*************************************************
+        
         # Dict col name to ColumnSpec object:
         self.cols = OrderedDict()
         
@@ -46,7 +93,7 @@ class JSONToRelation(object):
         # newly encountered: 
         self.nextNewColPos = 0;
         
-    def processJSONObjsFile(self):
+    def convert(self):
         for jsonStr in self.fileHandle:
             newRow = []
             newRow = self.processOneJSONObject(jsonStr, newRow)
@@ -154,7 +201,7 @@ class JSONToRelation(object):
                 # get a list of the chars, i.e. 'explode' the string into letters:
                 charList = list(proposedMySQLName)
                 newName = ""
-                for letter in enumerate(charList):
+                for letter in charList:
                     if letter == quoteChar:
                         letter = quoteChar + quoteChar
                     newName += letter
@@ -217,7 +264,7 @@ class PrintJSONElements(object):
 
 if __name__ == '__main__':
     converter = JSONToRelation(os.path.join(os.path.dirname(__file__),"../../test/json_to_relation/data/twoJSONRecords.json"))
-    converter.processJSONObjsFile();
+    converter.convert();
      
 #    printer = PrintJSONElements(os.path.join(os.path.dirname(__file__),"../../test/json_to_relation/data/twoJSONRecords.json"))
 #    printer.printElements()
