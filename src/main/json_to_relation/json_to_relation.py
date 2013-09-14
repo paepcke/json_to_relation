@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
+from collections import OrderedDict
 from urllib import urlopen
 import StringIO
 import ijson
 import math
 import os
+import re
 
 
 class JSONToRelation(object):
@@ -21,7 +23,12 @@ class JSONToRelation(object):
     MAX_SQL_INT = math.pow(2,31) - 1
     MIN_SQL_INT = -math.pow(2,31)
     
-    def __init__(self, urlOrFileName, schemaHints=None):
+    # Regex pattern to check whether a string
+    # contains only chars legal in a MySQL identifier
+    #, i.e. alphanumeric plus underscore plus dollar sign:
+    LEGAL_MYSQL_ATTRIBUTE_PATTERN = re.compile("^[$\w]+$")
+    
+    def __init__(self, urlOrFileName, schemaHints={}):
         '''
         
         @param urlOrFileName: A file name containing JSON structures, or a URL to such a source
@@ -33,7 +40,7 @@ class JSONToRelation(object):
         self.fileHandle = urlopen(urlOrFileName)
         self.schemaHints = schemaHints
         # Dict col name to ColumnSpec object:
-        self.cols = {}
+        self.cols = OrderedDict()
         
         # Position of column for next col name that is
         # newly encountered: 
@@ -44,6 +51,7 @@ class JSONToRelation(object):
             newRow = []
             newRow = self.processOneJSONObject(jsonStr, newRow)
             self.processFinishedRow(newRow)
+        print self.getColHeaders()
 
     def processOneJSONObject(self, jsonStr, row):
         '''
@@ -65,9 +73,13 @@ class JSONToRelation(object):
             #print("Nested label: %s; event: %s; value: %s" % (nestedLabel,event,value))
             if len(nestedLabel) == 0:
                 continue
-            if event == "map_key":
+            # Use the nested label as the MySQL column name. But ensure
+            # that it contains only MySQL-legal identifier chars. Else
+            # quote the label:
+            nestedLabel = self.ensureLegalIdentifierChars(nestedLabel)
+            if event == "string":
                 self.ensureColExistence(nestedLabel, ColDataType.TEXT)
-                self.addValToRow(row, nestedLabel,value, ColDataType.TEXT)
+                self.setValInRow(row, nestedLabel, value)
                 continue
             if event == "boolean":
                 raise NotImplementedError("Boolean not yet implemented"); 
@@ -78,33 +90,76 @@ class JSONToRelation(object):
                 except KeyError:
                     colDataType = ColDataType.DOUBLE
                 self.ensureColExistence(nestedLabel, colDataType)
-                self.addValToRow(row, nestedLabel,value)
+                self.setValInRow(row, nestedLabel,value)
             if event == "start_array":
                 raise NotImplementedError("Arrays not yet implemented"); 
+        return row
 
-    def ensureColExistence(self, colName, value, colDataType):
+    def ensureColExistence(self, colName, colDataType):
         try:
-            colSpec = self.cols[colName]
+            self.cols[colName]
         except KeyError:
             # New column must be added to table:
-            colSpec = ColumnSpec(colName, colDataType, self)
-        print(colSpec)
+            self.cols[colName] = ColumnSpec(colName, colDataType, self)
 
-    def addValToRow(self, theRow, colName, value):
+    def setValInRow(self, theRow, colName, value):
         colSpec = self.cols[colName]
         targetPos = colSpec.colPos
+        # Is value to go just beyond the current row len?
         if (len(theRow) == 0 or len(theRow) == targetPos):
-            pass
+            theRow.append(value)
+            return theRow
+        # Is value to go into an already existing column?
+        if (len(theRow) > targetPos):
+            theRow[targetPos] = value
+            return theRow
+        
+        # Adding a column beyond the current end of the row, but
+        # not just by one position.
+        # Won't usually happen, as we just keep adding cols as
+        # we go, but taking care of this case makes for flexibility:
+        # Make a list that spans the missing columns, and fill
+        # it with nulls; then concat that list with theRow:
+        fillList = ['null']*(targetPos - len(theRow))
+        fillList.append(value)
+        theRow.extend(fillList)
+        return theRow
 
     def processFinishedRow(self, filledNewRow):
         # TODO: add flexible output options
         print(filledNewRow)
+
+    def getColHeaders(self):
+        headers = []
+        for colSpec in self.cols.values():
+            headers.append(colSpec.colName)
+        return headers
 
     def getNextNewColPos(self):
         return self.nextNewColPos
     
     def bumpNextNewColPos(self):
         self.nextNewColPos += 1
+        
+    def ensureLegalIdentifierChars(self, proposedMySQLName):
+        if JSONToRelation.LEGAL_MYSQL_ATTRIBUTE_PATTERN.match(proposedMySQLName) is not None:
+            return proposedMySQLName
+        # Got an illegal char. Quote the name, doubling any
+        # embedded quote chars (sick, sick, sick proposed name): 
+        quoteChar = '"'
+        if proposedMySQLName.find(quoteChar) > -1:
+            quoteChar = "'"
+            if proposedMySQLName.find(quoteChar) > -1:
+                # Need to double each occurrence of quote char in the proposed name;
+                # get a list of the chars, i.e. 'explode' the string into letters:
+                charList = list(proposedMySQLName)
+                newName = ""
+                for letter in enumerate(charList):
+                    if letter == quoteChar:
+                        letter = quoteChar + quoteChar
+                    newName += letter
+                proposedMySQLName = newName
+        return quoteChar + proposedMySQLName + quoteChar
 
 class ColumnSpec(object):
 
