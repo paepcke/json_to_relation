@@ -1,20 +1,19 @@
 
-import StringIO
 import os
 import unittest
 
 from json_to_relation import JSONToRelation
-from output_disposition import OutputDisposition
-from input_source import InputSource
+from output_disposition import OutputDisposition, OutputPipe, OutputFile, OutputMySQLTable
+from input_source import InputSource, InString, InPipe, InURI, InMongoDB
 
 
 class TestJSONToRelation(unittest.TestCase):
     
     def setUp(self):
         super(TestJSONToRelation, self).setUp()
-        stringSource = InputSource.InString(os.path.join(os.path.dirname(__file__),"data/twoJSONRecords.json"))
+        stringSource = InString(os.path.join(os.path.dirname(__file__),"data/twoJSONRecords.json"))
         self.strConverter = JSONToRelation(stringSource, 
-                                           OutputDisposition.OutputPipe(),
+                                           OutputPipe(),
                                            outputFormat = OutputDisposition.OutputFormat.CSV,
                                            schemaHints = {}
                                            )

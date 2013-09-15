@@ -15,32 +15,29 @@ class OutputDisposition(object):
     Also defined here are available output formats, of
     which there are two: CSV, and SQL insert statements. 
     '''
+    def __init__(self, outputDest):
+        self.outputDest = outputDest
     
-    def __enter__(self, outputDest):
+    def __enter__(self):
+        return self.outputDest.fileHandle
         
-        self.fileHandle = None
-        self.mySQLHandle = None
-        
-        # I am *so* sorry to use instanceof here.
-        # These constructions would be much cleaner
-        # with parameter type based polymorphism!
-        
-        if isinstance(outputDest, OutputDisposition.OutputPipe):
-            self.fileHandle = sys.stdout
-            
-        elif isinstance(outputDest, OutputDisposition.OutputFile):
-            self.fileHandle = outputDest.fileHandle
-            
-        elif isinstance(outputDest, OutputDisposition.OutputMySQLTable):
-            #self.mySQLHandle = outputDest.connect()
-            raise NotImplementedError("Output to MySQL Table not yet implemented")
-        
-    def __exit__(self):
-        if self.fileHandle is not None:
-            self.fileHandle.close()
-        if self.mysqlHandle is not None:
-            # TODO: make this real
-            self.mySQLHandle.close()
+    def __exit__(self,excType, excValue, excTraceback):
+        try:
+            if self.outputDest.fileHandle is not None:
+                self.outputDest.fileHandle.close()
+        except:
+            # If the conversion itself when fine, then
+            # raise this exception from the closing attempt.
+            # But if the conversion failed, then have the 
+            # system re-raise that earlier exception:
+            if excValue is None:
+                raise IOError("Could not close the output of the conversion: %s" % sys.exc_info()[0])
+
+        # Return False to indicate that if the conversion
+        # threw an error, the exception should now be re-raised.
+        # If the conversion worked fine, then this return value
+        # is ignored.
+        return False
 
     #--------------------- Available Output Formats
       
@@ -48,30 +45,34 @@ class OutputDisposition(object):
         CSV = 0
         SQL_INSERT_STATEMENTS = 1
             
-    #--------------------- Available Output Destination Options:  
-            
-    class OutputPipe(object):
-        def close(self):
-            pass # don't close stdout
-    
-    class OutputFile(object):
-        def __init__(self, fileName, options='ab'):
-            self.fileHandle = open(fileName, options)
-            
-        def close(self):
-            self.fileHandle.close()
-    
-    class OutputMySQLTable(object):
-        def __init__(self, server, pwd, dbName, tbleName):
-            self.server = server
-            self.pwd = pwd
-            self.dbName = dbName
-            self.tbleName = tbleName
-            raise NotImplementedError("MySQL connector not yet implemented")
-            
-        def connect(self):
-            raise NotImplementedError("MySQL connector not yet implemented")
+#--------------------- Available Output Destination Options:  
         
-        def close(self):
-            raise NotImplementedError("MySQL connector not yet implemented")
+class OutputPipe(OutputDisposition):
+    def __init__(self):
+        self.fileHandle = sys.stdout
+        
+    def close(self):
+        pass # don't close stdout
+
+class OutputFile(OutputDisposition):
+    def __init__(self, fileName, options='ab'):
+        self.fileHandle = open(fileName, options)
+        
+    def close(self):
+        self.fileHandle.close()
+
+class OutputMySQLTable(OutputDisposition):
+    def __init__(self, server, pwd, dbName, tbleName):
+        raise NotImplementedError("MySQL connector not yet implemented")
+        self.server = server
+        self.pwd = pwd
+        self.dbName = dbName
+        self.tbleName = tbleName
+        self.fileHandle = self.connect()
+        
+    def connect(self):
+        raise NotImplementedError("MySQL connector not yet implemented")
+    
+    def close(self):
+        raise NotImplementedError("MySQL connector not yet implemented")
                     

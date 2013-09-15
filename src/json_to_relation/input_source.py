@@ -15,75 +15,72 @@ class InputSource(object):
     JSON strings, and MongoDB collections.
     '''
 
-    def __enter__(self, inputSource):
-        
-        self.fileHandle = None
-        self.mongoDBHandle = None
-        self.inputDest = inputSource
-        
-        # I am *so* sorry to use instanceof here.
-        # These constructions would be much cleaner
-        # with parameter type based polymorphism!
+    def __init__(self, inputSource):
+        self.inputSource = inputSource
 
+    def __enter__(self):
+        return self.inputSource.fileHandle
         
-        if isinstance(inputSource, InputSource.InPipe):
-            self.fileHandle = sys.stdin
+    def __exit__(self, excType, excValue, excTraceback):
+        # Even if the conversion threw an error, 
+        # try to close the input source:
+        try:
+            if self.inputSource.fileHandle is not None:
+                self.inputSource.fileHandle.close()
+        except:
+            # If the conversion itself when fine, then
+            # raise this exception from the closing attempt.
+            # But if the conversion failed, then have the 
+            # system re-raise that earlier exception:
+            if excValue is None:
+                raise IOError("Could not close the input to the conversion: %s" % sys.exc_info()[0])
+        # Return False to indicate that if the conversion
+        # threw an error, the exception should now be re-raised.
+        # If the conversion worked fine, then this return value
+        # is ignored.
+        return False
+            
+    
 
-        elif isinstance(inputSource, InputSource.InString):
-            self.fileHandle = StringIO(inputSource.inputStr)
-            
-        elif isinstance(inputSource, InputSource.InURI):
-            self.fileHandle = inputSource.fileHandle
-            
-        elif isinstance(inputSource, InputSource.InMongoDB):
-            #self.mySQLHandle = outputDest.connect()
-            raise NotImplementedError("Input from MongoDB collection not yet implemented")
-        
-    def __exit__(self):
-        if self.fileHandle is not None:
-            self.fileHandle.close()
-        if self.mongoDBHandle is not None:
-            self.mongoDBHandle.close()
+class InURI(InputSource):
+    def __init__(self, inFilePathOrURL):
+        self.inFilePathOrURL = inFilePathOrURL
+        self.fileHandle = urlopen(inFilePathOrURL)
     
+    def close(self):
+        # closing is different in case of file vs. URL:
+        (scheme,netloc,path,query,fragment) = self.inFilePathOrURL.urlsplit()  # @UnusedVariable
+        if len(scheme) == 0:
+            self.inFilePathOrURL.close()
+        else:
+            urlcleanup(self.inFilePathOrURL)
+      
     
-    class InURI(object):
-        def __init__(self, inFilePathOrURL):
-            self.inFilePathOrURL = inFilePathOrURL
-            self.fileHandle = urlopen(inFilePathOrURL)
-        
-        def close(self):
-            # closing is different in case of file vs. URL:
-            (scheme,netloc,path,query,fragment) = self.inFilePathOrURL.urlsplit()  # @UnusedVariable
-            if len(scheme) == 0:
-                self.inFilePathOrURL.close()
-            else:
-                urlcleanup(self.inFilePathOrURL)
-          
-        
-    class InString(object):
-        def __init__(self, inputStr):
-            self.inputStr = inputStr
-            
-        def close(self):
-            pass
-        
-    class InMongoDB(object):
-        def __init__(self, server, pwd, dbName, collName):
-            self.server = server
-            self.pwd = pwd
-            self.dbName = dbName
-            self.collName = collName
+class InString(InputSource):
+    def __init__(self, inputStr):
+        self.fileHandle = StringIO.StringIO(inputStr)
+                
+    def close(self):
+        pass
     
-        def connect(self):
-            raise NotImplementedError("MangoDB connector not yet implemented")
-        
-        def close(self):
-            raise NotImplementedError("MangoDB connector not yet implemented")
+class InMongoDB(InputSource):
+    def __init__(self, server, pwd, dbName, collName):
+        self.server = server
+        self.pwd = pwd
+        self.dbName = dbName
+        self.collName = collName
+        self.fileHandle = self.connect()
+
+    def connect(self):
+        raise NotImplementedError("MangoDB connector not yet implemented")
     
-    class InPipe(object):
-        def __init__(self):
-            raise NotImplementedError("Input pipe not implemented.")
-            
-        def close(self):
-            pass # don't close stdin
+    def close(self):
+        raise NotImplementedError("MangoDB connector not yet implemented")
+
+class InPipe(object):
+    def __init__(self):
+        self.fileHandle = sys.stdin
+        
+    def close(self):
+        pass # don't close stdin
         

@@ -15,6 +15,7 @@ import os
 import re
 
 from output_disposition import OutputDisposition
+from input_source import InputSource
 
 #>>> with open('/home/paepcke/tmp/trash.csv', 'wab') as fd:
 #...     writer = csv.writer(fd, delimiter=",", dialect="excel")
@@ -90,12 +91,11 @@ class JSONToRelation(object):
         self.nextNewColPos = 0;
         
     def convert(self):
-        with self.destination as outFd:
-            with self.jsonSource as fileHandle:
-                for jsonStr in fileHandle:
-                    newRow = []
-                    newRow = self.processOneJSONObject(jsonStr, newRow)
-                    self.processFinishedRow(newRow, outFd)
+        with OutputDisposition(self.destination) as outFd, InputSource(self.jsonSource) as inFd:
+            for jsonStr in inFd:
+                newRow = []
+                newRow = self.processOneJSONObject(jsonStr, newRow)
+                self.processFinishedRow(newRow, outFd)
 
         print self.getColHeaders()
 
