@@ -14,8 +14,7 @@ import math
 import os
 import re
 
-from output_disposition import OutputFormat
-from output_disposition import OutputMySQLTable, OutputFile, OutputPipe
+from output_disposition import OutputDisposition
 
 #>>> with open('/home/paepcke/tmp/trash.csv', 'wab') as fd:
 #...     writer = csv.writer(fd, delimiter=",", dialect="excel")
@@ -41,10 +40,10 @@ class JSONToRelation(object):
     #, i.e. alphanumeric plus underscore plus dollar sign:
     LEGAL_MYSQL_ATTRIBUTE_PATTERN = re.compile("^[$\w]+$")
     
-    def __init__(self, jsonSource, destination, outputFormat=OutputFormat.CSV, schemaHints={}):
+    def __init__(self, jsonSource, destination, outputFormat=OutputDisposition.OutputFormat.CSV, schemaHints={}):
         '''
         Create a JSON-to-Relation converter. The JSON source can be
-        a file with JSON objects, StringIO.StringIO string pseudo file,
+        a file with JSON objects, a StringIO.StringIO string pseudo file,
         stdin, or a MongoDB
         
         The destination can be a file, where CSV is written in Excel-readable
@@ -71,18 +70,15 @@ class JSONToRelation(object):
         @param schemaHints: Dict mapping col names to data types (optional)
         @type schemaHints: Map<String,ColDataTYpe>
         '''
-        if isinstance(jsonSource, StringIO.StringIO):
-            self.fileHandle = jsonSource
-        else:
-            self.fileHandle = urlopen(jsonSource)
+
+        
+        self.jsonSource = jsonSource
         self.destination = destination
         self.outputFormat = outputFormat
         self.schemaHints = schemaHints
         
         #************ Unimplemented Options **************
-        if isinstance(self.destination, OutputMySQLTable):
-            raise NotImplementedError("Output to MySQL table not yet implemented")
-        if isinstance(self.outputFormat, OutputFormat.SQL_INSERT_STATEMENTS):
+        if self.outputFormat == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
             raise NotImplementedError("Output as MySQL statements not yet implemented")
         #*************************************************
         
@@ -94,10 +90,13 @@ class JSONToRelation(object):
         self.nextNewColPos = 0;
         
     def convert(self):
-        for jsonStr in self.fileHandle:
-            newRow = []
-            newRow = self.processOneJSONObject(jsonStr, newRow)
-            self.processFinishedRow(newRow)
+        with self.destination as outFd:
+            with self.jsonSource as fileHandle:
+                for jsonStr in fileHandle:
+                    newRow = []
+                    newRow = self.processOneJSONObject(jsonStr, newRow)
+                    self.processFinishedRow(newRow, outFd)
+
         print self.getColHeaders()
 
     def processOneJSONObject(self, jsonStr, row):
@@ -172,9 +171,9 @@ class JSONToRelation(object):
         theRow.extend(fillList)
         return theRow
 
-    def processFinishedRow(self, filledNewRow):
-        # TODO: add flexible output options
-        print(filledNewRow)
+    def processFinishedRow(self, filledNewRow, outFd):
+        # TODO: handle out to MySQL db
+        outFd.write(filledNewRow)
 
     def getColHeaders(self):
         headers = []
