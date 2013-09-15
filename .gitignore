@@ -33,3 +33,6 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+.~lock*
+testOutput.csv
+testOutputWithHeader.csv

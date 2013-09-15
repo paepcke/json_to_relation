@@ -23,8 +23,7 @@ class OutputDisposition(object):
         
     def __exit__(self,excType, excValue, excTraceback):
         try:
-            if self.outputDest.fileHandle is not None:
-                self.outputDest.fileHandle.close()
+            self.outputDest.close()
         except:
             # If the conversion itself when fine, then
             # raise this exception from the closing attempt.
@@ -50,20 +49,36 @@ class OutputDisposition(object):
 class OutputPipe(OutputDisposition):
     def __init__(self):
         self.fileHandle = sys.stdout
+        # Make file name accessible as property just like 
+        # Python file objects do:
+        self.name = "<stdout>"  # @UnusedVariable
         
     def close(self):
         pass # don't close stdout
+    
+    def __str__(self):
+        return "<OutputPipe:<stdout>"
 
 class OutputFile(OutputDisposition):
     def __init__(self, fileName, options='ab'):
+        # Make file name accessible as property just like 
+        # Python file objects do:
+        self.name = fileName  # @UnusedVariable
+        # Open the output file as 'append' and 'binary'
+        # The latter is needed for Windows.
         self.fileHandle = open(fileName, options)
         
     def close(self):
         self.fileHandle.close()
 
+    def __str__(self):
+        return "<OutputFile:%s>" % self.name
+
+
 class OutputMySQLTable(OutputDisposition):
     def __init__(self, server, pwd, dbName, tbleName):
         raise NotImplementedError("MySQL connector not yet implemented")
+        self.name = "<MySQL:%s:%s:%s>" % (server,dbName,tbleName)
         self.server = server
         self.pwd = pwd
         self.dbName = dbName
@@ -75,4 +90,7 @@ class OutputMySQLTable(OutputDisposition):
     
     def close(self):
         raise NotImplementedError("MySQL connector not yet implemented")
+
+    def __str__(self):
+        return "<OutputMySQLTable--%s>" % self.name
                     

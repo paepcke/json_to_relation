@@ -6,22 +6,24 @@ Created on Sep 14, 2013
 @author: paepcke
 '''
 
-from collections import OrderedDict
-from urllib import urlopen
 import StringIO
-import ijson
+from collections import OrderedDict
 import math
 import os
 import re
+import shutil
+import tempfile
+from urllib import urlopen
 
-from output_disposition import OutputDisposition
+import ijson
+
 from input_source import InputSource
+from output_disposition import OutputDisposition, OutputMySQLTable, OutputFile
+
 
 #>>> with open('/home/paepcke/tmp/trash.csv', 'wab') as fd:
 #...     writer = csv.writer(fd, delimiter=",", dialect="excel")
 #...     writer.writerow(info)
-
-
 class JSONToRelation(object):
     '''
     Given a source with JSON structures, derive a schema, and construct 
@@ -90,14 +92,31 @@ class JSONToRelation(object):
         # newly encountered: 
         self.nextNewColPos = 0;
         
-    def convert(self):
+    def convert(self, prependColHeader=False):
+        savedFinalOutDest = None
+        if not isinstance(self.destination, OutputMySQLTable):
+            if prependColHeader:
+                savedFinalOutDest = self.destination
+                (tmpFd, tmpFileName)  = tempfile.mkstemp(suffix='.csv',prefix='jsonToRelationTmp')
+                os.close(tmpFd)
+                self.destination = OutputFile(tmpFileName)
+
         with OutputDisposition(self.destination) as outFd, InputSource(self.jsonSource) as inFd:
             for jsonStr in inFd:
                 newRow = []
                 newRow = self.processOneJSONObject(jsonStr, newRow)
                 self.processFinishedRow(newRow, outFd)
 
-        print self.getColHeaders()
+        # If output to other than MySQL table, check whether
+        # we are to prepend the column header row:
+        if prependColHeader and savedFinalOutDest is not None:
+            try:
+                with open(self.destination.name, 'rb') as inFd, OutputDisposition(savedFinalOutDest) as finalOutFd:
+                    colHeaders = self.getColHeaders()
+                    self.processFinishedRow(colHeaders, finalOutFd)
+                    shutil.copyfileobj(inFd, finalOutFd)
+            except:
+                os.remove(tmpFileName)
 
     def processOneJSONObject(self, jsonStr, row):
         '''
@@ -117,28 +136,53 @@ class JSONToRelation(object):
         #for prefix,event,value in self.parser:
         for nestedLabel, event, value in parser:
             #print("Nested label: %s; event: %s; value: %s" % (nestedLabel,event,value))
-            if len(nestedLabel) == 0:
+            if (len(nestedLabel) == 0) or\
+               (event == "start_map") or\
+               (event == "end_map") or\
+               (event == "map_key"):
                 continue
+            
             # Use the nested label as the MySQL column name. But ensure
             # that it contains only MySQL-legal identifier chars. Else
             # quote the label:
             nestedLabel = self.ensureLegalIdentifierChars(nestedLabel)
+            
+            # Check whether caller gave a type hint for this column:
+            try:
+                colDataType = self.schemaHints[nestedLabel]
+            except KeyError:
+                colDataType = None
+            
             if event == "string":
-                self.ensureColExistence(nestedLabel, ColDataType.TEXT)
+                if colDataType is None:
+                    colDataType = ColDataType.TEXT
+                self.ensureColExistence(nestedLabel, colDataType)
                 self.setValInRow(row, nestedLabel, value)
                 continue
+
             if event == "boolean":
-                raise NotImplementedError("Boolean not yet implemented"); 
+                raise NotImplementedError("Boolean not yet implemented");
+                continue 
+
             if event == "number":
-                try:
-                    colDataType = self.schemaHints[nestedLabel]
-                    self.ensureColExistence(nestedLabel, colDataType)
-                except KeyError:
+                if colDataType is None:
                     colDataType = ColDataType.DOUBLE
                 self.ensureColExistence(nestedLabel, colDataType)
                 self.setValInRow(row, nestedLabel,value)
+                continue
+
+            if event == "null":
+                if colDataType is None:
+                    colDataType = ColDataType.TEXT
+                self.ensureColExistence(nestedLabel, colDataType)
+                self.setValInRow(row, nestedLabel, '')
+                continue
+
             if event == "start_array":
-                raise NotImplementedError("Arrays not yet implemented"); 
+                raise NotImplementedError("Arrays not yet implemented");
+                continue
+
+            raise ValueError("Unknown JSON value type at %s for value %s (ijson event: %s)" % (nestedLabel,value,str(event))) 
         return row
 
     def ensureColExistence(self, colName, colDataType):
@@ -173,7 +217,7 @@ class JSONToRelation(object):
 
     def processFinishedRow(self, filledNewRow, outFd):
         # TODO: handle out to MySQL db
-        outFd.write(filledNewRow)
+        outFd.write(','.join(map(str,filledNewRow)) + "\n")
 
     def getColHeaders(self):
         headers = []

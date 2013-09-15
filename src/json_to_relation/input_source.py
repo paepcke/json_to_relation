@@ -25,15 +25,15 @@ class InputSource(object):
         # Even if the conversion threw an error, 
         # try to close the input source:
         try:
-            if self.inputSource.fileHandle is not None:
-                self.inputSource.fileHandle.close()
+            self.inputSource.close()
         except:
             # If the conversion itself when fine, then
             # raise this exception from the closing attempt.
             # But if the conversion failed, then have the 
             # system re-raise that earlier exception:
             if excValue is None:
-                raise IOError("Could not close the input to the conversion: %s" % sys.exc_info()[0])
+                (errType, errValue, errTraceback) = sys.exc_info()  # @UnusedVariable
+                raise IOError("Could not close the input to the conversion: %s" % errValue)
         # Return False to indicate that if the conversion
         # threw an error, the exception should now be re-raised.
         # If the conversion worked fine, then this return value
@@ -49,11 +49,12 @@ class InURI(InputSource):
     
     def close(self):
         # closing is different in case of file vs. URL:
-        (scheme,netloc,path,query,fragment) = self.inFilePathOrURL.urlsplit()  # @UnusedVariable
-        if len(scheme) == 0:
-            self.inFilePathOrURL.close()
+        try:
+            (scheme,netloc,path,query,fragment) = self.fileHandle.urlsplit()  # @UnusedVariable
+        except AttributeError:
+            self.fileHandle.close()
         else:
-            urlcleanup(self.inFilePathOrURL)
+            urlcleanup(self.fileHandle)
       
     
 class InString(InputSource):
