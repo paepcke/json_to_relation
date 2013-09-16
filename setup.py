@@ -5,9 +5,9 @@ setup(
     packages = find_packages(),
 
     # Dependencies on other packages:
-    setup_require    = ['nose>=1.1.2'],
+    setup_requires   = ['nose>=1.1.2'],
     install_requires = ['ijson>=1.0', 'pymongo>=2.6.2'],
-    tests_require    = ['mongomock>=1.0.1'],
+    tests_require    = ['mongomock>=1.0.1', 'sentinels>=0.0.6'],
 
     # Unit tests; they are initiated via 'python setup.py test'
     test_suite       = 'json_to_relation/test',
