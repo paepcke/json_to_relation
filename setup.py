@@ -5,7 +5,11 @@ setup(
     packages = find_packages(),
 
     # Dependencies on other packages:
-    install_requires = ['ijson>=1.0'],
+    install_requires = ['ijson>=1.0', 'pymongo>=2.6.2'],
+    tests_require    = ['mongomock>=1.0.1'],
+
+    # Unit tests; they are initiated via 'python setup.py test'
+    test_suite       = 'src/json_to_relation/TestSuite.py',
 
     package_data = {
         # If any package contains *.txt or *.rst files, include them:

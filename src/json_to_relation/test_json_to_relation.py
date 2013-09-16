@@ -2,13 +2,14 @@
 import StringIO
 import os
 import unittest
-from unittest.case import TestCase
 
 from input_source import InputSource, InString, InPipe, InURI, InMongoDB
 from json_to_relation import JSONToRelation
 from output_disposition import OutputDisposition, OutputPipe, OutputFile, \
     OutputMySQLTable
 
+
+TEST_ALL = True
 
 class TestJSONToRelation(unittest.TestCase):
     
@@ -33,7 +34,7 @@ class TestJSONToRelation(unittest.TestCase):
     def tearDown(self):
         super(TestJSONToRelation, self).tearDown()
     
-    
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def test_ensure_mysql_identifier_legal(self):
 
         # Vanilla, legal name
@@ -55,12 +56,14 @@ class TestJSONToRelation(unittest.TestCase):
         # Embedded double and single quotes:
         newName = self.fileConverter.ensureLegalIdentifierChars('fo"o\'bar')
         self.assertEqual("'fo\"o\'\'bar'", newName)
-        
+
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")        
     def test_simple_json(self):
         # Prints output to display, which we can't catch without
         # fuzzing with stdout. So just ensure no error happens: 
         self.fileConverter.convert()
 
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def test_simple_json_to_file(self):
         self.fileConverter = JSONToRelation(self.stringSource, 
                                             OutputFile("testOutput.csv"),
@@ -74,6 +77,7 @@ class TestJSONToRelation(unittest.TestCase):
                     "86597,,2013-05-08T22:48:38.174Z,,db47f263ac3532874b8f442ad8937d02"
         self.assertFileContentEquals(expected, "testOutput.csv")
 
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def test_json_to_file_with_col_header(self):
         self.fileConverter = JSONToRelation(self.stringSource, 
                                             OutputFile("testOutputWithHeader.csv"),
@@ -82,14 +86,14 @@ class TestJSONToRelation(unittest.TestCase):
                                             )
         self.fileConverter.convert(prependColHeader=True)
         expected = '"_id.category","_id.name","_id.course","_id.tag","_id.org","_id.revision",contentType,' +\
-                   'displayname,chunkSize,filename,length,import_path,"uploadDate.$date",thumbnail_location,md5' +\
+                   'displayname,chunkSize,filename,length,import_path,"uploadDate.$date",thumbnail_location,md5\n' +\
                    "asset,sainani.jpg,HRP258,c4x,Medicine,,image/jpeg,sainani.jpg,262144,/c4x/Medicine/HRP258/asset/sainani.jpg," +\
                     "22333,,2013-05-08T22:47:09.762Z,,ebcb2a60b0d6b7475c4e9a102b82637b\n" +\
                     "asset,medstats.png,HRP258,c4x,Medicine,,image/png,medstats.png,262144,/c4x/Medicine/HRP258/asset/medstats.png," +\
                     "86597,,2013-05-08T22:48:38.174Z,,db47f263ac3532874b8f442ad8937d02"
         self.assertFileContentEquals(expected, "testOutputWithHeader.csv")
 
-        
+#--------------------------------------------------------------------------------------------------    
     def assertFileContentEquals(self, expected, filePath):
         strFile = StringIO.StringIO(expected)
         with open(filePath, 'r') as fd:
