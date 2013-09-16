@@ -3,9 +3,9 @@ import StringIO
 import os
 import unittest
 
-from input_source import InputSource, InString, InPipe, InURI, InMongoDB
-from json_to_relation import JSONToRelation
-from output_disposition import OutputDisposition, OutputPipe, OutputFile, \
+from json_to_relation.input_source import InputSource, InString, InPipe, InURI, InMongoDB
+from json_to_relation.json_to_relation import JSONToRelation
+from json_to_relation.output_disposition import OutputDisposition, OutputPipe, OutputFile, \
     OutputMySQLTable
 
 
