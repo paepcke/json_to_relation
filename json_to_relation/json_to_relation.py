@@ -6,19 +6,18 @@ Created on Sep 14, 2013
 @author: paepcke
 '''
 
-import StringIO
 from collections import OrderedDict
+from input_source import InputSource
+from output_disposition import OutputDisposition, OutputMySQLTable, OutputFile
+import StringIO
+import ijson
 import math
 import os
 import re
 import shutil
 import tempfile
-from urllib import urlopen
 
-import ijson
 
-from input_source import InputSource
-from output_disposition import OutputDisposition, OutputMySQLTable, OutputFile
 
 
 #>>> with open('/home/paepcke/tmp/trash.csv', 'wab') as fd:
@@ -93,6 +92,18 @@ class JSONToRelation(object):
         self.nextNewColPos = 0;
         
     def convert(self, prependColHeader=False):
+        '''
+        Main user-facing API method. Read from the JSON source establish
+        in the __init__() call. Create a MySQL schema as the JSON is read.
+        Convert each JSON object into the requested output format (e.g. CSV),
+        and deliver it to the destination (e.g. a file)
+        @param prependColHeader: If true, the final destination, if it is stdout or a file,
+                will have the column names prepended. Note that this option requires that
+                the output file is first written to a temp file, and then merged with the
+                completed column name header row to the final destination that was specified
+                by the client. 
+        @type prependColHeader: Boolean
+        '''
         savedFinalOutDest = None
         if not isinstance(self.destination, OutputMySQLTable):
             if prependColHeader:
@@ -131,6 +142,7 @@ class JSONToRelation(object):
 		('end_array', None)
 		        
 		@param jsonStr: string of a single, self contained JSON object
+		@type jsonStr: String
         '''
         parser = ijson.parse(StringIO.StringIO(jsonStr))
         #for prefix,event,value in self.parser:
@@ -186,6 +198,16 @@ class JSONToRelation(object):
         return row
 
     def ensureColExistence(self, colName, colDataType):
+        '''
+        Given a column name and MySQL datatype name, check whether this
+        column has previously been encountered. If not, a column information
+        object is created, which will eventually be used to create the column
+        header, Django model, or SQL create statements.
+        @param colName: name of the column to consider
+        @type colName: String
+        @param colDataType: datatype of the column.
+        @type colDataType: ColDataType
+        '''
         try:
             self.cols[colName]
         except KeyError:
@@ -193,6 +215,17 @@ class JSONToRelation(object):
             self.cols[colName] = ColumnSpec(colName, colDataType, self)
 
     def setValInRow(self, theRow, colName, value):
+        '''
+        Given a column name, a value and a partially filled row,
+        add the column to the row, or set the value in an already
+        existing row.
+        @param theRow: list of values in their proper column positions
+        @type theRow: List<<any>>
+        @param colName: name of column into which value is to be inserted.
+        @type colName: String
+        @param value: the field value
+        @type value: <any>, as per ColDataType
+        '''
         colSpec = self.cols[colName]
         targetPos = colSpec.colPos
         # Is value to go just beyond the current row len?
@@ -216,22 +249,52 @@ class JSONToRelation(object):
         return theRow
 
     def processFinishedRow(self, filledNewRow, outFd):
+        '''
+        When a row is finished, this method processes the row as per
+        the user's disposition. The method writes the row to a CSV
+        file, inserts it into a MySQL table, and generates an SQL 
+        insert statement for later.
+        @param filledNewRow: the list of values for one row, possibly including empty fields  
+        @type filledNewRow: List<<any>>
+        @param outFd: an instance of a class that writes to the destination
+        @type outFd: OutputDisposition
+        '''
         # TODO: handle out to MySQL db
         outFd.write(','.join(map(str,filledNewRow)) + "\n")
 
     def getColHeaders(self):
+        '''
+        Returns a list of column header names collected so far.
+        '''
         headers = []
         for colSpec in self.cols.values():
             headers.append(colSpec.colName)
         return headers
 
     def getNextNewColPos(self):
+        '''
+        Returns the position of the next new column that
+        may need to be added when a previously unseen JSON
+        label is encountered.
+        '''
         return self.nextNewColPos
     
     def bumpNextNewColPos(self):
         self.nextNewColPos += 1
         
     def ensureLegalIdentifierChars(self, proposedMySQLName):
+        '''
+        Given a proposed MySQL identifier, such as a column name,
+        return a possibly modified name that will be acceptable to
+        a MySQL database. MySQL accepts alphanumeric, underscore,
+        and dollar sign. Identifiers with other chars must be quoted.
+        Quote characters embedded within the identifiers must be
+        doubled to be escaped. 
+        @param proposedMySQLName: input name
+        @type proposedMySQLName: String
+        @return: the possibly modified, legal MySQL identifier
+        @rtype: String
+        '''
         if JSONToRelation.LEGAL_MYSQL_ATTRIBUTE_PATTERN.match(proposedMySQLName) is not None:
             return proposedMySQLName
         # Got an illegal char. Quote the name, doubling any
@@ -252,6 +315,12 @@ class JSONToRelation(object):
         return quoteChar + proposedMySQLName + quoteChar
 
 class ColumnSpec(object):
+    '''
+    Housekeeping class. Each instance represents the name,
+    position, and datatype of one column. These instances are
+    used to generate column name headers, Django models, and
+    SQL insert statements.
+    '''
 
     def __init__(self, colName, colDataType, jsonToRelationProcessor):
         self.colName = colName
@@ -268,6 +337,10 @@ class ColumnSpec(object):
     
         
 class ColDataType:
+    '''
+    Enum for datatypes that can be converted to 
+    MySQL datatypes
+    '''
     TEXT=0
     LONGTEXT=1
     SMALLINT=2
@@ -295,21 +368,3 @@ class ColDataType:
         except KeyError:
             raise ValueError("The code %s does not refer to a known datatype." % str(val))
         
-# -----------------------------  Misc Tests --------------------
-class PrintJSONElements(object):
-    
-    def __init__(self, url):
-        self.parser = ijson.parse(urlopen(url))
-        
-    def printElements(self):
-        for prefix,event,value in self.parser:
-            print("Prefix: %s; event: %s; value: %s" % (prefix,event,value))
-
-if __name__ == '__main__':
-    converter = JSONToRelation(os.path.join(os.path.dirname(__file__),"../../test/json_to_relation/data/twoJSONRecords.json"))
-    converter.convert();
-     
-#    printer = PrintJSONElements(os.path.join(os.path.dirname(__file__),"../../test/json_to_relation/data/twoJSONRecords.json"))
-#    printer.printElements()
-#    print("--------------------")
-#    printer.printElements()
