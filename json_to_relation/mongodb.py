@@ -19,7 +19,7 @@ class MongoDB(object):
     
     # ----------------------------  Public Methods -------------------
     
-    def __init__(self, host="localhost", port=27017):
+    def __init__(self, host="localhost", port=27017, user=None, pwd=None):
         '''
         Create a connection to the MongoDB demon on the given host/port.
         @param host: host name where MongoDB demon is running. Can be IP address as string.
@@ -29,6 +29,7 @@ class MongoDB(object):
         '''
         self.host = host
         self.port = port
+        #client = MongoClient(mongodb://readonly:xxxxx@stanford-edx-prod.m0.mongolayer.com/stanford-edx-prod)
         self.client = MongoClient(host, port)
         self.set_db("test")
         self.set_collection('test_collection')
