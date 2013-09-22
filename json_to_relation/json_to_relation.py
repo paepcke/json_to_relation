@@ -148,21 +148,38 @@ class JSONToRelation(object):
         # Stack of array index counters for use with
         # nested arrays:
         arrayIndexStack = Stack()
+        objectDepth = 0
+        prevObjectDepth = 0
+        # Not currently processing 
         #for prefix,event,value in self.parser:
         for nestedLabel, event, value in parser:
             #print("Nested label: %s; event: %s; value: %s" % (nestedLabel,event,value))
+            if event == "start_map":
+                prevObjectDepth = objectDepth
+                objectDepth += 1
+                continue
+            elif event == "end_map":
+                objectDepth -= 1
+                prevObjectDepth = objectDepth
+                continue
+            
             if (len(nestedLabel) == 0) or\
+               (event == "map_key") or\
                (event == "start_map") or\
-               (event == "end_map") or\
-               (event == "map_key"):
+               (event == "end_map"):
                 continue
             
             # Use the nested label as the MySQL column name.
             # If we are in the middle of an array, append the
             # next array index to the label: 
-            if not arrayIndexStack.empty():                
+            if not arrayIndexStack.empty():
                 currArrayIndex = arrayIndexStack.pop()
-                currArrayIndex += 1
+                if prevObjectDepth != objectDepth:     
+                    currArrayIndex += 1
+                    prevObjectDepth = objectDepth
+            if event == "end_map":
+                continue
+
                 arrayIndexStack.push(currArrayIndex)
                 nestedLabel += "_" + str(currArrayIndex)
                 
