@@ -155,18 +155,14 @@ class JSONToRelation(object):
         for nestedLabel, event, value in parser:
             #print("Nested label: %s; event: %s; value: %s" % (nestedLabel,event,value))
             if event == "start_map":
-                prevObjectDepth = objectDepth
                 objectDepth += 1
                 continue
             elif event == "end_map":
                 objectDepth -= 1
-                prevObjectDepth = objectDepth
                 continue
             
             if (len(nestedLabel) == 0) or\
-               (event == "map_key") or\
-               (event == "start_map") or\
-               (event == "end_map"):
+               (event == "map_key"):
                 continue
             
             # Use the nested label as the MySQL column name.
@@ -174,12 +170,8 @@ class JSONToRelation(object):
             # next array index to the label: 
             if not arrayIndexStack.empty():
                 currArrayIndex = arrayIndexStack.pop()
-                if prevObjectDepth != objectDepth:     
+                if True: #******
                     currArrayIndex += 1
-                    prevObjectDepth = objectDepth
-            if event == "end_map":
-                continue
-
                 arrayIndexStack.push(currArrayIndex)
                 nestedLabel += "_" + str(currArrayIndex)
                 
