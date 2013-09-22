@@ -148,33 +148,27 @@ class JSONToRelation(object):
         # Stack of array index counters for use with
         # nested arrays:
         arrayIndexStack = Stack()
-        objectDepth = 0
-        prevObjectDepth = 0
         # Not currently processing 
         #for prefix,event,value in self.parser:
         for nestedLabel, event, value in parser:
             #print("Nested label: %s; event: %s; value: %s" % (nestedLabel,event,value))
             if event == "start_map":
-                objectDepth += 1
-                continue
-            elif event == "end_map":
-                objectDepth -= 1
+                if not arrayIndexStack.empty():
+                    self.incArrayIndex(arrayIndexStack)
                 continue
             
             if (len(nestedLabel) == 0) or\
-               (event == "map_key"):
+               (event == "map_key") or\
+               (event == "end_map"):
                 continue
             
-            # Use the nested label as the MySQL column name.
-            # If we are in the middle of an array, append the
-            # next array index to the label: 
             if not arrayIndexStack.empty():
-                currArrayIndex = arrayIndexStack.pop()
-                if True: #******
-                    currArrayIndex += 1
-                arrayIndexStack.push(currArrayIndex)
-                nestedLabel += "_" + str(currArrayIndex)
-                
+                # Label is now something like
+                # employees.item.firstName. The 'item' is ijson's way of indicating
+                # that we are in an array. Append our array index number
+                # with an underscore:
+                nestedLabel += '_' + str(arrayIndexStack.top(exceptionOnEmpty=True))
+            
             # Ensure that label contains only MySQL-legal identifier chars. Else
             # quote the label:                
             nestedLabel = self.ensureLegalIdentifierChars(nestedLabel)
@@ -224,6 +218,16 @@ class JSONToRelation(object):
 
             raise ValueError("Unknown JSON value type at %s for value %s (ijson event: %s)" % (nestedLabel,value,str(event))) 
         return row
+
+    def incArrayIndex(self, arrayIndexStack):
+        currArrayIndex = arrayIndexStack.pop()
+        currArrayIndex += 1
+        arrayIndexStack.push(currArrayIndex)
+
+    def decArrayIndex(self, arrayIndexStack):
+        currArrayIndex = arrayIndexStack.pop()
+        currArrayIndex -= 1
+        arrayIndexStack.push(currArrayIndex)
 
     def ensureColExistence(self, colName, colDataType):
         '''
