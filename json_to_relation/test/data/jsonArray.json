@@ -1,0 +1,6 @@
+{"employees": [{ "firstName":"John" , "lastName":"Doe" },{ "firstName":"Anna" , "lastName":"Smith" },{ "firstName":"Peter" , "lastName":"Jones" }]}
+{"company":"BongoFlip"}
+{"employees": [{"firstName":"Roman"}]}
+{"employees": []}
+{"employees": [{"firstName":"Roman"}],"consultants":[{"firstName":"Judy"}]}
+{"employees": [{"firstName":"Roman"},{"consultants":[{"firstName":"Judy"}]}]}

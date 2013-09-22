@@ -145,6 +145,9 @@ class JSONToRelation(object):
 		@type jsonStr: String
         '''
         parser = ijson.parse(StringIO.StringIO(jsonStr))
+        # Stack of array index counters for use with
+        # nested arrays:
+        arrayIndexStack = Stack()
         #for prefix,event,value in self.parser:
         for nestedLabel, event, value in parser:
             #print("Nested label: %s; event: %s; value: %s" % (nestedLabel,event,value))
@@ -154,9 +157,17 @@ class JSONToRelation(object):
                (event == "map_key"):
                 continue
             
-            # Use the nested label as the MySQL column name. But ensure
-            # that it contains only MySQL-legal identifier chars. Else
-            # quote the label:
+            # Use the nested label as the MySQL column name.
+            # If we are in the middle of an array, append the
+            # next array index to the label: 
+            if not arrayIndexStack.empty():                
+                currArrayIndex = arrayIndexStack.pop()
+                currArrayIndex += 1
+                arrayIndexStack.push(currArrayIndex)
+                nestedLabel += "_" + str(currArrayIndex)
+                
+            # Ensure that label contains only MySQL-legal identifier chars. Else
+            # quote the label:                
             nestedLabel = self.ensureLegalIdentifierChars(nestedLabel)
             
             # Check whether caller gave a type hint for this column:
@@ -191,7 +202,15 @@ class JSONToRelation(object):
                 continue
 
             if event == "start_array":
-                raise NotImplementedError("Arrays not yet implemented");
+                # New array index entry for this nested label.
+                # Used to generate <label>_0, <label>_1, etc. for
+                # column names:
+                arrayIndexStack.push(-1)
+                continue
+
+            if event == "end_array":
+                # Array closed; forget the array counter:
+                arrayIndexStack.pop()
                 continue
 
             raise ValueError("Unknown JSON value type at %s for value %s (ijson event: %s)" % (nestedLabel,value,str(event))) 
@@ -368,3 +387,31 @@ class ColDataType:
         except KeyError:
             raise ValueError("The code %s does not refer to a known datatype." % str(val))
         
+class Stack(object):
+    
+    def __init__(self):
+        self.stackArray = []
+
+    def empty(self):
+        return len(self.stackArray) == 0
+        
+    def push(self, item):
+        self.stackArray.append(item)
+        
+    def pop(self):
+        try:
+            return self.stackArray.pop()
+        except IndexError:
+            raise ValueError("Stack empty.")
+    
+    def top(self, exceptionOnEmpty=False):
+        if len(self.stackArray) == 0:
+            if exceptionOnEmpty:
+                raise ValueError("Call to Stack instance method 'top' when stack is empty.")
+            else:
+                return None
+        return self.stackArray[len(self.stackArray) -1]
+    
+    def stackHeight(self):
+        return len(self.stackArray)
+    

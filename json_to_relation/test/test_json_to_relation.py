@@ -9,7 +9,7 @@ from json_to_relation.output_disposition import OutputDisposition, OutputPipe, O
     OutputMySQLTable
 
 
-TEST_ALL = True
+TEST_ALL = False
 
 class TestJSONToRelation(unittest.TestCase):
     
@@ -28,6 +28,10 @@ class TestJSONToRelation(unittest.TestCase):
             pass
         try:
             os.remove("testOutputWithHeader.csv")
+        except:
+            pass
+        try:
+            os.remove("testArrays.csv")
         except:
             pass
         
@@ -92,6 +96,17 @@ class TestJSONToRelation(unittest.TestCase):
                     "asset,medstats.png,HRP258,c4x,Medicine,,image/png,medstats.png,262144,/c4x/Medicine/HRP258/asset/medstats.png," +\
                     "86597,,2013-05-08T22:48:38.174Z,,db47f263ac3532874b8f442ad8937d02"
         self.assertFileContentEquals(expected, "testOutputWithHeader.csv")
+
+
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def test_arrays(self):
+        source = InURI(os.path.join(os.path.dirname(__file__),"data/jsonArray.json"))
+        self.fileConverter = JSONToRelation(source, 
+                                            OutputFile("testArrays.csv"),
+                                            outputFormat = OutputDisposition.OutputFormat.CSV,
+                                            schemaHints = {}
+                                            )
+        self.fileConverter.convert(prependColHeader=True)
 
 #--------------------------------------------------------------------------------------------------    
     def assertFileContentEquals(self, expected, filePath):

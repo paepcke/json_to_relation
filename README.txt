@@ -1,3 +1,7 @@
 TODO:
-  - more unit tests in test_json_to_relation.py
   - direct drop into MySQL, as opposed to csv
+  - tolerate pretty printed json in files
+  - GUI
+  - arrays
+  - filler commas for missing fields
+
