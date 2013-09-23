@@ -5,7 +5,7 @@ Created on Sep 22, 2013
 '''
 import unittest
 
-from json_to_relation.json_to_relation import Stack
+from json_to_relation.json_to_relation import Stack, JSONToRelation
 
 
 class Test(unittest.TestCase):
@@ -26,7 +26,23 @@ class Test(unittest.TestCase):
         myStack.push(currCounter)
         self.assertEqual(10, myStack.top(exceptionOnEmpty=True), "Modifying top of stack did not modify.")
         
+    def testRemoveItemPartFromString(self):
+        converter = JSONToRelation(None,None)
+        res = converter.removeItemPartOfString('employee.item.name')
+        self.assertEquals('employee.name', res, 'Failed on simple case.')
         
+        res = converter.removeItemPartOfString('employee.name')
+        self.assertEquals('employee.name', res, "Failed when no 'item' present.")
+        
+        res = converter.removeItemPartOfString('employee.item')
+        self.assertEquals('employee.item', res, "Failed when no trailing 'item', followed by an additional component.")
+
+        res = converter.removeItemPartOfString('item')
+        self.assertEquals('item', res, "Failed when only'item' is present.")
+
+        res = converter.removeItemPartOfString('employee.item.lostFound.item.location')
+        self.assertEquals('employee.item.lostFound.location', res, "Failed to only remove the last occurrence of 'item'.")
+            
         
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testStack']

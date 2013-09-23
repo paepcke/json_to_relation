@@ -42,6 +42,13 @@ class JSONToRelation(object):
     #, i.e. alphanumeric plus underscore plus dollar sign:
     LEGAL_MYSQL_ATTRIBUTE_PATTERN = re.compile("^[$\w]+$")
     
+    # Regex pattern to remove '.item.' from column header names.
+    # (see removeItemFromString(). Example: employee.item.name
+    # will be replaced by employee.name. When used in r.search(),
+    # the regex below creates a Match result instance with two
+    # groups: 'item' and 'name'.
+    REMOVE_ITEM_FROM_STRING_PATTERN = re.compile(r'(item)\.([^.]*$)')
+    
     def __init__(self, jsonSource, destination, outputFormat=OutputDisposition.OutputFormat.CSV, schemaHints={}):
         '''
         Create a JSON-to-Relation converter. The JSON source can be
@@ -63,6 +70,9 @@ class JSONToRelation(object):
         The column names in schemaHints must match the corresponding (fully nested)
         key names in the JSON objects.
         
+        For unit testing isolated methods in this class, set jsonSource and
+        destination to None.
+        
         @param jsonSource: A file name containing JSON structures, or a URL to such a source
         @type jsonSource: {String | StringIO}
         @param destination: instruction to were resulting rows are to be directed
@@ -73,6 +83,11 @@ class JSONToRelation(object):
         @type schemaHints: Map<String,ColDataTYpe>
         '''
 
+        # If jsonSource and destination are both None,
+        # the caller is just unit testing some of the methods
+        # below:
+        if jsonSource is None and destination is None:
+            return
         
         self.jsonSource = jsonSource
         self.destination = destination
@@ -90,7 +105,7 @@ class JSONToRelation(object):
         # Position of column for next col name that is
         # newly encountered: 
         self.nextNewColPos = 0;
-        
+
     def convert(self, prependColHeader=False):
         '''
         Main user-facing API method. Read from the JSON source establish
@@ -154,6 +169,8 @@ class JSONToRelation(object):
             #print("Nested label: %s; event: %s; value: %s" % (nestedLabel,event,value))
             if event == "start_map":
                 if not arrayIndexStack.empty():
+                    # Starting a new attribute/value pair within an array: need
+                    # a new number to differentiate column headers                    
                     self.incArrayIndex(arrayIndexStack)
                 continue
             
@@ -165,9 +182,12 @@ class JSONToRelation(object):
             if not arrayIndexStack.empty():
                 # Label is now something like
                 # employees.item.firstName. The 'item' is ijson's way of indicating
-                # that we are in an array. Append our array index number
-                # with an underscore:
-                nestedLabel += '_' + str(arrayIndexStack.top(exceptionOnEmpty=True))
+                # that we are in an array. Remove the '.item.' part; it makes
+                # the relation column header unnecessarily long. Then append 
+                # our array index number with an underscore:
+                nestedLabel = self.removeItemPartOfString(nestedLabel) +\
+                              '_' +\
+                              str(arrayIndexStack.top(exceptionOnEmpty=True))
             
             # Ensure that label contains only MySQL-legal identifier chars. Else
             # quote the label:                
@@ -313,6 +333,28 @@ class JSONToRelation(object):
     
     def bumpNextNewColPos(self):
         self.nextNewColPos += 1
+
+    def removeItemPartOfString(self, label):
+        '''
+        Given a label, like employee.item.name, remove the last
+        occurrence of 'item'
+        @param label: string from which last 'item' occurrence is to be removed
+        @type label: String
+        '''
+        # JSONToRelation.REMOVE_ITEM_FROM_STRING_PATTERN is a regex pattern to remove '.item.' 
+        # from column header names. Example: employee.item.name
+        # will be replaced by employee.name. When used in r.search(),
+        # the regex below creates a Match result instance with two
+        # groups: 'item' and 'name'.
+        match = re.search(JSONToRelation.REMOVE_ITEM_FROM_STRING_PATTERN, label)        
+        if match is None:
+            # no appropriate occurrence of 'item' fround
+            return label
+        # Get label portion up to last occurrence of 'item',
+        # and add the last part of the label to that part: 
+        res = label[:match.start(1)] + match.group(2)
+        return res
+
         
     def ensureLegalIdentifierChars(self, proposedMySQLName):
         '''
