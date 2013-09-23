@@ -34,6 +34,15 @@ class TestJSONToRelation(unittest.TestCase):
             os.remove("testArrays.csv")
         except:
             pass
+        try:
+            os.remove("testTinyEdXImport.csv")
+        except:
+            pass
+        try:
+            os.remove("testEdXImport.csv")
+        except:
+            pass
+
         
     def tearDown(self):
         super(TestJSONToRelation, self).tearDown()
@@ -81,7 +90,7 @@ class TestJSONToRelation(unittest.TestCase):
                     "86597,,2013-05-08T22:48:38.174Z,,db47f263ac3532874b8f442ad8937d02"
         self.assertFileContentEquals(expected, "testOutput.csv")
 
-    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def test_json_to_file_with_col_header(self):
         self.fileConverter = JSONToRelation(self.stringSource, 
                                             OutputFile("testOutputWithHeader.csv"),
@@ -98,7 +107,7 @@ class TestJSONToRelation(unittest.TestCase):
         self.assertFileContentEquals(expected, "testOutputWithHeader.csv")
 
 
-    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def test_arrays(self):
         source = InURI(os.path.join(os.path.dirname(__file__),"data/jsonArray.json"))
         self.fileConverter = JSONToRelation(source, 
@@ -107,6 +116,30 @@ class TestJSONToRelation(unittest.TestCase):
                                             schemaHints = {}
                                             )
         self.fileConverter.convert(prependColHeader=True)
+
+
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def test_embedded_json_strings_comma_escaping(self):
+        source = InURI(os.path.join(os.path.dirname(__file__),"data/tinyEdXTrackLog.json"))
+        self.fileConverter = JSONToRelation(source, 
+                                            OutputFile("testTinyEdXImport.csv"),
+                                            outputFormat = OutputDisposition.OutputFormat.CSV,
+                                            schemaHints = {}
+                                            )
+        self.fileConverter.convert(prependColHeader=True)
+    
+    
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def test_edX_tracking_import(self):
+        source = InURI(os.path.join(os.path.dirname(__file__),"data/edxTrackLogSample.json"))
+        self.fileConverter = JSONToRelation(source, 
+                                            OutputFile("testEdXImport.csv"),
+                                            outputFormat = OutputDisposition.OutputFormat.CSV,
+                                            schemaHints = {}
+                                            )
+        self.fileConverter.convert(prependColHeader=True)
+
+
 
 #--------------------------------------------------------------------------------------------------    
     def assertFileContentEquals(self, expected, filePath):

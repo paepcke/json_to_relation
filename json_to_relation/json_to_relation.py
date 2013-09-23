@@ -7,17 +7,16 @@ Created on Sep 14, 2013
 '''
 
 from collections import OrderedDict
-from input_source import InputSource
-from output_disposition import OutputDisposition, OutputMySQLTable, OutputFile
-import StringIO
-import ijson
 import math
 import os
 import re
 import shutil
 import tempfile
 
-
+from generic_json_parser import GenericJSONParser
+from input_source import InputSource
+from col_data_type import ColDataType
+from output_disposition import OutputDisposition, OutputMySQLTable, OutputFile
 
 
 #>>> with open('/home/paepcke/tmp/trash.csv', 'wab') as fd:
@@ -41,15 +40,13 @@ class JSONToRelation(object):
     # contains only chars legal in a MySQL identifier
     #, i.e. alphanumeric plus underscore plus dollar sign:
     LEGAL_MYSQL_ATTRIBUTE_PATTERN = re.compile("^[$\w]+$")
-    
-    # Regex pattern to remove '.item.' from column header names.
-    # (see removeItemFromString(). Example: employee.item.name
-    # will be replaced by employee.name. When used in r.search(),
-    # the regex below creates a Match result instance with two
-    # groups: 'item' and 'name'.
-    REMOVE_ITEM_FROM_STRING_PATTERN = re.compile(r'(item)\.([^.]*$)')
-    
-    def __init__(self, jsonSource, destination, outputFormat=OutputDisposition.OutputFormat.CSV, schemaHints={}):
+        
+    def __init__(self, 
+                 jsonSource, 
+                 destination, 
+                 outputFormat=OutputDisposition.OutputFormat.CSV, 
+                 schemaHints={},
+                 jsonParserInstance=None):
         '''
         Create a JSON-to-Relation converter. The JSON source can be
         a file with JSON objects, a StringIO.StringIO string pseudo file,
@@ -81,6 +78,9 @@ class JSONToRelation(object):
         @type outputFormat: OutputFormat
         @param schemaHints: Dict mapping col names to data types (optional)
         @type schemaHints: Map<String,ColDataTYpe>
+        @param jsonParserInstance: a parser that takes one JSON string, and returns a CSV row. Parser also must inform this 
+                                   parent object of any generated column names.
+        @type {GenericJSONParser | EdXTrackLogJSONParser | CourseraTrackLogJSONParser}
         '''
 
         # If jsonSource and destination are both None,
@@ -93,6 +93,11 @@ class JSONToRelation(object):
         self.destination = destination
         self.outputFormat = outputFormat
         self.schemaHints = schemaHints
+
+        if jsonParserInstance is None:
+            self.jsonParserInstance = GenericJSONParser(self)
+        else:
+            self.jsonParserInstance = jsonParserInstance
         
         #************ Unimplemented Options **************
         if self.outputFormat == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
@@ -130,7 +135,7 @@ class JSONToRelation(object):
         with OutputDisposition(self.destination) as outFd, InputSource(self.jsonSource) as inFd:
             for jsonStr in inFd:
                 newRow = []
-                newRow = self.processOneJSONObject(jsonStr, newRow)
+                newRow = self.jsonParserInstance.processOneJSONObject(jsonStr, newRow)
                 self.processFinishedRow(newRow, outFd)
 
         # If output to other than MySQL table, check whether
@@ -140,114 +145,9 @@ class JSONToRelation(object):
                 with open(self.destination.name, 'rb') as inFd, OutputDisposition(savedFinalOutDest) as finalOutFd:
                     colHeaders = self.getColHeaders()
                     self.processFinishedRow(colHeaders, finalOutFd)
-                    shutil.copyfileobj(inFd, finalOutFd)
-            except:
+                    shutil.copyfileobj(inFd, finalOutFd.fileHandle)
+            finally:
                 os.remove(tmpFileName)
-
-    def processOneJSONObject(self, jsonStr, row):
-        '''
-   	    ('null', None)
-		('boolean', <True or False>)
-		('number', <int or Decimal>)
-		('string', <unicode>)
-		('map_key', <str>)
-		('start_map', None)
-		('end_map', None)
-		('start_array', None)
-		('end_array', None)
-		        
-		@param jsonStr: string of a single, self contained JSON object
-		@type jsonStr: String
-        '''
-        parser = ijson.parse(StringIO.StringIO(jsonStr))
-        # Stack of array index counters for use with
-        # nested arrays:
-        arrayIndexStack = Stack()
-        # Not currently processing 
-        #for prefix,event,value in self.parser:
-        for nestedLabel, event, value in parser:
-            #print("Nested label: %s; event: %s; value: %s" % (nestedLabel,event,value))
-            if event == "start_map":
-                if not arrayIndexStack.empty():
-                    # Starting a new attribute/value pair within an array: need
-                    # a new number to differentiate column headers                    
-                    self.incArrayIndex(arrayIndexStack)
-                continue
-            
-            if (len(nestedLabel) == 0) or\
-               (event == "map_key") or\
-               (event == "end_map"):
-                continue
-            
-            if not arrayIndexStack.empty():
-                # Label is now something like
-                # employees.item.firstName. The 'item' is ijson's way of indicating
-                # that we are in an array. Remove the '.item.' part; it makes
-                # the relation column header unnecessarily long. Then append 
-                # our array index number with an underscore:
-                nestedLabel = self.removeItemPartOfString(nestedLabel) +\
-                              '_' +\
-                              str(arrayIndexStack.top(exceptionOnEmpty=True))
-            
-            # Ensure that label contains only MySQL-legal identifier chars. Else
-            # quote the label:                
-            nestedLabel = self.ensureLegalIdentifierChars(nestedLabel)
-            
-            # Check whether caller gave a type hint for this column:
-            try:
-                colDataType = self.schemaHints[nestedLabel]
-            except KeyError:
-                colDataType = None
-            
-            if event == "string":
-                if colDataType is None:
-                    colDataType = ColDataType.TEXT
-                self.ensureColExistence(nestedLabel, colDataType)
-                self.setValInRow(row, nestedLabel, value)
-                continue
-
-            if event == "boolean":
-                raise NotImplementedError("Boolean not yet implemented");
-                continue 
-
-            if event == "number":
-                if colDataType is None:
-                    colDataType = ColDataType.DOUBLE
-                self.ensureColExistence(nestedLabel, colDataType)
-                self.setValInRow(row, nestedLabel,value)
-                continue
-
-            if event == "null":
-                if colDataType is None:
-                    colDataType = ColDataType.TEXT
-                self.ensureColExistence(nestedLabel, colDataType)
-                self.setValInRow(row, nestedLabel, '')
-                continue
-
-            if event == "start_array":
-                # New array index entry for this nested label.
-                # Used to generate <label>_0, <label>_1, etc. for
-                # column names:
-                arrayIndexStack.push(-1)
-                continue
-
-            if event == "end_array":
-                # Array closed; forget the array counter:
-                arrayIndexStack.pop()
-                continue
-
-            raise ValueError("Unknown JSON value type at %s for value %s (ijson event: %s)" % (nestedLabel,value,str(event))) 
-        return row
-
-    def incArrayIndex(self, arrayIndexStack):
-        currArrayIndex = arrayIndexStack.pop()
-        currArrayIndex += 1
-        arrayIndexStack.push(currArrayIndex)
-
-    def decArrayIndex(self, arrayIndexStack):
-        currArrayIndex = arrayIndexStack.pop()
-        currArrayIndex -= 1
-        arrayIndexStack.push(currArrayIndex)
 
     def ensureColExistence(self, colName, colDataType):
         '''
@@ -266,40 +166,6 @@ class JSONToRelation(object):
             # New column must be added to table:
             self.cols[colName] = ColumnSpec(colName, colDataType, self)
 
-    def setValInRow(self, theRow, colName, value):
-        '''
-        Given a column name, a value and a partially filled row,
-        add the column to the row, or set the value in an already
-        existing row.
-        @param theRow: list of values in their proper column positions
-        @type theRow: List<<any>>
-        @param colName: name of column into which value is to be inserted.
-        @type colName: String
-        @param value: the field value
-        @type value: <any>, as per ColDataType
-        '''
-        colSpec = self.cols[colName]
-        targetPos = colSpec.colPos
-        # Is value to go just beyond the current row len?
-        if (len(theRow) == 0 or len(theRow) == targetPos):
-            theRow.append(value)
-            return theRow
-        # Is value to go into an already existing column?
-        if (len(theRow) > targetPos):
-            theRow[targetPos] = value
-            return theRow
-        
-        # Adding a column beyond the current end of the row, but
-        # not just by one position.
-        # Won't usually happen, as we just keep adding cols as
-        # we go, but taking care of this case makes for flexibility:
-        # Make a list that spans the missing columns, and fill
-        # it with nulls; then concat that list with theRow:
-        fillList = ['null']*(targetPos - len(theRow))
-        fillList.append(value)
-        theRow.extend(fillList)
-        return theRow
-
     def processFinishedRow(self, filledNewRow, outFd):
         '''
         When a row is finished, this method processes the row as per
@@ -312,7 +178,8 @@ class JSONToRelation(object):
         @type outFd: OutputDisposition
         '''
         # TODO: handle out to MySQL db
-        outFd.write(','.join(map(str,filledNewRow)) + "\n")
+        #outFd.write(','.join(map(str,filledNewRow)) + "\n")
+        outFd.writerow(map(str,filledNewRow))
 
     def getColHeaders(self):
         '''
@@ -334,28 +201,6 @@ class JSONToRelation(object):
     def bumpNextNewColPos(self):
         self.nextNewColPos += 1
 
-    def removeItemPartOfString(self, label):
-        '''
-        Given a label, like employee.item.name, remove the last
-        occurrence of 'item'
-        @param label: string from which last 'item' occurrence is to be removed
-        @type label: String
-        '''
-        # JSONToRelation.REMOVE_ITEM_FROM_STRING_PATTERN is a regex pattern to remove '.item.' 
-        # from column header names. Example: employee.item.name
-        # will be replaced by employee.name. When used in r.search(),
-        # the regex below creates a Match result instance with two
-        # groups: 'item' and 'name'.
-        match = re.search(JSONToRelation.REMOVE_ITEM_FROM_STRING_PATTERN, label)        
-        if match is None:
-            # no appropriate occurrence of 'item' fround
-            return label
-        # Get label portion up to last occurrence of 'item',
-        # and add the last part of the label to that part: 
-        res = label[:match.start(1)] + match.group(2)
-        return res
-
-        
     def ensureLegalIdentifierChars(self, proposedMySQLName):
         '''
         Given a proposed MySQL identifier, such as a column name,
@@ -408,65 +253,4 @@ class ColumnSpec(object):
     
     def __repr__(self):
         return self.__str__()
-    
-        
-class ColDataType:
-    '''
-    Enum for datatypes that can be converted to 
-    MySQL datatypes
-    '''
-    TEXT=0
-    LONGTEXT=1
-    SMALLINT=2
-    INT=3
-    FLOAT=4
-    DOUBLE=5
-    DATE=6
-    TIME=7
-    DATETIME=8
-    
-    strings = {TEXT     : "TEXT",
-               LONGTEXT : "LONGTEXT",
-               SMALLINT : "SMALLINT",
-               INT      : "INT",
-               FLOAT    : "FLOAT",
-               DOUBLE   : "DOUBLE",
-               DATE     : "DATE",
-               TIME     : "TIME",
-               DATETIME : "DATETIME"
-    }
-    
-    def toString(self, val):
-        try:
-            return ColDataType.strings[val]
-        except KeyError:
-            raise ValueError("The code %s does not refer to a known datatype." % str(val))
-        
-class Stack(object):
-    
-    def __init__(self):
-        self.stackArray = []
-
-    def empty(self):
-        return len(self.stackArray) == 0
-        
-    def push(self, item):
-        self.stackArray.append(item)
-        
-    def pop(self):
-        try:
-            return self.stackArray.pop()
-        except IndexError:
-            raise ValueError("Stack empty.")
-    
-    def top(self, exceptionOnEmpty=False):
-        if len(self.stackArray) == 0:
-            if exceptionOnEmpty:
-                raise ValueError("Call to Stack instance method 'top' when stack is empty.")
-            else:
-                return None
-        return self.stackArray[len(self.stackArray) -1]
-    
-    def stackHeight(self):
-        return len(self.stackArray)
     

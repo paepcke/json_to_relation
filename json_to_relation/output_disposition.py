@@ -3,6 +3,7 @@ Created on Sep 14, 2013
 
 @author: paepcke
 '''
+import csv
 import sys
 
 
@@ -16,10 +17,14 @@ class OutputDisposition(object):
     which there are two: CSV, and SQL insert statements. 
     '''
     def __init__(self, outputDest):
+        '''
+        @param outputDest: os file descriptor for output
+        @type outputDest: File
+        '''
         self.outputDest = outputDest
     
     def __enter__(self):
-        return self.outputDest.fileHandle
+        return self.outputDest
         
     def __exit__(self,excType, excValue, excTraceback):
         try:
@@ -52,12 +57,16 @@ class OutputPipe(OutputDisposition):
         # Make file name accessible as property just like 
         # Python file objects do:
         self.name = "<stdout>"  # @UnusedVariable
+        self.csvWriter = csv.writer(sys.stdout, dialect='excel', delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         
     def close(self):
         pass # don't close stdout
     
     def __str__(self):
         return "<OutputPipe:<stdout>"
+
+    def writerow(self, colElementArray):
+        self.csvWriter.writerow(colElementArray)
 
 class OutputFile(OutputDisposition):
     def __init__(self, fileName, options='ab'):
@@ -67,6 +76,7 @@ class OutputFile(OutputDisposition):
         # Open the output file as 'append' and 'binary'
         # The latter is needed for Windows.
         self.fileHandle = open(fileName, options)
+        self.csvWriter = csv.writer(self.fileHandle, dialect='excel', delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         
     def close(self):
         self.fileHandle.close()
@@ -74,6 +84,8 @@ class OutputFile(OutputDisposition):
     def __str__(self):
         return "<OutputFile:%s>" % self.name
 
+    def writerow(self, colElementArray):
+        self.csvWriter.writerow(colElementArray)
 
 class OutputMySQLTable(OutputDisposition):
     def __init__(self, server, pwd, dbName, tbleName):
@@ -93,4 +105,7 @@ class OutputMySQLTable(OutputDisposition):
 
     def __str__(self):
         return "<OutputMySQLTable--%s>" % self.name
+
+    def writerow(self, fd, colElementArray):
+        raise NotImplementedError("MySQL connector not yet implemented")
                     
