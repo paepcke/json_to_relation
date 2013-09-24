@@ -19,7 +19,7 @@ class MongoDB(object):
     
     # ----------------------------  Public Methods -------------------
     
-    def __init__(self, host="localhost", port=27017, user=None, pwd=None):
+    def __init__(self, host="localhost", ssl_keyfile=None, dbName="test", collection="test_collection", port=27017, user=None, pwd=""):
         '''
         Create a connection to the MongoDB demon on the given host/port.
         @param host: host name where MongoDB demon is running. Can be IP address as string.
@@ -27,12 +27,24 @@ class MongoDB(object):
         @param port: MongoDB demon's port
         @type port: int
         '''
-        self.host = host
-        self.port = port
-        #client = MongoClient(mongodb://readonly:xxxxx@stanford-edx-prod.m0.mongolayer.com/stanford-edx-prod)
-        self.client = MongoClient(host, port)
-        self.set_db("test")
-        self.set_collection('test_collection')
+        self.host       = host
+        self.port       = port
+        self.dbName     = dbName
+        self.collection = collection
+        if user is not None:
+            # Use Mongodb URI, mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database][?options]] 
+            # e.g.: mongodb://readonly:xxxxx@stanford-edx-prod.m0.mongolayer.com/stanford-edx-prod)
+            if ssl_keyfile is None:
+                self.client=MongoClient("mongodb://%s:%s@%s/%s" % (user,pwd,host,dbName), port)
+            else:
+                self.client=MongoClient("mongodb://%s:%s@%s/%s" % (user,pwd,host,dbName), port, ssl_keyfile=ssl_keyfile)
+        else:
+            if ssl_keyfile is None:
+                self.client=MongoClient("mongodb://%s/%s" % (host,dbName), port)
+            else:
+                self.client=MongoClient("mongodb://%s/%s" % (host,dbName), port, ssl_keyfile=ssl_keyfile)
+        self.set_db(dbName)
+        self.set_collection(collection)
          
     def set_db(self, dbName):
         '''
