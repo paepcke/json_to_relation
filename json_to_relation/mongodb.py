@@ -179,6 +179,9 @@ class MongoDB(object):
             coll.insert(doc_or_docs)
 
 
+    def close(self):
+        self.client.close()
+
     # ----------------------------  Private Methods -------------------
     
     def get_db(self):
