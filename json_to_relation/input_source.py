@@ -5,7 +5,9 @@ Created on Sep 14, 2013
 '''
 import StringIO
 import sys
-from urllib import urlopen, urlcleanup
+import urllib2
+from urlparse import urlparse
+import zlib
 
 
 class InputSource(object):
@@ -19,13 +21,13 @@ class InputSource(object):
         self.inputSource = inputSource
 
     def __enter__(self):
-        return self.inputSource.fileHandle
+        return self.fileHandle
         
     def __exit__(self, excType, excValue, excTraceback):
         # Even if the conversion threw an error, 
         # try to close the input source:
         try:
-            self.inputSource.close()
+            self.close()
         except:
             # If the conversion itself when fine, then
             # raise this exception from the closing attempt.
@@ -44,22 +46,46 @@ class InputSource(object):
 
 class InURI(InputSource):
     def __init__(self, inFilePathOrURL):
+        self.isCompressed = False
+        if len(urlparse(inFilePathOrURL)[0]) == 0:
+            inFilePathOrURL = 'file://' + inFilePathOrURL 
         self.inFilePathOrURL = inFilePathOrURL
-        self.fileHandle = urlopen(inFilePathOrURL)
+        self.fileHandle = urllib2.urlopen(inFilePathOrURL)
+            
+        # See whether gzipped:
+        try:
+            self.fileHandle.readline()
+            zlib.decompress(self.fileHandle.read(), 16+zlib.MAX_WBITS)
+            self.isCompressed = True
+        except zlib.error:
+            self.isCompressed = False
+        # Close and re-open, and now we know whether to unzip on read:
+        self.fileHandle.close()
+        self.fileHandle = urllib2.urlopen(inFilePathOrURL)
     
+    def decompress(self, line):
+        if not self.isCompressed:
+            return line
+        return zlib.decompress(line, 16+zlib.MAX_WBITS)
+        
     def close(self):
         # closing is different in case of file vs. URL:
         try:
             (scheme,netloc,path,query,fragment) = self.fileHandle.urlsplit()  # @UnusedVariable
         except AttributeError:
             self.fileHandle.close()
-        else:
-            urlcleanup(self.fileHandle)
-      
     
 class InString(InputSource):
     def __init__(self, inputStr):
         self.fileHandle = StringIO.StringIO(inputStr)
+        
+    def decompress(self, line):
+        '''
+        No decompression for strings
+        @param line:
+        @type line:
+        '''
+        return line
                 
     def close(self):
         pass
@@ -73,6 +99,9 @@ class InMongoDB(InputSource):
         self.fileHandle = self.connect()
 
     def connect(self):
+        raise NotImplementedError("MangoDB connector not yet implemented")
+    
+    def decompress(self, line):
         raise NotImplementedError("MangoDB connector not yet implemented")
     
     def close(self):

@@ -5,7 +5,9 @@ Created on Sep 22, 2013
 '''
 import unittest
 
-from json_to_relation.json_to_relation import Stack, JSONToRelation
+from json_to_relation.generic_json_parser import GenericJSONParser
+from json_to_relation.generic_json_parser import Stack
+from json_to_relation.json_to_relation import JSONToRelation
 
 
 class Test(unittest.TestCase):
@@ -27,7 +29,7 @@ class Test(unittest.TestCase):
         self.assertEqual(10, myStack.top(exceptionOnEmpty=True), "Modifying top of stack did not modify.")
         
     def testRemoveItemPartFromString(self):
-        converter = JSONToRelation(None,None)
+        converter = GenericJSONParser(None)
         res = converter.removeItemPartOfString('employee.item.name')
         self.assertEquals('employee.name', res, 'Failed on simple case.')
         

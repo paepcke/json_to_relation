@@ -9,7 +9,7 @@ from json_to_relation.output_disposition import OutputDisposition, OutputPipe, O
     OutputMySQLTable
 
 
-TEST_ALL = False
+TEST_ALL = True
 
 class TestJSONToRelation(unittest.TestCase):
     
@@ -90,7 +90,7 @@ class TestJSONToRelation(unittest.TestCase):
                     "86597,,2013-05-08T22:48:38.174Z,,db47f263ac3532874b8f442ad8937d02"
         self.assertFileContentEquals(expected, "testOutput.csv")
 
-    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def test_json_to_file_with_col_header(self):
         self.fileConverter = JSONToRelation(self.stringSource, 
                                             OutputFile("testOutputWithHeader.csv"),
@@ -98,9 +98,9 @@ class TestJSONToRelation(unittest.TestCase):
                                             schemaHints = {}
                                             )
         self.fileConverter.convert(prependColHeader=True)
-        expected = '"_id.category","_id.name","_id.course","_id.tag","_id.org","_id.revision",contentType,' +\
-                   'displayname,chunkSize,filename,length,import_path,"uploadDate.$date",thumbnail_location,md5\n' +\
-                   "asset,sainani.jpg,HRP258,c4x,Medicine,,image/jpeg,sainani.jpg,262144,/c4x/Medicine/HRP258/asset/sainani.jpg," +\
+        expected = '"""_id.category""","""_id.name""","""_id.course""","""_id.tag""","""_id.org""","""_id.revision""",contentType,' +\
+                   'displayname,chunkSize,filename,length,import_path,"""uploadDate.$date""",thumbnail_location,md5\n' +\
+                    "asset,sainani.jpg,HRP258,c4x,Medicine,,image/jpeg,sainani.jpg,262144,/c4x/Medicine/HRP258/asset/sainani.jpg," +\
                     "22333,,2013-05-08T22:47:09.762Z,,ebcb2a60b0d6b7475c4e9a102b82637b\n" +\
                     "asset,medstats.png,HRP258,c4x,Medicine,,image/png,medstats.png,262144,/c4x/Medicine/HRP258/asset/medstats.png," +\
                     "86597,,2013-05-08T22:48:38.174Z,,db47f263ac3532874b8f442ad8937d02"

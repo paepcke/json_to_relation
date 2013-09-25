@@ -70,8 +70,8 @@ class JSONToRelation(object):
         For unit testing isolated methods in this class, set jsonSource and
         destination to None.
         
-        @param jsonSource: A file name containing JSON structures, or a URL to such a source
-        @type jsonSource: {String | StringIO}
+        @param jsonSource: subclass of InputSource that wraps containing JSON structures, or a URL to such a source
+        @type jsonSource: {InPipe | InString | InURI | InMongoDB}
         @param destination: instruction to were resulting rows are to be directed
         @type destination: {OutputPipe | OutputFile | OutputMySQLTable}
         @param outputFormat: format of output. Can be CSV or SQL INSERT statements
@@ -88,6 +88,9 @@ class JSONToRelation(object):
         # below:
         if jsonSource is None and destination is None:
             return
+        if not isinstance(jsonSource, InputSource):
+            raise ValueError("JSON source must be an instance of InPipe, InString, InURI, or InMongoDB")
+        
         
         self.jsonSource = jsonSource
         self.destination = destination
@@ -132,8 +135,9 @@ class JSONToRelation(object):
                 os.close(tmpFd)
                 self.destination = OutputFile(tmpFileName)
 
-        with OutputDisposition(self.destination) as outFd, InputSource(self.jsonSource) as inFd:
+        with OutputDisposition(self.destination) as outFd, self.jsonSource as inFd:
             for jsonStr in inFd:
+                jsonStr = self.jsonSource.decompress(jsonStr)
                 newRow = []
                 newRow = self.jsonParserInstance.processOneJSONObject(jsonStr, newRow)
                 self.processFinishedRow(newRow, outFd)
