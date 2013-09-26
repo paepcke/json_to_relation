@@ -10,9 +10,10 @@ Created on Sep 24, 2013
 from collections import OrderedDict
 import unittest
 
-from mysqldb import MySQLDB
+from json_to_relation.mysqldb import MySQLDB
 
 
+#from mysqldb import MySQLDB
 class TestMySQL(unittest.TestCase):
     '''
     To make these unittests work, prepare the local MySQL db as follows:
@@ -21,6 +22,7 @@ class TestMySQL(unittest.TestCase):
 		o GRANT SELECT ON unittest.* TO 'unittest'@'localhost';
 		o GRANT INSERT ON unittest.* TO 'unittest'@'localhost';
 	    o GRANT DROP ON unittest.* TO 'unittest'@'localhost';
+	    o GRANT CREATE ON unittest.* TO 'unittest'@'localhost';
 
     '''
     

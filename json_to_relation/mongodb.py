@@ -43,10 +43,10 @@ class MongoDB(object):
                 self.client=MongoClient("mongodb://%s/%s" % (host,dbName), port)
             else:
                 self.client=MongoClient("mongodb://%s/%s" % (host,dbName), port, ssl_keyfile=ssl_keyfile)
-        self.set_db(dbName)
-        self.set_collection(collection)
+        self.setDB(dbName)
+        self.setCollection(collection)
          
-    def set_db(self, dbName):
+    def setDB(self, dbName):
         '''
         Establish a default database within MongoDB for subsequent calls 
         to other methods of this class.
@@ -56,7 +56,7 @@ class MongoDB(object):
         self.dbName = dbName
         self.db = self.client[dbName]
         
-    def get_db_name(self):
+    def getDBName(self):
         '''
         Obtain the name of the MongoDB database that is
         currently the default for calls to methods of this class.
@@ -64,7 +64,7 @@ class MongoDB(object):
         '''
         return self.dbName
 
-    def set_collection(self, collName):
+    def setCollection(self, collName):
         '''
         Establish a default MongoDB collection for subsequent calls to 
         other methods of this class.
@@ -73,7 +73,7 @@ class MongoDB(object):
         '''
         self.coll = self.db[collName]
         
-    def get_collection_name(self):
+    def getCollectionName(self):
         '''
         Obtain the name of the MongoDB collection that is
         currently the default for calls to methods of this class.
@@ -152,7 +152,7 @@ class MongoDB(object):
                 else:
                     return coll.find(mongoQuery, limit=limit)
     
-    def clear_collection(self, db=None, collection=None):
+    def clearCollection(self, db=None, collection=None):
         '''
         Remove all documents from a collection. The affected database/collection
         are the current defaults, if database/collection are None, else the specified
@@ -165,6 +165,20 @@ class MongoDB(object):
         with newMongoDB(self, db) as db, newMongoColl(self, collection) as coll:
             coll.remove()
             
+    def dropCollection(self, db=None, collection=None):
+        '''
+        Remove a collection from the database. The affected database/collection
+        are the current defaults, if database/collection are None, else the specified
+        database/collection is affected.
+        @param db: Name of MongoDB database, or None
+        @type db: String
+        @param collection: Name of MongoDB collection, or None
+        @type collection: String
+        '''
+        with newMongoDB(self, db) as db, newMongoColl(self, collection) as coll:
+            coll.drop()
+            
+
     def insert(self, doc_or_docs, db=None, collection=None):
         '''
         Insert the given dictionary into a MongoDB collection.
@@ -206,13 +220,13 @@ class newMongoDB:
         self.newDbName = newDbName
         
     def __enter__(self):
-        self.savedDBName = self.mongoObj.get_db_name()
+        self.savedDBName = self.mongoObj.getDBName()
         if self.newDbName is not None:
-            self.mongoObj.set_db(self.newDbName)
+            self.mongoObj.setDB(self.newDbName)
         return self.mongoObj.get_db()
         
     def __exit__(self, errType, errValue, errTraceback):
-        self.mongoObj.set_db(self.savedDBName)
+        self.mongoObj.setDB(self.savedDBName)
         # Have any exception re-raised:
         return False
     
@@ -228,13 +242,13 @@ class newMongoColl:
         self.newCollName = newCollName
     
     def __enter__(self):
-        self.savedCollName = self.mongoObj.get_collection_name()
+        self.savedCollName = self.mongoObj.getCollectionName()
         if self.newCollName is not None:
-            self.mongoObj.set_collection(self.newCollName)
+            self.mongoObj.setCollection(self.newCollName)
         return self.mongoObj.get_collection()
         
     def __exit__(self, errType, errValue, errTraceback):
-        self.mongoObj.set_collection(self.savedCollName)
+        self.mongoObj.setCollection(self.savedCollName)
         # Have any exception re-raised:
         return False
     

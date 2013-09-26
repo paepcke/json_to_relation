@@ -17,28 +17,32 @@ class MongoTest(unittest.TestCase):
 
     def setUp(self):
         # Clear out the mock MongoDB:
-        self.collection = mongomock.Connection().db.test_collection
+        #self.collection = mongomock.Connection().db.unittest
         self.objs = [{"fname" : "Franco", "lname" : "Corelli"}, 
                      {"fname" : "Leonardo", "lname" : "DaVinci", "age" : 300},
                      {"fname" : "Franco", "lname" : "Gandolpho"}]
         
-        self.mongodb = MongoDB()
-        self.mongodb.clear_collection(collection="test_collection")
-        self.mongodb.clear_collection(collection="new_coll")
-        self.mongodb.set_collection("test_collection")
+        self.mongodb = MongoDB(dbName='unittest', collection='unittest')
+        self.mongodb.clearCollection(collection="unittest")
+        self.mongodb.clearCollection(collection="new_coll")
+        self.mongodb.setCollection("unittest")
+
+    def tearDown(self):
+        self.mongodb.dropCollection(collection='unittest')
+        self.mongodb.dropCollection(collection='new_coll')
 
     @unittest.skipIf(not TEST_ALL, "Skipping")
     def test_update_and_find_one(self):
         self.mongodb.insert(self.objs[0])
-        res = self.mongodb.query({"fname" : "Franco"}, limit=1, collection="test_collection")
+        res = self.mongodb.query({"fname" : "Franco"}, limit=1, collection="unittest")
         self.assertEqual('Corelli', res['lname'], "Failed retrieval of single obj; expected '%s' but got '%s'" % ('Corelli', res['lname']))
 
     @unittest.skipIf(not TEST_ALL, "Skipping")
     def test_set_coll_use_different_coll(self):
-        # Insert into test_collection:
+        # Insert into unittest:
         self.mongodb.insert(self.objs[0])
         # Switch to new_coll:
-        self.mongodb.set_collection('new_coll')
+        self.mongodb.setCollection('new_coll')
         self.mongodb.insert({"recommendation" : "Hawaii"})
         
         # We're in new_coll; the following should be empty result:
@@ -50,7 +54,7 @@ class MongoTest(unittest.TestCase):
         self.assertEqual('Hawaii', res['recommendation'], "Failed retrieval of single obj; expected '%s' but got '%s'" % ('Hawaii', res['recommendation']))
         
         # Try inline collection switch:
-        res = self.mongodb.query({"fname" : "Franco"}, limit=1, collection="test_collection")
+        res = self.mongodb.query({"fname" : "Franco"}, limit=1, collection="unittest")
         self.assertEqual('Corelli', res['lname'], "Failed retrieval of single obj; expected '%s' but got '%s'" % ('Corelli', res['lname']))
 
         # But the default collection should still be new_coll,
@@ -72,7 +76,7 @@ class MongoTest(unittest.TestCase):
         self.mongodb.insert({"foo" : 10})
         res = self.mongodb.query({"foo" : 10}, limit=1)
         self.assertIsNotNone(res, "Did not find document that was just inserted.")
-        self.mongodb.clear_collection()
+        self.mongodb.clearCollection()
         res = self.mongodb.query({"foo" : 10}, limit=1)
         self.assertIsNone(res, "Found document after clearing collection: " + str(res))
         
