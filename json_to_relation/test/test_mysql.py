@@ -3,27 +3,47 @@ Created on Sep 24, 2013
 
 @author: paepcke
 '''
-import unittest
+from collections import OrderedDict
 import pymysql
- 
+import unittest
+
+from mysqldb import MySQLDB
 
 
 class TestMySQL(unittest.TestCase):
+    '''
+    To make these unittests work, prepare the local MySQL db as follows:
+        o CREATE USER unittest;
+        o CREATE DATABASE unittest;
+		o GRANT SELECT ON unittest.* TO 'unittest'@'localhost';
+		o GRANT INSERT ON unittest.* TO 'unittest'@'localhost';
+	    o GRANT DROP ON unittest.* TO 'unittest'@'localhost';
+
+    '''
+    
 
 
     def setUp(self):
+        #self.mysqldb = MySQLDB(host='127.0.0.1', port=3306, user='unittest', passwd='', db='unittest')
         try:
-            self.connection = pymysql.connect(host='127.0.0.1', port=3306, user='unittest', passwd='', db='unittest')
-        except pymysql.OperationalError:
-            self.fail("To unittest module test_mysql you need to run a mysql demon; none is running.")
+            self.mysqldb = MySQLDB(host='localhost', port=3306, user='unittest', db='unittest')
+        except ValueError as e:
+            self.fail(str(e) + " (For unit testing, localhost MySQL server must have user 'unittest' without password, and a database called 'unittest')")
 
 
     def tearDown(self):
-        pass
+        self.mysqldb.dropTable('testTable')
+        self.mysqldb.close()
 
 
-    def testQuery(self):
-        pass
+    def testInsert(self):
+        schema = OrderedDict({'col1' : 'INT', 'col2' : 'TEXT'})
+        self.mysqldb.createTable('testTable', schema)
+        colnameValueDict = {'col1' : 10}
+        self.mysqldb.insert('testTable', colnameValueDict)
+        for value in self.mysqldb("SELECT * FROM testTable"):
+            print value
+        
 
 
 if __name__ == "__main__":
