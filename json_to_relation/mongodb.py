@@ -17,6 +17,10 @@ class MongoDB(object):
         myMongoDb.query({'lname' : 'Doe'}, ('fname', 'lname', 'age'))
     '''
     
+    # Map of query strings to MongoDB cursors. Administered
+    # by query() method. Used in resultCount():
+    queryCursors = {}
+    
     # ----------------------------  Public Methods -------------------
     
     def __init__(self, host="localhost", ssl_keyfile=None, dbName="test", collection="test_collection", port=27017, user=None, pwd=""):
@@ -141,16 +145,29 @@ class MongoDB(object):
                 # suppress _id:
                 colsToReturn['_id'] = 0
                 
-            if limit == 1:
-                if len(colsToReturn) > 0:          
-                    return coll.find_one(mongoQuery, colsToReturn)
-                else:
-                    return coll.find_one(mongoQuery)
+            if len(colsToReturn) > 0:
+                cursor = coll.find(mongoQuery, colsToReturn, limit=limit)
             else:
-                if len(colsToReturn) > 0:
-                    return coll.find(mongoQuery, colsToReturn, limit=limit)
-                else:
-                    return coll.find(mongoQuery, limit=limit)
+                cursor = coll.find(mongoQuery, limit=limit)
+            # Make the cursor findable, so that callers can ask for number of results
+            MongoDB.queryCursors[str(mongoQuery)] = cursor
+            while True:
+                # Termination happens when cursor is exhausted:
+                try:
+                    yield cursor.next()
+                except:
+                    # Cursor is exhausted, remove it from our
+                    # records:
+                    del(MongoDB.queryCursors[str(mongoQuery)])
+                    return
+    
+    def resultCount(self, queryDict):
+        try:
+            cursor = MongoDB.queryCursors[str(queryDict)]
+            return cursor.count(with_limit_and_skip=True)
+        except KeyError:
+            #raise ValueError("Called resultCount() with a query string that was not used in a prior call to query(), or the query results have all been retrieved.")
+            return None
     
     def clearCollection(self, db=None, collection=None):
         '''
@@ -194,6 +211,11 @@ class MongoDB(object):
 
 
     def close(self):
+        for cursor in MongoDB.queryCursors.values():
+            try:
+                cursor.close()
+            except:
+                pass
         self.client.close()
 
     # ----------------------------  Private Methods -------------------

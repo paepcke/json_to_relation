@@ -4,7 +4,6 @@ Created on Sep 15, 2013
 @author: paepcke
 '''
 from json_to_relation.mongodb import MongoDB
-import mongomock
 import unittest
 
 TEST_ALL = True
@@ -16,8 +15,6 @@ class MongoTest(unittest.TestCase):
     '''
 
     def setUp(self):
-        # Clear out the mock MongoDB:
-        #self.collection = mongomock.Connection().db.unittest
         self.objs = [{"fname" : "Franco", "lname" : "Corelli"}, 
                      {"fname" : "Leonardo", "lname" : "DaVinci", "age" : 300},
                      {"fname" : "Franco", "lname" : "Gandolpho"}]
@@ -30,11 +27,14 @@ class MongoTest(unittest.TestCase):
     def tearDown(self):
         self.mongodb.dropCollection(collection='unittest')
         self.mongodb.dropCollection(collection='new_coll')
+        self.mongodb.close()
 
     @unittest.skipIf(not TEST_ALL, "Skipping")
     def test_update_and_find_one(self):
         self.mongodb.insert(self.objs[0])
-        res = self.mongodb.query({"fname" : "Franco"}, limit=1, collection="unittest")
+        # Get a generator for the results:
+        resGen = self.mongodb.query({"fname" : "Franco"}, limit=1, collection="unittest")
+        res = resGen.next()
         self.assertEqual('Corelli', res['lname'], "Failed retrieval of single obj; expected '%s' but got '%s'" % ('Corelli', res['lname']))
 
     @unittest.skipIf(not TEST_ALL, "Skipping")
@@ -46,20 +46,24 @@ class MongoTest(unittest.TestCase):
         self.mongodb.insert({"recommendation" : "Hawaii"})
         
         # We're in new_coll; the following should be empty result:
-        res = self.mongodb.query({"fname" : "Franco"}, limit=1)
-        self.assertIsNone(res, "Got non-null result that should be null: %s" % res)
+        self.mongodb.query({"fname" : "Franco"}, limit=1)
+        resCount = self.mongodb.resultCount({"fname" : "Franco"})
+        self.assertIsNone(resCount, "Got non-null result that should be null: %s" % resCount)
         
         # But this search is within new_coll, and should succeed:
-        res = self.mongodb.query({"recommendation" : {'$regex' : '.*'}}, limit=1)
+        resGen = self.mongodb.query({"recommendation" : {'$regex' : '.*'}}, limit=1)
+        res = resGen.next()
         self.assertEqual('Hawaii', res['recommendation'], "Failed retrieval of single obj; expected '%s' but got '%s'" % ('Hawaii', res['recommendation']))
         
         # Try inline collection switch:
-        res = self.mongodb.query({"fname" : "Franco"}, limit=1, collection="unittest")
+        resGen = self.mongodb.query({"fname" : "Franco"}, limit=1, collection="unittest")
+        res = resGen.next()
         self.assertEqual('Corelli', res['lname'], "Failed retrieval of single obj; expected '%s' but got '%s'" % ('Corelli', res['lname']))
 
         # But the default collection should still be new_coll,
         # so a search with unspecified coll should be in new_coll:
-        res = self.mongodb.query({"recommendation" : {'$regex' : '.*'}}, limit=1)
+        resGen = self.mongodb.query({"recommendation" : {'$regex' : '.*'}}, limit=1)
+        res = resGen.next()
         self.assertEqual('Hawaii', res['recommendation'], "Failed retrieval of single obj; expected '%s' but got '%s'" % ('Hawaii', res['recommendation']))
 
     @unittest.skipIf(not TEST_ALL, "Skipping")
@@ -67,27 +71,29 @@ class MongoTest(unittest.TestCase):
         # Insert two docs with fname == Franco:
         self.mongodb.insert(self.objs[0])
         self.mongodb.insert(self.objs[2])
-        resCursor = self.mongodb.query({"fname" : "Franco"})
-        if resCursor.count(with_limit_and_skip=True) != 2:
-            self.fail("Added two Franco objects, but only %d are found." % resCursor.count(with_limit_and_skip=True))
+        resGen = self.mongodb.query({"fname" : "Franco"})
+        resCount = self.mongodb.resultCount({"fname" : "Franco"})
+        if resCount != 2:
+            self.fail("Added two Franco objects, but only %s are found." % str(resCount))
             
     @unittest.skipIf(not TEST_ALL, "Skipping")
     def test_clear_collection(self):
         self.mongodb.insert({"foo" : 10})
-        res = self.mongodb.query({"foo" : 10}, limit=1)
+        resGen = self.mongodb.query({"foo" : 10}, limit=1)
+        res = resGen.next()
         self.assertIsNotNone(res, "Did not find document that was just inserted.")
         self.mongodb.clearCollection()
-        res = self.mongodb.query({"foo" : 10}, limit=1)
-        self.assertIsNone(res, "Found document after clearing collection: " + str(res))
+        resGen = self.mongodb.query({"foo" : 10}, limit=1)
+        self.assertRaises(StopIteration, resGen.next)
         
     @unittest.skipIf(not TEST_ALL, "Skipping")
     def test_only_some_return_columns(self):
         # Also tests the suppression of _id col when desired:
         self.mongodb.insert(self.objs[0])
         self.mongodb.insert(self.objs[1])
-        resCur = self.mongodb.query({}, ("lname"))
+        resGen = self.mongodb.query({}, ("lname"))
         names = []
-        for lnameDict in resCur:
+        for lnameDict in resGen:
             names.append(lnameDict['lname'])
         self.assertItemsEqual(['Corelli','DaVinci'], names, "Did not receive expected lnames: %s" % str(names))
 
