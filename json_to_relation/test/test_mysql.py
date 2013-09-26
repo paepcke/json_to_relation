@@ -3,8 +3,11 @@ Created on Sep 24, 2013
 
 @author: paepcke
 '''
+# TODO: 
+#    o Test inserting values for several columns
+#    o Test calling query() multiple times with several queries and get results alternately from the iterators 
+
 from collections import OrderedDict
-import pymysql
 import unittest
 
 from mysqldb import MySQLDB
@@ -41,8 +44,9 @@ class TestMySQL(unittest.TestCase):
         self.mysqldb.createTable('testTable', schema)
         colnameValueDict = {'col1' : 10}
         self.mysqldb.insert('testTable', colnameValueDict)
-        for value in self.mysqldb("SELECT * FROM testTable"):
-            print value
+        self.assertEqual((None, 10), self.mysqldb.query("SELECT * FROM testTable").next())
+        #for value in self.mysqldb.query("SELECT * FROM testTable"):
+        #    print value
         
 
 

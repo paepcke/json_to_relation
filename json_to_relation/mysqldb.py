@@ -8,13 +8,13 @@ import pymysql
 
 class MySQLDB(object):
     '''
-    Shallow interface to MySQL databases
+    Shallow interface to MySQL databases. Some niceties nonetheless.
+    The query() method is an iterator. So:
+        for result in mySqlObj.query('SELECT * FROM foo'):
+            print result
     '''
 
     def __init__(self, host='127.0.0.1', port=3306, user='root', passwd='', db='mysql'):
-        '''
-        Constructor
-        '''
         self.cursors = []
         try:
             self.connection = pymysql.connect(host=host, port=port, user=user, passwd=passwd, db=db)
@@ -24,6 +24,9 @@ class MySQLDB(object):
                              (host, port, user, pwd, db))
         
     def close(self):
+        '''
+        Close all cursors that are currently still open.
+        '''
         for cursor in self.cursors:
             try:
                 cursor.close()
@@ -31,6 +34,15 @@ class MySQLDB(object):
                 pass
 
     def createTable(self, tableName, schema):
+        '''
+        Create new table, given its name, and schema.
+        The schema is a dict mappingt column names to 
+        column types. Example: {'col1' : 'INT', 'col2' : 'TEXT'}
+        @param tableName: name of new table
+        @type tableName: String
+        @param schema: dictionary mapping column names to column types
+        @type schema: Dict<String,String>
+        '''
         colSpec = ''
         for colName, colVal in schema.items():
             colSpec += str(colName) + ' ' + str(colVal) + ','
@@ -43,6 +55,11 @@ class MySQLDB(object):
             cursor.close()
 
     def dropTable(self, tableName):
+        '''
+        Delete table safely. No errors
+        @param tableName: name of table
+        @type tableName: String
+        '''
         cursor = self.connection.cursor()
         try:
             cursor.execute('DROP TABLE IF EXISTS %s' % tableName)
@@ -51,6 +68,14 @@ class MySQLDB(object):
             cursor.close()
 
     def insert(self, tblName, colnameValueDict):
+        '''
+        Given a dictionary mapping column names to column values,
+        insert the data into a specified table
+        @param tblName: name of table to insert into
+        @type tblName: String
+        @param colnameValueDict: mapping of column name to column value
+        @type colnameValueDict: Dict<String,Any>
+        '''
         colNames, colValues = zip(*colnameValueDict.items())
         cursor = self.connection.cursor()
         try:
@@ -60,26 +85,20 @@ class MySQLDB(object):
         finally:
             cursor.close()
         
-
-    def __iter__(self, queryStr):
+    def query(self, queryStr):
+        '''
+        Query iterator. Given a query, return one result for each
+        subsequent call.
+        @param queryStr: query
+        @type queryStr: String
+        '''
         cursor = self.connection.cursor()
-        cursor.execute(queryStr)
-        # Save the cursor so we can close it if need be:
+        # For if caller never exhausts the results by repeated calls:
         self.cursors.append(cursor)
-        return QueryIterator(cursor) 
-
-class QueryIterator(object):
-    
-    def __init__(self, cursor):
-        self.cursor = cursor
-
-    def next(self): #@ReservedAssignment
-        try:
-            return self.cursor.fetchone()
-        except StopIteration:
-            self.cursor.close()
-            raise StopIteration()
-        except:
-            print ("Attempt to operate on closed cursor")
-            raise StopIteration()
-        
+        cursor.execute(queryStr)
+        while True:
+            nextRes = cursor.fetchone()
+            if nextRes is None:
+                cursor.close()
+                return
+            yield nextRes
