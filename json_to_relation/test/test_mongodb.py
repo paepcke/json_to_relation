@@ -72,6 +72,8 @@ class MongoTest(unittest.TestCase):
         self.mongodb.insert(self.objs[0])
         self.mongodb.insert(self.objs[2])
         resGen = self.mongodb.query({"fname" : "Franco"})
+        # To get result count, must retrieve at least one result first:
+        resGen.next()
         resCount = self.mongodb.resultCount({"fname" : "Franco"})
         if resCount != 2:
             self.fail("Added two Franco objects, but only %s are found." % str(resCount))
@@ -94,8 +96,11 @@ class MongoTest(unittest.TestCase):
         resGen = self.mongodb.query({}, ("lname"))
         names = []
         for lnameDict in resGen:
+            resCount = self.mongodb.resultCount({})
+            self.assertEqual(2, resCount)
             names.append(lnameDict['lname'])
         self.assertItemsEqual(['Corelli','DaVinci'], names, "Did not receive expected lnames: %s" % str(names))
+
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

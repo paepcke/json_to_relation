@@ -115,7 +115,7 @@ class MongoDB(object):
         @type db: String
         @param collection: name of MongoDB collection other than the current default
         @type collection: String
-        @rtype: {Dictionary | MangoDB cursor} 
+        @rtype: {generator<ResultDict>} 
         '''
         with newMongoDB(self, db) as db, newMongoColl(self, collection) as coll:
             # Turn the list of column names to return into
@@ -162,6 +162,17 @@ class MongoDB(object):
                     return
     
     def resultCount(self, queryDict):
+        '''
+        Return number of results in the given query. Only works
+        when query has previously been issued via the query()
+        method AND at least one result has been extracted. That's
+        because the first call to query() only returns a generator.
+        This isn't good. 
+        @param queryDict: Same query that was provided to the query() method
+        @type queryDict: Dict<String,<any>>
+        @return: number of results, taking into account limit provided to query(). None if no result has been pulled from query()
+        @rtype: {int | None}
+        '''
         try:
             cursor = MongoDB.queryCursors[str(queryDict)]
             return cursor.count(with_limit_and_skip=True)
@@ -211,6 +222,9 @@ class MongoDB(object):
 
 
     def close(self):
+        '''
+        Release all resources.
+        '''
         for cursor in MongoDB.queryCursors.values():
             try:
                 cursor.close()
@@ -227,6 +241,9 @@ class MongoDB(object):
         return self.db
     
     def get_collection(self):
+        '''
+        Obtain current default MongoDB database object
+        '''
         return self.coll
     
     # ----------------------------  Private Classes -------------------    

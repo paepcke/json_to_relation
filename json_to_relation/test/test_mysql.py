@@ -5,7 +5,9 @@ Created on Sep 24, 2013
 '''
 # TODO: 
 #    o Test inserting values for several columns
-#    o Test calling query() multiple times with several queries and get results alternately from the iterators 
+#    o Test calling query() multiple times with several queries and get results alternately from the iterators
+#    o In: cmd = 'INSERT INTO %s (%s) VALUES (%s)' % (str(tblName), ','.join(colNames), ','.join(map(str, colValues)))
+#              the map removes quotes from strins: ','join(map(str,('My poem', 10)) --> (My Poem, 10) 
 
 from collections import OrderedDict
 import unittest
@@ -37,18 +39,25 @@ class TestMySQL(unittest.TestCase):
 
 
     def tearDown(self):
-        self.mysqldb.dropTable('testTable')
+        self.mysqldb.dropTable('unittest')
         self.mysqldb.close()
 
 
     def testInsert(self):
         schema = OrderedDict({'col1' : 'INT', 'col2' : 'TEXT'})
-        self.mysqldb.createTable('testTable', schema)
+        self.mysqldb.createTable('unittest', schema)
         colnameValueDict = {'col1' : 10}
-        self.mysqldb.insert('testTable', colnameValueDict)
-        self.assertEqual((None, 10), self.mysqldb.query("SELECT * FROM testTable").next())
-        #for value in self.mysqldb.query("SELECT * FROM testTable"):
+        self.mysqldb.insert('unittest', colnameValueDict)
+        self.assertEqual((None, 10), self.mysqldb.query("SELECT * FROM unittest").next())
+        #for value in self.mysqldb.query("SELECT * FROM unittest"):
         #    print value
+
+    def testInsertSeveralColums(self):
+        schema = OrderedDict({'col1' : 'INT', 'col2' : 'TEXT'})
+        self.mysqldb.createTable('unittest', schema)
+        colnameValueDict = {'col1' : 10, 'col2' : 'My poem'}
+        self.mysqldb.insert('unittest', colnameValueDict)
+        self.assertEqual(('My Poem', 10), self.mysqldb.query("SELECT * FROM unittest").next())
         
 
 
