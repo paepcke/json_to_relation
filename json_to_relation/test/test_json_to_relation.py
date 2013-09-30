@@ -3,13 +3,12 @@ import StringIO
 import os
 import unittest
 
-from json_to_relation.input_source import InputSource, InString, InPipe, InURI, InMongoDB
+#from input_source import InURI
+from json_to_relation.input_source import InputSource, InURI, InString, InMongoDB, InPipe #@UnusedImport 
 from json_to_relation.json_to_relation import JSONToRelation
-from json_to_relation.output_disposition import OutputDisposition, OutputPipe, OutputFile, \
-    OutputMySQLTable
+from output_disposition import OutputPipe, OutputDisposition, OutputFile
 
-
-TEST_ALL = True
+TEST_ALL = False
 
 class TestJSONToRelation(unittest.TestCase):
     
@@ -139,6 +138,21 @@ class TestJSONToRelation(unittest.TestCase):
                                             )
         self.fileConverter.convert(prependColHeader=True)
 
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def test_edX_stress_import(self):
+        source = InURI(os.path.join(os.path.dirname(__file__),"data/tracking.log-20130609.gz"))
+        self.fileConverter = JSONToRelation(source, 
+                                            OutputFile("testEdXStressImport.csv"),
+                                            outputFormat = OutputDisposition.OutputFormat.CSV,
+                                            schemaHints = {}
+                                            )
+        self.fileConverter.convert(prependColHeader=True)
+
+
+#Project/VPOL/Data/EdXTrackingSep19_2013/tracking$ cat app10/tracking.log-20130609.gz
+# {"username": "", "host": "localhost", "event_source": "server", "event_type": "/heartbeat", "time": "2013-06-08T22:52:37
+# .563104", "ip": "127.0.0.1", "event": "{\"POST\": {}, \"GET\": {}}", "agent": "curl/7.22.0 (x86_64-pc-linux-gnu) libcurl
+# /7.22.0 OpenSSL/1.0.1 zlib/1.2.3.4 libidn/1.23 librtmp/2.3", "page": null}
 
 
 #--------------------------------------------------------------------------------------------------    

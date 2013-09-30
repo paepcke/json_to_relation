@@ -4,11 +4,19 @@ Created on Sep 14, 2013
 @author: paepcke
 '''
 import StringIO
+import bz2
+import gzip
+import os
 import sys
+from urllib import FancyURLopener
 import urllib2
 from urlparse import urlparse
-import zlib
 
+
+class COMPRESSION_TYPE:
+    NO_COMPRESSION = 0;
+    GZIP = 1;
+    BZIP2 = 2
 
 class InputSource(object):
     '''
@@ -46,27 +54,31 @@ class InputSource(object):
 
 class InURI(InputSource):
     def __init__(self, inFilePathOrURL):
-        self.isCompressed = False
         if len(urlparse(inFilePathOrURL)[0]) == 0:
             inFilePathOrURL = 'file://' + inFilePathOrURL 
         self.inFilePathOrURL = inFilePathOrURL
-        self.fileHandle = urllib2.urlopen(inFilePathOrURL)
-            
-        # See whether gzipped:
-        try:
-            self.fileHandle.readline()
-            zlib.decompress(self.fileHandle.read(), 16+zlib.MAX_WBITS)
-            self.isCompressed = True
-        except zlib.error:
-            self.isCompressed = False
-        # Close and re-open, and now we know whether to unzip on read:
-        self.fileHandle.close()
-        self.fileHandle = urllib2.urlopen(inFilePathOrURL)
+        self.compression = self.determineCompression(self.inFilePathOrURL)
+
+        # If file is compressed and remote, pull it into a temp file
+        # so we can decompress locally. Sets self.localPathFile
+        # so that urlopen() or gzip.open(), or bz2.BZ2File() will work.
+        # Sets self.deleteTempFile if a tmp file was created:
+        self.ensureFileLocal(inFilePathOrURL)
+        
+        if self.compression == COMPRESSION_TYPE.NO_COMPRESSION:
+            self.fileHandle = urllib2.urlopen(self.localFilePath)
+        elif self.compression == COMPRESSION_TYPE.GZIP:
+            self.fileHandle = gzip.open(self.localFilePath, 'rb')
+        elif self.compression == COMPRESSION_TYPE.BZIP2:
+            self.fileHandle = bz2.BZ2File(self.localFilePath, 'rb')
     
     def decompress(self, line):
-        if not self.isCompressed:
+        if self.compression == COMPRESSION_TYPE.NO_COMPRESSION:
             return line
-        return zlib.decompress(line, 16+zlib.MAX_WBITS)
+        # For gzip and bz2, the read() of the fileHandle took
+        # care of decompression. This method is here for expansion
+        # to other compression schemes:
+        return line
         
     def close(self):
         # closing is different in case of file vs. URL:
@@ -74,6 +86,52 @@ class InURI(InputSource):
             (scheme,netloc,path,query,fragment) = self.fileHandle.urlsplit()  # @UnusedVariable
         except AttributeError:
             self.fileHandle.close()
+        if self.deleteTempFile:
+            try:
+                os.remove(self.localFilePath)
+            except:
+                pass
+    
+    def determineCompression(self, fileURI):
+        '''
+        Given a file path, determine by file extension whether
+        the file is gzip or bzip2 compressed, or whether it is
+        not compressed.
+        @param fileURI: item that str() turns into a file path or URL
+        @type fileURI: STRING
+        '''
+        if str(fileURI).endswith('bz2'):
+            return COMPRESSION_TYPE.BZIP2
+        elif str(fileURI).endswith('gz'):
+            return COMPRESSION_TYPE.GZIP
+        else:
+            return COMPRESSION_TYPE.NO_COMPRESSION
+    
+    def ensureFileLocal(self, inFilePathOrURL):
+        '''
+        Takes a file path or URL. Sets self.localFilePath
+        to the same path if file is local, or
+        if the file is remote but uncompressed. 
+        If a file is remote and compressed, retrieves
+        the file into a local tmp file and returns that
+        file name. In this case the flag self.deleteTempFile
+        is set to True. 
+        @param inFilePathOrURL: file path or URL to file
+        @type inFilePathOrURL: String
+        '''
+        self.localFilePath = inFilePathOrURL
+        self.deleteTempFile = False
+        if self.compression == COMPRESSION_TYPE.NO_COMPRESSION:
+            return
+        # Got compressed file; is it local?
+        parseResult = urlparse(inFilePathOrURL)
+        if parseResult.scheme == 'file':
+            self.localFilePath = parseResult.path
+            return
+        opener = FancyURLopener()
+        # Throws IOError if URL does not exist:
+        self.localFilePath = opener.retrieve(inFilePathOrURL)[0]
+        self.deleteTempFile = True
     
 class InString(InputSource):
     def __init__(self, inputStr):
@@ -107,9 +165,17 @@ class InMongoDB(InputSource):
     def close(self):
         raise NotImplementedError("MangoDB connector not yet implemented")
 
-class InPipe(object):
+class InPipe(InputSource):
     def __init__(self):
         self.fileHandle = sys.stdin
+
+    def decompress(self, line):
+        '''
+        No decompression for pipes. Pipe through gunzip or similar first.
+        @param line:
+        @type line:
+        '''
+        return line
         
     def close(self):
         pass # don't close stdin

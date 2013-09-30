@@ -14,7 +14,7 @@ import shutil
 import tempfile
 
 from generic_json_parser import GenericJSONParser
-from input_source import InputSource
+from input_source import InputSource, InURI, InString, InMongoDB, InPipe #@UnusedImport
 from col_data_type import ColDataType
 from output_disposition import OutputDisposition, OutputMySQLTable, OutputFile
 

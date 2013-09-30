@@ -30,7 +30,7 @@ class GenericJSONParser(object):
     def processOneJSONObject(self, jsonStr, row):
         '''
    	    ('null', None)
-		('boolean', <True or False>)
+		('boolean', <true orfFalse>)
 		('number', <int or Decimal>)
 		('string', <unicode>)
 		('map_key', <str>)
@@ -90,7 +90,14 @@ class GenericJSONParser(object):
                 continue
 
             if event == "boolean":
-                raise NotImplementedError("Boolean not yet implemented");
+                if colDataType is None:
+                    colDataType = ColDataType.SMALLINT
+                self.jsonToRelationConverter.ensureColExistence(nestedLabel, colDataType)
+                if value:
+                    value = 1
+                else:
+                    value = 0
+                self.setValInRow(row, nestedLabel,value)                                
                 continue 
 
             if event == "number":
