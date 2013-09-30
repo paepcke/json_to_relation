@@ -12,6 +12,7 @@ import os
 import re
 import shutil
 import tempfile
+import logging
 
 from generic_json_parser import GenericJSONParser
 from input_source import InputSource, InURI, InString, InMongoDB, InPipe #@UnusedImport
@@ -46,7 +47,9 @@ class JSONToRelation(object):
                  destination, 
                  outputFormat=OutputDisposition.OutputFormat.CSV, 
                  schemaHints={},
-                 jsonParserInstance=None):
+                 jsonParserInstance=None,
+                 loggingLevel=logging.WARN,
+                 logFile=None):
         '''
         Create a JSON-to-Relation converter. The JSON source can be
         a file with JSON objects, a StringIO.StringIO string pseudo file,
@@ -81,6 +84,8 @@ class JSONToRelation(object):
         @param jsonParserInstance: a parser that takes one JSON string, and returns a CSV row. Parser also must inform this 
                                    parent object of any generated column names.
         @type {GenericJSONParser | EdXTrackLogJSONParser | CourseraTrackLogJSONParser}
+        @param loggingLevel: level at which logging output is show. 
+        @type loggingLevel {logging.DEBUG | logging.WARN | logging.INFO | logging.ERROR | logging.CRITICAL
         '''
 
         # If jsonSource and destination are both None,
@@ -91,11 +96,15 @@ class JSONToRelation(object):
         if not isinstance(jsonSource, InputSource):
             raise ValueError("JSON source must be an instance of InPipe, InString, InURI, or InMongoDB")
         
-        
         self.jsonSource = jsonSource
         self.destination = destination
         self.outputFormat = outputFormat
         self.schemaHints = schemaHints
+
+        if logFile is not None:
+            logging.basicConfig(filename=logFile, level=loggingLevel)
+        else:
+            logging.basicConfig(level=loggingLevel)
 
         if jsonParserInstance is None:
             self.jsonParserInstance = GenericJSONParser(self)
@@ -135,12 +144,17 @@ class JSONToRelation(object):
                 os.close(tmpFd)
                 self.destination = OutputFile(tmpFileName)
 
+        lineCounter = 0
         with OutputDisposition(self.destination) as outFd, self.jsonSource as inFd:
             for jsonStr in inFd:
                 jsonStr = self.jsonSource.decompress(jsonStr)
                 newRow = []
-                newRow = self.jsonParserInstance.processOneJSONObject(jsonStr, newRow)
+                try:
+                    newRow = self.jsonParserInstance.processOneJSONObject(jsonStr, newRow)
+                except Exception as e:
+                    logging.warn('Line %d: bad JSON: %s' % (lineCounter, `e`))
                 self.processFinishedRow(newRow, outFd)
+                lineCounter += 1
 
         # If output to other than MySQL table, check whether
         # we are to prepend the column header row:
