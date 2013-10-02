@@ -23,6 +23,11 @@ class GenericJSONParser(object):
 
     def __init__(self, jsonToRelationConverter):
         '''
+        
+        @param jsonToRelationConverter: JSONToRelation instance
+        @type jsonToRelationConverter: JSONToRelation
+        '''
+        '''
         Constructor
         '''
         self.jsonToRelationConverter = jsonToRelationConverter
@@ -41,6 +46,8 @@ class GenericJSONParser(object):
 		        
 		@param jsonStr: string of a single, self contained JSON object
 		@type jsonStr: String
+		@param row: partially filled array of values.
+		@type row: List<<any>>
         '''
         parser = ijson.parse(StringIO.StringIO(jsonStr))
         # Stack of array index counters for use with
@@ -133,7 +140,8 @@ class GenericJSONParser(object):
         '''
         Given a column name, a value and a partially filled row,
         add the column to the row, or set the value in an already
-        existing row.
+        existing row. Uses the JSONToRelation instance passed to 
+        __init__() to obtain current schema. 
         @param theRow: list of values in their proper column positions
         @type theRow: List<<any>>
         @param colName: name of column into which value is to be inserted.
@@ -141,6 +149,9 @@ class GenericJSONParser(object):
         @param value: the field value
         @type value: <any>, as per ColDataType
         '''
+        # Assumes caller has called ensureColExistence() on the
+        # JSONToRelation object; so the following won't have
+        # a key failure:
         colSpec = self.jsonToRelationConverter.cols[colName]
         targetPos = colSpec.colPos
         # Is value to go just beyond the current row len?

@@ -30,7 +30,8 @@ class ColDataType:
                DATETIME : "DATETIME"
     }
     
-    def toString(self, val):
+    @classmethod
+    def toString(val):
         try:
             return ColDataType.strings[val]
         except KeyError:

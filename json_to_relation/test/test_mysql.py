@@ -57,7 +57,7 @@ class TestMySQL(unittest.TestCase):
         self.mysqldb.createTable('unittest', schema)
         colnameValueDict = {'col1' : 10, 'col2' : 'My poem'}
         self.mysqldb.insert('unittest', colnameValueDict)
-        self.assertEqual(('My Poem', 10), self.mysqldb.query("SELECT * FROM unittest").next())
+        self.assertEqual(('My poem', 10), self.mysqldb.query("SELECT * FROM unittest").next())
         
 
 

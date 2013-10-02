@@ -6,6 +6,7 @@ Created on Sep 24, 2013
 
 import pymysql
 
+
 class MySQLDB(object):
     '''
     Shallow interface to MySQL databases. Some niceties nonetheless.
@@ -15,6 +16,11 @@ class MySQLDB(object):
     '''
 
     def __init__(self, host='127.0.0.1', port=3306, user='root', passwd='', db='mysql'):
+        
+        # If all arguments are set to None, we are unittesting:
+        if all(arg is None for arg in (host,port,user,passwd,db)):
+            return
+        
         self.cursors = []
         try:
             self.connection = pymysql.connect(host=host, port=port, user=user, passwd=passwd, db=db)
@@ -79,11 +85,28 @@ class MySQLDB(object):
         colNames, colValues = zip(*colnameValueDict.items())
         cursor = self.connection.cursor()
         try:
-            cmd = 'INSERT INTO %s (%s) VALUES (%s)' % (str(tblName), ','.join(colNames), ','.join(map(str, colValues)))
+            cmd = 'INSERT INTO %s (%s) VALUES (%s)' % (str(tblName), ','.join(colNames), self.ensureSQLTyping(colValues))
             cursor.execute(cmd)
             self.connection.commit()
         finally:
             cursor.close()
+        
+    def ensureSQLTyping(self, colVals):
+        '''
+        Given a list of items, return a string that preserves
+        MySQL typing. Example: (10, 'My Poem') ---> '10, "My Poem"'
+        Note that ','.join(map(str,myList)) won't work:
+        (10, 'My Poem') ---> '10, My Poem'
+        @param colVals: list of column values destined for a MySQL table
+        @type colVals: <any>
+        '''
+        resList = []
+        for el in colVals:
+            if isinstance(el, basestring):
+                resList.append('"%s"' % el)
+            else:
+                resList.append(el)
+        return ','.join(map(str,resList))        
         
     def query(self, queryStr):
         '''

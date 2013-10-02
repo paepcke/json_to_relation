@@ -5,9 +5,8 @@ Created on Sep 22, 2013
 '''
 import unittest
 
-from json_to_relation.generic_json_parser import GenericJSONParser
-from json_to_relation.generic_json_parser import Stack
-from json_to_relation.json_to_relation import JSONToRelation
+from json_to_relation.generic_json_parser import GenericJSONParser, Stack
+from json_to_relation.mysqldb import MySQLDB
 
 
 class Test(unittest.TestCase):
@@ -45,6 +44,14 @@ class Test(unittest.TestCase):
         res = converter.removeItemPartOfString('employee.item.lostFound.item.location')
         self.assertEquals('employee.item.lostFound.location', res, "Failed to only remove the last occurrence of 'item'.")
             
+        
+    def testEnsureMySQLTyping(self):
+        mysqlDb = MySQLDB(None,None,None,None,None)
+        self.assertEqual('10,"My Poem"', mysqlDb.ensureSQLTyping((10, 'My Poem')))
+        self.assertEqual('10,11.23,"My Poem"', mysqlDb.ensureSQLTyping((10, 11.23, 'My Poem')))
+        self.assertEqual('10', mysqlDb.ensureSQLTyping((10,)))
+        self.assertEqual('"foo"', mysqlDb.ensureSQLTyping(('foo',)))
+        
         
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testStack']

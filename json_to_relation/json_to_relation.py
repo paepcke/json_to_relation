@@ -199,6 +199,15 @@ class JSONToRelation(object):
         #outFd.write(','.join(map(str,filledNewRow)) + "\n")
         outFd.writerow(map(str,filledNewRow))
 
+    def getSchema(self):
+        '''
+        Returns an ordered list of ColumnSpec instances.
+        Each such instance holds column name and SQL type.
+        @return ordered list of column information
+        @rtype: (ColumnSpec) 
+        '''
+        return self.cols.values()
+
     def getColHeaders(self):
         '''
         Returns a list of column header names collected so far.
@@ -260,14 +269,47 @@ class ColumnSpec(object):
     '''
 
     def __init__(self, colName, colDataType, jsonToRelationProcessor):
+        '''
+        Create a ColumnSpec instance.
+        @param colName: name of column
+        @type colName: String
+        @param colDataType: data type of column (an enum)
+        @type colDataType: ColumnSpec
+        @param jsonToRelationProcessor: associated JSON to relation JSONToRelation instance
+        @type jsonToRelationProcessor: JSONToRelation
+        '''
         self.colName = colName
         self.colDataType = colDataType
         self.colPos = jsonToRelationProcessor.getNextNewColPos()
         jsonToRelationProcessor.bumpNextNewColPos()
         
+    def getName(self):
+        '''
+        Return column name
+        @return: name of column
+        @rtype: String
+        '''
+        return self.colName
+    
+    def getType(self):
+        '''
+        Return SQL type
+        @return: SQL type of colum in upper case
+        @rtype: String
+        '''
+        return ColDataType.toString(self.colDataType).upper()
+    
+    def getSQLDefSnippet(self):
+        '''
+        Return string snippet to use in SQL CREATE TABLE or ALTER TABLE
+        statement
+        '''
+        return "%s %s" % (self.getName(), self.getType())
+    
     def __str__(self):
         return "<Col %s: %s (position %s)>" % (self.colName, 
-                                               ColDataType().toString(self.colDataType), self.colPos)
+                                               self.getType(),
+                                               self.colPos)
     
     def __repr__(self):
         return self.__str__()

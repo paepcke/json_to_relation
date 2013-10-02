@@ -3,11 +3,14 @@ import StringIO
 import os
 import unittest
 
-#from input_source import InURI
-from json_to_relation.input_source import InputSource, InURI, InString, InMongoDB, InPipe #@UnusedImport 
-from json_to_relation.json_to_relation import JSONToRelation
-from output_disposition import OutputPipe, OutputDisposition, OutputFile
+from json_to_relation.input_source import InputSource, InURI, InString, \
+    InMongoDB, InPipe #@UnusedImport
+from json_to_relation.json_to_relation import JSONToRelation, ColumnSpec
+from json_to_relation.output_disposition import OutputPipe, OutputDisposition, \
+    OutputFile
 
+
+#from input_source import InURI
 TEST_ALL = False
 
 class TestJSONToRelation(unittest.TestCase):
@@ -41,6 +44,11 @@ class TestJSONToRelation(unittest.TestCase):
             os.remove("testEdXImport.csv")
         except:
             pass
+        try:
+            os.remove("testEdXStressImport.csv")
+        except:
+            pass
+        
 
         
     def tearDown(self):
@@ -138,7 +146,7 @@ class TestJSONToRelation(unittest.TestCase):
                                             )
         self.fileConverter.convert(prependColHeader=True)
 
-    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def test_edX_stress_import(self):
         source = InURI(os.path.join(os.path.dirname(__file__),"data/tracking.log-20130609.gz"))
         self.fileConverter = JSONToRelation(source, 
@@ -148,12 +156,22 @@ class TestJSONToRelation(unittest.TestCase):
                                             )
         self.fileConverter.convert(prependColHeader=True)
 
-
-#Project/VPOL/Data/EdXTrackingSep19_2013/tracking$ cat app10/tracking.log-20130609.gz
-# {"username": "", "host": "localhost", "event_source": "server", "event_type": "/heartbeat", "time": "2013-06-08T22:52:37
-# .563104", "ip": "127.0.0.1", "event": "{\"POST\": {}, \"GET\": {}}", "agent": "curl/7.22.0 (x86_64-pc-linux-gnu) libcurl
-# /7.22.0 OpenSSL/1.0.1 zlib/1.2.3.4 libidn/1.23 librtmp/2.3", "page": null}
-
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def test_schema_hints(self):
+        self.fileConverter = JSONToRelation(self.stringSource, 
+                                            OutputFile("testOutput.csv"),
+                                            outputFormat = OutputDisposition.OutputFormat.CSV,
+                                            schemaHints = {}
+                                            )
+        self.fileConverter.convert()
+        schema = self.fileConverter.getSchema()
+        print schema
+        print map(ColumnSpec.getType, schema)
+#         expected = "asset,sainani.jpg,HRP258,c4x,Medicine,,image/jpeg,sainani.jpg,262144,/c4x/Medicine/HRP258/asset/sainani.jpg," +\
+#                     "22333,,2013-05-08T22:47:09.762Z,,ebcb2a60b0d6b7475c4e9a102b82637b\n" +\
+#                     "asset,medstats.png,HRP258,c4x,Medicine,,image/png,medstats.png,262144,/c4x/Medicine/HRP258/asset/medstats.png," +\
+#                     "86597,,2013-05-08T22:48:38.174Z,,db47f263ac3532874b8f442ad8937d02"
+#         self.assertFileContentEquals(expected, "testOutput.csv")
 
 #--------------------------------------------------------------------------------------------------    
     def assertFileContentEquals(self, expected, filePath):
