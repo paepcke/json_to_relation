@@ -64,11 +64,13 @@ class JSONToRelation(object):
         specify numeric columns as DOUBLE. Even though all encountered values
         for one column could be examined, and a more appropriate type chosen,
         such as INT when only 4-byte integers are ever seen, future additions
-        to the table might exceed the INT capacity for that column.
+        to the table might exceed the INT capacity for that column. Example
         
         If schemaHints is provided, it is a Dict mapping column names to ColDataType.
         The column names in schemaHints must match the corresponding (fully nested)
         key names in the JSON objects.
+        schemaHints dict: {'msg.length' : ColDataType.INT,
+                           'chunkSize' : ColDataType.INT}
         
         For unit testing isolated methods in this class, set jsonSource and
         destination to None.
@@ -297,7 +299,7 @@ class ColumnSpec(object):
         @return: SQL type of colum in upper case
         @rtype: String
         '''
-        return ColDataType.toString(self.colDataType).upper()
+        return ColDataType().toString(self.colDataType).upper()
     
     def getSQLDefSnippet(self):
         '''

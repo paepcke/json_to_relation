@@ -3,6 +3,7 @@ import StringIO
 import os
 import unittest
 
+from col_data_type import ColDataType
 from json_to_relation.input_source import InputSource, InURI, InString, \
     InMongoDB, InPipe #@UnusedImport
 from json_to_relation.json_to_relation import JSONToRelation, ColumnSpec
@@ -165,13 +166,23 @@ class TestJSONToRelation(unittest.TestCase):
                                             )
         self.fileConverter.convert()
         schema = self.fileConverter.getSchema()
-        print schema
-        print map(ColumnSpec.getType, schema)
-#         expected = "asset,sainani.jpg,HRP258,c4x,Medicine,,image/jpeg,sainani.jpg,262144,/c4x/Medicine/HRP258/asset/sainani.jpg," +\
-#                     "22333,,2013-05-08T22:47:09.762Z,,ebcb2a60b0d6b7475c4e9a102b82637b\n" +\
-#                     "asset,medstats.png,HRP258,c4x,Medicine,,image/png,medstats.png,262144,/c4x/Medicine/HRP258/asset/medstats.png," +\
-#                     "86597,,2013-05-08T22:48:38.174Z,,db47f263ac3532874b8f442ad8937d02"
-#         self.assertFileContentEquals(expected, "testOutput.csv")
+        #print schema
+        #print map(ColumnSpec.getType, schema)
+        self.assertEqual(['TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'DOUBLE', 'TEXT', 'DOUBLE', 'TEXT', 'TEXT', 'TEXT', 'TEXT'],
+                         map(ColumnSpec.getType, schema))
+
+        self.stringSource = InURI(os.path.join(os.path.dirname(__file__),"data/twoJSONRecords.json"))
+        self.fileConverter = JSONToRelation(self.stringSource, 
+                                            OutputFile("testOutput.csv"),
+                                            outputFormat = OutputDisposition.OutputFormat.CSV,
+                                            schemaHints = {'chunkSize' : ColDataType.INT,
+                                                           'length' : ColDataType.INT}
+                                            )
+        self.fileConverter.convert()
+        schema = self.fileConverter.getSchema()
+        self.assertEqual(['TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'INT', 'TEXT', 'INT', 'TEXT', 'TEXT', 'TEXT', 'TEXT'],
+                         map(ColumnSpec.getType, schema))
+
 
 #--------------------------------------------------------------------------------------------------    
     def assertFileContentEquals(self, expected, filePath):
