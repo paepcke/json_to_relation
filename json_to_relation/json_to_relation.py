@@ -86,6 +86,9 @@ class JSONToRelation(object):
         @type {GenericJSONParser | EdXTrackLogJSONParser | CourseraTrackLogJSONParser}
         @param loggingLevel: level at which logging output is show. 
         @type loggingLevel {logging.DEBUG | logging.WARN | logging.INFO | logging.ERROR | logging.CRITICAL
+        @raise ValueErrer: when value of jsonParserInstance is neither None, nor an instance of GenericJSONParser,
+                        nor one of its subclasses.
+        @raise ValueError: when jsonSource is not an instance of InPipe, InString, InURI, or InMongoDB  
         '''
 
         # If jsonSource and destination are both None,
@@ -108,8 +111,10 @@ class JSONToRelation(object):
 
         if jsonParserInstance is None:
             self.jsonParserInstance = GenericJSONParser(self)
-        else:
+        elif isinstance(jsonParserInstance, GenericJSONParser):
             self.jsonParserInstance = jsonParserInstance
+        else:
+            raise ValueError("Parameter jsonParserInstance needs to be of class GenericJSONParser, or one of its subclasses.")
         
         #************ Unimplemented Options **************
         if self.outputFormat == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
