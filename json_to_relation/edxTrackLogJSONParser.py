@@ -4,6 +4,8 @@ Created on Oct 2, 2013
 @author: paepcke
 '''
 import StringIO
+import json
+
 import ijson
 
 from col_data_type import ColDataType
@@ -42,6 +44,24 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 		@param row: partially filled array of values.
 		@type row: List<<any>>
         '''
+        try:
+            record = json.loads(jsonStr)
+            for attribute, value in record.iteritems():
+                if (attribute == 'event' and value and not isinstance(value, dict)):
+                    # hack to load the record when it is encoded as a string
+                    record["event"] = json.loads(value)
+            course_id = get_course_id(record)
+            if course_id:
+                record['course_id'] = course_id
+            res = events.insert(record)
+        except Exception as e:
+            # TODO: handle different types of exceptions
+            this_error += 1
+        else:
+            this_success += 1        
+        
+        
+        
         parser = ijson.parse(StringIO.StringIO(jsonStr))
         # Stack of array index counters for use with
         # nested arrays:
@@ -129,5 +149,64 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             raise ValueError("Unknown JSON value type at %s for value %s (ijson event: %s)" % (nestedLabel,value,str(event))) 
         return row
     
+        def get_course_id(event):
+            '''
+            Given a 'pythonized' JSON tracking event object, find
+            the course URL, and extract the course name from it.
+            A number of different events occur, which do not contain
+            course IDs: server heartbeats, account creation, dashboard
+            accesses. Among them are logins, which look like this:
+            
+            {"username": "", 
+             "host": "class.stanford.edu", 
+             "event_source": "server", 
+             "event_type": "/accounts/login", 
+             "time": "2013-06-14T00:31:57.661338", 
+             "ip": "98.230.189.66", 
+             "event": "{
+                        \"POST\": {}, 
+                        \"GET\": {
+                             \"next\": [\"/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/80160e.../\"]}}", 
+             "agent": "Mozilla/5.0 (Windows NT 5.1; rv:21.0) Gecko/20100101
+             Firefox/21.0", 
+             "page": null}
+            
+            Notice the 'event' key's value being a *string* containing JSON, rather than 
+            a nested JSON object. This requires special attention. Buried inside
+            that string is the 'next' tag, whose value is an array with a long (here
+            partially elided) hex number. This is where the course number is
+            extracted.
+            
+            @param event: JSON record of an edx tracking event as internalized dict
+            @type event: Dict
+            @return: name of course in which event occurred, or None if course ID could not be obtained.
+            @rtype: {String | None} 
+            '''
+            course_id = None
+            if event['event_source'] == 'server':
+                # get course_id from event type
+                if event['event_type'] == '/accounts/login/':
+                    s = event['event']['GET']['next'][0]
+                else:
+                    s = event['event_type']
+            else:
+                s = event['page']
+            if s:
+                a = s.split('/')
+                if 'courses' in a:
+                    i = a.index('courses')
+                    course_id = "/".join(map(str, a[i+1:i+4]))
+            return course_id
+        
+        def canonical_name(filepath):
+            """
+        Save only the filename and the subdirectory it is in, strip off all prior
+        paths. If the file ends in .gz, remove that too. Convert to lower case.
+        """
+            fname = '/'.join(filepath.lower().split('/')[-2:])
+            if len(fname) > 3 and fname[-3:] == ".gz":
+                fname = fname[:-3]
+            return fname
+        
 
         
