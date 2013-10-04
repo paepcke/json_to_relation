@@ -41,12 +41,41 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 		 "ip": "98.230.189.66", 
 		 "event": "{
 		            \"POST\": {}, 
-		 	    \"GET\": {
-			         \"next\": [\"/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/80160e.../\"]}}", 
+     		 	    \"GET\": {
+			             \"next\": [\"/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/80160e.../\"]}}", 
 		 "agent": "Mozilla/5.0 (Windows NT 5.1; rv:21.0) Gecko/20100101
 		 Firefox/21.0", 
 		 "page": null}
-		     
+
+        Two more examples to show the variance in the format. Note "event" field:
+		
+		Second example::
+		{"username": "jane", 
+		 "host": "class.stanford.edu", 
+		 "event_source": "server", 
+		 "event_type": "/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/combinedopenended/c415227048464571a99c2c430843a4d6/get_results", 
+		 "time": "2013-07-31T06:27:06.222843+00:00", 
+		 "ip": "67.166.146.73", 
+		 "event": "{\"POST\": {
+		                        \"task_number\": [\"0\"]}, 
+		                        \"GET\": {}}",
+		 "agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.71 Safari/537.36", 
+		 "page": null}
+				
+	    Third example:
+		{"username": "miller", 
+		 "host": "class.stanford.edu", 
+		 "session": "fa715506e8eccc99fddffc6280328c8b", 
+		 "event_source": "browser", 
+		 "event_type": "hide_transcript", 
+		 "time": "2013-07-31T06:27:10.877992+00:00", 
+		 "ip": "27.7.56.215", 
+		 "event": "{\"id\":\"i4x-Medicine-HRP258-videoalpha-09839728fc9c48b5b580f17b5b348edd\",
+		            \"code\":\"fQ3-TeuyTOY\",
+		            \"currentTime\":0}", 
+		 "agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.72 Safari/537.36", 
+		 "page": "https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/495757ee7b25401599b1ef0495b068e4/6fd116e15ab9436fa70b8c22474b3c17/"}
+				
 		@param jsonStr: string of a single, self contained JSON object
 		@type jsonStr: String
 		@param row: partially filled array of values. Passed by reference
@@ -61,7 +90,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 # contains a JSON expression, as opposed to a JSON sub-object,
                 # which manifests as a Python dict:
                 if (attribute == 'event' and value and not isinstance(value, dict)):
-                    # hack to load the record when it is encoded as a string
+                    # hack to load the event value when it is encoded as a JSON string:
                     nestedValue = json.loads(value)
                     record['fullCourseRef'] = nestedValue['GET']['next'][0]
             # Dig the course ID out of JSON records that happen to be user logins: 
