@@ -26,8 +26,8 @@ from output_disposition import OutputDisposition, OutputMySQLTable, OutputFile
 class JSONToRelation(object):
     '''
     Given a source with JSON structures, derive a schema, and construct 
-    a relational table. Source can be a local file name, a URL, or an
-    StringIO pseudofile. 
+    a relational table. Source can be a local file name, a URL, a
+    StringIO pseudofile, or a Unix pipe.
     
     JSON structures in the source must be one per line. That is, each line in 
     the source must be a self contained JSON object. Pretty printed strings
@@ -68,9 +68,9 @@ class JSONToRelation(object):
         
         If schemaHints is provided, it is a Dict mapping column names to ColDataType.
         The column names in schemaHints must match the corresponding (fully nested)
-        key names in the JSON objects.
-        schemaHints dict: {'msg.length' : ColDataType.INT,
-                           'chunkSize' : ColDataType.INT}
+        key names in the JSON objects::
+            schemaHints dict: {'msg.length' : ColDataType.INT,
+                               'chunkSize' : ColDataType.INT}
         
         For unit testing isolated methods in this class, set jsonSource and
         destination to None.
@@ -85,9 +85,9 @@ class JSONToRelation(object):
         @type schemaHints: Map<String,ColDataTYpe>
         @param jsonParserInstance: a parser that takes one JSON string, and returns a CSV row. Parser also must inform this 
                                    parent object of any generated column names.
-        @type {GenericJSONParser | EdXTrackLogJSONParser | CourseraTrackLogJSONParser}
+        @type jsonParserInstance: {GenericJSONParser | EdXTrackLogJSONParser | CourseraTrackLogJSONParser}
         @param loggingLevel: level at which logging output is show. 
-        @type loggingLevel {logging.DEBUG | logging.WARN | logging.INFO | logging.ERROR | logging.CRITICAL
+        @type loggingLevel: {logging.DEBUG | logging.WARN | logging.INFO | logging.ERROR | logging.CRITICAL}
         @raise ValueErrer: when value of jsonParserInstance is neither None, nor an instance of GenericJSONParser,
                         nor one of its subclasses.
         @raise ValueError: when jsonSource is not an instance of InPipe, InString, InURI, or InMongoDB  
@@ -210,7 +210,7 @@ class JSONToRelation(object):
         '''
         Returns an ordered list of ColumnSpec instances.
         Each such instance holds column name and SQL type.
-        @return ordered list of column information
+        @return: ordered list of column information
         @rtype: (ColumnSpec) 
         '''
         return self.cols.values()
@@ -218,6 +218,9 @@ class JSONToRelation(object):
     def getColHeaders(self):
         '''
         Returns a list of column header names collected so far.
+        @return: list of column headers that were discovered so far by an 
+                 associated JSON parser descending into a JSON structure.
+        @rtype: [String]
         '''
         headers = []
         for colSpec in self.cols.values():
@@ -229,6 +232,8 @@ class JSONToRelation(object):
         Returns the position of the next new column that
         may need to be added when a previously unseen JSON
         label is encountered.
+        @return: position in schema where the next new discovered column header is to go.
+        @rtype: int 
         '''
         return self.nextNewColPos
     

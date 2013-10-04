@@ -29,10 +29,21 @@ class ColDataType:
                TIME     : "TIME",
                DATETIME : "DATETIME"
     }
-    
+
     def toString(self, val):
         try:
             return ColDataType.strings[val]
         except KeyError:
             raise ValueError("The code %s does not refer to a known datatype." % str(val))
+        
+    @classmethod
+    def sqlTypeFromValue(cls, value):
+        if isinstance(str, value):
+            return ColDataType.TEXT
+        elif isinstance(float, value):
+            return ColDataType.FLOAT
+        elif isinstance(int, value):
+            return ColDataType.INT
+        else:
+            raise ValueError("Unknown type for value '%s'" % value )
         

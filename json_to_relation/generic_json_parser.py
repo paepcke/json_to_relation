@@ -34,20 +34,28 @@ class GenericJSONParser(object):
     
     def processOneJSONObject(self, jsonStr, row):
         '''
-   	    ('null', None)
-		('boolean', <true orfFalse>)
-		('number', <int or Decimal>)
-		('string', <unicode>)
-		('map_key', <str>)
-		('start_map', None)
-		('end_map', None)
-		('start_array', None)
-		('end_array', None)
-		        
+        Given a JSON string that is one entire JSON object, parse the
+        string into nested dicts. Derive relational column names from the
+        (possibly nested) labels. Cooperate with the parent JSONToRelations
+        instance to build a schema of typed SQL columns. Fill the passed-in
+        row with values from the JSON string. The following mappings from
+        Python values are used::
+       	    ('null', None)
+    		('boolean', <true orfFalse>)
+    		('number', <int or Decimal>)
+    		('string', <unicode>)
+    		('map_key', <str>)
+    		('start_map', None)
+    		('end_map', None)
+    		('start_array', None)
+    		('end_array', None)
+		
 		@param jsonStr: string of a single, self contained JSON object
 		@type jsonStr: String
 		@param row: partially filled array of values.
 		@type row: List<<any>>
+		@return: array of values. Fills into the passed-in row array
+		@rtype: [<any>]
         '''
         parser = ijson.parse(StringIO.StringIO(jsonStr))
         # Stack of array index counters for use with
@@ -148,6 +156,8 @@ class GenericJSONParser(object):
         @type colName: String
         @param value: the field value
         @type value: <any>, as per ColDataType
+        @return: the passed-in row, with the new value added at the proper index.
+        @rtype: List<<any>>
         '''
         # Assumes caller has called ensureColExistence() on the
         # JSONToRelation object; so the following won't have
@@ -191,6 +201,8 @@ class GenericJSONParser(object):
         occurrence of 'item'
         @param label: string from which last 'item' occurrence is to be removed
         @type label: String
+        @return: label after deletion of the substring
+        @rtype: String
         '''
         # JSONToRelation.REMOVE_ITEM_FROM_STRING_PATTERN is a regex pattern to remove '.item.' 
         # from column header names. Example: employee.item.name
@@ -207,6 +219,9 @@ class GenericJSONParser(object):
         return res
 
 class Stack(object):
+    '''
+    Simple stack implementation for use in recursive descent.
+    '''
     
     def __init__(self):
         self.stackArray = []

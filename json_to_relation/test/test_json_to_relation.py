@@ -3,16 +3,15 @@ import StringIO
 import os
 import unittest
 
-from col_data_type import ColDataType
-from json_to_relation.input_source import InputSource, InURI, InString, \
-    InMongoDB, InPipe #@UnusedImport
+from json_to_relation.col_data_type import ColDataType
+from json_to_relation.input_source import InputSource, InURI, InString, InMongoDB, InPipe #@UnusedImport
 from json_to_relation.json_to_relation import JSONToRelation, ColumnSpec
 from json_to_relation.output_disposition import OutputPipe, OutputDisposition, \
     OutputFile
 
 
 #from input_source import InURI
-TEST_ALL = False
+TEST_ALL = True
 
 class TestJSONToRelation(unittest.TestCase):
     
@@ -157,7 +156,7 @@ class TestJSONToRelation(unittest.TestCase):
                                             )
         self.fileConverter.convert(prependColHeader=True)
 
-    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def test_schema_hints(self):
         self.fileConverter = JSONToRelation(self.stringSource, 
                                             OutputFile("testOutput.csv"),

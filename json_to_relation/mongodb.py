@@ -13,7 +13,7 @@ class MongoDB(object):
     The query() method encapsulates MangoDB native methods find() 
     and find_one(). The query() method makes it very convenient to
     to request only particular sets of fields (columns in relational 
-    terms). Example:
+    terms). Example::
         myMongoDb.query({'lname' : 'Doe'}, ('fname', 'lname', 'age'))
     '''
     

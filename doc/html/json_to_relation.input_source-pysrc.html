@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>json_to_relation.input_source</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+      <th class="navbar" width="100%"></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        Package&nbsp;json_to_relation ::
+        Module&nbsp;input_source
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="json_to_relation.input_source-pysrc.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<h1 class="epydoc">Source Code for <a href="json_to_relation.input_source-module.html">Module json_to_relation.input_source</a></h1>
+<pre class="py-src">
+<a name="L1"></a><tt class="py-lineno">  1</tt>  <tt class="py-line"><tt class="py-docstring">'''</tt> </tt>
+<a name="L2"></a><tt class="py-lineno">  2</tt>  <tt class="py-line"><tt class="py-docstring">Created on Sep 14, 2013</tt> </tt>
+<a name="L3"></a><tt class="py-lineno">  3</tt>  <tt class="py-line"><tt class="py-docstring"></tt> </tt>
+<a name="L4"></a><tt class="py-lineno">  4</tt>  <tt class="py-line"><tt class="py-docstring">@author: paepcke</tt> </tt>
+<a name="L5"></a><tt class="py-lineno">  5</tt>  <tt class="py-line"><tt class="py-docstring">'''</tt> </tt>
+<a name="L6"></a><tt class="py-lineno">  6</tt>  <tt class="py-line"><tt class="py-keyword">import</tt> <tt class="py-name">StringIO</tt> </tt>
+<a name="L7"></a><tt class="py-lineno">  7</tt>  <tt class="py-line"><tt class="py-keyword">import</tt> <tt class="py-name">bz2</tt> </tt>
+<a name="L8"></a><tt class="py-lineno">  8</tt>  <tt class="py-line"><tt class="py-keyword">import</tt> <tt class="py-name">gzip</tt> </tt>
+<a name="L9"></a><tt class="py-lineno">  9</tt>  <tt class="py-line"><tt class="py-keyword">import</tt> <tt class="py-name">os</tt> </tt>
+<a name="L10"></a><tt class="py-lineno"> 10</tt>  <tt class="py-line"><tt class="py-keyword">import</tt> <tt class="py-name">sys</tt> </tt>
+<a name="L11"></a><tt class="py-lineno"> 11</tt>  <tt class="py-line"><tt class="py-keyword">from</tt> <tt class="py-name">urllib</tt> <tt class="py-keyword">import</tt> <tt class="py-name">FancyURLopener</tt> </tt>
+<a name="L12"></a><tt class="py-lineno"> 12</tt>  <tt class="py-line"><tt class="py-keyword">import</tt> <tt class="py-name">urllib2</tt> </tt>
+<a name="L13"></a><tt class="py-lineno"> 13</tt>  <tt class="py-line"><tt class="py-keyword">from</tt> <tt class="py-name">urlparse</tt> <tt class="py-keyword">import</tt> <tt class="py-name">urlparse</tt> </tt>
+<a name="L14"></a><tt class="py-lineno"> 14</tt>  <tt class="py-line"> </tt>
+<a name="L15"></a><tt class="py-lineno"> 15</tt>  <tt class="py-line"> </tt>
+<a name="COMPRESSION_TYPE"></a><div id="COMPRESSION_TYPE-def"><a name="L16"></a><tt class="py-lineno"> 16</tt> <a class="py-toggle" href="#" id="COMPRESSION_TYPE-toggle" onclick="return toggle('COMPRESSION_TYPE');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="json_to_relation.input_source.COMPRESSION_TYPE-class.html">COMPRESSION_TYPE</a><tt class="py-op">:</tt> </tt>
+</div><div id="COMPRESSION_TYPE-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="COMPRESSION_TYPE-expanded"><a name="L17"></a><tt class="py-lineno"> 17</tt>  <tt class="py-line">    <tt id="link-0" class="py-name" targets="Variable json_to_relation.input_source.COMPRESSION_TYPE.NO_COMPRESSION=json_to_relation.input_source.COMPRESSION_TYPE-class.html#NO_COMPRESSION"><a title="json_to_relation.input_source.COMPRESSION_TYPE.NO_COMPRESSION" class="py-name" href="#" onclick="return doclink('link-0', 'NO_COMPRESSION', 'link-0');">NO_COMPRESSION</a></tt> <tt class="py-op">=</tt> <tt class="py-number">0</tt><tt class="py-op">;</tt> </tt>
+<a name="L18"></a><tt class="py-lineno"> 18</tt>  <tt class="py-line">    <tt id="link-1" class="py-name" targets="Variable json_to_relation.input_source.COMPRESSION_TYPE.GZIP=json_to_relation.input_source.COMPRESSION_TYPE-class.html#GZIP"><a title="json_to_relation.input_source.COMPRESSION_TYPE.GZIP" class="py-name" href="#" onclick="return doclink('link-1', 'GZIP', 'link-1');">GZIP</a></tt> <tt class="py-op">=</tt> <tt class="py-number">1</tt><tt class="py-op">;</tt> </tt>
+<a name="L19"></a><tt class="py-lineno"> 19</tt>  <tt class="py-line">    <tt id="link-2" class="py-name" targets="Variable json_to_relation.input_source.COMPRESSION_TYPE.BZIP2=json_to_relation.input_source.COMPRESSION_TYPE-class.html#BZIP2"><a title="json_to_relation.input_source.COMPRESSION_TYPE.BZIP2" class="py-name" href="#" onclick="return doclink('link-2', 'BZIP2', 'link-2');">BZIP2</a></tt> <tt class="py-op">=</tt> <tt class="py-number">2</tt> </tt>
+</div><a name="L20"></a><tt class="py-lineno"> 20</tt>  <tt class="py-line"> </tt>
+<a name="InputSource"></a><div id="InputSource-def"><a name="L21"></a><tt class="py-lineno"> 21</tt> <a class="py-toggle" href="#" id="InputSource-toggle" onclick="return toggle('InputSource');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="json_to_relation.input_source.InputSource-class.html">InputSource</a><tt class="py-op">(</tt><tt class="py-base-class">object</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="InputSource-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="InputSource-expanded"><a name="L22"></a><tt class="py-lineno"> 22</tt>  <tt class="py-line">    <tt class="py-docstring">'''</tt> </tt>
+<a name="L23"></a><tt class="py-lineno"> 23</tt>  <tt class="py-line"><tt class="py-docstring">    Possible sources for JSON objects. These are</tt> </tt>
+<a name="L24"></a><tt class="py-lineno"> 24</tt>  <tt class="py-line"><tt class="py-docstring">    files on the local file system, URLs linking to</tt> </tt>
+<a name="L25"></a><tt class="py-lineno"> 25</tt>  <tt class="py-line"><tt class="py-docstring">    JSON strings, and MongoDB collections.</tt> </tt>
+<a name="L26"></a><tt class="py-lineno"> 26</tt>  <tt class="py-line"><tt class="py-docstring">    '''</tt> </tt>
+<a name="L27"></a><tt class="py-lineno"> 27</tt>  <tt class="py-line"> </tt>
+<a name="InputSource.__init__"></a><div id="InputSource.__init__-def"><a name="L28"></a><tt class="py-lineno"> 28</tt> <a class="py-toggle" href="#" id="InputSource.__init__-toggle" onclick="return toggle('InputSource.__init__');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.input_source.InputSource-class.html#__init__">__init__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">inputSource</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="InputSource.__init__-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="InputSource.__init__-expanded"><a name="L29"></a><tt class="py-lineno"> 29</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">inputSource</tt> <tt class="py-op">=</tt> <tt class="py-name">inputSource</tt> </tt>
+</div><a name="L30"></a><tt class="py-lineno"> 30</tt>  <tt class="py-line"> </tt>
+<a name="InputSource.__enter__"></a><div id="InputSource.__enter__-def"><a name="L31"></a><tt class="py-lineno"> 31</tt> <a class="py-toggle" href="#" id="InputSource.__enter__-toggle" onclick="return toggle('InputSource.__enter__');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.input_source.InputSource-class.html#__enter__">__enter__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="InputSource.__enter__-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="InputSource.__enter__-expanded"><a name="L32"></a><tt class="py-lineno"> 32</tt>  <tt class="py-line">        <tt class="py-keyword">return</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">fileHandle</tt> </tt>
+</div><a name="L33"></a><tt class="py-lineno"> 33</tt>  <tt class="py-line">         </tt>
+<a name="InputSource.__exit__"></a><div id="InputSource.__exit__-def"><a name="L34"></a><tt class="py-lineno"> 34</tt> <a class="py-toggle" href="#" id="InputSource.__exit__-toggle" onclick="return toggle('InputSource.__exit__');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.input_source.InputSource-class.html#__exit__">__exit__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">excType</tt><tt class="py-op">,</tt> <tt class="py-param">excValue</tt><tt class="py-op">,</tt> <tt class="py-param">excTraceback</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="InputSource.__exit__-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="InputSource.__exit__-expanded"><a name="L35"></a><tt class="py-lineno"> 35</tt>  <tt class="py-line">        <tt class="py-comment"># Even if the conversion threw an error, </tt> </tt>
+<a name="L36"></a><tt class="py-lineno"> 36</tt>  <tt class="py-line">        <tt class="py-comment"># try to close the input source:</tt> </tt>
+<a name="L37"></a><tt class="py-lineno"> 37</tt>  <tt class="py-line">        <tt class="py-keyword">try</tt><tt class="py-op">:</tt> </tt>
+<a name="L38"></a><tt class="py-lineno"> 38</tt>  <tt class="py-line">            <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-3" class="py-name" targets="Method json_to_relation.input_source.InMongoDB.close()=json_to_relation.input_source.InMongoDB-class.html#close,Method json_to_relation.input_source.InPipe.close()=json_to_relation.input_source.InPipe-class.html#close,Method json_to_relation.input_source.InString.close()=json_to_relation.input_source.InString-class.html#close,Method json_to_relation.input_source.InURI.close()=json_to_relation.input_source.InURI-class.html#close,Method json_to_relation.mongodb.MongoDB.close()=json_to_relation.mongodb.MongoDB-class.html#close,Method json_to_relation.mysqldb.MySQLDB.close()=json_to_relation.mysqldb.MySQLDB-class.html#close,Method json_to_relation.output_disposition.OutputFile.close()=json_to_relation.output_disposition.OutputFile-class.html#close,Method json_to_relation.output_disposition.OutputMySQLTable.close()=json_to_relation.output_disposition.OutputMySQLTable-class.html#close,Method json_to_relation.output_disposition.OutputPipe.close()=json_to_relation.output_disposition.OutputPipe-class.html#close"><a title="json_to_relation.input_source.InMongoDB.close
+json_to_relation.input_source.InPipe.close
+json_to_relation.input_source.InString.close
+json_to_relation.input_source.InURI.close
+json_to_relation.mongodb.MongoDB.close
+json_to_relation.mysqldb.MySQLDB.close
+json_to_relation.output_disposition.OutputFile.close
+json_to_relation.output_disposition.OutputMySQLTable.close
+json_to_relation.output_disposition.OutputPipe.close" class="py-name" href="#" onclick="return doclink('link-3', 'close', 'link-3');">close</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L39"></a><tt class="py-lineno"> 39</tt>  <tt class="py-line">        <tt class="py-keyword">except</tt><tt class="py-op">:</tt> </tt>
+<a name="L40"></a><tt class="py-lineno"> 40</tt>  <tt class="py-line">            <tt class="py-comment"># If the conversion itself when fine, then</tt> </tt>
+<a name="L41"></a><tt class="py-lineno"> 41</tt>  <tt class="py-line">            <tt class="py-comment"># raise this exception from the closing attempt.</tt> </tt>
+<a name="L42"></a><tt class="py-lineno"> 42</tt>  <tt class="py-line">            <tt class="py-comment"># But if the conversion failed, then have the </tt> </tt>
+<a name="L43"></a><tt class="py-lineno"> 43</tt>  <tt class="py-line">            <tt class="py-comment"># system re-raise that earlier exception:</tt> </tt>
+<a name="L44"></a><tt class="py-lineno"> 44</tt>  <tt class="py-line">            <tt class="py-keyword">if</tt> <tt class="py-name">excValue</tt> <tt class="py-keyword">is</tt> <tt class="py-name">None</tt><tt class="py-op">:</tt> </tt>
+<a name="L45"></a><tt class="py-lineno"> 45</tt>  <tt class="py-line">                <tt class="py-op">(</tt><tt class="py-name">errType</tt><tt class="py-op">,</tt> <tt class="py-name">errValue</tt><tt class="py-op">,</tt> <tt class="py-name">errTraceback</tt><tt class="py-op">)</tt> <tt class="py-op">=</tt> <tt class="py-name">sys</tt><tt class="py-op">.</tt><tt class="py-name">exc_info</tt><tt class="py-op">(</tt><tt class="py-op">)</tt>  <tt class="py-comment"># @UnusedVariable</tt> </tt>
+<a name="L46"></a><tt class="py-lineno"> 46</tt>  <tt class="py-line">                <tt class="py-keyword">raise</tt> <tt class="py-name">IOError</tt><tt class="py-op">(</tt><tt class="py-string">"Could not close the input to the conversion: %s"</tt> <tt class="py-op">%</tt> <tt class="py-name">errValue</tt><tt class="py-op">)</tt> </tt>
+<a name="L47"></a><tt class="py-lineno"> 47</tt>  <tt class="py-line">        <tt class="py-comment"># Return False to indicate that if the conversion</tt> </tt>
+<a name="L48"></a><tt class="py-lineno"> 48</tt>  <tt class="py-line">        <tt class="py-comment"># threw an error, the exception should now be re-raised.</tt> </tt>
+<a name="L49"></a><tt class="py-lineno"> 49</tt>  <tt class="py-line">        <tt class="py-comment"># If the conversion worked fine, then this return value</tt> </tt>
+<a name="L50"></a><tt class="py-lineno"> 50</tt>  <tt class="py-line">        <tt class="py-comment"># is ignored.</tt> </tt>
+<a name="L51"></a><tt class="py-lineno"> 51</tt>  <tt class="py-line">        <tt class="py-keyword">return</tt> <tt class="py-name">False</tt> </tt>
+</div></div><a name="L52"></a><tt class="py-lineno"> 52</tt>  <tt class="py-line">             </tt>
+<a name="L53"></a><tt class="py-lineno"> 53</tt>  <tt class="py-line">     </tt>
+<a name="L54"></a><tt class="py-lineno"> 54</tt>  <tt class="py-line"> </tt>
+<a name="InURI"></a><div id="InURI-def"><a name="L55"></a><tt class="py-lineno"> 55</tt> <a class="py-toggle" href="#" id="InURI-toggle" onclick="return toggle('InURI');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="json_to_relation.input_source.InURI-class.html">InURI</a><tt class="py-op">(</tt><tt class="py-base-class">InputSource</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="InURI-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="InURI-expanded"><a name="InURI.__init__"></a><div id="InURI.__init__-def"><a name="L56"></a><tt class="py-lineno"> 56</tt> <a class="py-toggle" href="#" id="InURI.__init__-toggle" onclick="return toggle('InURI.__init__');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.input_source.InURI-class.html#__init__">__init__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">inFilePathOrURL</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="InURI.__init__-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="InURI.__init__-expanded"><a name="L57"></a><tt class="py-lineno"> 57</tt>  <tt class="py-line">        <tt class="py-keyword">if</tt> <tt class="py-name">len</tt><tt class="py-op">(</tt><tt class="py-name">urlparse</tt><tt class="py-op">(</tt><tt class="py-name">inFilePathOrURL</tt><tt class="py-op">)</tt><tt class="py-op">[</tt><tt class="py-number">0</tt><tt class="py-op">]</tt><tt class="py-op">)</tt> <tt class="py-op">==</tt> <tt class="py-number">0</tt><tt class="py-op">:</tt> </tt>
+<a name="L58"></a><tt class="py-lineno"> 58</tt>  <tt class="py-line">            <tt class="py-name">inFilePathOrURL</tt> <tt class="py-op">=</tt> <tt class="py-string">'file://'</tt> <tt class="py-op">+</tt> <tt class="py-name">inFilePathOrURL</tt>  </tt>
+<a name="L59"></a><tt class="py-lineno"> 59</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">inFilePathOrURL</tt> <tt class="py-op">=</tt> <tt class="py-name">inFilePathOrURL</tt> </tt>
+<a name="L60"></a><tt class="py-lineno"> 60</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">compression</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-4" class="py-name" targets="Method json_to_relation.input_source.InURI.determineCompression()=json_to_relation.input_source.InURI-class.html#determineCompression"><a title="json_to_relation.input_source.InURI.determineCompression" class="py-name" href="#" onclick="return doclink('link-4', 'determineCompression', 'link-4');">determineCompression</a></tt><tt class="py-op">(</tt><tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">inFilePathOrURL</tt><tt class="py-op">)</tt> </tt>
+<a name="L61"></a><tt class="py-lineno"> 61</tt>  <tt class="py-line"> </tt>
+<a name="L62"></a><tt class="py-lineno"> 62</tt>  <tt class="py-line">        <tt class="py-comment"># If file is compressed and remote, pull it into a temp file</tt> </tt>
+<a name="L63"></a><tt class="py-lineno"> 63</tt>  <tt class="py-line">        <tt class="py-comment"># so we can decompress locally. Sets self.localPathFile</tt> </tt>
+<a name="L64"></a><tt class="py-lineno"> 64</tt>  <tt class="py-line">        <tt class="py-comment"># so that urlopen() or gzip.open(), or bz2.BZ2File() will work.</tt> </tt>
+<a name="L65"></a><tt class="py-lineno"> 65</tt>  <tt class="py-line">        <tt class="py-comment"># Sets self.deleteTempFile if a tmp file was created:</tt> </tt>
+<a name="L66"></a><tt class="py-lineno"> 66</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-5" class="py-name" targets="Method json_to_relation.input_source.InURI.ensureFileLocal()=json_to_relation.input_source.InURI-class.html#ensureFileLocal"><a title="json_to_relation.input_source.InURI.ensureFileLocal" class="py-name" href="#" onclick="return doclink('link-5', 'ensureFileLocal', 'link-5');">ensureFileLocal</a></tt><tt class="py-op">(</tt><tt class="py-name">inFilePathOrURL</tt><tt class="py-op">)</tt> </tt>
+<a name="L67"></a><tt class="py-lineno"> 67</tt>  <tt class="py-line">         </tt>
+<a name="L68"></a><tt class="py-lineno"> 68</tt>  <tt class="py-line">        <tt class="py-keyword">if</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">compression</tt> <tt class="py-op">==</tt> <tt id="link-6" class="py-name" targets="Class json_to_relation.input_source.COMPRESSION_TYPE=json_to_relation.input_source.COMPRESSION_TYPE-class.html"><a title="json_to_relation.input_source.COMPRESSION_TYPE" class="py-name" href="#" onclick="return doclink('link-6', 'COMPRESSION_TYPE', 'link-6');">COMPRESSION_TYPE</a></tt><tt class="py-op">.</tt><tt id="link-7" class="py-name"><a title="json_to_relation.input_source.COMPRESSION_TYPE.NO_COMPRESSION" class="py-name" href="#" onclick="return doclink('link-7', 'NO_COMPRESSION', 'link-0');">NO_COMPRESSION</a></tt><tt class="py-op">:</tt> </tt>
+<a name="L69"></a><tt class="py-lineno"> 69</tt>  <tt class="py-line">            <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">fileHandle</tt> <tt class="py-op">=</tt> <tt class="py-name">urllib2</tt><tt class="py-op">.</tt><tt class="py-name">urlopen</tt><tt class="py-op">(</tt><tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">localFilePath</tt><tt class="py-op">)</tt> </tt>
+<a name="L70"></a><tt class="py-lineno"> 70</tt>  <tt class="py-line">        <tt class="py-keyword">elif</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">compression</tt> <tt class="py-op">==</tt> <tt id="link-8" class="py-name"><a title="json_to_relation.input_source.COMPRESSION_TYPE" class="py-name" href="#" onclick="return doclink('link-8', 'COMPRESSION_TYPE', 'link-6');">COMPRESSION_TYPE</a></tt><tt class="py-op">.</tt><tt id="link-9" class="py-name"><a title="json_to_relation.input_source.COMPRESSION_TYPE.GZIP" class="py-name" href="#" onclick="return doclink('link-9', 'GZIP', 'link-1');">GZIP</a></tt><tt class="py-op">:</tt> </tt>
+<a name="L71"></a><tt class="py-lineno"> 71</tt>  <tt class="py-line">            <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">fileHandle</tt> <tt class="py-op">=</tt> <tt class="py-name">gzip</tt><tt class="py-op">.</tt><tt class="py-name">open</tt><tt class="py-op">(</tt><tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">localFilePath</tt><tt class="py-op">,</tt> <tt class="py-string">'rb'</tt><tt class="py-op">)</tt> </tt>
+<a name="L72"></a><tt class="py-lineno"> 72</tt>  <tt class="py-line">        <tt class="py-keyword">elif</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">compression</tt> <tt class="py-op">==</tt> <tt id="link-10" class="py-name"><a title="json_to_relation.input_source.COMPRESSION_TYPE" class="py-name" href="#" onclick="return doclink('link-10', 'COMPRESSION_TYPE', 'link-6');">COMPRESSION_TYPE</a></tt><tt class="py-op">.</tt><tt id="link-11" class="py-name"><a title="json_to_relation.input_source.COMPRESSION_TYPE.BZIP2" class="py-name" href="#" onclick="return doclink('link-11', 'BZIP2', 'link-2');">BZIP2</a></tt><tt class="py-op">:</tt> </tt>
+<a name="L73"></a><tt class="py-lineno"> 73</tt>  <tt class="py-line">            <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">fileHandle</tt> <tt class="py-op">=</tt> <tt class="py-name">bz2</tt><tt class="py-op">.</tt><tt class="py-name">BZ2File</tt><tt class="py-op">(</tt><tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">localFilePath</tt><tt class="py-op">,</tt> <tt class="py-string">'rb'</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L74"></a><tt class="py-lineno"> 74</tt>  <tt class="py-line">     </tt>
+<a name="InURI.decompress"></a><div id="InURI.decompress-def"><a name="L75"></a><tt class="py-lineno"> 75</tt> <a class="py-toggle" href="#" id="InURI.decompress-toggle" onclick="return toggle('InURI.decompress');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.input_source.InURI-class.html#decompress">decompress</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">line</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="InURI.decompress-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="InURI.decompress-expanded"><a name="L76"></a><tt class="py-lineno"> 76</tt>  <tt class="py-line">        <tt class="py-keyword">if</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">compression</tt> <tt class="py-op">==</tt> <tt id="link-12" class="py-name"><a title="json_to_relation.input_source.COMPRESSION_TYPE" class="py-name" href="#" onclick="return doclink('link-12', 'COMPRESSION_TYPE', 'link-6');">COMPRESSION_TYPE</a></tt><tt class="py-op">.</tt><tt id="link-13" class="py-name"><a title="json_to_relation.input_source.COMPRESSION_TYPE.NO_COMPRESSION" class="py-name" href="#" onclick="return doclink('link-13', 'NO_COMPRESSION', 'link-0');">NO_COMPRESSION</a></tt><tt class="py-op">:</tt> </tt>
+<a name="L77"></a><tt class="py-lineno"> 77</tt>  <tt class="py-line">            <tt class="py-keyword">return</tt> <tt class="py-name">line</tt> </tt>
+<a name="L78"></a><tt class="py-lineno"> 78</tt>  <tt class="py-line">        <tt class="py-comment"># For gzip and bz2, the read() of the fileHandle took</tt> </tt>
+<a name="L79"></a><tt class="py-lineno"> 79</tt>  <tt class="py-line">        <tt class="py-comment"># care of decompression. This method is here for expansion</tt> </tt>
+<a name="L80"></a><tt class="py-lineno"> 80</tt>  <tt class="py-line">        <tt class="py-comment"># to other compression schemes:</tt> </tt>
+<a name="L81"></a><tt class="py-lineno"> 81</tt>  <tt class="py-line">        <tt class="py-keyword">return</tt> <tt class="py-name">line</tt> </tt>
+</div><a name="L82"></a><tt class="py-lineno"> 82</tt>  <tt class="py-line">         </tt>
+<a name="InURI.close"></a><div id="InURI.close-def"><a name="L83"></a><tt class="py-lineno"> 83</tt> <a class="py-toggle" href="#" id="InURI.close-toggle" onclick="return toggle('InURI.close');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.input_source.InURI-class.html#close">close</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="InURI.close-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="InURI.close-expanded"><a name="L84"></a><tt class="py-lineno"> 84</tt>  <tt class="py-line">        <tt class="py-comment"># closing is different in case of file vs. URL:</tt> </tt>
+<a name="L85"></a><tt class="py-lineno"> 85</tt>  <tt class="py-line">        <tt class="py-keyword">try</tt><tt class="py-op">:</tt> </tt>
+<a name="L86"></a><tt class="py-lineno"> 86</tt>  <tt class="py-line">            <tt class="py-op">(</tt><tt class="py-name">scheme</tt><tt class="py-op">,</tt><tt class="py-name">netloc</tt><tt class="py-op">,</tt><tt class="py-name">path</tt><tt class="py-op">,</tt><tt id="link-14" class="py-name" targets="Method json_to_relation.mongodb.MongoDB.query()=json_to_relation.mongodb.MongoDB-class.html#query,Method json_to_relation.mysqldb.MySQLDB.query()=json_to_relation.mysqldb.MySQLDB-class.html#query"><a title="json_to_relation.mongodb.MongoDB.query
+json_to_relation.mysqldb.MySQLDB.query" class="py-name" href="#" onclick="return doclink('link-14', 'query', 'link-14');">query</a></tt><tt class="py-op">,</tt><tt class="py-name">fragment</tt><tt class="py-op">)</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">fileHandle</tt><tt class="py-op">.</tt><tt class="py-name">urlsplit</tt><tt class="py-op">(</tt><tt class="py-op">)</tt>  <tt class="py-comment"># @UnusedVariable</tt> </tt>
+<a name="L87"></a><tt class="py-lineno"> 87</tt>  <tt class="py-line">        <tt class="py-keyword">except</tt> <tt class="py-name">AttributeError</tt><tt class="py-op">:</tt> </tt>
+<a name="L88"></a><tt class="py-lineno"> 88</tt>  <tt class="py-line">            <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">fileHandle</tt><tt class="py-op">.</tt><tt id="link-15" class="py-name"><a title="json_to_relation.input_source.InMongoDB.close
+json_to_relation.input_source.InPipe.close
+json_to_relation.input_source.InString.close
+json_to_relation.input_source.InURI.close
+json_to_relation.mongodb.MongoDB.close
+json_to_relation.mysqldb.MySQLDB.close
+json_to_relation.output_disposition.OutputFile.close
+json_to_relation.output_disposition.OutputMySQLTable.close
+json_to_relation.output_disposition.OutputPipe.close" class="py-name" href="#" onclick="return doclink('link-15', 'close', 'link-3');">close</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L89"></a><tt class="py-lineno"> 89</tt>  <tt class="py-line">        <tt class="py-keyword">if</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">deleteTempFile</tt><tt class="py-op">:</tt> </tt>
+<a name="L90"></a><tt class="py-lineno"> 90</tt>  <tt class="py-line">            <tt class="py-keyword">try</tt><tt class="py-op">:</tt> </tt>
+<a name="L91"></a><tt class="py-lineno"> 91</tt>  <tt class="py-line">                <tt class="py-name">os</tt><tt class="py-op">.</tt><tt class="py-name">remove</tt><tt class="py-op">(</tt><tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">localFilePath</tt><tt class="py-op">)</tt> </tt>
+<a name="L92"></a><tt class="py-lineno"> 92</tt>  <tt class="py-line">            <tt class="py-keyword">except</tt><tt class="py-op">:</tt> </tt>
+<a name="L93"></a><tt class="py-lineno"> 93</tt>  <tt class="py-line">                <tt class="py-keyword">pass</tt> </tt>
+</div><a name="L94"></a><tt class="py-lineno"> 94</tt>  <tt class="py-line">     </tt>
+<a name="InURI.determineCompression"></a><div id="InURI.determineCompression-def"><a name="L95"></a><tt class="py-lineno"> 95</tt> <a class="py-toggle" href="#" id="InURI.determineCompression-toggle" onclick="return toggle('InURI.determineCompression');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.input_source.InURI-class.html#determineCompression">determineCompression</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">fileURI</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="InURI.determineCompression-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="InURI.determineCompression-expanded"><a name="L96"></a><tt class="py-lineno"> 96</tt>  <tt class="py-line">        <tt class="py-docstring">'''</tt> </tt>
+<a name="L97"></a><tt class="py-lineno"> 97</tt>  <tt class="py-line"><tt class="py-docstring">        Given a file path, determine by file extension whether</tt> </tt>
+<a name="L98"></a><tt class="py-lineno"> 98</tt>  <tt class="py-line"><tt class="py-docstring">        the file is gzip or bzip2 compressed, or whether it is</tt> </tt>
+<a name="L99"></a><tt class="py-lineno"> 99</tt>  <tt class="py-line"><tt class="py-docstring">        not compressed.</tt> </tt>
+<a name="L100"></a><tt class="py-lineno">100</tt>  <tt class="py-line"><tt class="py-docstring">        @param fileURI: item that str() turns into a file path or URL</tt> </tt>
+<a name="L101"></a><tt class="py-lineno">101</tt>  <tt class="py-line"><tt class="py-docstring">        @type fileURI: STRING</tt> </tt>
+<a name="L102"></a><tt class="py-lineno">102</tt>  <tt class="py-line"><tt class="py-docstring">        '''</tt> </tt>
+<a name="L103"></a><tt class="py-lineno">103</tt>  <tt class="py-line">        <tt class="py-keyword">if</tt> <tt class="py-name">str</tt><tt class="py-op">(</tt><tt class="py-name">fileURI</tt><tt class="py-op">)</tt><tt class="py-op">.</tt><tt class="py-name">endswith</tt><tt class="py-op">(</tt><tt class="py-string">'bz2'</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+<a name="L104"></a><tt class="py-lineno">104</tt>  <tt class="py-line">            <tt class="py-keyword">return</tt> <tt id="link-16" class="py-name"><a title="json_to_relation.input_source.COMPRESSION_TYPE" class="py-name" href="#" onclick="return doclink('link-16', 'COMPRESSION_TYPE', 'link-6');">COMPRESSION_TYPE</a></tt><tt class="py-op">.</tt><tt id="link-17" class="py-name"><a title="json_to_relation.input_source.COMPRESSION_TYPE.BZIP2" class="py-name" href="#" onclick="return doclink('link-17', 'BZIP2', 'link-2');">BZIP2</a></tt> </tt>
+<a name="L105"></a><tt class="py-lineno">105</tt>  <tt class="py-line">        <tt class="py-keyword">elif</tt> <tt class="py-name">str</tt><tt class="py-op">(</tt><tt class="py-name">fileURI</tt><tt class="py-op">)</tt><tt class="py-op">.</tt><tt class="py-name">endswith</tt><tt class="py-op">(</tt><tt class="py-string">'gz'</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+<a name="L106"></a><tt class="py-lineno">106</tt>  <tt class="py-line">            <tt class="py-keyword">return</tt> <tt id="link-18" class="py-name"><a title="json_to_relation.input_source.COMPRESSION_TYPE" class="py-name" href="#" onclick="return doclink('link-18', 'COMPRESSION_TYPE', 'link-6');">COMPRESSION_TYPE</a></tt><tt class="py-op">.</tt><tt id="link-19" class="py-name"><a title="json_to_relation.input_source.COMPRESSION_TYPE.GZIP" class="py-name" href="#" onclick="return doclink('link-19', 'GZIP', 'link-1');">GZIP</a></tt> </tt>
+<a name="L107"></a><tt class="py-lineno">107</tt>  <tt class="py-line">        <tt class="py-keyword">else</tt><tt class="py-op">:</tt> </tt>
+<a name="L108"></a><tt class="py-lineno">108</tt>  <tt class="py-line">            <tt class="py-keyword">return</tt> <tt id="link-20" class="py-name"><a title="json_to_relation.input_source.COMPRESSION_TYPE" class="py-name" href="#" onclick="return doclink('link-20', 'COMPRESSION_TYPE', 'link-6');">COMPRESSION_TYPE</a></tt><tt class="py-op">.</tt><tt id="link-21" class="py-name"><a title="json_to_relation.input_source.COMPRESSION_TYPE.NO_COMPRESSION" class="py-name" href="#" onclick="return doclink('link-21', 'NO_COMPRESSION', 'link-0');">NO_COMPRESSION</a></tt> </tt>
+</div><a name="L109"></a><tt class="py-lineno">109</tt>  <tt class="py-line">     </tt>
+<a name="InURI.ensureFileLocal"></a><div id="InURI.ensureFileLocal-def"><a name="L110"></a><tt class="py-lineno">110</tt> <a class="py-toggle" href="#" id="InURI.ensureFileLocal-toggle" onclick="return toggle('InURI.ensureFileLocal');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.input_source.InURI-class.html#ensureFileLocal">ensureFileLocal</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">inFilePathOrURL</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="InURI.ensureFileLocal-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="InURI.ensureFileLocal-expanded"><a name="L111"></a><tt class="py-lineno">111</tt>  <tt class="py-line">        <tt class="py-docstring">'''</tt> </tt>
+<a name="L112"></a><tt class="py-lineno">112</tt>  <tt class="py-line"><tt class="py-docstring">        Takes a file path or URL. Sets self.localFilePath</tt> </tt>
+<a name="L113"></a><tt class="py-lineno">113</tt>  <tt class="py-line"><tt class="py-docstring">        to the same path if file is local, or</tt> </tt>
+<a name="L114"></a><tt class="py-lineno">114</tt>  <tt class="py-line"><tt class="py-docstring">        if the file is remote but uncompressed. </tt> </tt>
+<a name="L115"></a><tt class="py-lineno">115</tt>  <tt class="py-line"><tt class="py-docstring">        If a file is remote and compressed, retrieves</tt> </tt>
+<a name="L116"></a><tt class="py-lineno">116</tt>  <tt class="py-line"><tt class="py-docstring">        the file into a local tmp file and returns that</tt> </tt>
+<a name="L117"></a><tt class="py-lineno">117</tt>  <tt class="py-line"><tt class="py-docstring">        file name. In this case the flag self.deleteTempFile</tt> </tt>
+<a name="L118"></a><tt class="py-lineno">118</tt>  <tt class="py-line"><tt class="py-docstring">        is set to True. </tt> </tt>
+<a name="L119"></a><tt class="py-lineno">119</tt>  <tt class="py-line"><tt class="py-docstring">        @param inFilePathOrURL: file path or URL to file</tt> </tt>
+<a name="L120"></a><tt class="py-lineno">120</tt>  <tt class="py-line"><tt class="py-docstring">        @type inFilePathOrURL: String</tt> </tt>
+<a name="L121"></a><tt class="py-lineno">121</tt>  <tt class="py-line"><tt class="py-docstring">        '''</tt> </tt>
+<a name="L122"></a><tt class="py-lineno">122</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">localFilePath</tt> <tt class="py-op">=</tt> <tt class="py-name">inFilePathOrURL</tt> </tt>
+<a name="L123"></a><tt class="py-lineno">123</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">deleteTempFile</tt> <tt class="py-op">=</tt> <tt class="py-name">False</tt> </tt>
+<a name="L124"></a><tt class="py-lineno">124</tt>  <tt class="py-line">        <tt class="py-keyword">if</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">compression</tt> <tt class="py-op">==</tt> <tt id="link-22" class="py-name"><a title="json_to_relation.input_source.COMPRESSION_TYPE" class="py-name" href="#" onclick="return doclink('link-22', 'COMPRESSION_TYPE', 'link-6');">COMPRESSION_TYPE</a></tt><tt class="py-op">.</tt><tt id="link-23" class="py-name"><a title="json_to_relation.input_source.COMPRESSION_TYPE.NO_COMPRESSION" class="py-name" href="#" onclick="return doclink('link-23', 'NO_COMPRESSION', 'link-0');">NO_COMPRESSION</a></tt><tt class="py-op">:</tt> </tt>
+<a name="L125"></a><tt class="py-lineno">125</tt>  <tt class="py-line">            <tt class="py-keyword">return</tt> </tt>
+<a name="L126"></a><tt class="py-lineno">126</tt>  <tt class="py-line">        <tt class="py-comment"># Got compressed file; is it local?</tt> </tt>
+<a name="L127"></a><tt class="py-lineno">127</tt>  <tt class="py-line">        <tt class="py-name">parseResult</tt> <tt class="py-op">=</tt> <tt class="py-name">urlparse</tt><tt class="py-op">(</tt><tt class="py-name">inFilePathOrURL</tt><tt class="py-op">)</tt> </tt>
+<a name="L128"></a><tt class="py-lineno">128</tt>  <tt class="py-line">        <tt class="py-keyword">if</tt> <tt class="py-name">parseResult</tt><tt class="py-op">.</tt><tt class="py-name">scheme</tt> <tt class="py-op">==</tt> <tt class="py-string">'file'</tt><tt class="py-op">:</tt> </tt>
+<a name="L129"></a><tt class="py-lineno">129</tt>  <tt class="py-line">            <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">localFilePath</tt> <tt class="py-op">=</tt> <tt class="py-name">parseResult</tt><tt class="py-op">.</tt><tt class="py-name">path</tt> </tt>
+<a name="L130"></a><tt class="py-lineno">130</tt>  <tt class="py-line">            <tt class="py-keyword">return</tt> </tt>
+<a name="L131"></a><tt class="py-lineno">131</tt>  <tt class="py-line">        <tt class="py-name">opener</tt> <tt class="py-op">=</tt> <tt class="py-name">FancyURLopener</tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L132"></a><tt class="py-lineno">132</tt>  <tt class="py-line">        <tt class="py-comment"># Throws IOError if URL does not exist:</tt> </tt>
+<a name="L133"></a><tt class="py-lineno">133</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">localFilePath</tt> <tt class="py-op">=</tt> <tt class="py-name">opener</tt><tt class="py-op">.</tt><tt class="py-name">retrieve</tt><tt class="py-op">(</tt><tt class="py-name">inFilePathOrURL</tt><tt class="py-op">)</tt><tt class="py-op">[</tt><tt class="py-number">0</tt><tt class="py-op">]</tt> </tt>
+<a name="L134"></a><tt class="py-lineno">134</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">deleteTempFile</tt> <tt class="py-op">=</tt> <tt class="py-name">True</tt> </tt>
+</div></div><a name="L135"></a><tt class="py-lineno">135</tt>  <tt class="py-line">     </tt>
+<a name="InString"></a><div id="InString-def"><a name="L136"></a><tt class="py-lineno">136</tt> <a class="py-toggle" href="#" id="InString-toggle" onclick="return toggle('InString');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="json_to_relation.input_source.InString-class.html">InString</a><tt class="py-op">(</tt><tt class="py-base-class">InputSource</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="InString-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="InString-expanded"><a name="InString.__init__"></a><div id="InString.__init__-def"><a name="L137"></a><tt class="py-lineno">137</tt> <a class="py-toggle" href="#" id="InString.__init__-toggle" onclick="return toggle('InString.__init__');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.input_source.InString-class.html#__init__">__init__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">inputStr</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="InString.__init__-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="InString.__init__-expanded"><a name="L138"></a><tt class="py-lineno">138</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">fileHandle</tt> <tt class="py-op">=</tt> <tt class="py-name">StringIO</tt><tt class="py-op">.</tt><tt class="py-name">StringIO</tt><tt class="py-op">(</tt><tt class="py-name">inputStr</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L139"></a><tt class="py-lineno">139</tt>  <tt class="py-line">         </tt>
+<a name="InString.decompress"></a><div id="InString.decompress-def"><a name="L140"></a><tt class="py-lineno">140</tt> <a class="py-toggle" href="#" id="InString.decompress-toggle" onclick="return toggle('InString.decompress');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.input_source.InString-class.html#decompress">decompress</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">line</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="InString.decompress-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="InString.decompress-expanded"><a name="L141"></a><tt class="py-lineno">141</tt>  <tt class="py-line">        <tt class="py-docstring">'''</tt> </tt>
+<a name="L142"></a><tt class="py-lineno">142</tt>  <tt class="py-line"><tt class="py-docstring">        No decompression for strings</tt> </tt>
+<a name="L143"></a><tt class="py-lineno">143</tt>  <tt class="py-line"><tt class="py-docstring">        @param line:</tt> </tt>
+<a name="L144"></a><tt class="py-lineno">144</tt>  <tt class="py-line"><tt class="py-docstring">        @type line:</tt> </tt>
+<a name="L145"></a><tt class="py-lineno">145</tt>  <tt class="py-line"><tt class="py-docstring">        '''</tt> </tt>
+<a name="L146"></a><tt class="py-lineno">146</tt>  <tt class="py-line">        <tt class="py-keyword">return</tt> <tt class="py-name">line</tt> </tt>
+</div><a name="L147"></a><tt class="py-lineno">147</tt>  <tt class="py-line">                 </tt>
+<a name="InString.close"></a><div id="InString.close-def"><a name="L148"></a><tt class="py-lineno">148</tt> <a class="py-toggle" href="#" id="InString.close-toggle" onclick="return toggle('InString.close');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.input_source.InString-class.html#close">close</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="InString.close-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="InString.close-expanded"><a name="L149"></a><tt class="py-lineno">149</tt>  <tt class="py-line">        <tt class="py-keyword">pass</tt> </tt>
+</div></div><a name="L150"></a><tt class="py-lineno">150</tt>  <tt class="py-line">     </tt>
+<a name="InMongoDB"></a><div id="InMongoDB-def"><a name="L151"></a><tt class="py-lineno">151</tt> <a class="py-toggle" href="#" id="InMongoDB-toggle" onclick="return toggle('InMongoDB');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="json_to_relation.input_source.InMongoDB-class.html">InMongoDB</a><tt class="py-op">(</tt><tt class="py-base-class">InputSource</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="InMongoDB-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="InMongoDB-expanded"><a name="InMongoDB.__init__"></a><div id="InMongoDB.__init__-def"><a name="L152"></a><tt class="py-lineno">152</tt> <a class="py-toggle" href="#" id="InMongoDB.__init__-toggle" onclick="return toggle('InMongoDB.__init__');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.input_source.InMongoDB-class.html#__init__">__init__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">server</tt><tt class="py-op">,</tt> <tt class="py-param">pwd</tt><tt class="py-op">,</tt> <tt class="py-param">dbName</tt><tt class="py-op">,</tt> <tt class="py-param">collName</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="InMongoDB.__init__-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="InMongoDB.__init__-expanded"><a name="L153"></a><tt class="py-lineno">153</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">server</tt> <tt class="py-op">=</tt> <tt class="py-name">server</tt> </tt>
+<a name="L154"></a><tt class="py-lineno">154</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">pwd</tt> <tt class="py-op">=</tt> <tt class="py-name">pwd</tt> </tt>
+<a name="L155"></a><tt class="py-lineno">155</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">dbName</tt> <tt class="py-op">=</tt> <tt class="py-name">dbName</tt> </tt>
+<a name="L156"></a><tt class="py-lineno">156</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">collName</tt> <tt class="py-op">=</tt> <tt class="py-name">collName</tt> </tt>
+<a name="L157"></a><tt class="py-lineno">157</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">fileHandle</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-24" class="py-name" targets="Method json_to_relation.input_source.InMongoDB.connect()=json_to_relation.input_source.InMongoDB-class.html#connect,Method json_to_relation.output_disposition.OutputMySQLTable.connect()=json_to_relation.output_disposition.OutputMySQLTable-class.html#connect"><a title="json_to_relation.input_source.InMongoDB.connect
+json_to_relation.output_disposition.OutputMySQLTable.connect" class="py-name" href="#" onclick="return doclink('link-24', 'connect', 'link-24');">connect</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L158"></a><tt class="py-lineno">158</tt>  <tt class="py-line"> </tt>
+<a name="InMongoDB.connect"></a><div id="InMongoDB.connect-def"><a name="L159"></a><tt class="py-lineno">159</tt> <a class="py-toggle" href="#" id="InMongoDB.connect-toggle" onclick="return toggle('InMongoDB.connect');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.input_source.InMongoDB-class.html#connect">connect</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="InMongoDB.connect-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="InMongoDB.connect-expanded"><a name="L160"></a><tt class="py-lineno">160</tt>  <tt class="py-line">        <tt class="py-keyword">raise</tt> <tt class="py-name">NotImplementedError</tt><tt class="py-op">(</tt><tt class="py-string">"MangoDB connector not yet implemented"</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L161"></a><tt class="py-lineno">161</tt>  <tt class="py-line">     </tt>
+<a name="InMongoDB.decompress"></a><div id="InMongoDB.decompress-def"><a name="L162"></a><tt class="py-lineno">162</tt> <a class="py-toggle" href="#" id="InMongoDB.decompress-toggle" onclick="return toggle('InMongoDB.decompress');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.input_source.InMongoDB-class.html#decompress">decompress</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">line</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="InMongoDB.decompress-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="InMongoDB.decompress-expanded"><a name="L163"></a><tt class="py-lineno">163</tt>  <tt class="py-line">        <tt class="py-keyword">raise</tt> <tt class="py-name">NotImplementedError</tt><tt class="py-op">(</tt><tt class="py-string">"MangoDB connector not yet implemented"</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L164"></a><tt class="py-lineno">164</tt>  <tt class="py-line">     </tt>
+<a name="InMongoDB.close"></a><div id="InMongoDB.close-def"><a name="L165"></a><tt class="py-lineno">165</tt> <a class="py-toggle" href="#" id="InMongoDB.close-toggle" onclick="return toggle('InMongoDB.close');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.input_source.InMongoDB-class.html#close">close</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="InMongoDB.close-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="InMongoDB.close-expanded"><a name="L166"></a><tt class="py-lineno">166</tt>  <tt class="py-line">        <tt class="py-keyword">raise</tt> <tt class="py-name">NotImplementedError</tt><tt class="py-op">(</tt><tt class="py-string">"MangoDB connector not yet implemented"</tt><tt class="py-op">)</tt> </tt>
+</div></div><a name="L167"></a><tt class="py-lineno">167</tt>  <tt class="py-line"> </tt>
+<a name="InPipe"></a><div id="InPipe-def"><a name="L168"></a><tt class="py-lineno">168</tt> <a class="py-toggle" href="#" id="InPipe-toggle" onclick="return toggle('InPipe');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="json_to_relation.input_source.InPipe-class.html">InPipe</a><tt class="py-op">(</tt><tt class="py-base-class">InputSource</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="InPipe-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="InPipe-expanded"><a name="InPipe.__init__"></a><div id="InPipe.__init__-def"><a name="L169"></a><tt class="py-lineno">169</tt> <a class="py-toggle" href="#" id="InPipe.__init__-toggle" onclick="return toggle('InPipe.__init__');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.input_source.InPipe-class.html#__init__">__init__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="InPipe.__init__-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="InPipe.__init__-expanded"><a name="L170"></a><tt class="py-lineno">170</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">fileHandle</tt> <tt class="py-op">=</tt> <tt class="py-name">sys</tt><tt class="py-op">.</tt><tt class="py-name">stdin</tt> </tt>
+</div><a name="L171"></a><tt class="py-lineno">171</tt>  <tt class="py-line"> </tt>
+<a name="InPipe.decompress"></a><div id="InPipe.decompress-def"><a name="L172"></a><tt class="py-lineno">172</tt> <a class="py-toggle" href="#" id="InPipe.decompress-toggle" onclick="return toggle('InPipe.decompress');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.input_source.InPipe-class.html#decompress">decompress</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">line</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="InPipe.decompress-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="InPipe.decompress-expanded"><a name="L173"></a><tt class="py-lineno">173</tt>  <tt class="py-line">        <tt class="py-docstring">'''</tt> </tt>
+<a name="L174"></a><tt class="py-lineno">174</tt>  <tt class="py-line"><tt class="py-docstring">        No decompression for pipes. Pipe through gunzip or similar first.</tt> </tt>
+<a name="L175"></a><tt class="py-lineno">175</tt>  <tt class="py-line"><tt class="py-docstring">        @param line:</tt> </tt>
+<a name="L176"></a><tt class="py-lineno">176</tt>  <tt class="py-line"><tt class="py-docstring">        @type line:</tt> </tt>
+<a name="L177"></a><tt class="py-lineno">177</tt>  <tt class="py-line"><tt class="py-docstring">        '''</tt> </tt>
+<a name="L178"></a><tt class="py-lineno">178</tt>  <tt class="py-line">        <tt class="py-keyword">return</tt> <tt class="py-name">line</tt> </tt>
+</div><a name="L179"></a><tt class="py-lineno">179</tt>  <tt class="py-line">         </tt>
+<a name="InPipe.close"></a><div id="InPipe.close-def"><a name="L180"></a><tt class="py-lineno">180</tt> <a class="py-toggle" href="#" id="InPipe.close-toggle" onclick="return toggle('InPipe.close');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.input_source.InPipe-class.html#close">close</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="InPipe.close-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="InPipe.close-expanded"><a name="L181"></a><tt class="py-lineno">181</tt>  <tt class="py-line">        <tt class="py-keyword">pass</tt> <tt class="py-comment"># don't close stdin</tt> </tt>
+</div></div><a name="L182"></a><tt class="py-lineno">182</tt>  <tt class="py-line"> </tt><script type="text/javascript">
+<!--
+expandto(location.href);
+// -->
+</script>
+</pre>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+      <th class="navbar" width="100%"></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Thu Oct  3 14:52:44 2013
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

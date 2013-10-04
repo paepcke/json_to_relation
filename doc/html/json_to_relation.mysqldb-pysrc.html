@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>json_to_relation.mysqldb</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+      <th class="navbar" width="100%"></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        Package&nbsp;json_to_relation ::
+        Module&nbsp;mysqldb
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="json_to_relation.mysqldb-pysrc.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<h1 class="epydoc">Source Code for <a href="json_to_relation.mysqldb-module.html">Module json_to_relation.mysqldb</a></h1>
+<pre class="py-src">
+<a name="L1"></a><tt class="py-lineno">  1</tt>  <tt class="py-line"><tt class="py-docstring">'''</tt> </tt>
+<a name="L2"></a><tt class="py-lineno">  2</tt>  <tt class="py-line"><tt class="py-docstring">Created on Sep 24, 2013</tt> </tt>
+<a name="L3"></a><tt class="py-lineno">  3</tt>  <tt class="py-line"><tt class="py-docstring"></tt> </tt>
+<a name="L4"></a><tt class="py-lineno">  4</tt>  <tt class="py-line"><tt class="py-docstring">@author: paepcke</tt> </tt>
+<a name="L5"></a><tt class="py-lineno">  5</tt>  <tt class="py-line"><tt class="py-docstring">'''</tt> </tt>
+<a name="L6"></a><tt class="py-lineno">  6</tt>  <tt class="py-line"> </tt>
+<a name="L7"></a><tt class="py-lineno">  7</tt>  <tt class="py-line"><tt class="py-keyword">import</tt> <tt class="py-name">pymysql</tt> </tt>
+<a name="L8"></a><tt class="py-lineno">  8</tt>  <tt class="py-line"> </tt>
+<a name="L9"></a><tt class="py-lineno">  9</tt>  <tt class="py-line"> </tt>
+<a name="MySQLDB"></a><div id="MySQLDB-def"><a name="L10"></a><tt class="py-lineno"> 10</tt> <a class="py-toggle" href="#" id="MySQLDB-toggle" onclick="return toggle('MySQLDB');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="json_to_relation.mysqldb.MySQLDB-class.html">MySQLDB</a><tt class="py-op">(</tt><tt class="py-base-class">object</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="MySQLDB-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="MySQLDB-expanded"><a name="L11"></a><tt class="py-lineno"> 11</tt>  <tt class="py-line">    <tt class="py-docstring">'''</tt> </tt>
+<a name="L12"></a><tt class="py-lineno"> 12</tt>  <tt class="py-line"><tt class="py-docstring">    Shallow interface to MySQL databases. Some niceties nonetheless.</tt> </tt>
+<a name="L13"></a><tt class="py-lineno"> 13</tt>  <tt class="py-line"><tt class="py-docstring">    The query() method is an iterator. So::</tt> </tt>
+<a name="L14"></a><tt class="py-lineno"> 14</tt>  <tt class="py-line"><tt class="py-docstring">        for result in mySqlObj.query('SELECT * FROM foo'):</tt> </tt>
+<a name="L15"></a><tt class="py-lineno"> 15</tt>  <tt class="py-line"><tt class="py-docstring">            print result</tt> </tt>
+<a name="L16"></a><tt class="py-lineno"> 16</tt>  <tt class="py-line"><tt class="py-docstring">    '''</tt> </tt>
+<a name="L17"></a><tt class="py-lineno"> 17</tt>  <tt class="py-line"> </tt>
+<a name="MySQLDB.__init__"></a><div id="MySQLDB.__init__-def"><a name="L18"></a><tt class="py-lineno"> 18</tt> <a class="py-toggle" href="#" id="MySQLDB.__init__-toggle" onclick="return toggle('MySQLDB.__init__');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.mysqldb.MySQLDB-class.html#__init__">__init__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">host</tt><tt class="py-op">=</tt><tt class="py-string">'127.0.0.1'</tt><tt class="py-op">,</tt> <tt class="py-param">port</tt><tt class="py-op">=</tt><tt class="py-number">3306</tt><tt class="py-op">,</tt> <tt class="py-param">user</tt><tt class="py-op">=</tt><tt class="py-string">'root'</tt><tt class="py-op">,</tt> <tt class="py-param">passwd</tt><tt class="py-op">=</tt><tt class="py-string">''</tt><tt class="py-op">,</tt> <tt class="py-param">db</tt><tt class="py-op">=</tt><tt class="py-string">'mysql'</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="MySQLDB.__init__-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="MySQLDB.__init__-expanded"><a name="L19"></a><tt class="py-lineno"> 19</tt>  <tt class="py-line">         </tt>
+<a name="L20"></a><tt class="py-lineno"> 20</tt>  <tt class="py-line">        <tt class="py-comment"># If all arguments are set to None, we are unittesting:</tt> </tt>
+<a name="L21"></a><tt class="py-lineno"> 21</tt>  <tt class="py-line">        <tt class="py-keyword">if</tt> <tt class="py-name">all</tt><tt class="py-op">(</tt><tt class="py-name">arg</tt> <tt class="py-keyword">is</tt> <tt class="py-name">None</tt> <tt class="py-keyword">for</tt> <tt class="py-name">arg</tt> <tt class="py-keyword">in</tt> <tt class="py-op">(</tt><tt class="py-name">host</tt><tt class="py-op">,</tt><tt class="py-name">port</tt><tt class="py-op">,</tt><tt class="py-name">user</tt><tt class="py-op">,</tt><tt class="py-name">passwd</tt><tt class="py-op">,</tt><tt class="py-name">db</tt><tt class="py-op">)</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+<a name="L22"></a><tt class="py-lineno"> 22</tt>  <tt class="py-line">            <tt class="py-keyword">return</tt> </tt>
+<a name="L23"></a><tt class="py-lineno"> 23</tt>  <tt class="py-line">         </tt>
+<a name="L24"></a><tt class="py-lineno"> 24</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">cursors</tt> <tt class="py-op">=</tt> <tt class="py-op">[</tt><tt class="py-op">]</tt> </tt>
+<a name="L25"></a><tt class="py-lineno"> 25</tt>  <tt class="py-line">        <tt class="py-keyword">try</tt><tt class="py-op">:</tt> </tt>
+<a name="L26"></a><tt class="py-lineno"> 26</tt>  <tt class="py-line">            <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">connection</tt> <tt class="py-op">=</tt> <tt class="py-name">pymysql</tt><tt class="py-op">.</tt><tt id="link-0" class="py-name" targets="Method json_to_relation.input_source.InMongoDB.connect()=json_to_relation.input_source.InMongoDB-class.html#connect,Method json_to_relation.output_disposition.OutputMySQLTable.connect()=json_to_relation.output_disposition.OutputMySQLTable-class.html#connect"><a title="json_to_relation.input_source.InMongoDB.connect
+json_to_relation.output_disposition.OutputMySQLTable.connect" class="py-name" href="#" onclick="return doclink('link-0', 'connect', 'link-0');">connect</a></tt><tt class="py-op">(</tt><tt class="py-name">host</tt><tt class="py-op">=</tt><tt class="py-name">host</tt><tt class="py-op">,</tt> <tt class="py-name">port</tt><tt class="py-op">=</tt><tt class="py-name">port</tt><tt class="py-op">,</tt> <tt class="py-name">user</tt><tt class="py-op">=</tt><tt class="py-name">user</tt><tt class="py-op">,</tt> <tt class="py-name">passwd</tt><tt class="py-op">=</tt><tt class="py-name">passwd</tt><tt class="py-op">,</tt> <tt class="py-name">db</tt><tt class="py-op">=</tt><tt class="py-name">db</tt><tt class="py-op">)</tt> </tt>
+<a name="L27"></a><tt class="py-lineno"> 27</tt>  <tt class="py-line">        <tt class="py-keyword">except</tt> <tt class="py-name">pymysql</tt><tt class="py-op">.</tt><tt class="py-name">OperationalError</tt><tt class="py-op">:</tt> </tt>
+<a name="L28"></a><tt class="py-lineno"> 28</tt>  <tt class="py-line">            <tt class="py-name">pwd</tt> <tt class="py-op">=</tt> <tt class="py-string">'...............'</tt> <tt class="py-keyword">if</tt> <tt class="py-name">len</tt><tt class="py-op">(</tt><tt class="py-name">passwd</tt><tt class="py-op">)</tt> <tt class="py-op">&gt;</tt> <tt class="py-number">0</tt> <tt class="py-keyword">else</tt> <tt class="py-string">'&lt;no password&gt;'</tt> </tt>
+<a name="L29"></a><tt class="py-lineno"> 29</tt>  <tt class="py-line">            <tt class="py-keyword">raise</tt> <tt class="py-name">ValueError</tt><tt class="py-op">(</tt><tt class="py-string">'Cannot reach MySQL server with host:%s, port:%s, user:%s, pwd:%s, db:%s'</tt> <tt class="py-op">%</tt> </tt>
+<a name="L30"></a><tt class="py-lineno"> 30</tt>  <tt class="py-line">                             <tt class="py-op">(</tt><tt class="py-name">host</tt><tt class="py-op">,</tt> <tt class="py-name">port</tt><tt class="py-op">,</tt> <tt class="py-name">user</tt><tt class="py-op">,</tt> <tt class="py-name">pwd</tt><tt class="py-op">,</tt> <tt class="py-name">db</tt><tt class="py-op">)</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L31"></a><tt class="py-lineno"> 31</tt>  <tt class="py-line">         </tt>
+<a name="MySQLDB.close"></a><div id="MySQLDB.close-def"><a name="L32"></a><tt class="py-lineno"> 32</tt> <a class="py-toggle" href="#" id="MySQLDB.close-toggle" onclick="return toggle('MySQLDB.close');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.mysqldb.MySQLDB-class.html#close">close</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="MySQLDB.close-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="MySQLDB.close-expanded"><a name="L33"></a><tt class="py-lineno"> 33</tt>  <tt class="py-line">        <tt class="py-docstring">'''</tt> </tt>
+<a name="L34"></a><tt class="py-lineno"> 34</tt>  <tt class="py-line"><tt class="py-docstring">        Close all cursors that are currently still open.</tt> </tt>
+<a name="L35"></a><tt class="py-lineno"> 35</tt>  <tt class="py-line"><tt class="py-docstring">        '''</tt> </tt>
+<a name="L36"></a><tt class="py-lineno"> 36</tt>  <tt class="py-line">        <tt class="py-keyword">for</tt> <tt class="py-name">cursor</tt> <tt class="py-keyword">in</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">cursors</tt><tt class="py-op">:</tt> </tt>
+<a name="L37"></a><tt class="py-lineno"> 37</tt>  <tt class="py-line">            <tt class="py-keyword">try</tt><tt class="py-op">:</tt> </tt>
+<a name="L38"></a><tt class="py-lineno"> 38</tt>  <tt class="py-line">                <tt class="py-name">cursor</tt><tt class="py-op">.</tt><tt id="link-1" class="py-name" targets="Method json_to_relation.input_source.InMongoDB.close()=json_to_relation.input_source.InMongoDB-class.html#close,Method json_to_relation.input_source.InPipe.close()=json_to_relation.input_source.InPipe-class.html#close,Method json_to_relation.input_source.InString.close()=json_to_relation.input_source.InString-class.html#close,Method json_to_relation.input_source.InURI.close()=json_to_relation.input_source.InURI-class.html#close,Method json_to_relation.mongodb.MongoDB.close()=json_to_relation.mongodb.MongoDB-class.html#close,Method json_to_relation.mysqldb.MySQLDB.close()=json_to_relation.mysqldb.MySQLDB-class.html#close,Method json_to_relation.output_disposition.OutputFile.close()=json_to_relation.output_disposition.OutputFile-class.html#close,Method json_to_relation.output_disposition.OutputMySQLTable.close()=json_to_relation.output_disposition.OutputMySQLTable-class.html#close,Method json_to_relation.output_disposition.OutputPipe.close()=json_to_relation.output_disposition.OutputPipe-class.html#close"><a title="json_to_relation.input_source.InMongoDB.close
+json_to_relation.input_source.InPipe.close
+json_to_relation.input_source.InString.close
+json_to_relation.input_source.InURI.close
+json_to_relation.mongodb.MongoDB.close
+json_to_relation.mysqldb.MySQLDB.close
+json_to_relation.output_disposition.OutputFile.close
+json_to_relation.output_disposition.OutputMySQLTable.close
+json_to_relation.output_disposition.OutputPipe.close" class="py-name" href="#" onclick="return doclink('link-1', 'close', 'link-1');">close</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L39"></a><tt class="py-lineno"> 39</tt>  <tt class="py-line">            <tt class="py-keyword">except</tt><tt class="py-op">:</tt> </tt>
+<a name="L40"></a><tt class="py-lineno"> 40</tt>  <tt class="py-line">                <tt class="py-keyword">pass</tt> </tt>
+</div><a name="L41"></a><tt class="py-lineno"> 41</tt>  <tt class="py-line"> </tt>
+<a name="MySQLDB.createTable"></a><div id="MySQLDB.createTable-def"><a name="L42"></a><tt class="py-lineno"> 42</tt> <a class="py-toggle" href="#" id="MySQLDB.createTable-toggle" onclick="return toggle('MySQLDB.createTable');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.mysqldb.MySQLDB-class.html#createTable">createTable</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">tableName</tt><tt class="py-op">,</tt> <tt class="py-param">schema</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="MySQLDB.createTable-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="MySQLDB.createTable-expanded"><a name="L43"></a><tt class="py-lineno"> 43</tt>  <tt class="py-line">        <tt class="py-docstring">'''</tt> </tt>
+<a name="L44"></a><tt class="py-lineno"> 44</tt>  <tt class="py-line"><tt class="py-docstring">        Create new table, given its name, and schema.</tt> </tt>
+<a name="L45"></a><tt class="py-lineno"> 45</tt>  <tt class="py-line"><tt class="py-docstring">        The schema is a dict mappingt column names to </tt> </tt>
+<a name="L46"></a><tt class="py-lineno"> 46</tt>  <tt class="py-line"><tt class="py-docstring">        column types. Example: {'col1' : 'INT', 'col2' : 'TEXT'}</tt> </tt>
+<a name="L47"></a><tt class="py-lineno"> 47</tt>  <tt class="py-line"><tt class="py-docstring">        @param tableName: name of new table</tt> </tt>
+<a name="L48"></a><tt class="py-lineno"> 48</tt>  <tt class="py-line"><tt class="py-docstring">        @type tableName: String</tt> </tt>
+<a name="L49"></a><tt class="py-lineno"> 49</tt>  <tt class="py-line"><tt class="py-docstring">        @param schema: dictionary mapping column names to column types</tt> </tt>
+<a name="L50"></a><tt class="py-lineno"> 50</tt>  <tt class="py-line"><tt class="py-docstring">        @type schema: Dict&lt;String,String&gt;</tt> </tt>
+<a name="L51"></a><tt class="py-lineno"> 51</tt>  <tt class="py-line"><tt class="py-docstring">        '''</tt> </tt>
+<a name="L52"></a><tt class="py-lineno"> 52</tt>  <tt class="py-line">        <tt class="py-name">colSpec</tt> <tt class="py-op">=</tt> <tt class="py-string">''</tt> </tt>
+<a name="L53"></a><tt class="py-lineno"> 53</tt>  <tt class="py-line">        <tt class="py-keyword">for</tt> <tt class="py-name">colName</tt><tt class="py-op">,</tt> <tt class="py-name">colVal</tt> <tt class="py-keyword">in</tt> <tt class="py-name">schema</tt><tt class="py-op">.</tt><tt class="py-name">items</tt><tt class="py-op">(</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+<a name="L54"></a><tt class="py-lineno"> 54</tt>  <tt class="py-line">            <tt class="py-name">colSpec</tt> <tt class="py-op">+=</tt> <tt class="py-name">str</tt><tt class="py-op">(</tt><tt class="py-name">colName</tt><tt class="py-op">)</tt> <tt class="py-op">+</tt> <tt class="py-string">' '</tt> <tt class="py-op">+</tt> <tt class="py-name">str</tt><tt class="py-op">(</tt><tt class="py-name">colVal</tt><tt class="py-op">)</tt> <tt class="py-op">+</tt> <tt class="py-string">','</tt> </tt>
+<a name="L55"></a><tt class="py-lineno"> 55</tt>  <tt class="py-line">        <tt class="py-name">cmd</tt> <tt class="py-op">=</tt> <tt class="py-string">'CREATE TABLE IF NOT EXISTS %s (%s) '</tt> <tt class="py-op">%</tt> <tt class="py-op">(</tt><tt class="py-name">tableName</tt><tt class="py-op">,</tt> <tt class="py-name">colSpec</tt><tt class="py-op">[</tt><tt class="py-op">:</tt><tt class="py-op">-</tt><tt class="py-number">1</tt><tt class="py-op">]</tt><tt class="py-op">)</tt> </tt>
+<a name="L56"></a><tt class="py-lineno"> 56</tt>  <tt class="py-line">        <tt class="py-name">cursor</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">connection</tt><tt class="py-op">.</tt><tt class="py-name">cursor</tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L57"></a><tt class="py-lineno"> 57</tt>  <tt class="py-line">        <tt class="py-keyword">try</tt><tt class="py-op">:</tt> </tt>
+<a name="L58"></a><tt class="py-lineno"> 58</tt>  <tt class="py-line">            <tt class="py-name">cursor</tt><tt class="py-op">.</tt><tt class="py-name">execute</tt><tt class="py-op">(</tt><tt class="py-name">cmd</tt><tt class="py-op">)</tt> </tt>
+<a name="L59"></a><tt class="py-lineno"> 59</tt>  <tt class="py-line">            <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">connection</tt><tt class="py-op">.</tt><tt class="py-name">commit</tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L60"></a><tt class="py-lineno"> 60</tt>  <tt class="py-line">        <tt class="py-keyword">finally</tt><tt class="py-op">:</tt> </tt>
+<a name="L61"></a><tt class="py-lineno"> 61</tt>  <tt class="py-line">            <tt class="py-name">cursor</tt><tt class="py-op">.</tt><tt id="link-2" class="py-name"><a title="json_to_relation.input_source.InMongoDB.close
+json_to_relation.input_source.InPipe.close
+json_to_relation.input_source.InString.close
+json_to_relation.input_source.InURI.close
+json_to_relation.mongodb.MongoDB.close
+json_to_relation.mysqldb.MySQLDB.close
+json_to_relation.output_disposition.OutputFile.close
+json_to_relation.output_disposition.OutputMySQLTable.close
+json_to_relation.output_disposition.OutputPipe.close" class="py-name" href="#" onclick="return doclink('link-2', 'close', 'link-1');">close</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L62"></a><tt class="py-lineno"> 62</tt>  <tt class="py-line"> </tt>
+<a name="MySQLDB.dropTable"></a><div id="MySQLDB.dropTable-def"><a name="L63"></a><tt class="py-lineno"> 63</tt> <a class="py-toggle" href="#" id="MySQLDB.dropTable-toggle" onclick="return toggle('MySQLDB.dropTable');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.mysqldb.MySQLDB-class.html#dropTable">dropTable</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">tableName</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="MySQLDB.dropTable-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="MySQLDB.dropTable-expanded"><a name="L64"></a><tt class="py-lineno"> 64</tt>  <tt class="py-line">        <tt class="py-docstring">'''</tt> </tt>
+<a name="L65"></a><tt class="py-lineno"> 65</tt>  <tt class="py-line"><tt class="py-docstring">        Delete table safely. No errors</tt> </tt>
+<a name="L66"></a><tt class="py-lineno"> 66</tt>  <tt class="py-line"><tt class="py-docstring">        @param tableName: name of table</tt> </tt>
+<a name="L67"></a><tt class="py-lineno"> 67</tt>  <tt class="py-line"><tt class="py-docstring">        @type tableName: String</tt> </tt>
+<a name="L68"></a><tt class="py-lineno"> 68</tt>  <tt class="py-line"><tt class="py-docstring">        '''</tt> </tt>
+<a name="L69"></a><tt class="py-lineno"> 69</tt>  <tt class="py-line">        <tt class="py-name">cursor</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">connection</tt><tt class="py-op">.</tt><tt class="py-name">cursor</tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L70"></a><tt class="py-lineno"> 70</tt>  <tt class="py-line">        <tt class="py-keyword">try</tt><tt class="py-op">:</tt> </tt>
+<a name="L71"></a><tt class="py-lineno"> 71</tt>  <tt class="py-line">            <tt class="py-name">cursor</tt><tt class="py-op">.</tt><tt class="py-name">execute</tt><tt class="py-op">(</tt><tt class="py-string">'DROP TABLE IF EXISTS %s'</tt> <tt class="py-op">%</tt> <tt class="py-name">tableName</tt><tt class="py-op">)</tt> </tt>
+<a name="L72"></a><tt class="py-lineno"> 72</tt>  <tt class="py-line">            <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">connection</tt><tt class="py-op">.</tt><tt class="py-name">commit</tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L73"></a><tt class="py-lineno"> 73</tt>  <tt class="py-line">        <tt class="py-keyword">finally</tt><tt class="py-op">:</tt> </tt>
+<a name="L74"></a><tt class="py-lineno"> 74</tt>  <tt class="py-line">            <tt class="py-name">cursor</tt><tt class="py-op">.</tt><tt id="link-3" class="py-name"><a title="json_to_relation.input_source.InMongoDB.close
+json_to_relation.input_source.InPipe.close
+json_to_relation.input_source.InString.close
+json_to_relation.input_source.InURI.close
+json_to_relation.mongodb.MongoDB.close
+json_to_relation.mysqldb.MySQLDB.close
+json_to_relation.output_disposition.OutputFile.close
+json_to_relation.output_disposition.OutputMySQLTable.close
+json_to_relation.output_disposition.OutputPipe.close" class="py-name" href="#" onclick="return doclink('link-3', 'close', 'link-1');">close</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L75"></a><tt class="py-lineno"> 75</tt>  <tt class="py-line"> </tt>
+<a name="MySQLDB.insert"></a><div id="MySQLDB.insert-def"><a name="L76"></a><tt class="py-lineno"> 76</tt> <a class="py-toggle" href="#" id="MySQLDB.insert-toggle" onclick="return toggle('MySQLDB.insert');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.mysqldb.MySQLDB-class.html#insert">insert</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">tblName</tt><tt class="py-op">,</tt> <tt class="py-param">colnameValueDict</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="MySQLDB.insert-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="MySQLDB.insert-expanded"><a name="L77"></a><tt class="py-lineno"> 77</tt>  <tt class="py-line">        <tt class="py-docstring">'''</tt> </tt>
+<a name="L78"></a><tt class="py-lineno"> 78</tt>  <tt class="py-line"><tt class="py-docstring">        Given a dictionary mapping column names to column values,</tt> </tt>
+<a name="L79"></a><tt class="py-lineno"> 79</tt>  <tt class="py-line"><tt class="py-docstring">        insert the data into a specified table</tt> </tt>
+<a name="L80"></a><tt class="py-lineno"> 80</tt>  <tt class="py-line"><tt class="py-docstring">        @param tblName: name of table to insert into</tt> </tt>
+<a name="L81"></a><tt class="py-lineno"> 81</tt>  <tt class="py-line"><tt class="py-docstring">        @type tblName: String</tt> </tt>
+<a name="L82"></a><tt class="py-lineno"> 82</tt>  <tt class="py-line"><tt class="py-docstring">        @param colnameValueDict: mapping of column name to column value</tt> </tt>
+<a name="L83"></a><tt class="py-lineno"> 83</tt>  <tt class="py-line"><tt class="py-docstring">        @type colnameValueDict: Dict&lt;String,Any&gt;</tt> </tt>
+<a name="L84"></a><tt class="py-lineno"> 84</tt>  <tt class="py-line"><tt class="py-docstring">        '''</tt> </tt>
+<a name="L85"></a><tt class="py-lineno"> 85</tt>  <tt class="py-line">        <tt class="py-name">colNames</tt><tt class="py-op">,</tt> <tt class="py-name">colValues</tt> <tt class="py-op">=</tt> <tt class="py-name">zip</tt><tt class="py-op">(</tt><tt class="py-op">*</tt><tt class="py-name">colnameValueDict</tt><tt class="py-op">.</tt><tt class="py-name">items</tt><tt class="py-op">(</tt><tt class="py-op">)</tt><tt class="py-op">)</tt> </tt>
+<a name="L86"></a><tt class="py-lineno"> 86</tt>  <tt class="py-line">        <tt class="py-name">cursor</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">connection</tt><tt class="py-op">.</tt><tt class="py-name">cursor</tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L87"></a><tt class="py-lineno"> 87</tt>  <tt class="py-line">        <tt class="py-keyword">try</tt><tt class="py-op">:</tt> </tt>
+<a name="L88"></a><tt class="py-lineno"> 88</tt>  <tt class="py-line">            <tt class="py-name">cmd</tt> <tt class="py-op">=</tt> <tt class="py-string">'INSERT INTO %s (%s) VALUES (%s)'</tt> <tt class="py-op">%</tt> <tt class="py-op">(</tt><tt class="py-name">str</tt><tt class="py-op">(</tt><tt class="py-name">tblName</tt><tt class="py-op">)</tt><tt class="py-op">,</tt> <tt class="py-string">','</tt><tt class="py-op">.</tt><tt class="py-name">join</tt><tt class="py-op">(</tt><tt class="py-name">colNames</tt><tt class="py-op">)</tt><tt class="py-op">,</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-4" class="py-name" targets="Method json_to_relation.mysqldb.MySQLDB.ensureSQLTyping()=json_to_relation.mysqldb.MySQLDB-class.html#ensureSQLTyping"><a title="json_to_relation.mysqldb.MySQLDB.ensureSQLTyping" class="py-name" href="#" onclick="return doclink('link-4', 'ensureSQLTyping', 'link-4');">ensureSQLTyping</a></tt><tt class="py-op">(</tt><tt class="py-name">colValues</tt><tt class="py-op">)</tt><tt class="py-op">)</tt> </tt>
+<a name="L89"></a><tt class="py-lineno"> 89</tt>  <tt class="py-line">            <tt class="py-name">cursor</tt><tt class="py-op">.</tt><tt class="py-name">execute</tt><tt class="py-op">(</tt><tt class="py-name">cmd</tt><tt class="py-op">)</tt> </tt>
+<a name="L90"></a><tt class="py-lineno"> 90</tt>  <tt class="py-line">            <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">connection</tt><tt class="py-op">.</tt><tt class="py-name">commit</tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L91"></a><tt class="py-lineno"> 91</tt>  <tt class="py-line">        <tt class="py-keyword">finally</tt><tt class="py-op">:</tt> </tt>
+<a name="L92"></a><tt class="py-lineno"> 92</tt>  <tt class="py-line">            <tt class="py-name">cursor</tt><tt class="py-op">.</tt><tt id="link-5" class="py-name"><a title="json_to_relation.input_source.InMongoDB.close
+json_to_relation.input_source.InPipe.close
+json_to_relation.input_source.InString.close
+json_to_relation.input_source.InURI.close
+json_to_relation.mongodb.MongoDB.close
+json_to_relation.mysqldb.MySQLDB.close
+json_to_relation.output_disposition.OutputFile.close
+json_to_relation.output_disposition.OutputMySQLTable.close
+json_to_relation.output_disposition.OutputPipe.close" class="py-name" href="#" onclick="return doclink('link-5', 'close', 'link-1');">close</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L93"></a><tt class="py-lineno"> 93</tt>  <tt class="py-line">         </tt>
+<a name="MySQLDB.ensureSQLTyping"></a><div id="MySQLDB.ensureSQLTyping-def"><a name="L94"></a><tt class="py-lineno"> 94</tt> <a class="py-toggle" href="#" id="MySQLDB.ensureSQLTyping-toggle" onclick="return toggle('MySQLDB.ensureSQLTyping');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.mysqldb.MySQLDB-class.html#ensureSQLTyping">ensureSQLTyping</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">colVals</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="MySQLDB.ensureSQLTyping-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="MySQLDB.ensureSQLTyping-expanded"><a name="L95"></a><tt class="py-lineno"> 95</tt>  <tt class="py-line">        <tt class="py-docstring">'''</tt> </tt>
+<a name="L96"></a><tt class="py-lineno"> 96</tt>  <tt class="py-line"><tt class="py-docstring">        Given a list of items, return a string that preserves</tt> </tt>
+<a name="L97"></a><tt class="py-lineno"> 97</tt>  <tt class="py-line"><tt class="py-docstring">        MySQL typing. Example: (10, 'My Poem') ---&gt; '10, "My Poem"'</tt> </tt>
+<a name="L98"></a><tt class="py-lineno"> 98</tt>  <tt class="py-line"><tt class="py-docstring">        Note that ','.join(map(str,myList)) won't work:</tt> </tt>
+<a name="L99"></a><tt class="py-lineno"> 99</tt>  <tt class="py-line"><tt class="py-docstring">        (10, 'My Poem') ---&gt; '10, My Poem'</tt> </tt>
+<a name="L100"></a><tt class="py-lineno">100</tt>  <tt class="py-line"><tt class="py-docstring">        @param colVals: list of column values destined for a MySQL table</tt> </tt>
+<a name="L101"></a><tt class="py-lineno">101</tt>  <tt class="py-line"><tt class="py-docstring">        @type colVals: &lt;any&gt;</tt> </tt>
+<a name="L102"></a><tt class="py-lineno">102</tt>  <tt class="py-line"><tt class="py-docstring">        '''</tt> </tt>
+<a name="L103"></a><tt class="py-lineno">103</tt>  <tt class="py-line">        <tt class="py-name">resList</tt> <tt class="py-op">=</tt> <tt class="py-op">[</tt><tt class="py-op">]</tt> </tt>
+<a name="L104"></a><tt class="py-lineno">104</tt>  <tt class="py-line">        <tt class="py-keyword">for</tt> <tt class="py-name">el</tt> <tt class="py-keyword">in</tt> <tt class="py-name">colVals</tt><tt class="py-op">:</tt> </tt>
+<a name="L105"></a><tt class="py-lineno">105</tt>  <tt class="py-line">            <tt class="py-keyword">if</tt> <tt class="py-name">isinstance</tt><tt class="py-op">(</tt><tt class="py-name">el</tt><tt class="py-op">,</tt> <tt class="py-name">basestring</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+<a name="L106"></a><tt class="py-lineno">106</tt>  <tt class="py-line">                <tt class="py-name">resList</tt><tt class="py-op">.</tt><tt class="py-name">append</tt><tt class="py-op">(</tt><tt class="py-string">'"%s"'</tt> <tt class="py-op">%</tt> <tt class="py-name">el</tt><tt class="py-op">)</tt> </tt>
+<a name="L107"></a><tt class="py-lineno">107</tt>  <tt class="py-line">            <tt class="py-keyword">else</tt><tt class="py-op">:</tt> </tt>
+<a name="L108"></a><tt class="py-lineno">108</tt>  <tt class="py-line">                <tt class="py-name">resList</tt><tt class="py-op">.</tt><tt class="py-name">append</tt><tt class="py-op">(</tt><tt class="py-name">el</tt><tt class="py-op">)</tt> </tt>
+<a name="L109"></a><tt class="py-lineno">109</tt>  <tt class="py-line">        <tt class="py-keyword">return</tt> <tt class="py-string">','</tt><tt class="py-op">.</tt><tt class="py-name">join</tt><tt class="py-op">(</tt><tt class="py-name">map</tt><tt class="py-op">(</tt><tt class="py-name">str</tt><tt class="py-op">,</tt><tt class="py-name">resList</tt><tt class="py-op">)</tt><tt class="py-op">)</tt>         </tt>
+</div><a name="L110"></a><tt class="py-lineno">110</tt>  <tt class="py-line">         </tt>
+<a name="MySQLDB.query"></a><div id="MySQLDB.query-def"><a name="L111"></a><tt class="py-lineno">111</tt> <a class="py-toggle" href="#" id="MySQLDB.query-toggle" onclick="return toggle('MySQLDB.query');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.mysqldb.MySQLDB-class.html#query">query</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">queryStr</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="MySQLDB.query-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="MySQLDB.query-expanded"><a name="L112"></a><tt class="py-lineno">112</tt>  <tt class="py-line">        <tt class="py-docstring">'''</tt> </tt>
+<a name="L113"></a><tt class="py-lineno">113</tt>  <tt class="py-line"><tt class="py-docstring">        Query iterator. Given a query, return one result for each</tt> </tt>
+<a name="L114"></a><tt class="py-lineno">114</tt>  <tt class="py-line"><tt class="py-docstring">        subsequent call.</tt> </tt>
+<a name="L115"></a><tt class="py-lineno">115</tt>  <tt class="py-line"><tt class="py-docstring">        @param queryStr: query</tt> </tt>
+<a name="L116"></a><tt class="py-lineno">116</tt>  <tt class="py-line"><tt class="py-docstring">        @type queryStr: String</tt> </tt>
+<a name="L117"></a><tt class="py-lineno">117</tt>  <tt class="py-line"><tt class="py-docstring">        '''</tt> </tt>
+<a name="L118"></a><tt class="py-lineno">118</tt>  <tt class="py-line">        <tt class="py-name">cursor</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">connection</tt><tt class="py-op">.</tt><tt class="py-name">cursor</tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L119"></a><tt class="py-lineno">119</tt>  <tt class="py-line">        <tt class="py-comment"># For if caller never exhausts the results by repeated calls:</tt> </tt>
+<a name="L120"></a><tt class="py-lineno">120</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">cursors</tt><tt class="py-op">.</tt><tt class="py-name">append</tt><tt class="py-op">(</tt><tt class="py-name">cursor</tt><tt class="py-op">)</tt> </tt>
+<a name="L121"></a><tt class="py-lineno">121</tt>  <tt class="py-line">        <tt class="py-name">cursor</tt><tt class="py-op">.</tt><tt class="py-name">execute</tt><tt class="py-op">(</tt><tt class="py-name">queryStr</tt><tt class="py-op">)</tt> </tt>
+<a name="L122"></a><tt class="py-lineno">122</tt>  <tt class="py-line">        <tt class="py-keyword">while</tt> <tt class="py-name">True</tt><tt class="py-op">:</tt> </tt>
+<a name="L123"></a><tt class="py-lineno">123</tt>  <tt class="py-line">            <tt class="py-name">nextRes</tt> <tt class="py-op">=</tt> <tt class="py-name">cursor</tt><tt class="py-op">.</tt><tt class="py-name">fetchone</tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L124"></a><tt class="py-lineno">124</tt>  <tt class="py-line">            <tt class="py-keyword">if</tt> <tt class="py-name">nextRes</tt> <tt class="py-keyword">is</tt> <tt class="py-name">None</tt><tt class="py-op">:</tt> </tt>
+<a name="L125"></a><tt class="py-lineno">125</tt>  <tt class="py-line">                <tt class="py-name">cursor</tt><tt class="py-op">.</tt><tt id="link-6" class="py-name"><a title="json_to_relation.input_source.InMongoDB.close
+json_to_relation.input_source.InPipe.close
+json_to_relation.input_source.InString.close
+json_to_relation.input_source.InURI.close
+json_to_relation.mongodb.MongoDB.close
+json_to_relation.mysqldb.MySQLDB.close
+json_to_relation.output_disposition.OutputFile.close
+json_to_relation.output_disposition.OutputMySQLTable.close
+json_to_relation.output_disposition.OutputPipe.close" class="py-name" href="#" onclick="return doclink('link-6', 'close', 'link-1');">close</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L126"></a><tt class="py-lineno">126</tt>  <tt class="py-line">                <tt class="py-keyword">return</tt> </tt>
+<a name="L127"></a><tt class="py-lineno">127</tt>  <tt class="py-line">            <tt class="py-keyword">yield</tt> <tt class="py-name">nextRes</tt> </tt>
+</div></div><a name="L128"></a><tt class="py-lineno">128</tt>  <tt class="py-line"> </tt><script type="text/javascript">
+<!--
+expandto(location.href);
+// -->
+</script>
+</pre>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+      <th class="navbar" width="100%"></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Thu Oct  3 14:52:44 2013
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

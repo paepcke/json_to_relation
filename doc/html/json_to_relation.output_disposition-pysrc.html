@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>json_to_relation.output_disposition</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+      <th class="navbar" width="100%"></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        Package&nbsp;json_to_relation ::
+        Module&nbsp;output_disposition
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="json_to_relation.output_disposition-pysrc.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<h1 class="epydoc">Source Code for <a href="json_to_relation.output_disposition-module.html">Module json_to_relation.output_disposition</a></h1>
+<pre class="py-src">
+<a name="L1"></a><tt class="py-lineno">  1</tt>  <tt class="py-line"><tt class="py-docstring">'''</tt> </tt>
+<a name="L2"></a><tt class="py-lineno">  2</tt>  <tt class="py-line"><tt class="py-docstring">Created on Sep 14, 2013</tt> </tt>
+<a name="L3"></a><tt class="py-lineno">  3</tt>  <tt class="py-line"><tt class="py-docstring"></tt> </tt>
+<a name="L4"></a><tt class="py-lineno">  4</tt>  <tt class="py-line"><tt class="py-docstring">@author: paepcke</tt> </tt>
+<a name="L5"></a><tt class="py-lineno">  5</tt>  <tt class="py-line"><tt class="py-docstring">'''</tt> </tt>
+<a name="L6"></a><tt class="py-lineno">  6</tt>  <tt class="py-line"><tt class="py-keyword">import</tt> <tt class="py-name">csv</tt> </tt>
+<a name="L7"></a><tt class="py-lineno">  7</tt>  <tt class="py-line"><tt class="py-keyword">import</tt> <tt class="py-name">sys</tt> </tt>
+<a name="L8"></a><tt class="py-lineno">  8</tt>  <tt class="py-line"> </tt>
+<a name="L9"></a><tt class="py-lineno">  9</tt>  <tt class="py-line"> </tt>
+<a name="OutputDisposition"></a><div id="OutputDisposition-def"><a name="L10"></a><tt class="py-lineno"> 10</tt> <a class="py-toggle" href="#" id="OutputDisposition-toggle" onclick="return toggle('OutputDisposition');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="json_to_relation.output_disposition.OutputDisposition-class.html">OutputDisposition</a><tt class="py-op">(</tt><tt class="py-base-class">object</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="OutputDisposition-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="OutputDisposition-expanded"><a name="L11"></a><tt class="py-lineno"> 11</tt>  <tt class="py-line">    <tt class="py-docstring">'''</tt> </tt>
+<a name="L12"></a><tt class="py-lineno"> 12</tt>  <tt class="py-line"><tt class="py-docstring">    Specifications for where completed relation rows</tt> </tt>
+<a name="L13"></a><tt class="py-lineno"> 13</tt>  <tt class="py-line"><tt class="py-docstring">    should be deposited, and in which format. Source</tt> </tt>
+<a name="L14"></a><tt class="py-lineno"> 14</tt>  <tt class="py-line"><tt class="py-docstring">    options are files, stdout, and a MySQL table.</tt> </tt>
+<a name="L15"></a><tt class="py-lineno"> 15</tt>  <tt class="py-line"><tt class="py-docstring">    </tt> </tt>
+<a name="L16"></a><tt class="py-lineno"> 16</tt>  <tt class="py-line"><tt class="py-docstring">    Also defined here are available output formats, of</tt> </tt>
+<a name="L17"></a><tt class="py-lineno"> 17</tt>  <tt class="py-line"><tt class="py-docstring">    which there are two: CSV, and SQL insert statements. </tt> </tt>
+<a name="L18"></a><tt class="py-lineno"> 18</tt>  <tt class="py-line"><tt class="py-docstring">    '''</tt> </tt>
+<a name="OutputDisposition.__init__"></a><div id="OutputDisposition.__init__-def"><a name="L19"></a><tt class="py-lineno"> 19</tt> <a class="py-toggle" href="#" id="OutputDisposition.__init__-toggle" onclick="return toggle('OutputDisposition.__init__');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.output_disposition.OutputDisposition-class.html#__init__">__init__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">outputDest</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="OutputDisposition.__init__-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="OutputDisposition.__init__-expanded"><a name="L20"></a><tt class="py-lineno"> 20</tt>  <tt class="py-line">        <tt class="py-docstring">'''</tt> </tt>
+<a name="L21"></a><tt class="py-lineno"> 21</tt>  <tt class="py-line"><tt class="py-docstring">        @param outputDest: os file descriptor for output</tt> </tt>
+<a name="L22"></a><tt class="py-lineno"> 22</tt>  <tt class="py-line"><tt class="py-docstring">        @type outputDest: File</tt> </tt>
+<a name="L23"></a><tt class="py-lineno"> 23</tt>  <tt class="py-line"><tt class="py-docstring">        '''</tt> </tt>
+<a name="L24"></a><tt class="py-lineno"> 24</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">outputDest</tt> <tt class="py-op">=</tt> <tt class="py-name">outputDest</tt> </tt>
+</div><a name="L25"></a><tt class="py-lineno"> 25</tt>  <tt class="py-line">     </tt>
+<a name="OutputDisposition.__enter__"></a><div id="OutputDisposition.__enter__-def"><a name="L26"></a><tt class="py-lineno"> 26</tt> <a class="py-toggle" href="#" id="OutputDisposition.__enter__-toggle" onclick="return toggle('OutputDisposition.__enter__');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.output_disposition.OutputDisposition-class.html#__enter__">__enter__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="OutputDisposition.__enter__-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="OutputDisposition.__enter__-expanded"><a name="L27"></a><tt class="py-lineno"> 27</tt>  <tt class="py-line">        <tt class="py-keyword">return</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">outputDest</tt> </tt>
+</div><a name="L28"></a><tt class="py-lineno"> 28</tt>  <tt class="py-line">         </tt>
+<a name="OutputDisposition.__exit__"></a><div id="OutputDisposition.__exit__-def"><a name="L29"></a><tt class="py-lineno"> 29</tt> <a class="py-toggle" href="#" id="OutputDisposition.__exit__-toggle" onclick="return toggle('OutputDisposition.__exit__');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.output_disposition.OutputDisposition-class.html#__exit__">__exit__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt><tt class="py-param">excType</tt><tt class="py-op">,</tt> <tt class="py-param">excValue</tt><tt class="py-op">,</tt> <tt class="py-param">excTraceback</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="OutputDisposition.__exit__-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="OutputDisposition.__exit__-expanded"><a name="L30"></a><tt class="py-lineno"> 30</tt>  <tt class="py-line">        <tt class="py-keyword">try</tt><tt class="py-op">:</tt> </tt>
+<a name="L31"></a><tt class="py-lineno"> 31</tt>  <tt class="py-line">            <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">outputDest</tt><tt class="py-op">.</tt><tt id="link-0" class="py-name" targets="Method json_to_relation.input_source.InMongoDB.close()=json_to_relation.input_source.InMongoDB-class.html#close,Method json_to_relation.input_source.InPipe.close()=json_to_relation.input_source.InPipe-class.html#close,Method json_to_relation.input_source.InString.close()=json_to_relation.input_source.InString-class.html#close,Method json_to_relation.input_source.InURI.close()=json_to_relation.input_source.InURI-class.html#close,Method json_to_relation.mongodb.MongoDB.close()=json_to_relation.mongodb.MongoDB-class.html#close,Method json_to_relation.mysqldb.MySQLDB.close()=json_to_relation.mysqldb.MySQLDB-class.html#close,Method json_to_relation.output_disposition.OutputFile.close()=json_to_relation.output_disposition.OutputFile-class.html#close,Method json_to_relation.output_disposition.OutputMySQLTable.close()=json_to_relation.output_disposition.OutputMySQLTable-class.html#close,Method json_to_relation.output_disposition.OutputPipe.close()=json_to_relation.output_disposition.OutputPipe-class.html#close"><a title="json_to_relation.input_source.InMongoDB.close
+json_to_relation.input_source.InPipe.close
+json_to_relation.input_source.InString.close
+json_to_relation.input_source.InURI.close
+json_to_relation.mongodb.MongoDB.close
+json_to_relation.mysqldb.MySQLDB.close
+json_to_relation.output_disposition.OutputFile.close
+json_to_relation.output_disposition.OutputMySQLTable.close
+json_to_relation.output_disposition.OutputPipe.close" class="py-name" href="#" onclick="return doclink('link-0', 'close', 'link-0');">close</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L32"></a><tt class="py-lineno"> 32</tt>  <tt class="py-line">        <tt class="py-keyword">except</tt><tt class="py-op">:</tt> </tt>
+<a name="L33"></a><tt class="py-lineno"> 33</tt>  <tt class="py-line">            <tt class="py-comment"># If the conversion itself when fine, then</tt> </tt>
+<a name="L34"></a><tt class="py-lineno"> 34</tt>  <tt class="py-line">            <tt class="py-comment"># raise this exception from the closing attempt.</tt> </tt>
+<a name="L35"></a><tt class="py-lineno"> 35</tt>  <tt class="py-line">            <tt class="py-comment"># But if the conversion failed, then have the </tt> </tt>
+<a name="L36"></a><tt class="py-lineno"> 36</tt>  <tt class="py-line">            <tt class="py-comment"># system re-raise that earlier exception:</tt> </tt>
+<a name="L37"></a><tt class="py-lineno"> 37</tt>  <tt class="py-line">            <tt class="py-keyword">if</tt> <tt class="py-name">excValue</tt> <tt class="py-keyword">is</tt> <tt class="py-name">None</tt><tt class="py-op">:</tt> </tt>
+<a name="L38"></a><tt class="py-lineno"> 38</tt>  <tt class="py-line">                <tt class="py-keyword">raise</tt> <tt class="py-name">IOError</tt><tt class="py-op">(</tt><tt class="py-string">"Could not close the output of the conversion: %s"</tt> <tt class="py-op">%</tt> <tt class="py-name">sys</tt><tt class="py-op">.</tt><tt class="py-name">exc_info</tt><tt class="py-op">(</tt><tt class="py-op">)</tt><tt class="py-op">[</tt><tt class="py-number">0</tt><tt class="py-op">]</tt><tt class="py-op">)</tt> </tt>
+<a name="L39"></a><tt class="py-lineno"> 39</tt>  <tt class="py-line"> </tt>
+<a name="L40"></a><tt class="py-lineno"> 40</tt>  <tt class="py-line">        <tt class="py-comment"># Return False to indicate that if the conversion</tt> </tt>
+<a name="L41"></a><tt class="py-lineno"> 41</tt>  <tt class="py-line">        <tt class="py-comment"># threw an error, the exception should now be re-raised.</tt> </tt>
+<a name="L42"></a><tt class="py-lineno"> 42</tt>  <tt class="py-line">        <tt class="py-comment"># If the conversion worked fine, then this return value</tt> </tt>
+<a name="L43"></a><tt class="py-lineno"> 43</tt>  <tt class="py-line">        <tt class="py-comment"># is ignored.</tt> </tt>
+<a name="L44"></a><tt class="py-lineno"> 44</tt>  <tt class="py-line">        <tt class="py-keyword">return</tt> <tt class="py-name">False</tt> </tt>
+</div><a name="L45"></a><tt class="py-lineno"> 45</tt>  <tt class="py-line"> </tt>
+<a name="L46"></a><tt class="py-lineno"> 46</tt>  <tt class="py-line">    <tt class="py-comment">#--------------------- Available Output Formats</tt> </tt>
+<a name="L47"></a><tt class="py-lineno"> 47</tt>  <tt class="py-line">       </tt>
+<a name="OutputDisposition.OutputFormat"></a><div id="OutputDisposition.OutputFormat-def"><a name="L48"></a><tt class="py-lineno"> 48</tt> <a class="py-toggle" href="#" id="OutputDisposition.OutputFormat-toggle" onclick="return toggle('OutputDisposition.OutputFormat');">-</a><tt class="py-line">    <tt class="py-keyword">class</tt> <a class="py-def-name" href="json_to_relation.output_disposition.OutputDisposition.OutputFormat-class.html">OutputFormat</a><tt class="py-op">(</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="OutputDisposition.OutputFormat-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="OutputDisposition.OutputFormat-expanded"><a name="L49"></a><tt class="py-lineno"> 49</tt>  <tt class="py-line">        <tt id="link-1" class="py-name" targets="Variable json_to_relation.output_disposition.OutputDisposition.OutputFormat.CSV=json_to_relation.output_disposition.OutputDisposition.OutputFormat-class.html#CSV"><a title="json_to_relation.output_disposition.OutputDisposition.OutputFormat.CSV" class="py-name" href="#" onclick="return doclink('link-1', 'CSV', 'link-1');">CSV</a></tt> <tt class="py-op">=</tt> <tt class="py-number">0</tt> </tt>
+<a name="L50"></a><tt class="py-lineno"> 50</tt>  <tt class="py-line">        <tt id="link-2" class="py-name" targets="Variable json_to_relation.output_disposition.OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS=json_to_relation.output_disposition.OutputDisposition.OutputFormat-class.html#SQL_INSERT_STATEMENTS"><a title="json_to_relation.output_disposition.OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS" class="py-name" href="#" onclick="return doclink('link-2', 'SQL_INSERT_STATEMENTS', 'link-2');">SQL_INSERT_STATEMENTS</a></tt> <tt class="py-op">=</tt> <tt class="py-number">1</tt> </tt>
+</div></div><a name="L51"></a><tt class="py-lineno"> 51</tt>  <tt class="py-line">             </tt>
+<a name="L52"></a><tt class="py-lineno"> 52</tt>  <tt class="py-line"><tt class="py-comment">#--------------------- Available Output Destination Options:  </tt> </tt>
+<a name="L53"></a><tt class="py-lineno"> 53</tt>  <tt class="py-line">         </tt>
+<a name="OutputPipe"></a><div id="OutputPipe-def"><a name="L54"></a><tt class="py-lineno"> 54</tt> <a class="py-toggle" href="#" id="OutputPipe-toggle" onclick="return toggle('OutputPipe');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="json_to_relation.output_disposition.OutputPipe-class.html">OutputPipe</a><tt class="py-op">(</tt><tt class="py-base-class">OutputDisposition</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="OutputPipe-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="OutputPipe-expanded"><a name="OutputPipe.__init__"></a><div id="OutputPipe.__init__-def"><a name="L55"></a><tt class="py-lineno"> 55</tt> <a class="py-toggle" href="#" id="OutputPipe.__init__-toggle" onclick="return toggle('OutputPipe.__init__');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.output_disposition.OutputPipe-class.html#__init__">__init__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="OutputPipe.__init__-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="OutputPipe.__init__-expanded"><a name="L56"></a><tt class="py-lineno"> 56</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">fileHandle</tt> <tt class="py-op">=</tt> <tt class="py-name">sys</tt><tt class="py-op">.</tt><tt class="py-name">stdout</tt> </tt>
+<a name="L57"></a><tt class="py-lineno"> 57</tt>  <tt class="py-line">        <tt class="py-comment"># Make file name accessible as property just like </tt> </tt>
+<a name="L58"></a><tt class="py-lineno"> 58</tt>  <tt class="py-line">        <tt class="py-comment"># Python file objects do:</tt> </tt>
+<a name="L59"></a><tt class="py-lineno"> 59</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">name</tt> <tt class="py-op">=</tt> <tt class="py-string">"&lt;stdout&gt;"</tt>  <tt class="py-comment"># @UnusedVariable</tt> </tt>
+<a name="L60"></a><tt class="py-lineno"> 60</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">csvWriter</tt> <tt class="py-op">=</tt> <tt class="py-name">csv</tt><tt class="py-op">.</tt><tt class="py-name">writer</tt><tt class="py-op">(</tt><tt class="py-name">sys</tt><tt class="py-op">.</tt><tt class="py-name">stdout</tt><tt class="py-op">,</tt> <tt class="py-name">dialect</tt><tt class="py-op">=</tt><tt class="py-string">'excel'</tt><tt class="py-op">,</tt> <tt class="py-name">delimiter</tt><tt class="py-op">=</tt><tt class="py-string">','</tt><tt class="py-op">,</tt> <tt class="py-name">quotechar</tt><tt class="py-op">=</tt><tt class="py-string">'"'</tt><tt class="py-op">,</tt> <tt class="py-name">quoting</tt><tt class="py-op">=</tt><tt class="py-name">csv</tt><tt class="py-op">.</tt><tt class="py-name">QUOTE_MINIMAL</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L61"></a><tt class="py-lineno"> 61</tt>  <tt class="py-line">         </tt>
+<a name="OutputPipe.close"></a><div id="OutputPipe.close-def"><a name="L62"></a><tt class="py-lineno"> 62</tt> <a class="py-toggle" href="#" id="OutputPipe.close-toggle" onclick="return toggle('OutputPipe.close');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.output_disposition.OutputPipe-class.html#close">close</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="OutputPipe.close-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="OutputPipe.close-expanded"><a name="L63"></a><tt class="py-lineno"> 63</tt>  <tt class="py-line">        <tt class="py-keyword">pass</tt> <tt class="py-comment"># don't close stdout</tt> </tt>
+</div><a name="L64"></a><tt class="py-lineno"> 64</tt>  <tt class="py-line">     </tt>
+<a name="OutputPipe.__str__"></a><div id="OutputPipe.__str__-def"><a name="L65"></a><tt class="py-lineno"> 65</tt> <a class="py-toggle" href="#" id="OutputPipe.__str__-toggle" onclick="return toggle('OutputPipe.__str__');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.output_disposition.OutputPipe-class.html#__str__">__str__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="OutputPipe.__str__-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="OutputPipe.__str__-expanded"><a name="L66"></a><tt class="py-lineno"> 66</tt>  <tt class="py-line">        <tt class="py-keyword">return</tt> <tt class="py-string">"&lt;OutputPipe:&lt;stdout&gt;"</tt> </tt>
+</div><a name="L67"></a><tt class="py-lineno"> 67</tt>  <tt class="py-line"> </tt>
+<a name="OutputPipe.writerow"></a><div id="OutputPipe.writerow-def"><a name="L68"></a><tt class="py-lineno"> 68</tt> <a class="py-toggle" href="#" id="OutputPipe.writerow-toggle" onclick="return toggle('OutputPipe.writerow');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.output_disposition.OutputPipe-class.html#writerow">writerow</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">colElementArray</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="OutputPipe.writerow-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="OutputPipe.writerow-expanded"><a name="L69"></a><tt class="py-lineno"> 69</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">csvWriter</tt><tt class="py-op">.</tt><tt id="link-3" class="py-name" targets="Method json_to_relation.output_disposition.OutputFile.writerow()=json_to_relation.output_disposition.OutputFile-class.html#writerow,Method json_to_relation.output_disposition.OutputMySQLTable.writerow()=json_to_relation.output_disposition.OutputMySQLTable-class.html#writerow,Method json_to_relation.output_disposition.OutputPipe.writerow()=json_to_relation.output_disposition.OutputPipe-class.html#writerow"><a title="json_to_relation.output_disposition.OutputFile.writerow
+json_to_relation.output_disposition.OutputMySQLTable.writerow
+json_to_relation.output_disposition.OutputPipe.writerow" class="py-name" href="#" onclick="return doclink('link-3', 'writerow', 'link-3');">writerow</a></tt><tt class="py-op">(</tt><tt class="py-name">colElementArray</tt><tt class="py-op">)</tt> </tt>
+</div></div><a name="L70"></a><tt class="py-lineno"> 70</tt>  <tt class="py-line"> </tt>
+<a name="OutputFile"></a><div id="OutputFile-def"><a name="L71"></a><tt class="py-lineno"> 71</tt> <a class="py-toggle" href="#" id="OutputFile-toggle" onclick="return toggle('OutputFile');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="json_to_relation.output_disposition.OutputFile-class.html">OutputFile</a><tt class="py-op">(</tt><tt class="py-base-class">OutputDisposition</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="OutputFile-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="OutputFile-expanded"><a name="OutputFile.__init__"></a><div id="OutputFile.__init__-def"><a name="L72"></a><tt class="py-lineno"> 72</tt> <a class="py-toggle" href="#" id="OutputFile.__init__-toggle" onclick="return toggle('OutputFile.__init__');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.output_disposition.OutputFile-class.html#__init__">__init__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">fileName</tt><tt class="py-op">,</tt> <tt class="py-param">options</tt><tt class="py-op">=</tt><tt class="py-string">'ab'</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="OutputFile.__init__-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="OutputFile.__init__-expanded"><a name="L73"></a><tt class="py-lineno"> 73</tt>  <tt class="py-line">        <tt class="py-comment"># Make file name accessible as property just like </tt> </tt>
+<a name="L74"></a><tt class="py-lineno"> 74</tt>  <tt class="py-line">        <tt class="py-comment"># Python file objects do:</tt> </tt>
+<a name="L75"></a><tt class="py-lineno"> 75</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">name</tt> <tt class="py-op">=</tt> <tt class="py-name">fileName</tt>  <tt class="py-comment"># @UnusedVariable</tt> </tt>
+<a name="L76"></a><tt class="py-lineno"> 76</tt>  <tt class="py-line">        <tt class="py-comment"># Open the output file as 'append' and 'binary'</tt> </tt>
+<a name="L77"></a><tt class="py-lineno"> 77</tt>  <tt class="py-line">        <tt class="py-comment"># The latter is needed for Windows.</tt> </tt>
+<a name="L78"></a><tt class="py-lineno"> 78</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">fileHandle</tt> <tt class="py-op">=</tt> <tt class="py-name">open</tt><tt class="py-op">(</tt><tt class="py-name">fileName</tt><tt class="py-op">,</tt> <tt class="py-name">options</tt><tt class="py-op">)</tt> </tt>
+<a name="L79"></a><tt class="py-lineno"> 79</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">csvWriter</tt> <tt class="py-op">=</tt> <tt class="py-name">csv</tt><tt class="py-op">.</tt><tt class="py-name">writer</tt><tt class="py-op">(</tt><tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">fileHandle</tt><tt class="py-op">,</tt> <tt class="py-name">dialect</tt><tt class="py-op">=</tt><tt class="py-string">'excel'</tt><tt class="py-op">,</tt> <tt class="py-name">delimiter</tt><tt class="py-op">=</tt><tt class="py-string">','</tt><tt class="py-op">,</tt> <tt class="py-name">quotechar</tt><tt class="py-op">=</tt><tt class="py-string">'"'</tt><tt class="py-op">,</tt> <tt class="py-name">quoting</tt><tt class="py-op">=</tt><tt class="py-name">csv</tt><tt class="py-op">.</tt><tt class="py-name">QUOTE_MINIMAL</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L80"></a><tt class="py-lineno"> 80</tt>  <tt class="py-line">         </tt>
+<a name="OutputFile.close"></a><div id="OutputFile.close-def"><a name="L81"></a><tt class="py-lineno"> 81</tt> <a class="py-toggle" href="#" id="OutputFile.close-toggle" onclick="return toggle('OutputFile.close');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.output_disposition.OutputFile-class.html#close">close</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="OutputFile.close-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="OutputFile.close-expanded"><a name="L82"></a><tt class="py-lineno"> 82</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">fileHandle</tt><tt class="py-op">.</tt><tt id="link-4" class="py-name"><a title="json_to_relation.input_source.InMongoDB.close
+json_to_relation.input_source.InPipe.close
+json_to_relation.input_source.InString.close
+json_to_relation.input_source.InURI.close
+json_to_relation.mongodb.MongoDB.close
+json_to_relation.mysqldb.MySQLDB.close
+json_to_relation.output_disposition.OutputFile.close
+json_to_relation.output_disposition.OutputMySQLTable.close
+json_to_relation.output_disposition.OutputPipe.close" class="py-name" href="#" onclick="return doclink('link-4', 'close', 'link-0');">close</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L83"></a><tt class="py-lineno"> 83</tt>  <tt class="py-line"> </tt>
+<a name="OutputFile.__str__"></a><div id="OutputFile.__str__-def"><a name="L84"></a><tt class="py-lineno"> 84</tt> <a class="py-toggle" href="#" id="OutputFile.__str__-toggle" onclick="return toggle('OutputFile.__str__');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.output_disposition.OutputFile-class.html#__str__">__str__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="OutputFile.__str__-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="OutputFile.__str__-expanded"><a name="L85"></a><tt class="py-lineno"> 85</tt>  <tt class="py-line">        <tt class="py-keyword">return</tt> <tt class="py-string">"&lt;OutputFile:%s&gt;"</tt> <tt class="py-op">%</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">name</tt> </tt>
+</div><a name="L86"></a><tt class="py-lineno"> 86</tt>  <tt class="py-line"> </tt>
+<a name="OutputFile.writerow"></a><div id="OutputFile.writerow-def"><a name="L87"></a><tt class="py-lineno"> 87</tt> <a class="py-toggle" href="#" id="OutputFile.writerow-toggle" onclick="return toggle('OutputFile.writerow');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.output_disposition.OutputFile-class.html#writerow">writerow</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">colElementArray</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="OutputFile.writerow-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="OutputFile.writerow-expanded"><a name="L88"></a><tt class="py-lineno"> 88</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">csvWriter</tt><tt class="py-op">.</tt><tt id="link-5" class="py-name"><a title="json_to_relation.output_disposition.OutputFile.writerow
+json_to_relation.output_disposition.OutputMySQLTable.writerow
+json_to_relation.output_disposition.OutputPipe.writerow" class="py-name" href="#" onclick="return doclink('link-5', 'writerow', 'link-3');">writerow</a></tt><tt class="py-op">(</tt><tt class="py-name">colElementArray</tt><tt class="py-op">)</tt> </tt>
+</div></div><a name="L89"></a><tt class="py-lineno"> 89</tt>  <tt class="py-line"> </tt>
+<a name="OutputMySQLTable"></a><div id="OutputMySQLTable-def"><a name="L90"></a><tt class="py-lineno"> 90</tt> <a class="py-toggle" href="#" id="OutputMySQLTable-toggle" onclick="return toggle('OutputMySQLTable');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="json_to_relation.output_disposition.OutputMySQLTable-class.html">OutputMySQLTable</a><tt class="py-op">(</tt><tt class="py-base-class">OutputDisposition</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="OutputMySQLTable-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="OutputMySQLTable-expanded"><a name="OutputMySQLTable.__init__"></a><div id="OutputMySQLTable.__init__-def"><a name="L91"></a><tt class="py-lineno"> 91</tt> <a class="py-toggle" href="#" id="OutputMySQLTable.__init__-toggle" onclick="return toggle('OutputMySQLTable.__init__');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.output_disposition.OutputMySQLTable-class.html#__init__">__init__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">server</tt><tt class="py-op">,</tt> <tt class="py-param">pwd</tt><tt class="py-op">,</tt> <tt class="py-param">dbName</tt><tt class="py-op">,</tt> <tt class="py-param">tbleName</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="OutputMySQLTable.__init__-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="OutputMySQLTable.__init__-expanded"><a name="L92"></a><tt class="py-lineno"> 92</tt>  <tt class="py-line">        <tt class="py-keyword">raise</tt> <tt class="py-name">NotImplementedError</tt><tt class="py-op">(</tt><tt class="py-string">"MySQL connector not yet implemented"</tt><tt class="py-op">)</tt> </tt>
+<a name="L93"></a><tt class="py-lineno"> 93</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">name</tt> <tt class="py-op">=</tt> <tt class="py-string">"&lt;MySQL:%s:%s:%s&gt;"</tt> <tt class="py-op">%</tt> <tt class="py-op">(</tt><tt class="py-name">server</tt><tt class="py-op">,</tt><tt class="py-name">dbName</tt><tt class="py-op">,</tt><tt class="py-name">tbleName</tt><tt class="py-op">)</tt> </tt>
+<a name="L94"></a><tt class="py-lineno"> 94</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">server</tt> <tt class="py-op">=</tt> <tt class="py-name">server</tt> </tt>
+<a name="L95"></a><tt class="py-lineno"> 95</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">pwd</tt> <tt class="py-op">=</tt> <tt class="py-name">pwd</tt> </tt>
+<a name="L96"></a><tt class="py-lineno"> 96</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">dbName</tt> <tt class="py-op">=</tt> <tt class="py-name">dbName</tt> </tt>
+<a name="L97"></a><tt class="py-lineno"> 97</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">tbleName</tt> <tt class="py-op">=</tt> <tt class="py-name">tbleName</tt> </tt>
+<a name="L98"></a><tt class="py-lineno"> 98</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">fileHandle</tt> <tt class="py-op">=</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt id="link-6" class="py-name" targets="Method json_to_relation.input_source.InMongoDB.connect()=json_to_relation.input_source.InMongoDB-class.html#connect,Method json_to_relation.output_disposition.OutputMySQLTable.connect()=json_to_relation.output_disposition.OutputMySQLTable-class.html#connect"><a title="json_to_relation.input_source.InMongoDB.connect
+json_to_relation.output_disposition.OutputMySQLTable.connect" class="py-name" href="#" onclick="return doclink('link-6', 'connect', 'link-6');">connect</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L99"></a><tt class="py-lineno"> 99</tt>  <tt class="py-line">         </tt>
+<a name="OutputMySQLTable.connect"></a><div id="OutputMySQLTable.connect-def"><a name="L100"></a><tt class="py-lineno">100</tt> <a class="py-toggle" href="#" id="OutputMySQLTable.connect-toggle" onclick="return toggle('OutputMySQLTable.connect');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.output_disposition.OutputMySQLTable-class.html#connect">connect</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="OutputMySQLTable.connect-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="OutputMySQLTable.connect-expanded"><a name="L101"></a><tt class="py-lineno">101</tt>  <tt class="py-line">        <tt class="py-keyword">raise</tt> <tt class="py-name">NotImplementedError</tt><tt class="py-op">(</tt><tt class="py-string">"MySQL connector not yet implemented"</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L102"></a><tt class="py-lineno">102</tt>  <tt class="py-line">     </tt>
+<a name="OutputMySQLTable.close"></a><div id="OutputMySQLTable.close-def"><a name="L103"></a><tt class="py-lineno">103</tt> <a class="py-toggle" href="#" id="OutputMySQLTable.close-toggle" onclick="return toggle('OutputMySQLTable.close');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.output_disposition.OutputMySQLTable-class.html#close">close</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="OutputMySQLTable.close-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="OutputMySQLTable.close-expanded"><a name="L104"></a><tt class="py-lineno">104</tt>  <tt class="py-line">        <tt class="py-keyword">raise</tt> <tt class="py-name">NotImplementedError</tt><tt class="py-op">(</tt><tt class="py-string">"MySQL connector not yet implemented"</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L105"></a><tt class="py-lineno">105</tt>  <tt class="py-line"> </tt>
+<a name="OutputMySQLTable.__str__"></a><div id="OutputMySQLTable.__str__-def"><a name="L106"></a><tt class="py-lineno">106</tt> <a class="py-toggle" href="#" id="OutputMySQLTable.__str__-toggle" onclick="return toggle('OutputMySQLTable.__str__');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.output_disposition.OutputMySQLTable-class.html#__str__">__str__</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="OutputMySQLTable.__str__-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="OutputMySQLTable.__str__-expanded"><a name="L107"></a><tt class="py-lineno">107</tt>  <tt class="py-line">        <tt class="py-keyword">return</tt> <tt class="py-string">"&lt;OutputMySQLTable--%s&gt;"</tt> <tt class="py-op">%</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">name</tt> </tt>
+</div><a name="L108"></a><tt class="py-lineno">108</tt>  <tt class="py-line"> </tt>
+<a name="OutputMySQLTable.writerow"></a><div id="OutputMySQLTable.writerow-def"><a name="L109"></a><tt class="py-lineno">109</tt> <a class="py-toggle" href="#" id="OutputMySQLTable.writerow-toggle" onclick="return toggle('OutputMySQLTable.writerow');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.output_disposition.OutputMySQLTable-class.html#writerow">writerow</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">fd</tt><tt class="py-op">,</tt> <tt class="py-param">colElementArray</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="OutputMySQLTable.writerow-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="OutputMySQLTable.writerow-expanded"><a name="L110"></a><tt class="py-lineno">110</tt>  <tt class="py-line">        <tt class="py-keyword">raise</tt> <tt class="py-name">NotImplementedError</tt><tt class="py-op">(</tt><tt class="py-string">"MySQL connector not yet implemented"</tt><tt class="py-op">)</tt> </tt>
+</div></div><a name="L111"></a><tt class="py-lineno">111</tt>  <tt class="py-line"> </tt><script type="text/javascript">
+<!--
+expandto(location.href);
+// -->
+</script>
+</pre>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+      <th class="navbar" width="100%"></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Thu Oct  3 14:52:44 2013
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

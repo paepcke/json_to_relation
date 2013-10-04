@@ -10,7 +10,7 @@ import pymysql
 class MySQLDB(object):
     '''
     Shallow interface to MySQL databases. Some niceties nonetheless.
-    The query() method is an iterator. So:
+    The query() method is an iterator. So::
         for result in mySqlObj.query('SELECT * FROM foo'):
             print result
     '''
