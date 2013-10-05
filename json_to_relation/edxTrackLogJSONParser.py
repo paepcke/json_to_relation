@@ -22,6 +22,17 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @type jsonToRelationConverter: JSONToRelation
         '''
         super(EdXTrackLogJSONParser, self).__init__(jsonToRelationConverter)
+        self.jsonToRelationConverter.schemaHints['agent'] = ColDataType.TEXT
+        self.jsonToRelationConverter.schemaHints['event'] = ColDataType.TEXT
+        self.jsonToRelationConverter.schemaHints['event_source'] = ColDataType.TINYTEXT
+        self.jsonToRelationConverter.schemaHints['event_type'] = ColDataType.TEXT
+        self.jsonToRelationConverter.schemaHints['ip'] = ColDataType.TINYTEXT
+        self.jsonToRelationConverter.schemaHints['page'] = ColDataType.TEXT
+        self.jsonToRelationConverter.schemaHints['session'] = ColDataType.TEXT
+        self.jsonToRelationConverter.schemaHints['time'] = ColDataType.DATETIME
+        self.jsonToRelationConverter.schemaHints['username'] = ColDataType.TEXT
+        
+        self.resultDict = {}
 
     def processOneJSONObject(self, jsonStr, row):
         '''
@@ -83,39 +94,53 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 		@return: the filled-in row
 		@rtype: [<any>]
         '''
-        try:
-            record = json.loads(jsonStr)
-            for attribute, value in record.iteritems():
-                # Find cases in which the 'event' value is a *string* that
-                # contains a JSON expression, as opposed to a JSON sub-object,
-                # which manifests as a Python dict:
-                if (attribute == 'event' and value and not isinstance(value, dict)):
-                    # hack to load the event value when it is encoded as a JSON string:
-                    nestedValue = json.loads(value)
-                    record['fullCourseRef'] = nestedValue['GET']['next'][0]
-            # Dig the course ID out of JSON records that happen to be user logins: 
-            (fullCourseName, course_id) = self.get_course_id(record)
-            if course_id is not None:
-                record['course_id'] = course_id
-            if fullCourseName is not None:
-                record['fullCourseName'] = fullCourseName
-        except Exception as e:
-            # TODO: handle different types of exceptions
-            logging.error("While importing EdX track log event: " + `e`)
-
-        if record is not None:
-            for jsonFldName in record.keys():
-                fldValue = record[jsonFldName]
-                # Check whether caller gave a type hint for this column:
-                try:
-                    colDataType = self.jsonToRelationConverter.schemaHints[jsonFldName]
-                except KeyError:
-                    colDataType = ColDataType.sqlTypeFromValue(fldValue)
-                
-                self.jsonToRelationConverter.ensureColExistence(jsonFldName, colDataType)
-                self.setValInRow(row, jsonFldName, fldValue)
-                    
-        return row
+        # Turn top level JSON object to dict:
+        record = json.loads(jsonStr)
+        # Dispense with the fields common to all events, except event,
+        # which is a nested JSON string. Results will be 
+        # in self.resultDict:
+        self.handleCommonFields(record)
+        
+        
+        
+    def handleCommonFields(self, record):
+        for fldName in ['agent', 'event_source', 'event_type', 'ip', 'session', 'username']:
+            self.resultDict[fldName] = record[fldName]
+        
+        
+#         try:
+#             record = json.loads(jsonStr)
+#             for attribute, value in record.iteritems():
+#                  Find cases in which the 'event' value is a *string* that
+#                  contains a JSON expression, as opposed to a JSON sub-object,
+#                  which manifests as a Python dict:
+#                 if (attribute == 'event' and value and not isinstance(value, dict)):
+#                      hack to load the event value when it is encoded as a JSON string:
+#                     nestedValue = json.loads(value)
+#                     record['fullCourseRef'] = nestedValue['GET']['next'][0]
+#              Dig the course ID out of JSON records that happen to be user logins: 
+#             (fullCourseName, course_id) = self.get_course_id(record)
+#             if course_id is not None:
+#                 record['course_id'] = course_id
+#             if fullCourseName is not None:
+#                 record['fullCourseName'] = fullCourseName
+#         except Exception as e:
+#              TODO: handle different types of exceptions
+#             logging.error("While importing EdX track log event: " + `e`)
+# 
+#         if record is not None:
+#             for jsonFldName in record.keys():
+#                 fldValue = record[jsonFldName]
+#                  Check whether caller gave a type hint for this column:
+#                 try:
+#                     colDataType = self.jsonToRelationConverter.schemaHints[jsonFldName]
+#                 except KeyError:
+#                     colDataType = ColDataType.sqlTypeFromValue(fldValue)
+#                 
+#                 self.jsonToRelationConverter.ensureColExistence(jsonFldName, colDataType)
+#                 self.setValInRow(row, jsonFldName, fldValue)
+#                     
+#         return row
     
     def get_course_id(self, event):
         '''
