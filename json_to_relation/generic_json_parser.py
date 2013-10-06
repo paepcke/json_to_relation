@@ -5,6 +5,7 @@ Created on Sep 23, 2013
 '''
 import StringIO
 import ijson
+import logging
 import re
 
 from col_data_type import ColDataType
@@ -21,16 +22,21 @@ class GenericJSONParser(object):
     # groups: 'item' and 'name'.
     REMOVE_ITEM_FROM_STRING_PATTERN = re.compile(r'(item)\.([^.]*$)')
 
-    def __init__(self, jsonToRelationConverter):
+    def __init__(self, jsonToRelationConverter, logfileID=''):
         '''
-        
         @param jsonToRelationConverter: JSONToRelation instance
         @type jsonToRelationConverter: JSONToRelation
-        '''
-        '''
-        Constructor
+        @param logfileID: an identfier of the log file being processed. Used 
+               to build error/warning msgs that cite a file and line number in
+               their text
+        @type jsonToRelationConverter: JSONToRelation
+
         '''
         self.jsonToRelationConverter = jsonToRelationConverter
+        # Count JSON objects (i.e. JSON file lines) as they are passed
+        # to us for parsing. Used for logging malformed entries:
+        self.lineCounter = -1
+        self.logfileID = logfileID
     
     def processOneJSONObject(self, jsonStr, row):
         '''
@@ -57,7 +63,13 @@ class GenericJSONParser(object):
 		@return: array of values. Fills into the passed-in row array
 		@rtype: [<any>]
         '''
-        parser = ijson.parse(StringIO.StringIO(jsonStr))
+        self.lineCounter += 1
+        try:
+            parser = ijson.parse(StringIO.StringIO(jsonStr))
+        except Exception as e:
+            logging.warn('Ill formed JSON in track log, line %d: %s' % (self.makeFileCitation(self.lineCounter), `e`))
+            return row
+        
         # Stack of array index counters for use with
         # nested arrays:
         arrayIndexStack = Stack()
@@ -184,6 +196,8 @@ class GenericJSONParser(object):
         theRow.extend(fillList)
         return theRow
 
+    def makeFileCitation(self, lineNumber):
+        return self.logfileID + ':' + str(lineNumber)
 
     def incArrayIndex(self, arrayIndexStack):
         currArrayIndex = arrayIndexStack.pop()

@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+#TODO: 
+#   - pass log line number prefix into parsers to get fileName:nnn in error msgs.
+
 '''
 Created on Sep 14, 2013
 
@@ -159,6 +162,7 @@ class JSONToRelation(object):
                 try:
                     newRow = self.jsonParserInstance.processOneJSONObject(jsonStr, newRow)
                 except Exception as e:
+                    #***** Catch here or down in the parser?
                     logging.warn('Line %d: bad JSON: %s' % (lineCounter, `e`))
                 self.processFinishedRow(newRow, outFd)
                 lineCounter += 1
