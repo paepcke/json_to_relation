@@ -43,17 +43,30 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
         # Sequence navigation:
         self.jsonToRelationConverter.schemaHints['seqID'] = ColDataType.TEXT
-        self.jsonToRelationConverter.schemaHints['seqGotoFrom'] = ColDataType.INT
-        self.jsonToRelationConverter.schemaHints['seqGotoNew'] = ColDataType.INT
+        self.jsonToRelationConverter.schemaHints['gotoFrom'] = ColDataType.INT
+        self.jsonToRelationConverter.schemaHints['gotoDest'] = ColDataType.INT
         
         # Problems:
         self.jsonToRelationConverter.schemaHints['problemID'] = ColDataType.TEXT
         self.jsonToRelationConverter.schemaHints['problemChoice'] = ColDataType.TEXT
         self.jsonToRelationConverter.schemaHints['questionLocation'] = ColDataType.TEXT
         
+        # Feedback
+        self.jsonToRelationConverter.schemaHints['feedback'] = ColDataType.TEXT
+        self.jsonToRelationConverter.schemaHints['feedbackResponseSelected'] = ColDataType.TINYINT
+        
         # Rubrics:
         self.jsonToRelationConverter.schemaHints['rubricSelection'] = ColDataType.INT
         self.jsonToRelationConverter.schemaHints['rubricCategory'] = ColDataType.INT
+
+        # Video:
+        self.jsonToRelationConverter.schemaHints['videoID'] = ColDataType.TEXT
+        self.jsonToRelationConverter.schemaHints['videoCode'] = ColDataType.TEXT
+        self.jsonToRelationConverter.schemaHints['videoCurrentTime'] = ColDataType.FLOAT
+        self.jsonToRelationConverter.schemaHints['videoSpeed'] = ColDataType.TINYTEXT
+
+        # Book (PDF) reading:
+        self.jsonToRelationConverter.schemaHints['bookInteractionType'] = ColDataType.TINYTEXT
         
         # problem_check:
         self.jsonToRelationConverter.schemaHints['success'] = ColDataType.TINYTEXT
@@ -248,6 +261,29 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             row = self.handleRubricSelect(record, row, event)
             return row
         
+        elif eventType == 'oe_show_full_feedback' or\
+             eventType == 'oe_show_respond_to_feedback':
+            row = self.handleOEShowFeedback(record, row, event)
+            return row
+            
+        elif eventType == 'oe_feedback_response_selected':
+            row = self.handleOEFeedbackResponseSelected(record, row, event)
+            return row
+        
+        elif eventType == 'page_close':
+            # No additional info in event field
+            return row
+        
+        elif eventType == 'play_video' or\
+             eventType == 'pause_video' or\
+             eventType == 'load_video':
+            row = self.handleVideoPlayPause(record, row, event)
+            return row
+            
+        elif eventType == 'book':
+            row = self.handleBook(record, row, event)
+            return row
+        
         else:
             logging.warn("Unknown event type '%s' in tracklog row %d" % (eventType, self.makeFileCitation(self.lineCounter)))
             return row
@@ -279,8 +315,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.makeFileCitation(self.lineCounter), eventType)) 
             return row
         self.setValInRow(row, 'seqID', seqID)
-        self.setValInRow(row, 'seqGotoFrom', oldIndex)
-        self.setValInRow(row, 'seqGotoNew', newIndex)
+        self.setValInRow(row, 'gotoFrom', oldIndex)
+        self.setValInRow(row, 'gotoDest', newIndex)
         return row
         
     def handleProblemCheck(self, record, row, event):
@@ -429,8 +465,103 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.setValInRow(row, 'rubricSelection', selection)
         self.setValInRow(row, 'rubricCategory', category)
         return row
-    
+
+    def handleOEShowFeedback(self, record, row, event):
+        '''
+        All examples seen as of this writing had this field empty: "{}"
+        '''
+        try:
+            eventDict = json.loads(event)
+        except Exception as e:
+            logging.warn("Track log line %d with event type oe_show_full_feedback or oe_show_respond_to_feedback contains malformed event field: '%s'" %
+                         (self.makeFileCitation(self.lineCounter), `e`))
+            return row
+        # Just stringify the dict and make it the field content:
+        self.setValInRow(row, 'feedback', str(eventDict))
         
+    def handleOEFeedbackResponseSelected(self, record, row, event):
+        '''
+        Gets a event string like this::
+        "event": "{\"value\":\"5\"}"
+        After JSON import into Python:
+        {u'value': u'5'}
+        '''
+        if event is None:
+            logging.warn("Track log line %d: missing event text in oe_feedback_response_selected." %\
+                         (self.makeFileCitation(self.lineCounter)))
+            return row
+        try:
+            eventDict = json.loads(event)
+        except Exception as e:
+            logging.warn("Track log line %d with event type oe_feedback_response_selected contains malformed event field: '%s'" %
+                         (self.makeFileCitation(self.lineCounter), `e`))
+            return row
+        try:
+            value = eventDict['value']
+        except KeyError:
+            logging.warn("Track log line %d: missing 'value' field in event type oe_feedback_response_selected." %\
+                         (self.makeFileCitation(self.lineCounter)))
+            return row
+        self.setValInRow(row, 'feedbackResponseSelected', value)
+
+    def handleVideoPlayPause(self, record, row, event):
+        '''
+        For play_video, event looks like this::
+        "{\"id\":\"i4x-Education-EDUC115N-videoalpha-c41e588863ff47bf803f14dec527be70\",\"code\":\"html5\",\"currentTime\":0}"
+        For pause_video:
+        "{\"id\":\"i4x-Education-EDUC115N-videoalpha-c5f2fd6ee9784df0a26984977658ad1d\",\"code\":\"html5\",\"currentTime\":124.017784}"
+        For load_video:
+        "{\"id\":\"i4x-Education-EDUC115N-videoalpha-003bc44b4fd64cb79cdfd459e93a8275\",\"code\":\"4GlF1t_5EwI\"}"
+        '''
+        if event is None:
+            logging.warn("Track log line %d: missing event text in video play or pause." %\
+                         (self.makeFileCitation(self.lineCounter)))
+            return row
+        try:
+            eventDict = json.loads(event)
+        except Exception as e:
+            logging.warn("Track log line %d with event type play or pause video contains malformed event field: '%s'" %
+                         (self.makeFileCitation(self.lineCounter), `e`))
+            return row
+        try:
+            videoID = eventDict['id']
+            videoCode = eventDict['code']
+            videoCurrentTime = eventDict['currentTime']
+            videoSpeed = eventDict['speed']
+        except KeyError:
+            logging.warn("Track log line %d: missing location, selection, or category in event type select_rubric." %\
+                         (self.makeFileCitation(self.lineCounter)))
+            return row
+        self.setValInRow(row, 'videoID', videoID)
+        self.setValInRow(row, 'videoCode', videoCode)
+        self.setValInRow(row, 'videoCurrentTime', videoCurrentTime)
+        self.setValInRow(row, 'videoSpeed', videoSpeed)
+        return row
+        
+    def handleBook(self, record, row, event):
+        '''
+        No example of book available
+        '''
+        if event is None:
+            logging.warn("Track log line %d: missing event text in book event type." %\
+                         (self.makeFileCitation(self.lineCounter)))
+            return row
+        try:
+            eventDict = json.loads(event)
+        except Exception as e:
+            logging.warn("Track log line %d with event type book contains malformed event field: '%s'" %
+                         (self.makeFileCitation(self.lineCounter), `e`))
+            return row
+        bookInteractionType = eventDict.get('type', None)
+        bookOld = eventDict.get('old', None)
+        bookNew = eventDict.get('new', None)
+        if bookInteractionType is not None:
+            self.setValInRow(row, 'bookInteractionType', bookInteractionType)
+        if bookOld is not None:            
+            self.setValInRow(row, 'gotoFrom', bookOld)
+        if bookNew is not None:            
+            self.setValInRow(row, 'gotoDest', bookNew)
+        return row
         
         
 #         try:

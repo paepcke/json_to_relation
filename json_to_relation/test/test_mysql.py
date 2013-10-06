@@ -3,11 +3,9 @@ Created on Sep 24, 2013
 
 @author: paepcke
 '''
-# TODO: 
-#    o Test inserting values for several columns
-#    o Test calling query() multiple times with several queries and get results alternately from the iterators
-#    o In: cmd = 'INSERT INTO %s (%s) VALUES (%s)' % (str(tblName), ','.join(colNames), ','.join(map(str, colValues)))
-#              the map removes quotes from strins: ','join(map(str,('My poem', 10)) --> (My Poem, 10) 
+# TODO: Test calling query() multiple times with several queries and get results alternately from the iterators
+# TODO: In: cmd = 'INSERT INTO %s (%s) VALUES (%s)' % (str(tblName), ','.join(colNames), ','.join(map(str, colValues)))
+#                 the map removes quotes from strins: ','join(map(str,('My poem', 10)) --> (My Poem, 10) 
 
 from collections import OrderedDict
 import unittest

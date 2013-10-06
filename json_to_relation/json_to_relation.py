@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-#TODO: 
-#   - pass log line number prefix into parsers to get fileName:nnn in error msgs.
+#TODO: continue with edx parser. Stopped with 'book' event type. Use PDF: pass log line number prefix into parsers to get fileName:nnn in error msgs.
 
 '''
 Created on Sep 14, 2013
