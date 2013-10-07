@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 
-#TODO: continue with edx parser. Stopped with 'book' event type. Use PDF: pass log line number prefix into parsers to get fileName:nnn in error msgs.
+#TODO: Edx problem_check_fail
+#TODO: Edx problem_check
+#TODO: Edx save_problem_check
+#TODO: Edx problem_rescore_fail
+#TODO: Edx problem_rescore
+
 
 '''
 Created on Sep 14, 2013
