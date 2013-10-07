@@ -11,8 +11,10 @@ from json_to_relation.edxTrackLogJSONParser import EdXTrackLogJSONParser
 from json_to_relation.input_source import InURI
 from json_to_relation.json_to_relation import JSONToRelation
 from json_to_relation.output_disposition import OutputPipe, OutputDisposition
+from output_disposition import TableSchemas
 
-TEST_ALL = True
+
+TEST_ALL = False
 
 class TestEdxTrackLogJSONParser(unittest.TestCase):
     
@@ -35,6 +37,18 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
 
     def tearDown(self):
         self.stringSource.close()
+
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
+    def testTableSchemaRepo(self):
+        try:
+            TableSchemas()
+            self.fail("Should not be possible to instantiate TableSchemas other than via createInstance()")
+        except ValueError:
+            pass # expect error, b/c TableSchema 
+
+        # Should initially have an empty schema for main (default) table:
+        self.assertEqual(type(TableSchemas[None]), type({}))
+        self.assertEquals(len(TableSchemas[None]), 0)
 
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testGetCourseID(self):

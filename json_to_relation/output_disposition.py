@@ -7,7 +7,6 @@ import csv
 import sys
 import tempfile
 
-
 class OutputDisposition(object):
     '''
     Specifications for where completed relation rows
@@ -19,12 +18,12 @@ class OutputDisposition(object):
     '''
     def __init__(self, outputDest):
         '''
-        @param outputDest: os file descriptor for output
-        @type outputDest: File
+        @param outputDest: instance of one of the subclasses
+        @type outputDest: Subclass(OutputDisposition)
+        
         '''
         self.outputDest = outputDest
         self.tmpTableFiles = {}
-        self.schemas = TableSchema.createInstance()
     
     def __enter__(self):
         return self.outputDest
@@ -54,7 +53,7 @@ class OutputDisposition(object):
         @param schemaHints: dict mapping column names to SQL types via ColumnSpec instances
         @type schemaHints: [ordered]Dict<String,ColumnSpec>
         '''
-        self.schemas[tableName].extendColSpecs(schemaHints)
+        TableSchemas.extendColSpecs(tableName, schemaHints)
 
     def ensureColExistence(self, colName, colDataType, tableName=None):
         '''
@@ -69,17 +68,19 @@ class OutputDisposition(object):
         @param tableName: name of table to which the column is to belong; None if for main table
         @type tableName: {String | None}
         '''
-        
-        
-        if tableName is None:
-            try:
-                self.cols[colName]
-            except KeyError:
-                # New column must be added to table:
-                self.cols[colName] = ColumnSpec(colName, colDataType, self)
-        else:
-            self.outputFormat.ensureColExistence(self, colName, colDataType, tableName=None)
-
+        schemaDict = TableSchemas[tableName]
+        if schemaDict is None or len(schemaDict) == 0:
+            # schema for this table definitely does not have the column:
+            TableSchemas[tableName] = {colName : colDataType}
+            return
+        # Have schema (dict) for this table. Does that dict contain
+        # an entry for the col name?
+        try:
+            schemaDict[colName]
+            # all set:
+            return
+        except KeyError:
+            schemaDict[colName] = colDataType
 
     def createTmpTableFile(self, tableName, fileSuffix):
         '''
@@ -105,7 +106,9 @@ class OutputDisposition(object):
 #--------------------- Available Output Destination Options:  
         
 class OutputPipe(OutputDisposition):
+    
     def __init__(self):
+        super(OutputPipe, self).__init__(self)
         self.fileHandle = sys.stdout
         # Make file name accessible as property just like 
         # Python file objects do:
@@ -142,6 +145,7 @@ class OutputPipe(OutputDisposition):
 
 class OutputFile(OutputDisposition):
     def __init__(self, fileName, options='ab'):
+        super(OutputPipe, self).__init__(self)        
         # Make file name accessible as property just like 
         # Python file objects do:
         self.name = fileName  # @UnusedVariable
@@ -181,6 +185,7 @@ class OutputFile(OutputDisposition):
 
 class OutputMySQLDump(OutputDisposition):
     def __init__(self, dbName, tbleName):
+        super(OutputPipe, self).__init__(self)        
         raise NotImplementedError("MySQL dump not yet implemented")
         self.tableFiles = {}
         
@@ -204,7 +209,61 @@ class OutputMySQLDump(OutputDisposition):
         tmpTableFile = self.createTmpTableFile(tableName, 'sql')
         self.tableFiles[tableName] = tmpTableFile
 
-class TableSchema(object):
+class ColumnSpec(object):
+    '''
+    Housekeeping class. Each instance represents the name,
+    position, and datatype of one column. These instances are
+    used to generate column name headers, Django models, and
+    SQL insert statements.
+    '''
+
+    def __init__(self, colName, colDataType, jsonToRelationProcessor):
+        '''
+        Create a ColumnSpec instance.
+        @param colName: name of column
+        @type colName: String
+        @param colDataType: data type of column (an enum)
+        @type colDataType: ColumnSpec
+        @param jsonToRelationProcessor: associated JSON to relation JSONToRelation instance
+        @type jsonToRelationProcessor: JSONToRelation
+        '''
+        self.colName = colName
+        self.colDataType = colDataType
+        self.colPos = jsonToRelationProcessor.getNextNewColPos()
+        jsonToRelationProcessor.bumpNextNewColPos()
+        
+    def getName(self):
+        '''
+        Return column name
+        @return: name of column
+        @rtype: String
+        '''
+        return self.colName
+    
+    def getType(self):
+        '''
+        Return SQL type
+        @return: SQL type of colum in upper case
+        @rtype: String
+        '''
+        return ColDataType().toString(self.colDataType).upper()
+    
+    def getSQLDefSnippet(self):
+        '''
+        Return string snippet to use in SQL CREATE TABLE or ALTER TABLE
+        statement
+        '''
+        return "%s %s" % (self.getName(), self.getType())
+    
+    def __str__(self):
+        return "<Col %s: %s (position %s)>" % (self.colName, 
+                                               self.getType(),
+                                               self.colPos)
+    
+    def __repr__(self):
+        return self.__str__()
+    
+class TableSchemas(object):
     '''
     Repository for the schemas of all tables. A schema is an 
     array ColumnSpec instances. Each such list is associated with
@@ -215,34 +274,35 @@ class TableSchema(object):
     singleObj = None    
     # Class var:
     allSchemas = {}
+    # Add empty schema for main (default) table:
+    allSchemas[None] = {}
     
     def __init__(self):
-        if TableSchema.singleObj is not None:
-            raise ValueError("TableSchema is a singleton: use TableSchema.createInstance()")
+        raise ValueError("TableSchemas cannot be instantiated; use class methods on class TableSchemas")
+    
+    @classmethod    
+    def __getitem__(cls, tableName):
+        return TableSchemas.allSchemas[tableName]
+    
+    @classmethod    
+    def __setitem__(cls, tableName, colSpecsDict):
+        TableSchemas.allSchemas[tableName] = colSpecsDict
+
+    @classmethod
+    def addColSpec(cls, tableName, colSpec):
+        try:
+            schema = TableSchemas.allSchemas[tableName]
+        except KeyError:
+            TableSchemas.allSchemas[tableName] = {colSpec.getName(), colSpec}
+        schema[colSpec.getName()] = colSpec
         
     @classmethod
-    def createInstance(cls):
-        if TableSchema.singleObj is not None:
-            return TableSchema.singleObj
-        TableSchema.singleObj = TableSchema()
-        return TableSchema.singleObj
-    
-    def __getitem__(self, tableName):
-        return TableSchema.allSchemas[tableName]
-    
-    def __setitem__(self, tableName, colSpecsList):
-        TableSchema.allSchemas[tableName] = colSpecsList
-
-    def addColSpec(self, tableName, colSpec):
+    def extendColSpecs(cls, tableName, colSpecsDict):
+        if type(colSpecsDict) != type({}):
+            raise ValueError("ColumSpec parameter must be a dictionary<ColName,ColumnSpec>")
         try:
-            TableSchema.allSchemas[tableName].append(colSpec)
+            schema = TableSchemas.allSchemas[tableName]
         except KeyError:
-            TableSchema.allSchemas[tableName] = [colSpec]
-        
-    def extendColSpecs(self, tableName, colSpecsList):
-        if type(colSpecsList) != type([]):
-            colSpecsList = [colSpecsList]
-        try:
-            TableSchema.allSchemas[tableName].extend(colSpecsList)
-        except KeyError:
-            TableSchema.allSchemas[tableName] = colSpecsList
+            TableSchemas.allSchemas[tableName] = colSpecsDict
+        # Change schema to include the new dict:
+        schema.update(colSpecsDict)

@@ -117,7 +117,7 @@ class JSONToRelation(object):
         self.destination = destination
         self.outputFormat = outputFormat
         # Establish the schema hints for the main table:
-        self.outputFormat.addSchemaHints(None, schemaHints)
+        self.destination.addSchemaHints(None, schemaHints)
 
         if logFile is not None:
             logging.basicConfig(filename=logFile, level=loggingLevel)
@@ -161,6 +161,9 @@ class JSONToRelation(object):
         '''
         self.outputFormat.startNewTable(tableName, schemaHintsNewTable)
         
+    def setSchemaHints(self, schemaHints, tableName=None):
+        self.destination.addSchemaHints(tableName, schemaHints)
+
 
     def convert(self, prependColHeader=False):
         '''
@@ -206,28 +209,6 @@ class JSONToRelation(object):
                     shutil.copyfileobj(inFd, finalOutFd.fileHandle)
             finally:
                 os.remove(tmpFileName)
-
-    def ensureColExistence(self, colName, colDataType, tableName=None):
-        '''
-        Given a column name and MySQL datatype name, check whether this
-        column has previously been encountered. If not, a column information
-        object is created, which will eventually be used to create the column
-        header, SQL alter statements.
-        @param colName: name of the column to consider
-        @type colName: String
-        @param colDataType: datatype of the column.
-        @type colDataType: ColDataType
-        @param tableName: if column is to belong to a table other than the main, default table (see startNewTable())
-        @type tableName: String
-        '''
-        if tableName is None:
-            try:
-                self.cols[colName]
-            except KeyError:
-                # New column must be added to table:
-                self.cols[colName] = ColumnSpec(colName, colDataType, self)
-        else:
-            self.outputFormat.ensureColExistence(self, colName, colDataType, tableName=None)
 
     def processFinishedRow(self, filledNewRow, outFd):
         '''
@@ -309,58 +290,3 @@ class JSONToRelation(object):
                     newName += letter
                 proposedMySQLName = newName
         return quoteChar + proposedMySQLName + quoteChar
-
-class ColumnSpec(object):
-    '''
-    Housekeeping class. Each instance represents the name,
-    position, and datatype of one column. These instances are
-    used to generate column name headers, Django models, and
-    SQL insert statements.
-    '''
-
-    def __init__(self, colName, colDataType, jsonToRelationProcessor):
-        '''
-        Create a ColumnSpec instance.
-        @param colName: name of column
-        @type colName: String
-        @param colDataType: data type of column (an enum)
-        @type colDataType: ColumnSpec
-        @param jsonToRelationProcessor: associated JSON to relation JSONToRelation instance
-        @type jsonToRelationProcessor: JSONToRelation
-        '''
-        self.colName = colName
-        self.colDataType = colDataType
-        self.colPos = jsonToRelationProcessor.getNextNewColPos()
-        jsonToRelationProcessor.bumpNextNewColPos()
-        
-    def getName(self):
-        '''
-        Return column name
-        @return: name of column
-        @rtype: String
-        '''
-        return self.colName
-    
-    def getType(self):
-        '''
-        Return SQL type
-        @return: SQL type of colum in upper case
-        @rtype: String
-        '''
-        return ColDataType().toString(self.colDataType).upper()
-    
-    def getSQLDefSnippet(self):
-        '''
-        Return string snippet to use in SQL CREATE TABLE or ALTER TABLE
-        statement
-        '''
-        return "%s %s" % (self.getName(), self.getType())
-    
-    def __str__(self):
-        return "<Col %s: %s (position %s)>" % (self.colName, 
-                                               self.getType(),
-                                               self.colPos)
-    
-    def __repr__(self):
-        return self.__str__()
-    

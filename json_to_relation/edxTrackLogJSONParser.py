@@ -28,83 +28,81 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         super(EdXTrackLogJSONParser, self).__init__(jsonToRelationConverter)
         
         # Prepare as much as possible outside parsing of
-        # each line:
+        # each line; Build the schema:
         
-        # Fields common to all track log entries:
-        self.jsonToRelationConverter.schemaHints['eventID'] = ColDataType.TEXT # we generate this one ourselves.
-        self.jsonToRelationConverter.schemaHints['agent'] = ColDataType.TEXT
-        self.jsonToRelationConverter.schemaHints['event_source'] = ColDataType.TINYTEXT
-        self.jsonToRelationConverter.schemaHints['event_type'] = ColDataType.TEXT
-        self.jsonToRelationConverter.schemaHints['ip'] = ColDataType.TINYTEXT
-        self.jsonToRelationConverter.schemaHints['page'] = ColDataType.TEXT
-        self.jsonToRelationConverter.schemaHints['session'] = ColDataType.TEXT
-        self.jsonToRelationConverter.schemaHints['time'] = ColDataType.DATETIME
-        self.jsonToRelationConverter.schemaHints['username'] = ColDataType.TEXT
-        self.jsonToRelationConverter.schemaHints['downtime_since'] = ColDataType.DATETIME
+        self.schemaHintsMainTable = {}
+
+        self.schemaHintsMainTable['eventID'] = ColDataType.TEXT # we generate this one ourselves.
+        self.schemaHintsMainTable['agent'] = ColDataType.TEXT
+        self.schemaHintsMainTable['event_source'] = ColDataType.TINYTEXT
+        self.schemaHintsMainTable['event_type'] = ColDataType.TEXT
+        self.schemaHintsMainTable['ip'] = ColDataType.TINYTEXT
+        self.schemaHintsMainTable['page'] = ColDataType.TEXT
+        self.schemaHintsMainTable['session'] = ColDataType.TEXT
+        self.schemaHintsMainTable['time'] = ColDataType.DATETIME
+        self.schemaHintsMainTable['username'] = ColDataType.TEXT
+        self.schemaHintsMainTable['downtime_since'] = ColDataType.DATETIME
 
         # Students
-        self.jsonToRelationConverter.schemaHints['studentID'] = ColDataType.TEXT
+        self.schemaHintsMainTable['studentID'] = ColDataType.TEXT
         
         # Instructors:
-        self.jsonToRelationConverter.schemaHints['instructorID'] = ColDataType.TEXT
+        self.schemaHintsMainTable['instructorID'] = ColDataType.TEXT
         
         # Courses
-        self.jsonToRelationConverter.schemaHints['courseID'] = ColDataType.TEXT
+        self.schemaHintsMainTable['courseID'] = ColDataType.TEXT
         
         # Sequence navigation:
-        self.jsonToRelationConverter.schemaHints['seqID'] = ColDataType.TEXT
-        self.jsonToRelationConverter.schemaHints['gotoFrom'] = ColDataType.INT
-        self.jsonToRelationConverter.schemaHints['gotoDest'] = ColDataType.INT
+        self.schemaHintsMainTable['seqID'] = ColDataType.TEXT
+        self.schemaHintsMainTable['gotoFrom'] = ColDataType.INT
+        self.schemaHintsMainTable['gotoDest'] = ColDataType.INT
         
         # Problems:
-        self.jsonToRelationConverter.schemaHints['problemID'] = ColDataType.TEXT
-        self.jsonToRelationConverter.schemaHints['problemChoice'] = ColDataType.TEXT
-        self.jsonToRelationConverter.schemaHints['questionLocation'] = ColDataType.TEXT
+        self.schemaHintsMainTable['problemID'] = ColDataType.TEXT
+        self.schemaHintsMainTable['problemChoice'] = ColDataType.TEXT
+        self.schemaHintsMainTable['questionLocation'] = ColDataType.TEXT
         
         # Attempts:
-        self.jsonToRelationConverter.schemaHints['attempts'] = ColDataType.TEXT
+        self.schemaHintsMainTable['attempts'] = ColDataType.TEXT
         
         
         # Answers (in their own table; so this is just a foreign key field):
         # use problemID 
         
         # Feedback
-        self.jsonToRelationConverter.schemaHints['feedback'] = ColDataType.TEXT
-        self.jsonToRelationConverter.schemaHints['feedbackResponseSelected'] = ColDataType.TINYINT
+        self.schemaHintsMainTable['feedback'] = ColDataType.TEXT
+        self.schemaHintsMainTable['feedbackResponseSelected'] = ColDataType.TINYINT
         
         # Rubrics:
-        self.jsonToRelationConverter.schemaHints['rubricSelection'] = ColDataType.INT
-        self.jsonToRelationConverter.schemaHints['rubricCategory'] = ColDataType.INT
+        self.schemaHintsMainTable['rubricSelection'] = ColDataType.INT
+        self.schemaHintsMainTable['rubricCategory'] = ColDataType.INT
 
         # Video:
-        self.jsonToRelationConverter.schemaHints['videoID'] = ColDataType.TEXT
-        self.jsonToRelationConverter.schemaHints['videoCode'] = ColDataType.TEXT
-        self.jsonToRelationConverter.schemaHints['videoCurrentTime'] = ColDataType.FLOAT
-        self.jsonToRelationConverter.schemaHints['videoSpeed'] = ColDataType.TINYTEXT
+        self.schemaHintsMainTable['videoID'] = ColDataType.TEXT
+        self.schemaHintsMainTable['videoCode'] = ColDataType.TEXT
+        self.schemaHintsMainTable['videoCurrentTime'] = ColDataType.FLOAT
+        self.schemaHintsMainTable['videoSpeed'] = ColDataType.TINYTEXT
 
         # Book (PDF) reading:
-        self.jsonToRelationConverter.schemaHints['bookInteractionType'] = ColDataType.TINYTEXT
+        self.schemaHintsMainTable['bookInteractionType'] = ColDataType.TINYTEXT
         
         # problem_check:
-        self.jsonToRelationConverter.schemaHints['success'] = ColDataType.TINYTEXT
-        self.jsonToRelationConverter.schemaHints['answer_id'] = ColDataType.TEXT
-        self.jsonToRelationConverter.schemaHints['hint'] = ColDataType.TEXT
-        self.jsonToRelationConverter.schemaHints['hintmode'] = ColDataType.TINYTEXT
-        self.jsonToRelationConverter.schemaHints['correctness'] = ColDataType.TINYTEXT
-        self.jsonToRelationConverter.schemaHints['msg'] = ColDataType.TEXT
-        self.jsonToRelationConverter.schemaHints['npoints'] = ColDataType.TINYINT
-        self.jsonToRelationConverter.schemaHints['queuestate'] = ColDataType.TEXT
+        self.schemaHintsMainTable['success'] = ColDataType.TINYTEXT
+        self.schemaHintsMainTable['answer_id'] = ColDataType.TEXT
+        self.schemaHintsMainTable['hint'] = ColDataType.TEXT
+        self.schemaHintsMainTable['hintmode'] = ColDataType.TINYTEXT
+        self.schemaHintsMainTable['correctness'] = ColDataType.TINYTEXT
+        self.schemaHintsMainTable['msg'] = ColDataType.TEXT
+        self.schemaHintsMainTable['npoints'] = ColDataType.TINYINT
+        self.schemaHintsMainTable['queuestate'] = ColDataType.TEXT
+        
+        # Establish the schema for the main table:
+        self.jsonToRelationConverter.setSchemaHints(self.schemaHintsMainTable)
         
         # Dict<IP,Datetime>: record each IP's most recent
         # activity timestamp (heartbeat or any other event).
         # Used to detect server downtimes: 
         self.downtimes = {}
-        
-        # Make sure the schema knows about the fields we'll encounter all the time
-        # in track logs:
-        self.commonFldNames = ['agent', 'event_source', 'event_type', 'ip', 'session', 'username', 'heartbeat_stopped', 'heartbeat_started']
-        for fldName in self.commonFldNames:
-            self.jsonToRelationConverter.ensureColExistence(fldName, self.jsonToRelationConverter.schemaHints[fldName])
                 
         # Place to keep history for some rows, for which we want
         # to computer some on-the-fly aggregations:
