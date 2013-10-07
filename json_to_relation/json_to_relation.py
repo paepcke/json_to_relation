@@ -24,7 +24,7 @@ import logging
 from generic_json_parser import GenericJSONParser
 from input_source import InputSource, InURI, InString, InMongoDB, InPipe #@UnusedImport
 from col_data_type import ColDataType
-from output_disposition import OutputDisposition, OutputMySQLTable, OutputFile
+from output_disposition import OutputDisposition, OutputMySQLDump, OutputFile
 
 
 #>>> with open('/home/paepcke/tmp/trash.csv', 'wab') as fd:
@@ -81,6 +81,11 @@ class JSONToRelation(object):
         
         For unit testing isolated methods in this class, set jsonSource and
         destination to None.
+
+        This constructor can be thought of as creating the main relational
+        table that will hold all results from the JSON parsers in relational
+        form. However, parsers may call startNewTable() to build any new tables
+        they wish.
         
         @param jsonSource: subclass of InputSource that wraps containing JSON structures, or a URL to such a source
         @type jsonSource: {InPipe | InString | InURI | InMongoDB}
@@ -88,7 +93,7 @@ class JSONToRelation(object):
         @type destination: {OutputPipe | OutputFile | OutputMySQLTable}
         @param outputFormat: format of output. Can be CSV or SQL INSERT statements
         @type outputFormat: OutputFormat
-        @param schemaHints: Dict mapping col names to data types (optional)
+        @param schemaHints: Dict mapping col names to data types (optional). Affects the default (main) table.
         @type schemaHints: Map<String,ColDataTYpe>
         @param jsonParserInstance: a parser that takes one JSON string, and returns a CSV row. Parser also must inform this 
                                    parent object of any generated column names.
@@ -111,7 +116,8 @@ class JSONToRelation(object):
         self.jsonSource = jsonSource
         self.destination = destination
         self.outputFormat = outputFormat
-        self.schemaHints = schemaHints
+        # Establish the schema hints for the main table:
+        self.outputFormat.addSchemaHints(None, schemaHints)
 
         if logFile is not None:
             logging.basicConfig(filename=logFile, level=loggingLevel)
@@ -137,6 +143,25 @@ class JSONToRelation(object):
         # newly encountered: 
         self.nextNewColPos = 0;
 
+    def startNewTable(self, tableName, schemaHintsNewTable):
+        '''
+        Called by parsers when they need to start a new relational
+        table beyond the one that is created for them. Ex: edxTrackLogJSONParser.py
+        needs auxiliary tables for deeply embedded JSON structures with unpredictable
+        numbers of elements (e.g. problem state). The schemaHintsNewTable 
+        is an optionally ordered dict. Parsers may add additional columns later
+        via calls to ensureColExistence(). Note that for MySQL load files such
+        subsequent addition generates ALTER table, which might be expensive. So,
+        completeness of the schemaHintsNewTable dict is recommended for MySQL
+        load file outputs.
+        @param tableName: name by which parser will refer to this table.
+        @type tableName: String
+        @param schemaHintsNewTable: dict that map column names to SQL types
+        @type schemaHintsNewTable: [Ordered]Dict<String,ColumnSpec>
+        '''
+        self.outputFormat.startNewTable(tableName, schemaHintsNewTable)
+        
+
     def convert(self, prependColHeader=False):
         '''
         Main user-facing API method. Read from the JSON source establish
@@ -151,7 +176,7 @@ class JSONToRelation(object):
         @type prependColHeader: Boolean
         '''
         savedFinalOutDest = None
-        if not isinstance(self.destination, OutputMySQLTable):
+        if not isinstance(self.destination, OutputMySQLDump):
             if prependColHeader:
                 savedFinalOutDest = self.destination
                 (tmpFd, tmpFileName)  = tempfile.mkstemp(suffix='.csv',prefix='jsonToRelationTmp')
@@ -182,22 +207,27 @@ class JSONToRelation(object):
             finally:
                 os.remove(tmpFileName)
 
-    def ensureColExistence(self, colName, colDataType):
+    def ensureColExistence(self, colName, colDataType, tableName=None):
         '''
         Given a column name and MySQL datatype name, check whether this
         column has previously been encountered. If not, a column information
         object is created, which will eventually be used to create the column
-        header, Django model, or SQL create statements.
+        header, SQL alter statements.
         @param colName: name of the column to consider
         @type colName: String
         @param colDataType: datatype of the column.
         @type colDataType: ColDataType
+        @param tableName: if column is to belong to a table other than the main, default table (see startNewTable())
+        @type tableName: String
         '''
-        try:
-            self.cols[colName]
-        except KeyError:
-            # New column must be added to table:
-            self.cols[colName] = ColumnSpec(colName, colDataType, self)
+        if tableName is None:
+            try:
+                self.cols[colName]
+            except KeyError:
+                # New column must be added to table:
+                self.cols[colName] = ColumnSpec(colName, colDataType, self)
+        else:
+            self.outputFormat.ensureColExistence(self, colName, colDataType, tableName=None)
 
     def processFinishedRow(self, filledNewRow, outFd):
         '''
