@@ -23,7 +23,6 @@ import logging
 
 from generic_json_parser import GenericJSONParser
 from input_source import InputSource, InURI, InString, InMongoDB, InPipe #@UnusedImport
-from col_data_type import ColDataType
 from output_disposition import OutputDisposition, OutputMySQLDump, OutputFile
 
 
@@ -161,9 +160,42 @@ class JSONToRelation(object):
         '''
         self.outputFormat.startNewTable(tableName, schemaHintsNewTable)
         
+    def getSourceName(self):
+        '''
+        Request a human-readable name of the JSON source, which 
+        might be a pipe, or a file, or something else. Each input source
+        class knows to provide such a name.
+        '''
+        return self.jsonSource.getSourceName()
+        
     def setSchemaHints(self, schemaHints, tableName=None):
+        '''
+        Given a schema hint dictionary, set the given table's schema
+        to the given dictionary. Any schema fragments already defined
+        for table tableName will be removed
+        @param schemaHints: dict mapping column names to ColumnSpec instances
+        @type schemaHints: [Ordered]Dict<String,ColumnSpec>
+        @param tableName: name of table whose schema is to be changed. None changes the main (default) table's schema
+        @type tableName: String
+        '''
         self.destination.addSchemaHints(tableName, schemaHints)
 
+    def getSchemaHint(self, colName, tableName=None):
+        '''
+        Given a column name, and a table name, return the ColumnSpec for that column in that table.
+        If tableName is None, the table is assumed to be the main (default) table.
+        @param colName: name of column whose ColumnSpec instance is wanted
+        @type colName: String
+        @param tableName: name of table of which the column is a part 
+        @type tableName: {String | None}
+        @return: a ColumnSpec object that contains the SQL type name of the column
+        @rtype: ColumnSpec
+        @raise KeyError: if either the table or the column don't exist.  
+        '''
+        return self.destination.getSchemaHint(colName, tableName)
+
+    def ensureColExistence(self, colName, colDataType, tableName=None):
+        self.destination.ensureColExistence(colName, colDataType, tableName)
 
     def convert(self, prependColHeader=False):
         '''
@@ -187,7 +219,7 @@ class JSONToRelation(object):
                 self.destination = OutputFile(tmpFileName)
 
         lineCounter = 0
-        with OutputDisposition(self.destination) as outFd, self.jsonSource as inFd:
+        with self.destination as outFd, self.jsonSource as inFd:
             for jsonStr in inFd:
                 jsonStr = self.jsonSource.decompress(jsonStr)
                 newRow = []
@@ -195,7 +227,7 @@ class JSONToRelation(object):
                     newRow = self.jsonParserInstance.processOneJSONObject(jsonStr, newRow)
                 except Exception as e:
                     #***** Catch here or down in the parser?
-                    logging.warn('Line %d: bad JSON: %s' % (lineCounter, `e`))
+                    logging.warn('Line %s: bad JSON: %s' % (self.makeFileCitation(self.lineCounter), `e`))
                 self.processFinishedRow(newRow, outFd)
                 lineCounter += 1
 

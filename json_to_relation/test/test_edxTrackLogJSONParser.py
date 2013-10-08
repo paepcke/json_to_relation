@@ -7,14 +7,15 @@ import json
 import os
 import unittest
 
+from col_data_type import ColDataType
 from json_to_relation.edxTrackLogJSONParser import EdXTrackLogJSONParser
 from json_to_relation.input_source import InURI
 from json_to_relation.json_to_relation import JSONToRelation
 from json_to_relation.output_disposition import OutputPipe, OutputDisposition
-from output_disposition import TableSchemas
+from output_disposition import TableSchemas, ColumnSpec
 
 
-TEST_ALL = False
+TEST_ALL = True
 
 class TestEdxTrackLogJSONParser(unittest.TestCase):
     
@@ -38,17 +39,34 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
     def tearDown(self):
         self.stringSource.close()
 
-    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testTableSchemaRepo(self):
-        try:
-            TableSchemas()
-            self.fail("Should not be possible to instantiate TableSchemas other than via createInstance()")
-        except ValueError:
-            pass # expect error, b/c TableSchema 
-
+        tblRepo = TableSchemas()
+        
         # Should initially have an empty schema for main (default) table:
-        self.assertEqual(type(TableSchemas[None]), type({}))
-        self.assertEquals(len(TableSchemas[None]), 0)
+        self.assertEqual(type(tblRepo[None]), type({}))
+        self.assertEquals(len(tblRepo[None]), 0)
+        
+        # Add single schema item to an empty repo
+        tblRepo.addColSpec('myTbl', ColumnSpec('myCol', ColDataType.INT, self.fileConverter))
+        self.assertEqual('INT', tblRepo['myTbl']['myCol'].getType())
+        
+        # Add single schema item to a non-empty repo:
+        tblRepo.addColSpec('myTbl', ColumnSpec('yourCol', ColDataType.FLOAT, self.fileConverter))
+        self.assertEqual('FLOAT', tblRepo['myTbl']['yourCol'].getType())
+        
+        # Add a dict with one spec to the existing schema:
+        schemaAddition = {'hisCol' : ColumnSpec('hisCol', ColDataType.DATETIME, self.fileConverter)}
+        tblRepo.addColSpecs('myTbl', schemaAddition)
+        self.assertEqual('DATETIME', tblRepo['myTbl']['hisCol'].getType())
+        
+        # Add a dict with multiple specs to the existing schema:
+        schemaAddition = {'hisCol' : ColumnSpec('hisCol', ColDataType.DATETIME, self.fileConverter),
+                          'herCol' : ColumnSpec('herCol', ColDataType.LONGTEXT, self.fileConverter)}
+        tblRepo.addColSpecs('myTbl', schemaAddition)        
+        self.assertEqual('DATETIME', tblRepo['myTbl']['hisCol'].getType())         
+        self.assertEqual('LONGTEXT', tblRepo['myTbl']['herCol'].getType())                 
+        
 
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testGetCourseID(self):

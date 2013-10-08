@@ -10,6 +10,7 @@ import uuid
 
 from col_data_type import ColDataType
 from generic_json_parser import GenericJSONParser
+from output_disposition import ColumnSpec
 
 
 EDX_HEARTBEAT_PERIOD = 6 # seconds
@@ -29,6 +30,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
         # Prepare as much as possible outside parsing of
         # each line; Build the schema:
+        
+        # Fields common to every request:
+        self.commonFldNames = ['agent','event_source','event_type','ip','page','session','time','username']
         
         self.schemaHintsMainTable = {}
 
@@ -96,9 +100,16 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaHintsMainTable['npoints'] = ColDataType.TINYINT
         self.schemaHintsMainTable['queuestate'] = ColDataType.TEXT
         
+        # Schema hints need to be a dict that maps column names to ColumnSpec 
+        # instances. The dict we built so far only the the column types. Go through
+        # and turn the dict's values into ColumnSpec instances:
+        for colName in self.schemaHintsMainTable.keys():
+            colType = self.schemaHintsMainTable[colName]
+            self.schemaHintsMainTable[colName] = ColumnSpec(colName, colType, self.jsonToRelationConverter)
+        
         # Establish the schema for the main table:
         self.jsonToRelationConverter.setSchemaHints(self.schemaHintsMainTable)
-        
+
         # Dict<IP,Datetime>: record each IP's most recent
         # activity timestamp (heartbeat or any other event).
         # Used to detect server downtimes: 
@@ -169,200 +180,205 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 		@rtype: [<any>]
         '''
         self.lineCounter += 1
-        # Turn top level JSON object to dict:
         try:
-            record = json.loads(jsonStr)
-        except Exception as e:
-            logging.warn('Ill formed JSON in track log, line %d: %s' % (self.makeFileCitation(self.lineCounter), `e`))
-            return row
-        
-        # Dispense with the fields common to all events, except event,
-        # which is a nested JSON string. Results will be 
-        # in self.resultDict:
-        self.handleCommonFields(record, row)
-        
-        # Now handle the different types of events:
-        
-        try:
-            eventType = record['eventType']
-        except KeyError:
-            logging.warn("No event type in line %d" % self.makeFileCitation(self.lineCounter))
-            return row
-        
-        # Check whether we had a server downtime:
-        try:
-            eventTimeStr = record['time']
-            ip = record['ip']
-            eventDateTime = datetime.datetime.strptime(eventTimeStr, '%Y-%m-%dT%H:%M:%S.%f+00:00')
-        except KeyError:
-            logging.warn("No event time or server IP in line %d" % self.makeFileCitation(self.lineCounter))
-            return row
-        
-        try:
-            recentSignOfLife = self.downtimes[ip]
-            # Get a timedelta obj w/ duration of time
-            # during which nothing was heard from server:
-            serverQuietTime = eventDateTime - recentSignOfLife
-            if serverQuietTime.seconds > EDX_HEARTBEAT_PERIOD:
-                self.setValInRow(row, 'downtime_since', str(serverQuietTime))
-            # New recently-heard from this IP:
-            self.downtimes[ip] = eventDateTime
-        except KeyError:
-            # First sign of life for this IP:
-            self.downtimes[ip] = eventDateTime
-            # Record a time of 0 in downtime detection column:
-            self.setValInRow(row, 'downtime_since', str(datetime.timedelta()))
+            # Turn top level JSON object to dict:
+            try:
+                record = json.loads(jsonStr)
+            except Exception as e:
+                logging.warn('Ill formed JSON in track log, line %d: %s' % (self.makeFileCitation(self.lineCounter), `e`))
+                return row
+    
+            eventID = self.getUniqueEventID()
+            self.setValInRow(row, 'eventID', eventID)
+                    
+            # Dispense with the fields common to all events, except event,
+            # which is a nested JSON string. Results will be 
+            # in self.resultDict:
+            self.handleCommonFields(record, row)
             
-        
-        if eventType == 'heartbeat':
-            # Handled heartbeat above, no further entry needed
-            return row
-        
-        # For any event other than heartbeat, we need to look
-        # at the event field, which is an embedded JSON *string*
-        # Turn that string into a (nested) Python dict:
-        try:
-            eventJSONStr = record['event']
-        except KeyError:
-            logging.warn("Track log line %d of event type %s has no event field" % (self.makeFileCitation(self.lineCounter), eventType))
-            return row
-        
-        try:
-            event = json.loads(eventJSONStr)
-        except Exception as e:
-            logging.warn("Track log line %d of event type %s has non-parsable JSON event field: %s" % (self.makeFileCitation(self.lineCounter), eventType, `e`))
-            return row
-        
-        if eventType == 'seq_goto' or\
-           eventType == 'seq_next' or\
-           eventType == 'seq_prev':
-        
-            row = self.handleSeqNav(record, row, event, eventType)
-            return row
-        
-        elif eventType == 'problem_check':
-            row = self.handleProblemCheck(record, row, event)
-            return row
-         
-        elif eventType == 'problem_reset':
-            row = self.handleProblemReset(record, row, event)
-            return row
-        
-        elif eventType == 'problem_show':
-            row = self.handleProblemShow(record, row, event)
-            return row
-        
-        elif eventType == 'problem_save':
-            row = self.handleProblemSave(record, row, event)
-            return row
-        
-        elif eventType == 'oe_hide_question' or\
-             eventType == 'oe_hide_problem' or\
-             eventType == 'peer_grading_hide_question' or\
-             eventType == 'peer_grading_hide_problem' or\
-             eventType == 'staff_grading_hide_question' or\
-             eventType == 'staff_grading_hide_problem' or\
-             eventType == 'oe_show_question' or\
-             eventType == 'oe_show_problem' or\
-             eventType == 'peer_grading_show_question' or\
-             eventType == 'peer_grading_show_problem' or\
-             eventType == 'staff_grading_show_question' or\
-             eventType == 'staff_grading_show_problem':
+            # Now handle the different types of events:
+            
+            try:
+                eventType = record['eventType']
+            except KeyError:
+                logging.warn("No event type in line %s" % self.makeFileCitation(self.lineCounter))
+                return row
+            
+            # Check whether we had a server downtime:
+            try:
+                eventTimeStr = record['time']
+                ip = record['ip']
+                eventDateTime = datetime.datetime.strptime(eventTimeStr, '%Y-%m-%dT%H:%M:%S.%f+00:00')
+            except KeyError:
+                logging.warn("No event time or server IP in line %s" % self.makeFileCitation(self.lineCounter))
+                return row
+            
+            try:
+                recentSignOfLife = self.downtimes[ip]
+                # Get a timedelta obj w/ duration of time
+                # during which nothing was heard from server:
+                serverQuietTime = eventDateTime - recentSignOfLife
+                if serverQuietTime.seconds > EDX_HEARTBEAT_PERIOD:
+                    self.setValInRow(row, 'downtime_since', str(serverQuietTime))
+                # New recently-heard from this IP:
+                self.downtimes[ip] = eventDateTime
+            except KeyError:
+                # First sign of life for this IP:
+                self.downtimes[ip] = eventDateTime
+                # Record a time of 0 in downtime detection column:
+                self.setValInRow(row, 'downtime_since', str(datetime.timedelta()))
+                
+            
+            if eventType == 'heartbeat':
+                # Handled heartbeat above, no further entry needed
+                return row
+            
+            # For any event other than heartbeat, we need to look
+            # at the event field, which is an embedded JSON *string*
+            # Turn that string into a (nested) Python dict:
+            try:
+                eventJSONStr = record['event']
+            except KeyError:
+                logging.warn("Track log line %d of event type %s has no event field" % (self.makeFileCitation(self.lineCounter), eventType))
+                return row
+            
+            try:
+                event = json.loads(eventJSONStr)
+            except Exception as e:
+                logging.warn("Track log line %d of event type %s has non-parsable JSON event field: %s" % (self.makeFileCitation(self.lineCounter), eventType, `e`))
+                return row
+            
+            if eventType == 'seq_goto' or\
+               eventType == 'seq_next' or\
+               eventType == 'seq_prev':
+            
+                row = self.handleSeqNav(record, row, event, eventType)
+                return row
+            
+            elif eventType == 'problem_check':
+                row = self.handleProblemCheck(record, row, event)
+                return row
              
-            row = self.handleQuestionProblemHidingShowing(record, row, event)
-            return row
-
-        elif eventType == 'rubric_select':
-            row = self.handleRubricSelect(record, row, event)
-            return row
-        
-        elif eventType == 'oe_show_full_feedback' or\
-             eventType == 'oe_show_respond_to_feedback':
-            row = self.handleOEShowFeedback(record, row, event)
-            return row
+            elif eventType == 'problem_reset':
+                row = self.handleProblemReset(record, row, event)
+                return row
             
-        elif eventType == 'oe_feedback_response_selected':
-            row = self.handleOEFeedbackResponseSelected(record, row, event)
-            return row
-        
-        elif eventType == 'page_close':
-            # No additional info in event field
-            return row
-        
-        elif eventType == 'play_video' or\
-             eventType == 'pause_video' or\
-             eventType == 'load_video':
-            row = self.handleVideoPlayPause(record, row, event)
-            return row
+            elif eventType == 'problem_show':
+                row = self.handleProblemShow(record, row, event)
+                return row
             
-        elif eventType == 'book':
-            row = self.handleBook(record, row, event)
-            return row
-
-        elif eventType == 'showanswer' or eventType == 'show_answer':
-            row = self.handleShowAnswer(record, row, event)
-            return row
-
-        elif eventType == 'problem_check_fail':
-            self.handleProblemCheckFail(record, row, event)
-            return row
-        
-        # Instructor events:
-        elif eventType in ['list-students',  'dump-grades',  'dump-grades-raw',  'dump-grades-csv',
-                           'dump-grades-csv-raw', 'dump-answer-dist-csv', 'dump-graded-assignments-config',
-                           'list-staff',  'list-instructors',  'list-beta-testers']:
-            # These events have no additional info. The event_type says it all,
-            # and that's already been stuck into the table:
-            return row
-          
-        elif eventType == 'rescore-all-submissions' or eventType == 'reset-all-attempts':
-            self.handleRescoreReset(record, row, event)
-            return row
+            elif eventType == 'problem_save':
+                row = self.handleProblemSave(record, row, event)
+                return row
             
-        elif eventType == 'delete-student-module-state' or eventType == 'rescore-student-submission':
-            self.handleDeleteStateRescoreSubmission(record, row, event)
-            return row
+            elif eventType == 'oe_hide_question' or\
+                 eventType == 'oe_hide_problem' or\
+                 eventType == 'peer_grading_hide_question' or\
+                 eventType == 'peer_grading_hide_problem' or\
+                 eventType == 'staff_grading_hide_question' or\
+                 eventType == 'staff_grading_hide_problem' or\
+                 eventType == 'oe_show_question' or\
+                 eventType == 'oe_show_problem' or\
+                 eventType == 'peer_grading_show_question' or\
+                 eventType == 'peer_grading_show_problem' or\
+                 eventType == 'staff_grading_show_question' or\
+                 eventType == 'staff_grading_show_problem':
+                 
+                row = self.handleQuestionProblemHidingShowing(record, row, event)
+                return row
+    
+            elif eventType == 'rubric_select':
+                row = self.handleRubricSelect(record, row, event)
+                return row
             
-        elif eventType == 'reset-student-attempts':
-            self.handleResetStudentAttempts(record, row, event)
-            return row
+            elif eventType == 'oe_show_full_feedback' or\
+                 eventType == 'oe_show_respond_to_feedback':
+                row = self.handleOEShowFeedback(record, row, event)
+                return row
+                
+            elif eventType == 'oe_feedback_response_selected':
+                row = self.handleOEFeedbackResponseSelected(record, row, event)
+                return row
             
-        elif eventType == 'get-student-progress-page':
-            self.handleGetStudentProgressPage(record, row, event)
-            return row
-
-        elif eventType == 'add-instructor' or eventType == 'remove-instructor':        
-            self.handleAddRemoveInstructor(record, row, event)
-            return row
-        
-        elif eventType in ['list-forum-admins', 'list-forum-mods', 'list-forum-community-TAs']:
-            self.handleListForumMatters(record, row, event)
-            return row
-
-        elif eventType in ['remove-forum-admin', 'add-forum-admin', 'remove-forum-mod',
-                           'add-forum-mod', 'remove-forum-community-TA',  'add-forum-community-TA']:
-            self.handleForumManipulations(record, row, event)
-            return row
-
-        elif eventType == 'psychometrics-histogram-generation':
-            self.handlePsychometricsHistogramGen(record, row, event)
-            return row
-        
-        elif eventType == 'add-or-remove-user-group':
-            self.handleAddRemoveUserGroup(record, row, event)
-            return row
-        
-        else:
-            logging.warn("Unknown event type '%s' in tracklog row %d" % (eventType, self.makeFileCitation(self.lineCounter)))
-            return row
-        
+            elif eventType == 'page_close':
+                # No additional info in event field
+                return row
+            
+            elif eventType == 'play_video' or\
+                 eventType == 'pause_video' or\
+                 eventType == 'load_video':
+                row = self.handleVideoPlayPause(record, row, event)
+                return row
+                
+            elif eventType == 'book':
+                row = self.handleBook(record, row, event)
+                return row
+    
+            elif eventType == 'showanswer' or eventType == 'show_answer':
+                row = self.handleShowAnswer(record, row, event)
+                return row
+    
+            elif eventType == 'problem_check_fail':
+                self.handleProblemCheckFail(record, row, event)
+                return row
+            
+            # Instructor events:
+            elif eventType in ['list-students',  'dump-grades',  'dump-grades-raw',  'dump-grades-csv',
+                               'dump-grades-csv-raw', 'dump-answer-dist-csv', 'dump-graded-assignments-config',
+                               'list-staff',  'list-instructors',  'list-beta-testers']:
+                # These events have no additional info. The event_type says it all,
+                # and that's already been stuck into the table:
+                return row
+              
+            elif eventType == 'rescore-all-submissions' or eventType == 'reset-all-attempts':
+                self.handleRescoreReset(record, row, event)
+                return row
+                
+            elif eventType == 'delete-student-module-state' or eventType == 'rescore-student-submission':
+                self.handleDeleteStateRescoreSubmission(record, row, event)
+                return row
+                
+            elif eventType == 'reset-student-attempts':
+                self.handleResetStudentAttempts(record, row, event)
+                return row
+                
+            elif eventType == 'get-student-progress-page':
+                self.handleGetStudentProgressPage(record, row, event)
+                return row
+    
+            elif eventType == 'add-instructor' or eventType == 'remove-instructor':        
+                self.handleAddRemoveInstructor(record, row, event)
+                return row
+            
+            elif eventType in ['list-forum-admins', 'list-forum-mods', 'list-forum-community-TAs']:
+                self.handleListForumMatters(record, row, event)
+                return row
+    
+            elif eventType in ['remove-forum-admin', 'add-forum-admin', 'remove-forum-mod',
+                               'add-forum-mod', 'remove-forum-community-TA',  'add-forum-community-TA']:
+                self.handleForumManipulations(record, row, event)
+                return row
+    
+            elif eventType == 'psychometrics-histogram-generation':
+                self.handlePsychometricsHistogramGen(record, row, event)
+                return row
+            
+            elif eventType == 'add-or-remove-user-group':
+                self.handleAddRemoveUserGroup(record, row, event)
+                return row
+            
+            else:
+                logging.warn("Unknown event type '%s' in tracklog row %d" % (eventType, self.makeFileCitation(self.lineCounter)))
+                return row
+        finally:
+            self.reportProgressIfNeeded()
         
     def handleCommonFields(self, record, row):
+        self.setValInRow(row, 'eventID', self.getUniqueEventID())
         for fldName in self.commonFldNames:
             val = record.get(fldName, None)
             self.setValInRow(row, fldName, val)
         # Create a unique event key  for this event:
-        self.setValInRow(row, 'eventID', self.getUniqueEventID())
         return row
 
     def handleSeqNav(self, record, row, event, eventType):

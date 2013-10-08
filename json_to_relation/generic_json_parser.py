@@ -22,7 +22,7 @@ class GenericJSONParser(object):
     # groups: 'item' and 'name'.
     REMOVE_ITEM_FROM_STRING_PATTERN = re.compile(r'(item)\.([^.]*$)')
 
-    def __init__(self, jsonToRelationConverter, logfileID=''):
+    def __init__(self, jsonToRelationConverter, logfileID='', progressEvery=1000):
         '''
         @param jsonToRelationConverter: JSONToRelation instance
         @type jsonToRelationConverter: JSONToRelation
@@ -30,6 +30,8 @@ class GenericJSONParser(object):
                to build error/warning msgs that cite a file and line number in
                their text
         @type jsonToRelationConverter: JSONToRelation
+        @param progressEvery: number of input lines, a.k.a. JSON objects after which logging should report total done
+        @type progressEvery: int 
 
         '''
         self.jsonToRelationConverter = jsonToRelationConverter
@@ -37,6 +39,9 @@ class GenericJSONParser(object):
         # to us for parsing. Used for logging malformed entries:
         self.lineCounter = -1
         self.logfileID = logfileID
+        self.progressEvery = progressEvery
+        self.totalLinesDoneSoFar = 0
+        self.linesSinceLastProgReport = 0
     
     def processOneJSONObject(self, jsonStr, row):
         '''
@@ -65,96 +70,99 @@ class GenericJSONParser(object):
         '''
         self.lineCounter += 1
         try:
-            parser = ijson.parse(StringIO.StringIO(jsonStr))
-        except Exception as e:
-            logging.warn('Ill formed JSON in track log, line %d: %s' % (self.makeFileCitation(self.lineCounter), `e`))
-            return row
-        
-        # Stack of array index counters for use with
-        # nested arrays:
-        arrayIndexStack = Stack()
-        # Not currently processing 
-        #for prefix,event,value in self.parser:
-        for nestedLabel, event, value in parser:
-            #print("Nested label: %s; event: %s; value: %s" % (nestedLabel,event,value))
-            if event == "start_map":
-                if not arrayIndexStack.empty():
-                    # Starting a new attribute/value pair within an array: need
-                    # a new number to differentiate column headers                    
-                    self.incArrayIndex(arrayIndexStack)
-                continue
-            
-            if (len(nestedLabel) == 0) or\
-               (event == "map_key") or\
-               (event == "end_map"):
-                continue
-            
-            if not arrayIndexStack.empty():
-                # Label is now something like
-                # employees.item.firstName. The 'item' is ijson's way of indicating
-                # that we are in an array. Remove the '.item.' part; it makes
-                # the relation column header unnecessarily long. Then append 
-                # our array index number with an underscore:
-                nestedLabel = self.removeItemPartOfString(nestedLabel) +\
-                              '_' +\
-                              str(arrayIndexStack.top(exceptionOnEmpty=True))
-            
-            # Ensure that label contains only MySQL-legal identifier chars. Else
-            # quote the label:                
-            nestedLabel = self.jsonToRelationConverter.ensureLegalIdentifierChars(nestedLabel)
-            
-            # Check whether caller gave a type hint for this column:
             try:
-                colDataType = self.jsonToRelationConverter.schemaHints[nestedLabel]
-            except KeyError:
-                colDataType = None
+                parser = ijson.parse(StringIO.StringIO(jsonStr))
+            except Exception as e:
+                logging.warn('Ill formed JSON in track log, line %d: %s' % (self.makeFileCitation(self.lineCounter), `e`))
+                return row
             
-            if event == "string":
-                if colDataType is None:
-                    colDataType = ColDataType.TEXT
-                self.jsonToRelationConverter.ensureColExistence(nestedLabel, colDataType)
-                self.setValInRow(row, nestedLabel, value)
-                continue
-
-            if event == "boolean":
-                if colDataType is None:
-                    colDataType = ColDataType.SMALLINT
-                self.jsonToRelationConverter.ensureColExistence(nestedLabel, colDataType)
-                if value:
-                    value = 1
-                else:
-                    value = 0
-                self.setValInRow(row, nestedLabel,value)                                
-                continue 
-
-            if event == "number":
-                if colDataType is None:
-                    colDataType = ColDataType.DOUBLE
-                self.jsonToRelationConverter.ensureColExistence(nestedLabel, colDataType)
-                self.setValInRow(row, nestedLabel,value)
-                continue
-
-            if event == "null":
-                if colDataType is None:
-                    colDataType = ColDataType.TEXT
-                self.jsonToRelationConverter.ensureColExistence(nestedLabel, colDataType)
-                self.setValInRow(row, nestedLabel, '')
-                continue
-
-            if event == "start_array":
-                # New array index entry for this nested label.
-                # Used to generate <label>_0, <label>_1, etc. for
-                # column names:
-                arrayIndexStack.push(-1)
-                continue
-
-            if event == "end_array":
-                # Array closed; forget the array counter:
-                arrayIndexStack.pop()
-                continue
-
-            raise ValueError("Unknown JSON value type at %s for value %s (ijson event: %s)" % (nestedLabel,value,str(event))) 
-        return row
+            # Stack of array index counters for use with
+            # nested arrays:
+            arrayIndexStack = Stack()
+            # Not currently processing 
+            #for prefix,event,value in self.parser:
+            for nestedLabel, event, value in parser:
+                #print("Nested label: %s; event: %s; value: %s" % (nestedLabel,event,value))
+                if event == "start_map":
+                    if not arrayIndexStack.empty():
+                        # Starting a new attribute/value pair within an array: need
+                        # a new number to differentiate column headers                    
+                        self.incArrayIndex(arrayIndexStack)
+                    continue
+                
+                if (len(nestedLabel) == 0) or\
+                   (event == "map_key") or\
+                   (event == "end_map"):
+                    continue
+                
+                if not arrayIndexStack.empty():
+                    # Label is now something like
+                    # employees.item.firstName. The 'item' is ijson's way of indicating
+                    # that we are in an array. Remove the '.item.' part; it makes
+                    # the relation column header unnecessarily long. Then append 
+                    # our array index number with an underscore:
+                    nestedLabel = self.removeItemPartOfString(nestedLabel) +\
+                                  '_' +\
+                                  str(arrayIndexStack.top(exceptionOnEmpty=True))
+                
+                # Ensure that label contains only MySQL-legal identifier chars. Else
+                # quote the label:                
+                nestedLabel = self.jsonToRelationConverter.ensureLegalIdentifierChars(nestedLabel)
+                
+                # Check whether caller gave a type hint for this column:
+                try:
+                    colDataType = self.jsonToRelationConverter.getSchemaHint(nestedLabel)
+                except KeyError:
+                    colDataType = None
+                
+                if event == "string":
+                    if colDataType is None:
+                        colDataType = ColDataType.TEXT
+                    self.jsonToRelationConverter.ensureColExistence(nestedLabel, colDataType)
+                    self.setValInRow(row, nestedLabel, value)
+                    continue
+    
+                if event == "boolean":
+                    if colDataType is None:
+                        colDataType = ColDataType.SMALLINT
+                    self.jsonToRelationConverter.ensureColExistence(nestedLabel, colDataType)
+                    if value:
+                        value = 1
+                    else:
+                        value = 0
+                    self.setValInRow(row, nestedLabel,value)                                
+                    continue 
+    
+                if event == "number":
+                    if colDataType is None:
+                        colDataType = ColDataType.DOUBLE
+                    self.jsonToRelationConverter.ensureColExistence(nestedLabel, colDataType)
+                    self.setValInRow(row, nestedLabel,value)
+                    continue
+    
+                if event == "null":
+                    if colDataType is None:
+                        colDataType = ColDataType.TEXT
+                    self.jsonToRelationConverter.ensureColExistence(nestedLabel, colDataType)
+                    self.setValInRow(row, nestedLabel, '')
+                    continue
+    
+                if event == "start_array":
+                    # New array index entry for this nested label.
+                    # Used to generate <label>_0, <label>_1, etc. for
+                    # column names:
+                    arrayIndexStack.push(-1)
+                    continue
+    
+                if event == "end_array":
+                    # Array closed; forget the array counter:
+                    arrayIndexStack.pop()
+                    continue
+    
+                raise ValueError("Unknown JSON value type at %s for value %s (ijson event: %s)" % (nestedLabel,value,str(event))) 
+            return row
+        finally:
+            self.reportProgressIfNeeded()
 
     def setValInRow(self, theRow, colName, value):
         '''
@@ -174,7 +182,7 @@ class GenericJSONParser(object):
         # Assumes caller has called ensureColExistence() on the
         # JSONToRelation object; so the following won't have
         # a key failure:
-        colSpec = self.jsonToRelationConverter.cols[colName]
+        colSpec = self.jsonToRelationConverter.getSchemaHint(colName)
         targetPos = colSpec.colPos
         # Is value to go just beyond the current row len?
         if (len(theRow) == 0 or len(theRow) == targetPos):
@@ -197,7 +205,7 @@ class GenericJSONParser(object):
         return theRow
 
     def makeFileCitation(self, lineNumber):
-        return self.logfileID + ':' + str(lineNumber)
+        return self.jsonToRelationConverter.getSourceName() + ':' + str(lineNumber)
 
     def incArrayIndex(self, arrayIndexStack):
         currArrayIndex = arrayIndexStack.pop()
@@ -231,6 +239,13 @@ class GenericJSONParser(object):
         # and add the last part of the label to that part: 
         res = label[:match.start(1)] + match.group(2)
         return res
+
+    def reportProgressIfNeeded(self):
+        self.linesSinceLastProgReport += 1
+        self.totalLinesDoneSoFar += 1
+        if self.linesSinceLastProgReport >= self.progressEvery:
+            logging.info("Processed %d JSON objects..." % self.totalLinesDoneSoFar)
+            self.linesSinceLastProgReport = 0 
 
 class Stack(object):
     '''

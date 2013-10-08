@@ -72,6 +72,15 @@ class InURI(InputSource):
         elif self.compression == COMPRESSION_TYPE.BZIP2:
             self.fileHandle = bz2.BZ2File(self.localFilePath, 'rb')
     
+    def getSourceName(self):
+        '''
+        Identify this source such that logging can identify sources
+        of errors.
+        @return: a string that can be prepended to a line number in error/warn msgs
+        @rtype: String
+        '''
+        return self.inFilePathOrURL
+    
     def decompress(self, line):
         if self.compression == COMPRESSION_TYPE.NO_COMPRESSION:
             return line
@@ -136,6 +145,15 @@ class InURI(InputSource):
 class InString(InputSource):
     def __init__(self, inputStr):
         self.fileHandle = StringIO.StringIO(inputStr)
+
+    def getSourceName(self):
+        '''
+        Identify this source such that logging can identify sources
+        of errors.
+        @return: a string that can be prepended to a line number in error/warn msgs
+        @rtype: String
+        '''
+        return "In-string"
         
     def decompress(self, line):
         '''
@@ -156,6 +174,16 @@ class InMongoDB(InputSource):
         self.collName = collName
         self.fileHandle = self.connect()
 
+    def getSourceName(self):
+        '''
+        Identify this source such that logging can identify sources
+        of errors.
+        @return: a string that can be prepended to a line number in error/warn msgs
+        @rtype: String
+        '''
+        return "%s:%s" % (self.dbName, self.collName)
+
+
     def connect(self):
         raise NotImplementedError("MangoDB connector not yet implemented")
     
@@ -168,6 +196,16 @@ class InMongoDB(InputSource):
 class InPipe(InputSource):
     def __init__(self):
         self.fileHandle = sys.stdin
+
+    def getSourceName(self):
+        '''
+        Identify this source such that logging can identify sources
+        of errors.
+        @return: a string that can be prepended to a line number in error/warn msgs
+        @rtype: String
+        '''
+        return "Pipe"
+
 
     def decompress(self, line):
         '''
