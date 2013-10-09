@@ -118,6 +118,20 @@ class JSONToRelation(object):
         # Establish the schema hints for the main table:
         self.destination.addSchemaHints(None, schemaHints)
 
+        # The following three instance vars are used for accumulating INSERT
+        # values when output is a MySQL dump. 
+        # Current table for which insert values are being collected:
+        self.currOutTable = None
+        # Insert values so far (array of value arrays):
+        self.currValsArray = []
+        # Column names for which INSERT values are being collected.
+        # Ex.: 'col1,col2':
+        self.currInsertSig = None
+
+        # Count JSON objects (i.e. JSON file lines) as they are passed
+        # to us for parsing. Used for logging malformed entries:
+        self.lineCounter = -1
+
         if logFile is not None:
             logging.basicConfig(filename=logFile, level=loggingLevel)
         else:
@@ -195,7 +209,7 @@ class JSONToRelation(object):
         return self.destination.getSchemaHint(colName, tableName)
 
     def ensureColExistence(self, colName, colDataType, tableName=None):
-        self.destination.ensureColExistence(colName, colDataType, tableName)
+        self.destination.ensureColExistence(colName, colDataType, self, tableName)
 
     def convert(self, prependColHeader=False):
         '''
@@ -218,18 +232,17 @@ class JSONToRelation(object):
                 os.close(tmpFd)
                 self.destination = OutputFile(tmpFileName)
 
-        lineCounter = 0
         with self.destination as outFd, self.jsonSource as inFd:
             for jsonStr in inFd:
                 jsonStr = self.jsonSource.decompress(jsonStr)
                 newRow = []
                 try:
                     newRow = self.jsonParserInstance.processOneJSONObject(jsonStr, newRow)
-                except Exception as e:
+                except ValueError as e:
                     #***** Catch here or down in the parser?
-                    logging.warn('Line %s: bad JSON: %s' % (self.makeFileCitation(self.lineCounter), `e`))
+                    logging.warn('Line %s: bad JSON: %s' % (self.makeFileCitation(), `e`))
                 self.processFinishedRow(newRow, outFd)
-                lineCounter += 1
+                self.bumpLineCounter()
 
         # If output to other than MySQL table, check whether
         # we are to prepend the column header row:
@@ -246,27 +259,96 @@ class JSONToRelation(object):
         '''
         When a row is finished, this method processes the row as per
         the user's disposition. The method writes the row to a CSV
-        file, inserts it into a MySQL table, and generates an SQL 
-        insert statement for later.
+        file, or pipe, or generates an SQL insert statement for later.
+        
+        The filledNewRow parameter looks different, depending on whether
+        the underlying parser generates MySQL insert statement information,
+        or CSV rows. The latter are just written to outFD. MySQL insert info
+        looks like this: ('tableName', 'insertSig', [valsArray]). The insertSig
+        is a string as needed for the INSERT statement's column names part. 
+        Ex.: 'col1,col2'. 
+        
         @param filledNewRow: the list of values for one row, possibly including empty fields  
         @type filledNewRow: List<<any>>
         @param outFd: an instance of a class that writes to the destination
         @type outFd: OutputDisposition
         '''
-        # TODO: handle out to MySQL db
-        #outFd.write(','.join(map(str,filledNewRow)) + "\n")
-        outFd.writerow(map(str,filledNewRow))
+        # We handle 'rows' destined for MySQL dumps differently
+        # from rows destined to CSV. Parsers that generate dump
+        # information as they translate JSON provide different
+        # information than CSV destined parsers. MySQL dumps provide
+        # a list 
+        if isinstance(outFd, OutputMySQLDump):
+            filledNewRow = self.prepareMySQLRow(filledNewRow)
+        if filledNewRow is not None:
+            outFd.writerow(map(str,filledNewRow))
 
-    def getSchema(self):
+    def prepareMySQLRow(self, insertInfo):
+        '''
+        Receives either a triple ('tableName', 'insertSig', [valsArray]),
+        or the string 'FLUSH'. Generates either None, or a legal MySQL insert statement. 
+        The method is lazy.
+        
+        It collects values to be inserted into the same table, and the same
+        columns within that table, and returns a non-Null string only when
+        the incoming insertInfo is for a different table, or a different set
+        of columns in the same table (as the previous calls). In that case the
+        returned string is a legal MySQL INSERT statement, possibly multi-valued.
+        
+        If insertInfo is the string 'FLUSH', then an INSERT statement is
+        returned for any held-back prior values. 
+        
+        @param insertInfo: information on what to generate for MySQL dumps
+        @type insertInfo: {(String, String, [<any>]) | String)}
+        '''
+        try:
+            (tableName, insertSig, valsArray) = insertInfo
+        except ValueError:
+            if insertInfo == 'FLUSH':
+                return self.finalizeInsertStatement()
+            else:
+                raise ValueError('Bad argument to prepareMySQLRow: %s' % str(insertInfo))
+        # Have we started accumulating values in an earlier call?
+        if self.currOutTable is not None: 
+            if tableName == self.currOutTable and insertSig == self.currInsertSig:
+                # These values are for the same columns in the same table
+                # as previous call(s). Accumulate them:
+                self.currValsArray.append(valsArray)
+                return None
+            else:
+                # Were accumulating vals, but this call is for a different
+                # table or set of columns:
+                insertStatement = self.finalizeInsertStatement()
+                # Start accumulating values for this new INSERT request:
+                self.currOutTable = tableName
+                self.currInsertSig = insertSig
+                self.valsArray = [valsArray]
+                return insertStatement
+                
+    def finalizeInsertStatement(self):
+        '''
+        Create a possibly multivalued INSERT statement from what is
+        stored in self.currOutTable, self.currInsertSig, and self.currValsArray.
+        '''
+        res = "INSERT INTO %s (%s) %s;" % (self.currOutTable, self.currInsertSig, self.currValsArray)
+        # We are no longer accumulating INSERT values right now:
+        self.currOutTable = None
+        self.currInsertSig = None
+        self.currValsArray = []
+        return res
+
+    def getSchema(self, tableName=None):
         '''
         Returns an ordered list of ColumnSpec instances.
         Each such instance holds column name and SQL type.
+        @param tableName: name of table for which schema is wanted. None: the main (default) table. 
+        @type tableName: String
         @return: ordered list of column information
         @rtype: (ColumnSpec) 
         '''
-        return self.cols.values()
+        return self.destination.getSchema(tableName)
 
-    def getColHeaders(self):
+    def getColHeaders(self, tableName=None):
         '''
         Returns a list of column header names collected so far.
         @return: list of column headers that were discovered so far by an 
@@ -274,7 +356,7 @@ class JSONToRelation(object):
         @rtype: [String]
         '''
         headers = []
-        for colSpec in self.cols.values():
+        for colSpec in self.getSchema(tableName):
             headers.append(colSpec.colName)
         return headers
 
@@ -322,3 +404,9 @@ class JSONToRelation(object):
                     newName += letter
                 proposedMySQLName = newName
         return quoteChar + proposedMySQLName + quoteChar
+
+    def makeFileCitation(self):
+        return self.getSourceName() + ':' + str(self.lineCounter)
+
+    def bumpLineCounter(self):
+        self.lineCounter += 1

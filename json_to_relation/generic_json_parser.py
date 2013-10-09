@@ -35,9 +35,6 @@ class GenericJSONParser(object):
 
         '''
         self.jsonToRelationConverter = jsonToRelationConverter
-        # Count JSON objects (i.e. JSON file lines) as they are passed
-        # to us for parsing. Used for logging malformed entries:
-        self.lineCounter = -1
         self.logfileID = logfileID
         self.progressEvery = progressEvery
         self.totalLinesDoneSoFar = 0
@@ -68,12 +65,12 @@ class GenericJSONParser(object):
 		@return: array of values. Fills into the passed-in row array
 		@rtype: [<any>]
         '''
-        self.lineCounter += 1
+        self.jsonToRelationConverter.bumpLineCounter()
         try:
             try:
                 parser = ijson.parse(StringIO.StringIO(jsonStr))
             except Exception as e:
-                logging.warn('Ill formed JSON in track log, line %d: %s' % (self.makeFileCitation(self.lineCounter), `e`))
+                logging.warn('Ill formed JSON in track log, line %d: %s' % (self.jsonToRelationConverter.makeFileCitation(), `e`))
                 return row
             
             # Stack of array index counters for use with
@@ -203,9 +200,6 @@ class GenericJSONParser(object):
         fillList.append(value)
         theRow.extend(fillList)
         return theRow
-
-    def makeFileCitation(self, lineNumber):
-        return self.jsonToRelationConverter.getSourceName() + ':' + str(lineNumber)
 
     def incArrayIndex(self, arrayIndexStack):
         currArrayIndex = arrayIndexStack.pop()

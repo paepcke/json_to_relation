@@ -179,13 +179,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 		@return: the filled-in row
 		@rtype: [<any>]
         '''
-        self.lineCounter += 1
+        self.jsonToRelationConverter.bumpLineCounter()
         try:
             # Turn top level JSON object to dict:
             try:
                 record = json.loads(jsonStr)
             except Exception as e:
-                logging.warn('Ill formed JSON in track log, line %d: %s' % (self.makeFileCitation(self.lineCounter), `e`))
+                logging.warn('Ill formed JSON in track log, line %d: %s' % (self.jsonToRelationConverter.makeFileCitation(), `e`))
                 return row
     
             eventID = self.getUniqueEventID()
@@ -201,7 +201,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             try:
                 eventType = record['eventType']
             except KeyError:
-                logging.warn("No event type in line %s" % self.makeFileCitation(self.lineCounter))
+                logging.warn("No event type in line %s" % self.jsonToRelationConverter.makeFileCitation())
                 return row
             
             # Check whether we had a server downtime:
@@ -210,7 +210,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 ip = record['ip']
                 eventDateTime = datetime.datetime.strptime(eventTimeStr, '%Y-%m-%dT%H:%M:%S.%f+00:00')
             except KeyError:
-                logging.warn("No event time or server IP in line %s" % self.makeFileCitation(self.lineCounter))
+                logging.warn("No event time or server IP in line %s" % self.jsonToRelationConverter.makeFileCitation())
                 return row
             
             try:
@@ -239,13 +239,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             try:
                 eventJSONStr = record['event']
             except KeyError:
-                logging.warn("Track log line %d of event type %s has no event field" % (self.makeFileCitation(self.lineCounter), eventType))
+                logging.warn("Track log line %d of event type %s has no event field" % (self.jsonToRelationConverter.makeFileCitation(), eventType))
                 return row
             
             try:
                 event = json.loads(eventJSONStr)
             except Exception as e:
-                logging.warn("Track log line %d of event type %s has non-parsable JSON event field: %s" % (self.makeFileCitation(self.lineCounter), eventType, `e`))
+                logging.warn("Track log line %d of event type %s has non-parsable JSON event field: %s" % (self.jsonToRelationConverter.makeFileCitation(), eventType, `e`))
                 return row
             
             if eventType == 'seq_goto' or\
@@ -368,7 +368,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 return row
             
             else:
-                logging.warn("Unknown event type '%s' in tracklog row %d" % (eventType, self.makeFileCitation(self.lineCounter)))
+                logging.warn("Unknown event type '%s' in tracklog row %d" % (eventType, self.jsonToRelationConverter.makeFileCitation()))
                 return row
         finally:
             self.reportProgressIfNeeded()
@@ -385,7 +385,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
         if event is None:
             logging.warn("Track log line %d: missing event text in sequence navigation event." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             return row
 
         oldIndex = event.get('old', 0)
@@ -394,7 +394,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             seqID    = event['id']
         except KeyError:
             logging.warn("Track log line %d with event type %s is missing sequence id" %
-                         (self.makeFileCitation(self.lineCounter), eventType)) 
+                         (self.jsonToRelationConverter.makeFileCitation(), eventType)) 
             return row
         self.setValInRow(row, 'seqID', seqID)
         self.setValInRow(row, 'gotoFrom', oldIndex)
@@ -419,21 +419,21 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         if event is None:
             logging.warn("Track log line %d: missing event text in event type problem_reset." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             return row
         
         try:
             eventDict = json.loads(event)
         except Exception as e:
             logging.warn("Track log line %d with event type problem_reset contains malformed event field: '%s'" %
-                         (self.makeFileCitation(self.lineCounter), `e`))
+                         (self.jsonToRelationConverter.makeFileCitation(), `e`))
             return row
         # Get the POST field's problem id array:
         try:
             problemIDs = eventDict['POST']['id']
         except KeyError:
             logging.warn("Track log line %d with event type problem_reset contains event without problem ID array: '%s'" %
-                         (self.makeFileCitation(self.lineCounter), eventDict))
+                         (self.jsonToRelationConverter.makeFileCitation(), eventDict))
         self.setValInRow(row, 'problemID', problemIDs)
         return row
 
@@ -454,21 +454,21 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         if event is None:
             logging.warn("Track log line %d: missing event text in event type problem_show." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             return row
         
         try:
             eventDict = json.loads(event)
         except Exception as e:
             logging.warn("Track log line %d with event type problem_show contains malformed event field: '%s'" %
-                         (self.makeFileCitation(self.lineCounter), `e`))
+                         (self.jsonToRelationConverter.makeFileCitation(), `e`))
             return row
         # Get the problem id:
         try:
             problemID = eventDict['POST']['problem']
         except KeyError:
             logging.warn("Track log line %d with event type problem_show contains event without problem ID: '%s'" %
-                         (self.makeFileCitation(self.lineCounter), eventDict))
+                         (self.jsonToRelationConverter.makeFileCitation(), eventDict))
         self.setValInRow(row, 'problemID', problemID)
         return row
 
@@ -489,7 +489,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         if event is None:
             logging.warn("Track log line %d: missing event text in event type problem_save." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             return row
         (problemID, choice) = event.split('=')
         self.setValInRow(row, 'problemID', problemID[1:])  # remove leading double quote
@@ -505,13 +505,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         if event is None:
             logging.warn("Track log line %d: missing event text in question hide or show." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             return row
         try:
             eventDict = json.loads(event)
         except Exception as e:
             logging.warn("Track log line %d with event type question show/hide contains malformed event field: '%s'" %
-                         (self.makeFileCitation(self.lineCounter), `e`))
+                         (self.jsonToRelationConverter.makeFileCitation(), `e`))
             return row
         # Get location:
         location = eventDict['location']
@@ -527,13 +527,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         if event is None:
             logging.warn("Track log line %d: missing event text in select_rubric." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             return row
         try:
             eventDict = json.loads(event)
         except Exception as e:
             logging.warn("Track log line %d with event type show_rubric contains malformed event field: '%s'" %
-                         (self.makeFileCitation(self.lineCounter), `e`))
+                         (self.jsonToRelationConverter.makeFileCitation(), `e`))
             return row
         try:
             location = eventDict['location']
@@ -541,7 +541,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             category = eventDict['category']
         except KeyError:
             logging.warn("Track log line %d: missing location, selection, or category in event type select_rubric." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             return row
         self.setValInRow(row, 'questionLocation', location)
         self.setValInRow(row, 'rubricSelection', selection)
@@ -556,7 +556,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             eventDict = json.loads(event)
         except Exception as e:
             logging.warn("Track log line %d with event type oe_show_full_feedback or oe_show_respond_to_feedback contains malformed event field: '%s'" %
-                         (self.makeFileCitation(self.lineCounter), `e`))
+                         (self.jsonToRelationConverter.makeFileCitation(), `e`))
             return row
         # Just stringify the dict and make it the field content:
         self.setValInRow(row, 'feedback', str(eventDict))
@@ -570,19 +570,19 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         if event is None:
             logging.warn("Track log line %d: missing event text in oe_feedback_response_selected." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             return row
         try:
             eventDict = json.loads(event)
         except Exception as e:
             logging.warn("Track log line %d with event type oe_feedback_response_selected contains malformed event field: '%s'" %
-                         (self.makeFileCitation(self.lineCounter), `e`))
+                         (self.jsonToRelationConverter.makeFileCitation(), `e`))
             return row
         try:
             value = eventDict['value']
         except KeyError:
             logging.warn("Track log line %d: missing 'value' field in event type oe_feedback_response_selected." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             return row
         self.setValInRow(row, 'feedbackResponseSelected', value)
 
@@ -597,13 +597,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         if event is None:
             logging.warn("Track log line %d: missing event text in video play or pause." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             return row
         try:
             eventDict = json.loads(event)
         except Exception as e:
             logging.warn("Track log line %d with event type play or pause video contains malformed event field: '%s'" %
-                         (self.makeFileCitation(self.lineCounter), `e`))
+                         (self.jsonToRelationConverter.makeFileCitation(), `e`))
             return row
         try:
             videoID = eventDict['id']
@@ -612,7 +612,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             videoSpeed = eventDict['speed']
         except KeyError:
             logging.warn("Track log line %d: missing location, selection, or category in event type select_rubric." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             return row
         self.setValInRow(row, 'videoID', videoID)
         self.setValInRow(row, 'videoCode', videoCode)
@@ -626,13 +626,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         if event is None:
             logging.warn("Track log line %d: missing event text in book event type." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             return row
         try:
             eventDict = json.loads(event)
         except Exception as e:
             logging.warn("Track log line %d with event type book contains malformed event field: '%s'" %
-                         (self.makeFileCitation(self.lineCounter), `e`))
+                         (self.jsonToRelationConverter.makeFileCitation(), `e`))
             return row
         bookInteractionType = eventDict.get('type', None)
         bookOld = eventDict.get('old', None)
@@ -652,19 +652,19 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         if event is None:
             logging.warn("Track log line %d: missing event text in showanswer." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             return row
         try:
             eventDict = json.loads(event)
         except Exception as e:
             logging.warn("Track log line %d with event type showanswer (or show_answer) contains malformed event field: '%s'" %
-                         (self.makeFileCitation(self.lineCounter), `e`))
+                         (self.jsonToRelationConverter.makeFileCitation(), `e`))
             return row
         try:
             problem_id = eventDict['problem_id']
         except KeyError:
             logging.warn("Track log line %d: missing problem_id in event type showanswer (or show_answer)." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             return row
         self.setValInRow(row, 'problemID', problem_id)
         return row
@@ -714,22 +714,22 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleRescoreReset(self, record, row, event):
         if event is None:
             logging.warn("Track log line %d: missing event info in rescore-all-submissions or reset-all-attempts." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             return row
         try:
             eventDict = json.loads(event)
         except Exception as e:
             logging.warn("Track log line %d with event rescore-all-submissions or reset-all-attempts contains malformed event field: '%s'" %
-                         (self.makeFileCitation(self.lineCounter), `e`))
+                         (self.jsonToRelationConverter.makeFileCitation(), `e`))
             return row
         problemID = eventDict.get('problem', None)
         courseID  = eventDict.get('course', None)
         if problemID is None:
             logging.warn("Track log line %d: missing problem ID in rescore-all-submissions or reset-all-attempts." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
         if problemID is None:
             logging.warn("Track log line %d: missing course ID in rescore-all-submissions or reset-all-attempts." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
         self.setValInRow(row, 'problemID', problemID)
         self.setValInRow(row, 'courseID', courseID)
         return row
@@ -737,13 +737,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleDeleteStateRescoreSubmission(self, record, row, event):
         if event is None:
             logging.warn("Track log line %d: missing event info in delete-student-module-state or rescore-student-submission." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             return row
         try:
             eventDict = json.loads(event)
         except Exception as e:
             logging.warn("Track log line %d with event delete-student-module-state or rescore-student-submission contains malformed event field: '%s'" %
-                         (self.makeFileCitation(self.lineCounter), `e`))
+                         (self.jsonToRelationConverter.makeFileCitation(), `e`))
             return row
 
         problemID = eventDict.get('problem', None)
@@ -751,13 +751,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         studentID = eventDict.get('student', None)
         if problemID is None:
             logging.warn("Track log line %d: missing problem ID in delete-student-module-state or rescore-student-submission." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
         if courseID is None:
             logging.warn("Track log line %d: missing course ID in delete-student-module-state or rescore-student-submission." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
         if studentID is None:
             logging.warn("Track log line %d: missing student ID in delete-student-module-state or rescore-student-submission." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
         self.setValInRow(row, 'problemID', problemID)
         self.setValInRow(row, 'courseID', courseID)
         self.setValInRow(row, 'studentID', studentID)
@@ -766,14 +766,14 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleResetStudentAttempts(self, record, row, event):
         if event is None:
             logging.warn("Track log line %d: missing event info in reset-student-attempts." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             return row
         
         try:
             eventDict = json.loads(event)
         except Exception as e:
             logging.warn("Track log line %d with event rescore-all-submissions or reset-all-attempts contains malformed event field: '%s'" %
-                         (self.makeFileCitation(self.lineCounter), `e`))
+                         (self.jsonToRelationConverter.makeFileCitation(), `e`))
             return row
 
         problemID = eventDict.get('problem', None)
@@ -783,19 +783,19 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         attempts = eventDict.get('old_attempts', None)
         if problemID is None:
             logging.warn("Track log line %d: missing problem ID in reset-student-attempts." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
         if courseID is None:
             logging.warn("Track log line %d: missing course ID in reset-student-attempts." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
         if studentID is None:
             logging.warn("Track log line %d: missing student ID in reset-student-attempts." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
         if instructorID is None:
             logging.warn("Track log line %d: missing instrucotrIDin reset-student-attempts." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
         if attempts is None:
             logging.warn("Track log line %d: missing attempts field in reset-student-attempts." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             
         self.setValInRow(row, 'problemID', problemID)
         self.setValInRow(row, 'courseID', courseID)
@@ -808,14 +808,14 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleGetStudentProgressPage(self, record, row, event):
         if event is None:
             logging.warn("Track log line %d: missing event info in get-student-progress-page." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             return row
         
         try:
             eventDict = json.loads(event)
         except Exception as e:
             logging.warn("Track log line %d with event get-student-progress-page contains malformed event field: '%s'" %
-                         (self.makeFileCitation(self.lineCounter), `e`))
+                         (self.jsonToRelationConverter.makeFileCitation(), `e`))
             return row
         
         courseID  = eventDict.get('course', None)
@@ -824,13 +824,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
         if courseID is None:
             logging.warn("Track log line %d: missing course ID in get-student-progress-page." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
         if studentID is None:
             logging.warn("Track log line %d: missing student ID in get-student-progress-page." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
         if instructorID is None:
             logging.warn("Track log line %d: missing instrucotrID in get-student-progress-page." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             
         self.setValInRow(row, 'courseID', courseID)
         self.setValInRow(row, 'studentID', studentID)        
@@ -840,42 +840,42 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleAddRemoveInstructor(self, record, row, event):
         if event is None:
             logging.warn("Track log line %d: missing event info in add-instructor or remove-instructor." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             return row
         
         try:
             eventDict = json.loads(event)
         except Exception as e:
             logging.warn("Track log line %d with add-instructor or remove-instructor contains malformed event field: '%s'" %
-                         (self.makeFileCitation(self.lineCounter), `e`))
+                         (self.jsonToRelationConverter.makeFileCitation(), `e`))
             return row
 
         instructorID = eventDict.get('instructorID', None)
 
         if instructorID is None:
             logging.warn("Track log line %d: missing instrucotrID add-instructor or remove-instructor." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
         self.setValInRow(row, 'instructorID', instructorID)
         return row
         
     def handleListForumMatters(self, record, row, event):
         if event is None:
             logging.warn("Track log line %d: missing event info in list-forum-admins, list-forum-mods, or list-forum-community-TAs." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             return row
         
         try:
             eventDict = json.loads(event)
         except Exception as e:
             logging.warn("Track log line %d with list-forum-admins, list-forum-mods, or list-forum-community-TAs contains malformed event field: '%s'" %
-                         (self.makeFileCitation(self.lineCounter), `e`))
+                         (self.jsonToRelationConverter.makeFileCitation(), `e`))
             return row
 
         courseID = eventDict.get('course', None)
         
         if courseID is None:
             logging.warn("Track log line %d: missing course ID in list-forum-admins, list-forum-mods, or list-forum-community-TAs." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
         self.setValInRow(row, 'courseID', courseID)
         return row
         
@@ -883,7 +883,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         if event is None:
             logging.warn("Track log line %d: missing event info in one of remove-forum-admin, add-forum-admin, " +\
                          "remove-forum-mod, add-forum-mod, remove-forum-community-TA, or add-forum-community-TA." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             return row
 
         try:
@@ -891,7 +891,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         except Exception as e:
             logging.warn("Track log line %d with event remove-forum-admin, add-forum-admin, " +\
                          "remove-forum-mod, add-forum-mod, remove-forum-community-TA, or add-forum-community-T  contains malformed event field: '%s'" %
-                         (self.makeFileCitation(self.lineCounter), `e`))
+                         (self.jsonToRelationConverter.makeFileCitation(), `e`))
             return row
         
         courseID  = eventDict.get('course', None)
@@ -900,11 +900,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         if courseID is None:
             logging.warn("Track log line %d: missing course ID in one of remove-forum-admin, add-forum-admin, " +\
                          "remove-forum-mod, add-forum-mod, remove-forum-community-TA, or add-forum-community-TA." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
         if username is None:
             logging.warn("Track log line %d: missing username in one of remove-forum-admin, add-forum-admin, " +\
                          "remove-forum-mod, add-forum-mod, remove-forum-community-TA, or add-forum-community-TA." %\
-                         (self.makeFileCitation(self.lineCounter), `e`))
+                         (self.jsonToRelationConverter.makeFileCitation(), `e`))
             
         self.setValInRow(row, 'courseID', courseID)
         self.setValInRow(row, 'username', username)        
@@ -913,35 +913,35 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handlePsychometricsHistogramGen(self, record, row, event):
         if event is None:
             logging.warn("Track log line %d: missing event info in pyschometrics-histogram-generation." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             return row
 
         try:
             eventDict = json.loads(event)
         except Exception as e:
             logging.warn("Track log line %d with event pyschometrics-histogram-generation contains malformed event field: '%s'" %
-                         (self.makeFileCitation(self.lineCounter), `e`))
+                         (self.jsonToRelationConverter.makeFileCitation(), `e`))
             return row
 
         problemID = eventDict.get('problem', None)
         
         if problemID is None:
             logging.warn("Track log line %d: missing problemID in pyschometrics-histogram-generation event." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
         self.setValInRow(row, 'problemID', problemID)
         return row
     
     def handleAddRemoveUserGroup(self, record, row, event):
         if event is None:
             logging.warn("Track log line %d: missing event info add-or-remove-user-group" %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             return row
 
         try:
             eventDict = json.loads(event)
         except Exception as e:
             logging.warn("Track log line %d with event_type add-or-remove-user-group contains malformed event field: '%s'" %
-                         (self.makeFileCitation(self.lineCounter), `e`))
+                         (self.jsonToRelationConverter.makeFileCitation(), `e`))
             return row
         
         eventName  = eventDict.get('event_name', None)
@@ -950,13 +950,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
         if eventName is None:
             logging.warn("Track log line %d: missing event_name in add-or-remove-user-group." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
         if user is None:
             logging.warn("Track log line %d: missing user field in add-or-remove-user-group." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
         if event is None:
             logging.warn("Track log line %d: missing event field in add-or-remove-user-group." %\
-                         (self.makeFileCitation(self.lineCounter)))
+                         (self.jsonToRelationConverter.makeFileCitation()))
             
         self.setValInRow(row, 'event_name', eventName)
         self.setValInRow(row, 'user', user)

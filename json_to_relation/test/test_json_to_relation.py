@@ -11,7 +11,7 @@ from json_to_relation.output_disposition import ColumnSpec, OutputPipe, OutputDi
 
 
 #from input_source import InURI
-TEST_ALL = True
+TEST_ALL = False
 
 class TestJSONToRelation(unittest.TestCase):
     
@@ -149,14 +149,16 @@ class TestJSONToRelation(unittest.TestCase):
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def test_edX_stress_import(self):
         source = InURI(os.path.join(os.path.dirname(__file__),"data/tracking.log-20130609.gz"))
+        print("Stress test: importing lots...")
         self.fileConverter = JSONToRelation(source, 
                                             OutputFile("testEdXStressImport.csv"),
                                             outputFormat = OutputDisposition.OutputFormat.CSV,
                                             schemaHints = {}
                                             )
         self.fileConverter.convert(prependColHeader=True)
+        print("Stress test done")
 
-    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def test_schema_hints(self):
         self.fileConverter = JSONToRelation(self.stringSource, 
                                             OutputFile("testOutput.csv"),

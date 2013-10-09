@@ -3,6 +3,7 @@ Created on Sep 14, 2013
 
 @author: paepcke
 '''
+from collections import OrderedDict
 import csv
 import sys
 import tempfile
@@ -73,13 +74,19 @@ class OutputDisposition(object):
         @type colName: String
         @param tableName: name of table in which the given column resides
         @type tableName: String
-        @return: ColumnSpec instance
-        @rtype: ColumnSpec
+        @return: list of ColumnSpec instances
+        @rtype: (ColumnSpec)
         @raise KeyError: if table or column are not found 
         '''
         return self.schemas[tableName][colName]
 
-    def ensureColExistence(self, colName, colDataType, tableName=None):
+    def getSchema(self, tableName=None):
+        try:
+            return self.schemas[tableName].values()
+        except ValueError:
+            return None
+    
+    def ensureColExistence(self, colName, colDataType, jsonToRelationConverter, tableName=None):
         '''
         Given a column name and MySQL datatype name, check whether this
         column has previously been encountered. If not, a column information
@@ -95,7 +102,8 @@ class OutputDisposition(object):
         schemaDict = self.schemas[tableName]
         if schemaDict is None or len(schemaDict) == 0:
             # schema for this table definitely does not have the column:
-            TableSchemas[tableName] = {colName : colDataType}
+            colSpecObj = ColumnSpec( colName, colDataType, jsonToRelationConverter)
+            self.schemas[tableName] = {colName : colSpecObj}
             return
         # Have schema (dict) for this table. Does that dict contain
         # an entry for the col name?
@@ -104,7 +112,8 @@ class OutputDisposition(object):
             # all set:
             return
         except KeyError:
-            schemaDict[colName] = colDataType
+            colSpecObj = ColumnSpec( colName, colDataType, jsonToRelationConverter)
+            schemaDict[colName] = colSpecObj
 
     def createTmpTableFile(self, tableName, fileSuffix):
         '''
@@ -208,6 +217,7 @@ class OutputFile(OutputDisposition):
 
 
 class OutputMySQLDump(OutputDisposition):
+    
     def __init__(self, dbName, tbleName):
         super(OutputMySQLDump, self).__init__()        
         raise NotImplementedError("MySQL dump not yet implemented")
@@ -292,14 +302,14 @@ class TableSchemas(object):
     Repository for the schemas of all tables. A schema is an 
     array ColumnSpec instances. Each such list is associated with
     one relational table. A class var dict holds the schemas for
-    all tables. The class 
+    all tables. 
     '''
 
     def __init__(self):
     
-        self.allSchemas = {}
+        self.allSchemas = OrderedDict()
         # Add empty schema for main (default) table:
-        self.allSchemas[None] = {}
+        self.allSchemas[None] = OrderedDict()
     
     def __getitem__(self, tableName):
         return self.allSchemas[tableName]

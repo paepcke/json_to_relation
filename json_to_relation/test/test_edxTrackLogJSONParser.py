@@ -7,12 +7,11 @@ import json
 import os
 import unittest
 
-from col_data_type import ColDataType
 from json_to_relation.edxTrackLogJSONParser import EdXTrackLogJSONParser
 from json_to_relation.input_source import InURI
 from json_to_relation.json_to_relation import JSONToRelation
-from json_to_relation.output_disposition import OutputPipe, OutputDisposition
-from output_disposition import TableSchemas, ColumnSpec
+from json_to_relation.output_disposition import OutputPipe, OutputDisposition, ColDataType
+from json_to_relation.output_disposition import TableSchemas, ColumnSpec
 
 
 TEST_ALL = True
