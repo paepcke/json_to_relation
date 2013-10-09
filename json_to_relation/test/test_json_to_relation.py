@@ -1,13 +1,15 @@
 
 import StringIO
+from collections import OrderedDict
 import os
+import tempfile
 import unittest
 
 from json_to_relation.col_data_type import ColDataType
 from json_to_relation.input_source import InputSource, InURI, InString, InMongoDB, InPipe #@UnusedImport
 from json_to_relation.json_to_relation import JSONToRelation
-from json_to_relation.output_disposition import ColumnSpec, OutputPipe, OutputDisposition, \
-    OutputFile
+from json_to_relation.output_disposition import ColumnSpec, OutputPipe, \
+    OutputDisposition, OutputFile
 
 
 #from input_source import InURI
@@ -17,11 +19,12 @@ class TestJSONToRelation(unittest.TestCase):
     
     def setUp(self):
         super(TestJSONToRelation, self).setUp()
+        self.tmpLogFile = tempfile.NamedTemporaryFile()
         self.stringSource = InURI(os.path.join(os.path.dirname(__file__),"data/twoJSONRecords.json"))
         self.fileConverter = JSONToRelation(self.stringSource, 
                                             OutputPipe(),
-                                            outputFormat = OutputDisposition.OutputFormat.CSV,
-                                            schemaHints = {}
+                                            outputFormat=OutputDisposition.OutputFormat.CSV,
+                                            logFile=self.tmpLogFile.name
                                             )
         # Remove various test output files if it exists:
         try:
@@ -53,6 +56,7 @@ class TestJSONToRelation(unittest.TestCase):
         
     def tearDown(self):
         super(TestJSONToRelation, self).tearDown()
+        self.tmpLogFile.close()
     
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def test_ensure_mysql_identifier_legal(self):
@@ -88,7 +92,6 @@ class TestJSONToRelation(unittest.TestCase):
         self.fileConverter = JSONToRelation(self.stringSource, 
                                             OutputFile("testOutput.csv"),
                                             outputFormat = OutputDisposition.OutputFormat.CSV,
-                                            schemaHints = {}
                                             )
         self.fileConverter.convert()
         expected = "asset,sainani.jpg,HRP258,c4x,Medicine,,image/jpeg,sainani.jpg,262144,/c4x/Medicine/HRP258/asset/sainani.jpg," +\
@@ -102,7 +105,6 @@ class TestJSONToRelation(unittest.TestCase):
         self.fileConverter = JSONToRelation(self.stringSource, 
                                             OutputFile("testOutputWithHeader.csv"),
                                             outputFormat = OutputDisposition.OutputFormat.CSV,
-                                            schemaHints = {}
                                             )
         self.fileConverter.convert(prependColHeader=True)
         expected = '"""_id.category""","""_id.name""","""_id.course""","""_id.tag""","""_id.org""","""_id.revision""",contentType,' +\
@@ -120,7 +122,6 @@ class TestJSONToRelation(unittest.TestCase):
         self.fileConverter = JSONToRelation(source, 
                                             OutputFile("testArrays.csv"),
                                             outputFormat = OutputDisposition.OutputFormat.CSV,
-                                            schemaHints = {}
                                             )
         self.fileConverter.convert(prependColHeader=True)
 
@@ -131,7 +132,6 @@ class TestJSONToRelation(unittest.TestCase):
         self.fileConverter = JSONToRelation(source, 
                                             OutputFile("testTinyEdXImport.csv"),
                                             outputFormat = OutputDisposition.OutputFormat.CSV,
-                                            schemaHints = {}
                                             )
         self.fileConverter.convert(prependColHeader=True)
     
@@ -142,28 +142,37 @@ class TestJSONToRelation(unittest.TestCase):
         self.fileConverter = JSONToRelation(source, 
                                             OutputFile("testEdXImport.csv"),
                                             outputFormat = OutputDisposition.OutputFormat.CSV,
-                                            schemaHints = {}
                                             )
         self.fileConverter.convert(prependColHeader=True)
 
-    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def test_edX_stress_import(self):
         source = InURI(os.path.join(os.path.dirname(__file__),"data/tracking.log-20130609.gz"))
+        tmpLogFile = tempfile.NamedTemporaryFile() # gets deleted automatically when closed.
+
         print("Stress test: importing lots...")
         self.fileConverter = JSONToRelation(source, 
                                             OutputFile("testEdXStressImport.csv"),
                                             outputFormat = OutputDisposition.OutputFormat.CSV,
-                                            schemaHints = {}
+                                            logFile = tmpLogFile.name,
+                                            progressEvery=10
                                             )
         self.fileConverter.convert(prependColHeader=True)
         print("Stress test done")
+        # Print the log file:
+        tmpLogFile.flush()
+        for line in tmpLogFile:
+            print(line)
+        # Cause log file to be deleted:
+        tmpLogFile.close()
+        
 
-    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def test_schema_hints(self):
         self.fileConverter = JSONToRelation(self.stringSource, 
                                             OutputFile("testOutput.csv"),
                                             outputFormat = OutputDisposition.OutputFormat.CSV,
-                                            schemaHints = {}
+                                            schemaHints = OrderedDict()
                                             )
         self.fileConverter.convert()
         schema = self.fileConverter.getSchema()
@@ -176,8 +185,8 @@ class TestJSONToRelation(unittest.TestCase):
         self.fileConverter = JSONToRelation(self.stringSource, 
                                             OutputFile("testOutput.csv"),
                                             outputFormat = OutputDisposition.OutputFormat.CSV,
-                                            schemaHints = {'chunkSize' : ColDataType.INT,
-                                                           'length' : ColDataType.INT}
+                                            schemaHints = OrderedDict({'chunkSize' : ColDataType.INT,
+                                                           'length' : ColDataType.INT})
                                             )
         self.fileConverter.convert()
         schema = self.fileConverter.getSchema()

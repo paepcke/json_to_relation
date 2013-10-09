@@ -48,8 +48,8 @@ class ColDataType:
     DATE=11
     TIME=12
     DATETIME=13
-    BOOL=14
-    
+    BOOL=14        # IF YOU ADD ENTRIES, MODIFY isistance method below
+        
     strings = {TINYTEXT : "TINYTEXT",
                TEXT     : "TEXT",
                MEDIUMTEXT : "MEDIUMTEXT",
@@ -65,6 +65,10 @@ class ColDataType:
                DATETIME : "DATETIME",
                BOOL     : "BOOL"
     }
+
+    @classmethod
+    def isinstance(cls, value):
+        return value >= ColDataType.TINYTEXT and value <= ColDataType.BOOL
 
     def toString(self, val):
         try:

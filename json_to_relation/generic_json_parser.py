@@ -26,7 +26,7 @@ class GenericJSONParser(object):
         '''
         @param jsonToRelationConverter: JSONToRelation instance
         @type jsonToRelationConverter: JSONToRelation
-        @param logfileID: an identfier of the log file being processed. Used 
+        @param logfileID: an identfier of the tracking log file being processed. Used 
                to build error/warning msgs that cite a file and line number in
                their text
         @type jsonToRelationConverter: JSONToRelation
@@ -238,6 +238,9 @@ class GenericJSONParser(object):
         self.linesSinceLastProgReport += 1
         self.totalLinesDoneSoFar += 1
         if self.linesSinceLastProgReport >= self.progressEvery:
+            #*******************
+            print("Processed %d JSON objects..." % self.totalLinesDoneSoFar)
+            #*******************
             logging.info("Processed %d JSON objects..." % self.totalLinesDoneSoFar)
             self.linesSinceLastProgReport = 0 
 

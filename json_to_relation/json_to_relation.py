@@ -1,34 +1,28 @@
 #!/usr/bin/env python
-
 #TODO: Edx problem_check_fail
 #TODO: Edx problem_check
 #TODO: Edx save_problem_check
 #TODO: Edx problem_rescore_fail
 #TODO: Edx problem_rescore
-
-
 '''
 Created on Sep 14, 2013
 
 @author: paepcke
 '''
-
 from collections import OrderedDict
+import logging
 import math
 import os
 import re
 import shutil
 import tempfile
-import logging
 
+from col_data_type import ColDataType
 from generic_json_parser import GenericJSONParser
 from input_source import InputSource, InURI, InString, InMongoDB, InPipe #@UnusedImport
-from output_disposition import OutputDisposition, OutputMySQLDump, OutputFile
+from output_disposition import OutputDisposition, OutputMySQLDump, OutputFile, OutputPipe
 
 
-#>>> with open('/home/paepcke/tmp/trash.csv', 'wab') as fd:
-#...     writer = csv.writer(fd, delimiter=",", dialect="excel")
-#...     writer.writerow(info)
 class JSONToRelation(object):
     '''
     Given a source with JSON structures, derive a schema, and construct 
@@ -52,10 +46,11 @@ class JSONToRelation(object):
                  jsonSource, 
                  destination, 
                  outputFormat=OutputDisposition.OutputFormat.CSV, 
-                 schemaHints={},
+                 schemaHints=OrderedDict(),
                  jsonParserInstance=None,
-                 loggingLevel=logging.WARN,
-                 logFile=None):
+                 loggingLevel=logging.INFO,
+                 logFile=None,
+                 progressEvery=1000):
         '''
         Create a JSON-to-Relation converter. The JSON source can be
         a file with JSON objects, a StringIO.StringIO string pseudo file,
@@ -93,12 +88,18 @@ class JSONToRelation(object):
         @param outputFormat: format of output. Can be CSV or SQL INSERT statements
         @type outputFormat: OutputFormat
         @param schemaHints: Dict mapping col names to data types (optional). Affects the default (main) table.
-        @type schemaHints: Map<String,ColDataTYpe>
+        @type schemaHints: OrderedDict<String,ColDataTYpe>
         @param jsonParserInstance: a parser that takes one JSON string, and returns a CSV row. Parser also must inform this 
                                    parent object of any generated column names.
         @type jsonParserInstance: {GenericJSONParser | EdXTrackLogJSONParser | CourseraTrackLogJSONParser}
         @param loggingLevel: level at which logging output is show. 
         @type loggingLevel: {logging.DEBUG | logging.WARN | logging.INFO | logging.ERROR | logging.CRITICAL}
+        @param logFile: path to file where log is to be written. Default is None: log to stdout.
+                        It is an error to default logFile if the destination is OutputPipe. Otherwise log output
+                        would be mixed in with the data output
+        @type logFile: String
+        @param progressEvery: number of JSON object to process before reporting the number in a log info msg. If None, no reporting
+        @type  progressEvery: {int | None}
         @raise ValueErrer: when value of jsonParserInstance is neither None, nor an instance of GenericJSONParser,
                         nor one of its subclasses.
         @raise ValueError: when jsonSource is not an instance of InPipe, InString, InURI, or InMongoDB  
@@ -112,11 +113,23 @@ class JSONToRelation(object):
         if not isinstance(jsonSource, InputSource):
             raise ValueError("JSON source must be an instance of InPipe, InString, InURI, or InMongoDB")
         
+        if not isinstance(schemaHints, OrderedDict):
+            raise ValueError("The schemaHints, if provided, must be an OrderedDict.")
+        
         self.jsonSource = jsonSource
         self.destination = destination
         self.outputFormat = outputFormat
-        # Establish the schema hints for the main table:
-        self.destination.addSchemaHints(None, schemaHints)
+
+        # Check schemaHints correctness:
+        if schemaHints is not None:
+            for typeHint in schemaHints.values():
+                if not ColDataType.isinstance(typeHint):
+                    raise ValueError("Schema hints must be of type ColDataType")
+        self.userDefinedHints = schemaHints
+
+        # Check whether log output would interleave with data output:
+        if logFile is None and isinstance(destination, OutputPipe):
+            raise ValueError("If output is to a Unix pipe, then a log file name must be provided.")
 
         # The following three instance vars are used for accumulating INSERT
         # values when output is a MySQL dump. 
@@ -209,6 +222,10 @@ class JSONToRelation(object):
         return self.destination.getSchemaHint(colName, tableName)
 
     def ensureColExistence(self, colName, colDataType, tableName=None):
+        userDefinedHintType = self.userDefinedHints.get(colName, None)
+        if userDefinedHintType is not None:
+            # We checked type correctness in __init__() method, so trust it here:
+            colDataType = userDefinedHintType
         self.destination.ensureColExistence(colName, colDataType, self, tableName)
 
     def convert(self, prependColHeader=False):

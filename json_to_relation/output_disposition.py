@@ -103,7 +103,7 @@ class OutputDisposition(object):
         if schemaDict is None or len(schemaDict) == 0:
             # schema for this table definitely does not have the column:
             colSpecObj = ColumnSpec( colName, colDataType, jsonToRelationConverter)
-            self.schemas[tableName] = {colName : colSpecObj}
+            self.schemas[tableName] = OrderedDict({colName : colSpecObj})
             return
         # Have schema (dict) for this table. Does that dict contain
         # an entry for the col name?
@@ -326,7 +326,7 @@ class TableSchemas(object):
         schema[colSpec.getName()] = colSpec
         
     def addColSpecs(self, tableName, colSpecsDict):
-        if type(colSpecsDict) != type({}):
+        if not isinstance(colSpecsDict, OrderedDict):
             raise ValueError("ColumSpec parameter must be a dictionary<ColName,ColumnSpec>")
         try:
             schema = self.allSchemas[tableName]

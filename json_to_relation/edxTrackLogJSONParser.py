@@ -20,13 +20,19 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     Parser specialized for EdX track logs.
     '''
 
-    def __init__(self, jsonToRelationConverter):
+    def __init__(self, jsonToRelationConverter, logfileID='', progressEvery=1000):
         '''
         Constructor
         @param jsonToRelationConverter: JSONToRelation instance
         @type jsonToRelationConverter: JSONToRelation
+        @param logfileID: an identfier of the tracking log file being processed. Used 
+               to build error/warning msgs that cite a file and line number in
+               their text
+        @type jsonToRelationConverter: JSONToRelation
+        @param progressEvery: number of input lines, a.k.a. JSON objects after which logging should report total done
+        @type progressEvery: int 
         '''
-        super(EdXTrackLogJSONParser, self).__init__(jsonToRelationConverter)
+        super(EdXTrackLogJSONParser, self).__init__(jsonToRelationConverter, logfileID=logfileID, progressEvery=progressEvery)
         
         # Prepare as much as possible outside parsing of
         # each line; Build the schema:
