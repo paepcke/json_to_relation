@@ -23,21 +23,6 @@ from generic_json_parser import GenericJSONParser
 from input_source import InputSource, InURI, InString, InMongoDB, InPipe #@UnusedImport
 from output_disposition import OutputDisposition, OutputMySQLDump, OutputFile, OutputPipe
 
-# How long a MySQL packet is allowed to be.
-# MySQL server default is 1M as per documentation,
-# but 16M as per observation. Change that value
-# on server via either  
-#     mysqld --max_allowed_packet=32M
-# or putting this into /etc/mysql/my.cnf
-#       [mysqld]
-#       max_allowed_packet=16M
-# Then change the following constant to the
-# new limit minus about 1K to allow for
-# the INSERT, and column name specs. Or round
-# down like this:
-
-MAX_ALLOWED_PACKET_SIZE = 1000000; 
-
 
 class JSONToRelation(object):
     '''
@@ -57,6 +42,20 @@ class JSONToRelation(object):
     # contains only chars legal in a MySQL identifier
     #, i.e. alphanumeric plus underscore plus dollar sign:
     LEGAL_MYSQL_ATTRIBUTE_PATTERN = re.compile("^[$\w]+$")
+
+    # How long a MySQL packet is allowed to be.
+    # MySQL server default is 1M as per documentation,
+    # but 16M as per observation. Change that value
+    # on server via either  
+    #     mysqld --max_allowed_packet=32M
+    # or putting this into /etc/mysql/my.cnf
+    #       [mysqld]
+    #       max_allowed_packet=16M
+    # Then change the following constant to the
+    # new limit minus about 1K to allow for
+    # the INSERT, and column name specs. Or round
+    # down like this:
+    MAX_ALLOWED_PACKET_SIZE = 1000000; 
     
 
     # Remember whether logging has been initialized (class var!):
@@ -381,27 +380,26 @@ class JSONToRelation(object):
                 return self.finalizeInsertStatement()
             else:
                 raise ValueError('Bad argument to prepareMySQLRow: %s' % str(insertInfo))
+
+        # Compute approximate new size of hold-back buffer with these new values:
+        newCacheSize = self.valsCacheSize + self.calculateHeldBackDataSize(valsArray)
         
         # Have we started accumulating values in an earlier call?
         if self.currOutTable is not None: 
             if tableName == self.currOutTable and insertSig == self.currInsertSig:
-                # These values are for the same columns in the same table
-                # as previous call(s). Accumulate them, unless that would
-                # result in an illegally large INSERT statement:
-                newCacheSize = self.valsCacheSize + self.calculateHeldBackDataSize(valsArray)
-                if newCacheSize > MAX_ALLOWED_PACKET_SIZE:
+                if newCacheSize > JSONToRelation.MAX_ALLOWED_PACKET_SIZE:
                     # New vals could be held back, but buffer is full:
                     # Construct INSERT statement from the cached values:
                     insertStatement = self.finalizeInsertStatement()
                     # Start accumulating values for this new INSERT request:
                     self.currOutTable = tableName
                     self.currInsertSig = insertSig
-                    self.valsArray = [valsArray]
+                    self.currValsArray.extend(valsArray)
                     return insertStatement
                 else:
                     # Can hold back the new values:
                     self.valsCacheSize = newCacheSize
-                    self.currValsArray.append(valsArray)
+                    self.currValsArray.extend(valsArray)
                     return None
             else:
                 # Were accumulating vals, but this call is for a different
@@ -410,9 +408,25 @@ class JSONToRelation(object):
                 # Start accumulating values for this new INSERT request:
                 self.currOutTable = tableName
                 self.currInsertSig = insertSig
-                self.valsArray = [valsArray]
+                self.currValsArray.extend(valsArray)
                 return insertStatement
-                
+            
+        # We have not yet started to accumulate values:
+        else:
+            # If even the first INSERT values are too big for
+            # the empty hold-back buffer: just send the INSERT
+            # right away:
+            if newCacheSize > JSONToRelation.MAX_ALLOWED_PACKET_SIZE:
+                valuesPartFileStr = self.constructValuesStr(valsArray)
+                insertStatement = "INSERT INTO %s (%s) VALUES %s;" % (tableName, insertSig, valuesPartFileStr.getvalue())
+                return insertStatement
+            # Hold back the new values:
+            self.valsCacheSize = newCacheSize
+            self.currOutTable = tableName
+            self.currInsertSig = insertSig
+            self.currValsArray.extend(valsArray)
+            return None
+         
     def finalizeInsertStatement(self):
         '''
         Create a possibly multivalued INSERT statement from what is
@@ -420,8 +434,32 @@ class JSONToRelation(object):
         Example return::
            INSERT INTO myTable (col2, col2) VALUES
               ('foo',10),
-              ('bar',20)
-              ;
+              ('bar',20);
+        '''
+        
+        if len(self.currValsArray) == 0:
+            raise ValueError("Method finalizeInsertStatement called with empty hold-back values buffer.")
+        
+        valsFileStr = self.constructValuesStr(self.currValsArray)
+        
+        res = "INSERT INTO %s (%s) VALUES %s;" % (self.currOutTable, self.currInsertSig, valsFileStr.getvalue())
+        # We are no longer accumulating INSERT values right now:
+        self.currOutTable = None
+        self.currInsertSig = None
+        self.currValsArray = []
+        self.insertValCacheSize = 0
+        return res
+
+    def constructValuesStr(self, valsArrays):
+        '''
+        Takes an array of arrays that hold the values to use in 
+        an INSERT statement. Ex: [['foo',10],['bar',20]]. Returns
+        a StringIO string file containing a legal INSERT statement's
+        VALUES part: ('foo',10),('bar',20)
+        @param valsArrays: array of values arrays
+        @type valsArrays: [[<any>]]
+        @return: IOString string file with legal VALUES section of INSERT statement
+        @rtype: IOString
         '''
         # Build the values part:
         valsFileStr = StringIO()
@@ -433,12 +471,12 @@ class JSONToRelation(object):
         # needed, but there it is:
         isFirstValTuple = True
         isFirstVal = True
-        for insertVals in self.currValsArray:
+        for insertVals in valsArrays:
             if isFirstValTuple:
                 valsFileStr.write('\n    (')
                 isFirstValTuple = False
             else:
-                valsFileStr.write('(')
+                valsFileStr.write(',\n    (')
             for insertVal in insertVals:
                 if isFirstVal:
                     isFirstVal = False
@@ -446,16 +484,9 @@ class JSONToRelation(object):
                     valsFileStr.write(str(','))
                 # Ensure that strings get a quote char arround them:
                 valsFileStr.write("'" + insertVal + "'" if isinstance(insertVal,basestring) else str(insertVal))
-            valsFileStr.write(')\n    ')
+            valsFileStr.write(')')
             isFirstVal = True
-        
-        res = "INSERT INTO %s (%s) VALUES %s;" % (self.currOutTable, self.currInsertSig, valsFileStr.getvalue())
-        # We are no longer accumulating INSERT values right now:
-        self.currOutTable = None
-        self.currInsertSig = None
-        self.currValsArray = []
-        self.insertValCacheSize = 0
-        return res
+        return valsFileStr
 
     def getSchema(self, tableName=None):
         '''

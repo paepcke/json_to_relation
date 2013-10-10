@@ -188,17 +188,84 @@ class TestJSONToRelation(unittest.TestCase):
 
     #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testInsertStatementConstruction(self):
+        
+        # No value array in hold-back buffer:
         self.fileConverter.currInsertSig = 'col1, col2'
         self.fileConverter.currOutTable = 'TestTable'
+        self.fileConverter.currValsArray = []
+        try:
+            self.fileConverter.finalizeInsertStatement()
+            self.fail("Expected ValueError for empty hold-back buffer")
+        except ValueError:
+            pass
+
+        # One value array in hold-back buffer:
+        self.fileConverter.currInsertSig = 'col1, col2'
+        self.fileConverter.currOutTable = 'MyTable'
+        self.fileConverter.currValsArray = [['foo', 10]]
+        res = self.fileConverter.finalizeInsertStatement()
+        #print res
+        self.assertEqual("INSERT INTO MyTable (col1, col2) VALUES \n    ('foo',10);", res)
+        
+        self.fileConverter.currInsertSig = 'col1, col2'
+        self.fileConverter.currOutTable = 'MyTable'
         self.fileConverter.currValsArray = [['foo', 10], ['bar', 20]]
         res = self.fileConverter.finalizeInsertStatement()
-        print res
-        self.assertEqual("INSERT INTO TestTable (col1, col2) VALUES \n    ('foo',10),\n    ('bar',20)\n    ;", res)
+        #print res
+        self.assertEqual("INSERT INTO MyTable (col1, col2) VALUES \n    ('foo',10),\n    ('bar',20);", res)
         
-"INSERT INTO TestTable (col1, col2) VALUES\n     ('foo',10)
-    ('bar',20)
-    ;        
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def testPrepareMySQLRow(self):
+        
+        # Pretend to be the edx parser, sending one insert's worth of
+        # info. This will fit into the hold-back buffer, and return None:
+        insertInfo = ('MyTable', 'col1, col2', [['foo', 10],['bar',20]])
+        res = self.fileConverter.prepareMySQLRow(insertInfo)
+        self.assertIsNone(res)
+        self.assertEqual('MyTable', self.fileConverter.currOutTable)
+        self.assertEqual('col1, col2', self.fileConverter.currInsertSig)
+        self.assertEqual([['foo', 10], ['bar', 20]], self.fileConverter.currValsArray)
+        
+        # Lower the allowed MySQL packet size to force immediate creation of INSERT statement:
+        self.fileConverter.__class__.MAX_ALLOWED_PACKET_SIZE = 3
+        self.fileConverter.currInsertSig = None
+        self.fileConverter.currOutTable = None
+        self.fileConverter.currValsArray = []
+        res = self.fileConverter.prepareMySQLRow(insertInfo)
+        self.assertEqual("INSERT INTO MyTable (col1, col2) VALUES \n    ('foo',10),\n    ('bar',20);", res)
 
+        # Set the allowed MySQL packet size to allow a first INSERT statement to be 
+        # held back, but a second call must trigger sending of the held back
+        # values, holding back the newly submitted values: 
+        
+        # First call:
+        self.fileConverter.__class__.MAX_ALLOWED_PACKET_SIZE = 60
+        self.fileConverter.currInsertSig = None
+        self.fileConverter.currOutTable = None
+        self.fileConverter.currValsArray = []
+        res = self.fileConverter.prepareMySQLRow(insertInfo)
+        self.assertIsNone(res)
+        self.assertEqual('MyTable', self.fileConverter.currOutTable)
+        self.assertEqual('col1, col2', self.fileConverter.currInsertSig)
+        self.assertEqual([['foo', 10], ['bar', 20]], self.fileConverter.currValsArray)
+
+        # Second call:
+        insertMoreInfo = ('MyTable', 'col1, col2', [['blue', 30.1],['green',40.99]])
+        res = self.fileConverter.prepareMySQLRow(insertMoreInfo)
+        # Should have insert statement for the prior submission...
+        self.assertEqual("INSERT INTO MyTable (col1, col2) VALUES \n    ('foo',10),\n    ('bar',20);", res)
+        # ... and the hold-back buffer should have the new submission:
+        self.assertEqual('MyTable', self.fileConverter.currOutTable)
+        self.assertEqual('col1, col2', self.fileConverter.currInsertSig)
+        self.assertEqual([['blue', 30.1], ['green', 40.99]], self.fileConverter.currValsArray)
+         
+        # Call FLUSH to get the held-back values:
+        res = self.fileConverter.prepareMySQLRow('FLUSH')
+        self.assertEqual("INSERT INTO MyTable (col1, col2) VALUES \n    ('blue',30.1),\n    ('green',40.99);", res)
+        self.assertIsNone(self.fileConverter.currOutTable)
+        self.assertIsNone(self.fileConverter.currInsertSig)
+        self.assertEqual([], self.fileConverter.currValsArray)
+        
 #--------------------------------------------------------------------------------------------------    
     def assertFileContentEquals(self, expected, filePath):
         strFile = StringIO.StringIO(expected)
