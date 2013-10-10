@@ -41,6 +41,11 @@ class JSONToRelation(object):
     # contains only chars legal in a MySQL identifier
     #, i.e. alphanumeric plus underscore plus dollar sign:
     LEGAL_MYSQL_ATTRIBUTE_PATTERN = re.compile("^[$\w]+$")
+    
+
+    # Remember whether logging has been initialized (class var!):
+    loggingInitialized = False
+    logger = None
         
     def __init__(self, 
                  jsonSource, 
@@ -89,14 +94,15 @@ class JSONToRelation(object):
         @type outputFormat: OutputFormat
         @param schemaHints: Dict mapping col names to data types (optional). Affects the default (main) table.
         @type schemaHints: OrderedDict<String,ColDataTYpe>
-        @param jsonParserInstance: a parser that takes one JSON string, and returns a CSV row. Parser also must inform this 
+        @param jsonParserInstance: a parser that takes one JSON string, and returns a CSV row, or other
+                                   desired output, like SQL dump statements. Parser also must inform this 
                                    parent object of any generated column names.
         @type jsonParserInstance: {GenericJSONParser | EdXTrackLogJSONParser | CourseraTrackLogJSONParser}
         @param loggingLevel: level at which logging output is show. 
         @type loggingLevel: {logging.DEBUG | logging.WARN | logging.INFO | logging.ERROR | logging.CRITICAL}
         @param logFile: path to file where log is to be written. Default is None: log to stdout.
-                        It is an error to default logFile if the destination is OutputPipe. Otherwise log output
-                        would be mixed in with the data output
+                        A warning is logged if logFile is None and the destination is OutputPipe. In this
+                        case logging messages will be mixed in with the data output
         @type logFile: String
         @param progressEvery: number of JSON object to process before reporting the number in a log info msg. If None, no reporting
         @type  progressEvery: {int | None}
@@ -127,10 +133,6 @@ class JSONToRelation(object):
                     raise ValueError("Schema hints must be of type ColDataType")
         self.userDefinedHints = schemaHints
 
-        # Check whether log output would interleave with data output:
-        if logFile is None and isinstance(destination, OutputPipe):
-            raise ValueError("If output is to a Unix pipe, then a log file name must be provided.")
-
         # The following three instance vars are used for accumulating INSERT
         # values when output is a MySQL dump. 
         # Current table for which insert values are being collected:
@@ -144,12 +146,13 @@ class JSONToRelation(object):
         # Count JSON objects (i.e. JSON file lines) as they are passed
         # to us for parsing. Used for logging malformed entries:
         self.lineCounter = -1
+        
+        self.setupLogging(loggingLevel, logFile)
 
-        if logFile is not None:
-            logging.basicConfig(filename=logFile, level=loggingLevel)
-        else:
-            logging.basicConfig(level=loggingLevel)
-
+        # Check whether log output would interleave with data output:
+        if logFile is None and isinstance(destination, OutputPipe):
+            JSONToRelation.logger.warn("If output is to a Unix pipe, then a log file name must be provided.")
+        
         if jsonParserInstance is None:
             self.jsonParserInstance = GenericJSONParser(self)
         elif isinstance(jsonParserInstance, GenericJSONParser):
@@ -168,6 +171,36 @@ class JSONToRelation(object):
         # Position of column for next col name that is
         # newly encountered: 
         self.nextNewColPos = 0;
+
+    def setupLogging(self, loggingLevel, logFile):
+        if JSONToRelation.loggingInitialized:
+            return
+            
+        # Set up logging:
+        JSONToRelation.logger = logging.getLogger('jsonToRel')
+        JSONToRelation.logger.setLevel(loggingLevel)
+        # Create file handler if requested:
+        if logFile is not None:
+            handler = logging.FileHandler(logFile)
+            handler.setLevel(loggingLevel)
+        else:
+            # Create console handler:
+            handler = logging.StreamHandler()
+            handler.setLevel(loggingLevel)
+#         # create formatter and add it to the handlers
+#         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+#         fh.setFormatter(formatter)
+#         ch.setFormatter(formatter)
+        # Add the handler to the logger
+        JSONToRelation.logger.addHandler(handler)
+        #**********************
+        #JSONToRelation.logger.info("Info for you")
+        #JSONToRelation.logger.warn("Warning for you")
+        #JSONToRelation.logger.debug("Debug for you")
+        #**********************
+        
+        JSONToRelation.loggingInitialized = True
+
 
     def startNewTable(self, tableName, schemaHintsNewTable):
         '''
@@ -257,7 +290,7 @@ class JSONToRelation(object):
                     newRow = self.jsonParserInstance.processOneJSONObject(jsonStr, newRow)
                 except ValueError as e:
                     #***** Catch here or down in the parser?
-                    logging.warn('Line %s: bad JSON: %s' % (self.makeFileCitation(), `e`))
+                    JSONToRelation.logger.warn('Line %s: bad JSON: %s' % (self.makeFileCitation(), `e`))
                 self.processFinishedRow(newRow, outFd)
                 self.bumpLineCounter()
 

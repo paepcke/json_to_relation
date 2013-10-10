@@ -10,7 +10,6 @@ import re
 
 from col_data_type import ColDataType
 
-
 class GenericJSONParser(object):
     '''
     Takes a JSON string, and returns a CSV row for later import into a relational database. 
@@ -22,7 +21,7 @@ class GenericJSONParser(object):
     # groups: 'item' and 'name'.
     REMOVE_ITEM_FROM_STRING_PATTERN = re.compile(r'(item)\.([^.]*$)')
 
-    def __init__(self, jsonToRelationConverter, logfileID='', progressEvery=1000):
+    def __init__(self, jsonToRelationConverter, logfileID='', progressEvery=1000, logger=None):
         '''
         @param jsonToRelationConverter: JSONToRelation instance
         @type jsonToRelationConverter: JSONToRelation
@@ -32,7 +31,8 @@ class GenericJSONParser(object):
         @type jsonToRelationConverter: JSONToRelation
         @param progressEvery: number of input lines, a.k.a. JSON objects after which logging should report total done
         @type progressEvery: int 
-
+        @param logger: logging.logger object for info and warnings
+        @type logger: logging.logger
         '''
         self.jsonToRelationConverter = jsonToRelationConverter
         self.logfileID = logfileID
@@ -238,10 +238,7 @@ class GenericJSONParser(object):
         self.linesSinceLastProgReport += 1
         self.totalLinesDoneSoFar += 1
         if self.linesSinceLastProgReport >= self.progressEvery:
-            #*******************
-            print("Processed %d JSON objects..." % self.totalLinesDoneSoFar)
-            #*******************
-            logging.info("Processed %d JSON objects..." % self.totalLinesDoneSoFar)
+            JSONToRelation.logger.info("Processed %d JSON objects..." % self.totalLinesDoneSoFar)
             self.linesSinceLastProgReport = 0 
 
 class Stack(object):

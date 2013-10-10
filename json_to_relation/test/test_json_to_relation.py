@@ -13,7 +13,7 @@ from json_to_relation.output_disposition import ColumnSpec, OutputPipe, \
 
 
 #from input_source import InURI
-TEST_ALL = False
+TEST_ALL = True
 
 class TestJSONToRelation(unittest.TestCase):
     
@@ -145,26 +145,18 @@ class TestJSONToRelation(unittest.TestCase):
                                             )
         self.fileConverter.convert(prependColHeader=True)
 
-    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def test_edX_stress_import(self):
         source = InURI(os.path.join(os.path.dirname(__file__),"data/tracking.log-20130609.gz"))
-        tmpLogFile = tempfile.NamedTemporaryFile() # gets deleted automatically when closed.
 
         print("Stress test: importing lots...")
         self.fileConverter = JSONToRelation(source, 
                                             OutputFile("testEdXStressImport.csv"),
                                             outputFormat = OutputDisposition.OutputFormat.CSV,
-                                            logFile = tmpLogFile.name,
                                             progressEvery=10
                                             )
         self.fileConverter.convert(prependColHeader=True)
         print("Stress test done")
-        # Print the log file:
-        tmpLogFile.flush()
-        for line in tmpLogFile:
-            print(line)
-        # Cause log file to be deleted:
-        tmpLogFile.close()
         
 
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
