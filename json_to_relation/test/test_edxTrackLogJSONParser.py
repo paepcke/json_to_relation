@@ -30,7 +30,6 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         self.fileConverter = JSONToRelation(self.stringSource, 
                                             OutputPipe(),
                                             outputFormat = OutputDisposition.OutputFormat.CSV,
-                                            schemaHints = {}
                                             )
         
         self.edxParser = EdXTrackLogJSONParser(self.fileConverter)

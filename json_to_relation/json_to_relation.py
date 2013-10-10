@@ -174,7 +174,9 @@ class JSONToRelation(object):
 
     def setupLogging(self, loggingLevel, logFile):
         if JSONToRelation.loggingInitialized:
-            return
+            # Remove previous file or console handlers,
+            # else we get logging output doubled:
+            JSONToRelation.logger.handlers = []
             
         # Set up logging:
         JSONToRelation.logger = logging.getLogger('jsonToRel')
@@ -182,11 +184,10 @@ class JSONToRelation(object):
         # Create file handler if requested:
         if logFile is not None:
             handler = logging.FileHandler(logFile)
-            handler.setLevel(loggingLevel)
         else:
             # Create console handler:
             handler = logging.StreamHandler()
-            handler.setLevel(loggingLevel)
+        handler.setLevel(loggingLevel)
 #         # create formatter and add it to the handlers
 #         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 #         fh.setFormatter(formatter)

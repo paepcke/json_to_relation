@@ -21,7 +21,7 @@ class GenericJSONParser(object):
     # groups: 'item' and 'name'.
     REMOVE_ITEM_FROM_STRING_PATTERN = re.compile(r'(item)\.([^.]*$)')
 
-    def __init__(self, jsonToRelationConverter, logfileID='', progressEvery=1000, logger=None):
+    def __init__(self, jsonToRelationConverter, logfileID='', progressEvery=1000):
         '''
         @param jsonToRelationConverter: JSONToRelation instance
         @type jsonToRelationConverter: JSONToRelation
@@ -39,6 +39,8 @@ class GenericJSONParser(object):
         self.progressEvery = progressEvery
         self.totalLinesDoneSoFar = 0
         self.linesSinceLastProgReport = 0
+        
+        self.logger = self.jsonToRelationConverter.__class__.logger
     
     def processOneJSONObject(self, jsonStr, row):
         '''
@@ -238,7 +240,8 @@ class GenericJSONParser(object):
         self.linesSinceLastProgReport += 1
         self.totalLinesDoneSoFar += 1
         if self.linesSinceLastProgReport >= self.progressEvery:
-            JSONToRelation.logger.info("Processed %d JSON objects..." % self.totalLinesDoneSoFar)
+            #****self.logger.info("Processed %d JSON objects..." % self.totalLinesDoneSoFar)
+            self.jsonToRelationConverter.__class__.logger.info("Processed %d JSON objects..." % self.totalLinesDoneSoFar)
             self.linesSinceLastProgReport = 0 
 
 class Stack(object):
