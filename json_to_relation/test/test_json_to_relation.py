@@ -13,7 +13,7 @@ from json_to_relation.output_disposition import ColumnSpec, OutputPipe, \
 
 
 #from input_source import InURI
-TEST_ALL = True
+TEST_ALL = False
 
 class TestJSONToRelation(unittest.TestCase):
     
@@ -185,6 +185,19 @@ class TestJSONToRelation(unittest.TestCase):
         self.assertEqual(['TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'INT', 'TEXT', 'INT', 'TEXT', 'TEXT', 'TEXT', 'TEXT'],
                          map(ColumnSpec.getType, schema))
 
+
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def testInsertStatementConstruction(self):
+        self.fileConverter.currInsertSig = 'col1, col2'
+        self.fileConverter.currOutTable = 'TestTable'
+        self.fileConverter.currValsArray = [['foo', 10], ['bar', 20]]
+        res = self.fileConverter.finalizeInsertStatement()
+        print res
+        self.assertEqual("INSERT INTO TestTable (col1, col2) VALUES \n    ('foo',10),\n    ('bar',20)\n    ;", res)
+        
+"INSERT INTO TestTable (col1, col2) VALUES\n     ('foo',10)
+    ('bar',20)
+    ;        
 
 #--------------------------------------------------------------------------------------------------    
     def assertFileContentEquals(self, expected, filePath):

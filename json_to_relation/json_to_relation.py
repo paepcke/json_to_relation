@@ -16,11 +16,27 @@ import os
 import re
 import shutil
 import tempfile
+from cStringIO import StringIO
 
 from col_data_type import ColDataType
 from generic_json_parser import GenericJSONParser
 from input_source import InputSource, InURI, InString, InMongoDB, InPipe #@UnusedImport
 from output_disposition import OutputDisposition, OutputMySQLDump, OutputFile, OutputPipe
+
+# How long a MySQL packet is allowed to be.
+# MySQL server default is 1M as per documentation,
+# but 16M as per observation. Change that value
+# on server via either  
+#     mysqld --max_allowed_packet=32M
+# or putting this into /etc/mysql/my.cnf
+#       [mysqld]
+#       max_allowed_packet=16M
+# Then change the following constant to the
+# new limit minus about 1K to allow for
+# the INSERT, and column name specs. Or round
+# down like this:
+
+MAX_ALLOWED_PACKET_SIZE = 1000000; 
 
 
 class JSONToRelation(object):
@@ -137,11 +153,17 @@ class JSONToRelation(object):
         # values when output is a MySQL dump. 
         # Current table for which insert values are being collected:
         self.currOutTable = None
+        
         # Insert values so far (array of value arrays):
         self.currValsArray = []
+        
         # Column names for which INSERT values are being collected.
         # Ex.: 'col1,col2':
         self.currInsertSig = None
+        
+        # Current approximate len of INSERT statement 
+        # for cached values:
+        self.valsCacheSize = 0;
 
         # Count JSON objects (i.e. JSON file lines) as they are passed
         # to us for parsing. Used for logging malformed entries:
@@ -359,13 +381,28 @@ class JSONToRelation(object):
                 return self.finalizeInsertStatement()
             else:
                 raise ValueError('Bad argument to prepareMySQLRow: %s' % str(insertInfo))
+        
         # Have we started accumulating values in an earlier call?
         if self.currOutTable is not None: 
             if tableName == self.currOutTable and insertSig == self.currInsertSig:
                 # These values are for the same columns in the same table
-                # as previous call(s). Accumulate them:
-                self.currValsArray.append(valsArray)
-                return None
+                # as previous call(s). Accumulate them, unless that would
+                # result in an illegally large INSERT statement:
+                newCacheSize = self.valsCacheSize + self.calculateHeldBackDataSize(valsArray)
+                if newCacheSize > MAX_ALLOWED_PACKET_SIZE:
+                    # New vals could be held back, but buffer is full:
+                    # Construct INSERT statement from the cached values:
+                    insertStatement = self.finalizeInsertStatement()
+                    # Start accumulating values for this new INSERT request:
+                    self.currOutTable = tableName
+                    self.currInsertSig = insertSig
+                    self.valsArray = [valsArray]
+                    return insertStatement
+                else:
+                    # Can hold back the new values:
+                    self.valsCacheSize = newCacheSize
+                    self.currValsArray.append(valsArray)
+                    return None
             else:
                 # Were accumulating vals, but this call is for a different
                 # table or set of columns:
@@ -380,12 +417,44 @@ class JSONToRelation(object):
         '''
         Create a possibly multivalued INSERT statement from what is
         stored in self.currOutTable, self.currInsertSig, and self.currValsArray.
+        Example return::
+           INSERT INTO myTable (col2, col2) VALUES
+              ('foo',10),
+              ('bar',20)
+              ;
         '''
-        res = "INSERT INTO %s (%s) %s;" % (self.currOutTable, self.currInsertSig, self.currValsArray)
+        # Build the values part:
+        valsFileStr = StringIO()
+        # Avoid putting anything into the 
+        # file string in the nested loop below, so
+        # that noting needs to be stripped
+        # out afterwards; avoids a string copy.
+        # Not sure whether this optimization is
+        # needed, but there it is:
+        isFirstValTuple = True
+        isFirstVal = True
+        for insertVals in self.currValsArray:
+            if isFirstValTuple:
+                valsFileStr.write('\n    (')
+                isFirstValTuple = False
+            else:
+                valsFileStr.write('(')
+            for insertVal in insertVals:
+                if isFirstVal:
+                    isFirstVal = False
+                else:
+                    valsFileStr.write(str(','))
+                # Ensure that strings get a quote char arround them:
+                valsFileStr.write("'" + insertVal + "'" if isinstance(insertVal,basestring) else str(insertVal))
+            valsFileStr.write(')\n    ')
+            isFirstVal = True
+        
+        res = "INSERT INTO %s (%s) VALUES %s;" % (self.currOutTable, self.currInsertSig, valsFileStr.getvalue())
         # We are no longer accumulating INSERT values right now:
         self.currOutTable = None
         self.currInsertSig = None
         self.currValsArray = []
+        self.insertValCacheSize = 0
         return res
 
     def getSchema(self, tableName=None):
@@ -424,6 +493,21 @@ class JSONToRelation(object):
     def bumpNextNewColPos(self):
         self.nextNewColPos += 1
 
+    def calculateHeldBackDataSize(self, valueArray):
+        '''
+        Computes number of ASCII bytes needed for the
+        values in the given array. Used to estimate 
+        when held-back INSERT data needs to be flushed
+        to server. Ex: ['foo', 10] returns 7.
+        
+        @param valueArray: array of mixed-type values to be INSERTed into MySQL at some point
+        @type valueArray: [<any>]
+        '''
+        arrSize = 0
+        for val in valueArray:
+            arrSize += len(str(val))
+        return arrSize
+    
     def ensureLegalIdentifierChars(self, proposedMySQLName):
         '''
         Given a proposed MySQL identifier, such as a column name,
