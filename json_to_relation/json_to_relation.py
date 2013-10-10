@@ -151,7 +151,7 @@ class JSONToRelation(object):
 
         # Check whether log output would interleave with data output:
         if logFile is None and isinstance(destination, OutputPipe):
-            JSONToRelation.logger.warn("If output is to a Unix pipe, then a log file name must be provided.")
+            JSONToRelation.logger.warn("If output is to a Unix pipe and no log file name is provided, log output will be mixed with data output.")
         
         if jsonParserInstance is None:
             self.jsonParserInstance = GenericJSONParser(self)

@@ -3,6 +3,7 @@ Created on Oct 3, 2013
 
 @author: paepcke
 '''
+from collections import OrderedDict
 import json
 import os
 import unittest
@@ -10,8 +11,8 @@ import unittest
 from json_to_relation.edxTrackLogJSONParser import EdXTrackLogJSONParser
 from json_to_relation.input_source import InURI
 from json_to_relation.json_to_relation import JSONToRelation
-from json_to_relation.output_disposition import OutputPipe, OutputDisposition, ColDataType
-from json_to_relation.output_disposition import TableSchemas, ColumnSpec
+from json_to_relation.output_disposition import OutputPipe, OutputDisposition, \
+    ColDataType, TableSchemas, ColumnSpec
 
 
 TEST_ALL = True
@@ -42,7 +43,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         tblRepo = TableSchemas()
         
         # Should initially have an empty schema for main (default) table:
-        self.assertEqual(type(tblRepo[None]), type({}))
+        self.assertTrue(isinstance(tblRepo[None], OrderedDict))
         self.assertEquals(len(tblRepo[None]), 0)
         
         # Add single schema item to an empty repo
@@ -54,13 +55,13 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         self.assertEqual('FLOAT', tblRepo['myTbl']['yourCol'].getType())
         
         # Add a dict with one spec to the existing schema:
-        schemaAddition = {'hisCol' : ColumnSpec('hisCol', ColDataType.DATETIME, self.fileConverter)}
+        schemaAddition = OrderedDict({'hisCol' : ColumnSpec('hisCol', ColDataType.DATETIME, self.fileConverter)})
         tblRepo.addColSpecs('myTbl', schemaAddition)
         self.assertEqual('DATETIME', tblRepo['myTbl']['hisCol'].getType())
         
         # Add a dict with multiple specs to the existing schema:
-        schemaAddition = {'hisCol' : ColumnSpec('hisCol', ColDataType.DATETIME, self.fileConverter),
-                          'herCol' : ColumnSpec('herCol', ColDataType.LONGTEXT, self.fileConverter)}
+        schemaAddition = OrderedDict({'hisCol' : ColumnSpec('hisCol', ColDataType.DATETIME, self.fileConverter),
+                                      'herCol' : ColumnSpec('herCol', ColDataType.LONGTEXT, self.fileConverter)})
         tblRepo.addColSpecs('myTbl', schemaAddition)        
         self.assertEqual('DATETIME', tblRepo['myTbl']['hisCol'].getType())         
         self.assertEqual('LONGTEXT', tblRepo['myTbl']['herCol'].getType())                 

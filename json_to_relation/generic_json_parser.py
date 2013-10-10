@@ -5,7 +5,6 @@ Created on Sep 23, 2013
 '''
 import StringIO
 import ijson
-import logging
 import re
 
 from col_data_type import ColDataType
@@ -31,8 +30,6 @@ class GenericJSONParser(object):
         @type jsonToRelationConverter: JSONToRelation
         @param progressEvery: number of input lines, a.k.a. JSON objects after which logging should report total done
         @type progressEvery: int 
-        @param logger: logging.logger object for info and warnings
-        @type logger: logging.logger
         '''
         self.jsonToRelationConverter = jsonToRelationConverter
         self.logfileID = logfileID
@@ -40,8 +37,6 @@ class GenericJSONParser(object):
         self.totalLinesDoneSoFar = 0
         self.linesSinceLastProgReport = 0
         
-        self.logger = self.jsonToRelationConverter.__class__.logger
-    
     def processOneJSONObject(self, jsonStr, row):
         '''
         Given a JSON string that is one entire JSON object, parse the
@@ -72,7 +67,7 @@ class GenericJSONParser(object):
             try:
                 parser = ijson.parse(StringIO.StringIO(jsonStr))
             except Exception as e:
-                logging.warn('Ill formed JSON in track log, line %d: %s' % (self.jsonToRelationConverter.makeFileCitation(), `e`))
+                self.logWarn('Ill formed JSON in track log, line %d: %s' % (self.jsonToRelationConverter.makeFileCitation(), `e`))
                 return row
             
             # Stack of array index counters for use with
@@ -240,9 +235,15 @@ class GenericJSONParser(object):
         self.linesSinceLastProgReport += 1
         self.totalLinesDoneSoFar += 1
         if self.linesSinceLastProgReport >= self.progressEvery:
-            #****self.logger.info("Processed %d JSON objects..." % self.totalLinesDoneSoFar)
-            self.jsonToRelationConverter.__class__.logger.info("Processed %d JSON objects..." % self.totalLinesDoneSoFar)
-            self.linesSinceLastProgReport = 0 
+            self.logInfo("Processed %d JSON objects..." % self.totalLinesDoneSoFar)
+            self.linesSinceLastProgReport = 0
+            
+    def logWarn(self, msg):
+        self.jsonToRelationConverter.__class__.logger.warn(msg)
+
+    def logInfo(self, msg):
+        self.jsonToRelationConverter.__class__.logger.info(msg)
+     
 
 class Stack(object):
     '''
