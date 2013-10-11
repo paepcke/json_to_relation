@@ -229,7 +229,6 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 serverQuietTime = eventDateTime - recentSignOfLife
                 if serverQuietTime.seconds > EDX_HEARTBEAT_PERIOD:
                     self.setValInRow(row, 'downtime_since', str(serverQuietTime))
-                    self.colsToSet.append('downtime_since')
                 # New recently-heard from this IP:
                 self.downtimes[ip] = eventDateTime
             except KeyError:
@@ -239,7 +238,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 self.setValInRow(row, 'downtime_since', str(datetime.timedelta()))
                 
             
-            if eventType == 'heartbeat':
+            if eventType == '/heartbeat':
                 # Handled heartbeat above, no further entry needed
                 return self.resultTriplet(row)
             
@@ -381,7 +380,6 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 return self.resultTriplet(row)
         finally:
             self.reportProgressIfNeeded()
-            return self.resultTriplet(row)
         
     def resultTriplet(self, row):
         '''

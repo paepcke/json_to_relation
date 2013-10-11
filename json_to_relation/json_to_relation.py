@@ -6,8 +6,7 @@
 #TODO: Edx problem_rescore
 #TODO: Edx unittest for detecting server downtimes in log
 #TODO: Edx unittest for coursID across all event types
-#TODO: Where is last-heartbeat in signature? And ok to have last-time missing in intermediate heartbeats?
-#TODO: Why is output comma-separated?: I,N,S,E,R,T, ,I,N,T,O, ,N,o,n,e, ,(,e,v,e,n,t,I,D,",",a,g,e,n,t,",",e,v,e,n,t,_,s,o,u,r,c,e,",",e,v,e,n,t,_,t,y,p,e,",",i,p,","...
+#TODO: unittesting INSERT output: deal with event IDs always being different
 '''
 Created on Sep 14, 2013
 
@@ -70,7 +69,6 @@ class JSONToRelation(object):
     def __init__(self, 
                  jsonSource, 
                  destination, 
-                 outputFormat=OutputDisposition.OutputFormat.CSV, 
                  schemaHints=OrderedDict(),
                  jsonParserInstance=None,
                  loggingLevel=logging.INFO,
@@ -110,8 +108,6 @@ class JSONToRelation(object):
         @type jsonSource: {InPipe | InString | InURI | InMongoDB}
         @param destination: instruction to were resulting rows are to be directed
         @type destination: {OutputPipe | OutputFile | OutputMySQLTable}
-        @param outputFormat: format of output. Can be CSV or SQL INSERT statements
-        @type outputFormat: OutputFormat
         @param schemaHints: Dict mapping col names to data types (optional). Affects the default (main) table.
         @type schemaHints: OrderedDict<String,ColDataTYpe>
         @param jsonParserInstance: a parser that takes one JSON string, and returns a CSV row, or other
@@ -144,7 +140,6 @@ class JSONToRelation(object):
         
         self.jsonSource = jsonSource
         self.destination = destination
-        self.outputFormat = outputFormat
 
         # Check schemaHints correctness:
         if schemaHints is not None:
@@ -253,7 +248,7 @@ class JSONToRelation(object):
         @param schemaHintsNewTable: dict that map column names to SQL types
         @type schemaHintsNewTable: [Ordered]Dict<String,ColumnSpec>
         '''
-        self.outputFormat.startNewTable(tableName, schemaHintsNewTable)
+        self.destination.startNewTable(tableName, schemaHintsNewTable)
         
     def getSourceName(self):
         '''
@@ -327,8 +322,9 @@ class JSONToRelation(object):
                     JSONToRelation.logger.warn('Line %s: bad JSON object: %s' % (self.makeFileCitation(), `e`))
                 self.processFinishedRow(newRow, outFd)
                 self.bumpLineCounter()
-        if self.outputFormat == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
-            self.processFinishedRow('FLUSH', outFd) 
+
+            if self.destination.getOutputFormat() == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
+                self.processFinishedRow('FLUSH', outFd) 
         
         # If output to other than MySQL table, check whether
         # we are to prepend the column header row:
@@ -364,10 +360,10 @@ class JSONToRelation(object):
         # information as they translate JSON provide different
         # information than CSV destined parsers. MySQL dumps provide
         # a list 
-        if self.outputFormat == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
+        if self.destination.getOutputFormat() == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
             filledNewRow = self.prepareMySQLRow(filledNewRow)
         if filledNewRow is not None:
-            outFd.writerow(map(str,filledNewRow))
+            outFd.writerow(filledNewRow)
 
     def prepareMySQLRow(self, insertInfo):
         '''
@@ -399,7 +395,7 @@ class JSONToRelation(object):
         newCacheSize = self.valsCacheSize + self.calculateHeldBackDataSize(valsArray)
         
         # Have we started accumulating values in an earlier call?
-        if self.currOutTable is not None: 
+        if self.currInsertSig is not None: 
             if tableName == self.currOutTable and insertSig == self.currInsertSig:
                 if newCacheSize > JSONToRelation.MAX_ALLOWED_PACKET_SIZE:
                     # New vals could be held back, but buffer is full:

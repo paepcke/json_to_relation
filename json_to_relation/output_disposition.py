@@ -22,12 +22,13 @@ class OutputDisposition(object):
     Also defined here are available output formats, of
     which there are two: CSV, and SQL insert statements. 
     '''
-    def __init__(self, outputDestObj=None):
+    def __init__(self, outputFormat, outputDestObj=None):
         '''
         @param outputDestObj: instance of one of the subclasses
         @type outputDestObj: Subclass(OutputDisposition)
         
         '''
+        self.outputFormat = outputFormat
         if outputDestObj is None:
             self.outputDest = self
         else:
@@ -54,6 +55,9 @@ class OutputDisposition(object):
         # If the conversion worked fine, then this return value
         # is ignored.
         return False
+
+    def getOutputFormat(self):
+        return self.outputFormat
 
     def addSchemaHints(self, tableName, schemaHints):
         '''
@@ -140,8 +144,8 @@ class OutputDisposition(object):
         
 class OutputPipe(OutputDisposition):
     
-    def __init__(self):
-        super(OutputPipe, self).__init__()
+    def __init__(self, outputFormat):
+        super(OutputPipe, self).__init__(outputFormat)
         self.fileHandle = sys.stdout
         # Make file name accessible as property just like 
         # Python file objects do:
@@ -156,10 +160,16 @@ class OutputPipe(OutputDisposition):
         return "<OutputPipe:<stdout>"
 
     def writerow(self, colElementArray, tableName=None):
-        if tableName is None:
-            self.csvWriter.writerow(colElementArray)
+        # For CSV: make sure everything is a string:
+        if self.outputFormat == OutputDisposition.OutputFormat.CSV:
+            row = map(str,colElementArray)
+            if tableName is None:
+                self.csvWriter.writerow(row)
+            else:
+                self.tableCSVWriters[tableName].writerow(row)
         else:
-            self.tableCSVWriters[tableName].writerow(colElementArray)
+            print(colElementArray)
+            
 
     def startNewTable(self, tableName, schemaHintsNewTable):
         '''
@@ -177,28 +187,38 @@ class OutputPipe(OutputDisposition):
                                                      quoting=csv.QUOTE_MINIMAL)
 
 class OutputFile(OutputDisposition):
-    def __init__(self, fileName, options='ab'):
-        super(OutputFile, self).__init__()        
+    def __init__(self, fileName, outputFormat, options='ab'):
+        super(OutputFile, self).__init__(outputFormat)        
         # Make file name accessible as property just like 
         # Python file objects do:
         self.name = fileName  # @UnusedVariable
+        self.outputFormat = outputFormat
         # Open the output file as 'append' and 'binary'
         # The latter is needed for Windows.
         self.fileHandle = open(fileName, options)
-        self.csvWriter = csv.writer(self.fileHandle, dialect='excel', delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        self.tableCSVWriters = {}
+        if outputFormat == OutputDisposition.OutputFormat.CSV:
+            self.csvWriter = csv.writer(self.fileHandle, dialect='excel', delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            self.tableCSVWriters = {}
         
     def close(self):
         self.fileHandle.close()
 
     def __str__(self):
-        return "<OutputFile:%s>" % self.name
+        return "<OutputFile:%s>" % self.getFileName()
+
+    def getFileName(self):
+        return self.name
 
     def writerow(self, colElementArray, tableName=None):
-        if tableName is None:
-            self.csvWriter.writerow(colElementArray)
+        # For CSV: make sure everything is a string:
+        if self.outputFormat == OutputDisposition.OutputFormat.CSV:
+            row = map(str,colElementArray)
+            if tableName is None:
+                self.csvWriter.writerow(row)
+            else:
+                self.tableCSVWriters[tableName].writerow(row)
         else:
-            self.tableCSVWriters[tableName].writerow(colElementArray)
+            self.fileHandle.write(colElementArray + '\n')
 
     def startNewTable(self, tableName, schemaHintsNewTable):
         '''

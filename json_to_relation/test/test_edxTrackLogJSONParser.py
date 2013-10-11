@@ -3,16 +3,18 @@ Created on Oct 3, 2013
 
 @author: paepcke
 '''
+import StringIO
 from collections import OrderedDict
 import json
 import os
+import tempfile
 import unittest
 
 from json_to_relation.edxTrackLogJSONParser import EdXTrackLogJSONParser
 from json_to_relation.input_source import InURI
 from json_to_relation.json_to_relation import JSONToRelation
 from json_to_relation.output_disposition import OutputPipe, OutputDisposition, \
-    ColDataType, TableSchemas, ColumnSpec
+    ColDataType, TableSchemas, ColumnSpec, OutputFile
 
 
 TEST_ALL = False
@@ -30,8 +32,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
 
         self.stringSource = InURI(os.path.join(os.path.dirname(__file__),"data/twoJSONRecords.json"))
         self.fileConverter = JSONToRelation(self.stringSource, 
-                                            OutputPipe(),
-                                            outputFormat = OutputDisposition.OutputFormat.CSV,
+                                            OutputPipe(OutputDisposition.OutputFormat.CSV)
                                             )
          
         self.edxParser = EdXTrackLogJSONParser(self.fileConverter)
@@ -97,15 +98,35 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
     #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testEdxHeartbeat(self):
         inFileSource = InURI(os.path.join(os.path.dirname(__file__),"data/edxHeartbeatEvent.json"))
+        resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+        # Just use the file name of the tmp file.
+        resultFileName = resultFile.name
+        resultFile.close()
+        dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
         self.fileConverter = JSONToRelation(inFileSource, 
-                                            OutputPipe(),
-                                            outputFormat = OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS,
+                                            dest
                                             )
         
         self.edxParser = EdXTrackLogJSONParser(self.fileConverter)
         self.fileConverter.setParser(self.edxParser)
         self.fileConverter.convert(prependColHeader=False)
-                
+        self.assertFileContentEquals(file('data/edxHeartbeatEventTruth.sql'), dest.getFileName())
+    
+                #--------------------------------------------------------------------------------------------------    
+    def assertFileContentEquals(self, expected, filePath):
+        if isinstance(expected, file):
+            strFile = expected
+        else:
+            strFile = StringIO.StringIO(expected)
+        with open(filePath, 'r') as fd:
+            for fileLine in fd:
+                expectedLine = strFile.readline()
+                self.assertEqual(expectedLine.strip(), fileLine.strip())
+            
+            if strFile.readline() != "":
+                # expected is longer than what's in the file:
+                self.fail("Expected string is longer than content of output file %s" % filePath)
+
     
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testGetCourseID']
