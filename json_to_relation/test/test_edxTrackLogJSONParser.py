@@ -15,7 +15,7 @@ from json_to_relation.output_disposition import OutputPipe, OutputDisposition, \
     ColDataType, TableSchemas, ColumnSpec
 
 
-TEST_ALL = True
+TEST_ALL = False
 
 class TestEdxTrackLogJSONParser(unittest.TestCase):
     
@@ -26,17 +26,19 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         self.videoEvent = '{"username": "smith", "host": "class.stanford.edu", "session": "f011450e5f78d954ce5a475de473a454", "event_source": "browser", "event_type": "speed_change_video",  "time": "2013-06-21T06:31:11.804290+00:00", "ip": "80.216.21.147", "event": "{\\"id\\":\\"i4x-Medicine-HRP258-videoalpha-be496fded4f8424da9aacc553f480fa5\\",\\"code\\": \\"html5\\",\\"currentTime\\":474.524041,\\"old_speed\\":\\"0.25\\",\\"new_speed\\":\\"1.0\\"}", "agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like  Gecko) Chrome/28.0.1500.44 Safari/537.36", "page": "https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/64abcdd9afc54c6089a284e985 3da6ea/2a8de59355e349b7ae40aba97c59736f/"}' 
         self.heartbeatEvent = '{"username": "", "host": "10.0.10.32", "event_source": "server", "event_type": "/heartbeat", "time": "2013-06-21T06:32:09.881521+00:00", "ip": "127.0.0.1", "event": "{\\"POST\\": {}, \\"GET\\": {}}", "agent": "ELB-HealthChecker/1.0", "page": null}'
 
+        self.stringSource = None
 
         self.stringSource = InURI(os.path.join(os.path.dirname(__file__),"data/twoJSONRecords.json"))
         self.fileConverter = JSONToRelation(self.stringSource, 
                                             OutputPipe(),
                                             outputFormat = OutputDisposition.OutputFormat.CSV,
                                             )
-        
+         
         self.edxParser = EdXTrackLogJSONParser(self.fileConverter)
 
     def tearDown(self):
-        self.stringSource.close()
+        if self.stringSource is not None:
+            self.stringSource.close()
 
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testTableSchemaRepo(self):
@@ -92,6 +94,18 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         self.edxParser.processOneJSONObject(self.loginEvent, row)
         print row
         
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def testEdxHeartbeat(self):
+        inFileSource = InURI(os.path.join(os.path.dirname(__file__),"data/edxHeartbeatEvent.json"))
+        self.fileConverter = JSONToRelation(inFileSource, 
+                                            OutputPipe(),
+                                            outputFormat = OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS,
+                                            )
+        
+        self.edxParser = EdXTrackLogJSONParser(self.fileConverter)
+        self.fileConverter.setParser(self.edxParser)
+        self.fileConverter.convert(prependColHeader=False)
+                
     
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testGetCourseID']

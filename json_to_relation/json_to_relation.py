@@ -4,11 +4,16 @@
 #TODO: Edx save_problem_check
 #TODO: Edx problem_rescore_fail
 #TODO: Edx problem_rescore
+#TODO: Edx unittest for detecting server downtimes in log
+#TODO: Edx unittest for coursID across all event types
+#TODO: Where is last-heartbeat in signature? And ok to have last-time missing in intermediate heartbeats?
+#TODO: Why is output comma-separated?: I,N,S,E,R,T, ,I,N,T,O, ,N,o,n,e, ,(,e,v,e,n,t,I,D,",",a,g,e,n,t,",",e,v,e,n,t,_,s,o,u,r,c,e,",",e,v,e,n,t,_,t,y,p,e,",",i,p,","...
 '''
 Created on Sep 14, 2013
 
 @author: paepcke
 '''
+from cStringIO import StringIO
 from collections import OrderedDict
 import logging
 import math
@@ -16,12 +21,12 @@ import os
 import re
 import shutil
 import tempfile
-from cStringIO import StringIO
 
 from col_data_type import ColDataType
 from generic_json_parser import GenericJSONParser
 from input_source import InputSource, InURI, InString, InMongoDB, InPipe #@UnusedImport
-from output_disposition import OutputDisposition, OutputMySQLDump, OutputFile, OutputPipe
+from output_disposition import OutputDisposition, OutputMySQLDump, OutputFile, \
+    OutputPipe
 
 
 class JSONToRelation(object):
@@ -182,8 +187,8 @@ class JSONToRelation(object):
             raise ValueError("Parameter jsonParserInstance needs to be of class GenericJSONParser, or one of its subclasses.")
         
         #************ Unimplemented Options **************
-        if self.outputFormat == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
-            raise NotImplementedError("Output as MySQL statements not yet implemented")
+        #if self.outputFormat == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
+        #    raise NotImplementedError("Output as MySQL statements not yet implemented")
         #*************************************************
         
         # Dict col name to ColumnSpec object:
@@ -222,6 +227,14 @@ class JSONToRelation(object):
         #**********************
         
         JSONToRelation.loggingInitialized = True
+
+    def setParser(self, parserInstance):
+        '''
+        Set the parser instance to use for upcoming calls to the convert() method.
+        @param parserInstance: must be instance of GenericJSONParser or one of its subclasses 
+        @type parserInstance: {GenericJSONParser | subclass}
+        '''
+        self.jsonParserInstance = parserInstance
 
 
     def startNewTable(self, tableName, schemaHintsNewTable):
@@ -311,11 +324,12 @@ class JSONToRelation(object):
                 try:
                     newRow = self.jsonParserInstance.processOneJSONObject(jsonStr, newRow)
                 except ValueError as e:
-                    #***** Catch here or down in the parser?
-                    JSONToRelation.logger.warn('Line %s: bad JSON: %s' % (self.makeFileCitation(), `e`))
+                    JSONToRelation.logger.warn('Line %s: bad JSON object: %s' % (self.makeFileCitation(), `e`))
                 self.processFinishedRow(newRow, outFd)
                 self.bumpLineCounter()
-
+        if self.outputFormat == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
+            self.processFinishedRow('FLUSH', outFd) 
+        
         # If output to other than MySQL table, check whether
         # we are to prepend the column header row:
         if prependColHeader and savedFinalOutDest is not None:
@@ -350,7 +364,7 @@ class JSONToRelation(object):
         # information as they translate JSON provide different
         # information than CSV destined parsers. MySQL dumps provide
         # a list 
-        if isinstance(outFd, OutputMySQLDump):
+        if self.outputFormat == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
             filledNewRow = self.prepareMySQLRow(filledNewRow)
         if filledNewRow is not None:
             outFd.writerow(map(str,filledNewRow))
@@ -394,12 +408,12 @@ class JSONToRelation(object):
                     # Start accumulating values for this new INSERT request:
                     self.currOutTable = tableName
                     self.currInsertSig = insertSig
-                    self.currValsArray.extend(valsArray)
+                    self.currValsArray.append(valsArray)
                     return insertStatement
                 else:
                     # Can hold back the new values:
                     self.valsCacheSize = newCacheSize
-                    self.currValsArray.extend(valsArray)
+                    self.currValsArray.append(valsArray)
                     return None
             else:
                 # Were accumulating vals, but this call is for a different
@@ -408,7 +422,7 @@ class JSONToRelation(object):
                 # Start accumulating values for this new INSERT request:
                 self.currOutTable = tableName
                 self.currInsertSig = insertSig
-                self.currValsArray.extend(valsArray)
+                self.currValsArray.append(valsArray)
                 return insertStatement
             
         # We have not yet started to accumulate values:
@@ -424,7 +438,7 @@ class JSONToRelation(object):
             self.valsCacheSize = newCacheSize
             self.currOutTable = tableName
             self.currInsertSig = insertSig
-            self.currValsArray.extend(valsArray)
+            self.currValsArray.append(valsArray)
             return None
          
     def finalizeInsertStatement(self):
@@ -537,6 +551,10 @@ class JSONToRelation(object):
         arrSize = 0
         for val in valueArray:
             arrSize += len(str(val))
+        # Add bytes for commas, spaces after the commas, and
+        # a pair of quotes around strings (assume worst case of
+        # every value being a string:
+        arrSize += 4*len(valueArray)
         return arrSize
     
     def ensureLegalIdentifierChars(self, proposedMySQLName):

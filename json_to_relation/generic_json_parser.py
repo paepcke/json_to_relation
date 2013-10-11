@@ -178,6 +178,12 @@ class GenericJSONParser(object):
         # a key failure:
         colSpec = self.jsonToRelationConverter.getSchemaHint(colName)
         targetPos = colSpec.colPos
+        
+        # Is this column name already in the list of 
+        # column names for the INSERT statement?
+        if colName not in self.colsToSet:
+            self.colsToSet.append(colName)
+        
         # Is value to go just beyond the current row len?
         if (len(theRow) == 0 or len(theRow) == targetPos):
             theRow.append(value)

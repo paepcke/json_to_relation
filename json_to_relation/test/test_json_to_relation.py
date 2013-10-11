@@ -13,7 +13,7 @@ from json_to_relation.output_disposition import ColumnSpec, OutputPipe, \
 
 
 #from input_source import InURI
-TEST_ALL = False
+TEST_ALL = True
 
 class TestJSONToRelation(unittest.TestCase):
     
@@ -186,7 +186,7 @@ class TestJSONToRelation(unittest.TestCase):
                          map(ColumnSpec.getType, schema))
 
 
-    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testInsertStatementConstruction(self):
         
         # No value array in hold-back buffer:
@@ -214,7 +214,7 @@ class TestJSONToRelation(unittest.TestCase):
         #print res
         self.assertEqual("INSERT INTO MyTable (col1, col2) VALUES \n    ('foo',10),\n    ('bar',20);", res)
         
-    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testPrepareMySQLRow(self):
         
         # Pretend to be the edx parser, sending one insert's worth of
