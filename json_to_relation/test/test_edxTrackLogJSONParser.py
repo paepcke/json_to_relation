@@ -92,7 +92,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         self.assertEqual('/heartbeat', fullCourseName)        
         self.assertIsNone(courseName)        
 
-    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testProcessOneJSONObject(self):
         row = []
         self.edxParser.processOneJSONObject(self.loginEvent, row)
@@ -114,6 +114,26 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         self.fileConverter.setParser(self.edxParser)
         self.fileConverter.convert(prependColHeader=False)
         self.assertFileContentEquals(file('data/edxHeartbeatEventTruth.sql'), dest.getFileName())
+        
+        # Detecting server downtime:
+        inFileSource = InURI(os.path.join(os.path.dirname(__file__),"data/edxHeartbeatEventDownTime.json"))
+        resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+        # Just use the file name of the tmp file.
+        resultFileName = resultFile.name
+        resultFile.close()
+        dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+        self.fileConverter = JSONToRelation(inFileSource, 
+                                            dest
+                                            )
+        
+        self.edxParser = EdXTrackLogJSONParser(self.fileConverter)
+        self.fileConverter.setParser(self.edxParser)
+        self.fileConverter.convert(prependColHeader=False)
+        self.assertFileContentEquals(file('data/edxHeartbeatEventDownTimeTruth.sql'), dest.getFileName())
+        
+        with open(dest.getFileName()) as fd:
+            for line in fd:
+                print line
     
                 #--------------------------------------------------------------------------------------------------    
     def assertFileContentEquals(self, expected, filePath):
@@ -128,8 +148,8 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                 uuidMatch = self.pattern.search(fileLine)
                 expectedLine = strFile.readline()
                 if uuidMatch:
-                    expectedLine = expectedLine[0:uuidMatch.start()] + expectedLine[uuidMatch.stop():]
-                    fileLine = fileLine[0:uuidMatch.start()] + fileLine[uuidMatch.stop():]
+                    expectedLine = expectedLine[0:uuidMatch.start()] + expectedLine[uuidMatch.end():]
+                    fileLine = fileLine[0:uuidMatch.start()] + fileLine[uuidMatch.end():]
                 self.assertEqual(expectedLine.strip(), fileLine.strip())
             
             if strFile.readline() != "":

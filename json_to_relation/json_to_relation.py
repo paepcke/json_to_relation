@@ -73,6 +73,7 @@ class JSONToRelation(object):
                  jsonParserInstance=None,
                  loggingLevel=logging.INFO,
                  logFile=None,
+                 mainTableName='Main',
                  progressEvery=1000):
         '''
         Create a JSON-to-Relation converter. The JSON source can be
@@ -140,6 +141,7 @@ class JSONToRelation(object):
         
         self.jsonSource = jsonSource
         self.destination = destination
+        self.mainTableName = mainTableName
 
         # Check schemaHints correctness:
         if schemaHints is not None:
@@ -268,6 +270,8 @@ class JSONToRelation(object):
         @param tableName: name of table whose schema is to be changed. None changes the main (default) table's schema
         @type tableName: String
         '''
+        if tableName is None:
+            tableName = self.mainTableName
         self.destination.addSchemaHints(tableName, schemaHints)
 
     def getSchemaHint(self, colName, tableName=None):
@@ -282,9 +286,13 @@ class JSONToRelation(object):
         @rtype: ColumnSpec
         @raise KeyError: if either the table or the column don't exist.  
         '''
+        if tableName is None:
+            tableName = self.mainTableName
         return self.destination.getSchemaHint(colName, tableName)
 
     def ensureColExistence(self, colName, colDataType, tableName=None):
+        if tableName is None:
+            tableName = self.mainTableName
         userDefinedHintType = self.userDefinedHints.get(colName, None)
         if userDefinedHintType is not None:
             # We checked type correctness in __init__() method, so trust it here:
@@ -305,7 +313,7 @@ class JSONToRelation(object):
         @type prependColHeader: Boolean
         '''
         savedFinalOutDest = None
-        if not isinstance(self.destination, OutputMySQLDump):
+        if self.destination.getOutputFormat() != self.destination.OutputFormat.SQL_INSERT_STATEMENTS: 
             if prependColHeader:
                 savedFinalOutDest = self.destination
                 (tmpFd, self.tmpFileName)  = tempfile.NamedTemporaryFile(suffix='.csv',prefix='jsonToRelationTmp')
@@ -317,10 +325,11 @@ class JSONToRelation(object):
                 jsonStr = self.jsonSource.decompress(jsonStr)
                 newRow = []
                 try:
+                    # processOneJSONObject will call pushtToTable() for all 
+                    # tables necessary for each event type:
                     newRow = self.jsonParserInstance.processOneJSONObject(jsonStr, newRow)
                 except ValueError as e:
                     JSONToRelation.logger.warn('Line %s: bad JSON object: %s' % (self.makeFileCitation(), `e`))
-                self.pushToTable(newRow, outFd)
                 self.bumpLineCounter()
 
             if self.destination.getOutputFormat() == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
@@ -522,6 +531,8 @@ class JSONToRelation(object):
         @return: ordered list of column information
         @rtype: (ColumnSpec) 
         '''
+        if tableName is None:
+            tableName = self.mainTableName
         return self.destination.getSchema(tableName)
 
     def getColHeaders(self, tableName=None):

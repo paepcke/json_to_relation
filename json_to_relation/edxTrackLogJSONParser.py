@@ -6,6 +6,7 @@ Created on Oct 2, 2013
 from collections import OrderedDict
 import datetime
 import json
+import re
 import uuid
 
 from col_data_type import ColDataType
@@ -54,7 +55,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaHintsMainTable['session'] = ColDataType.TEXT
         self.schemaHintsMainTable['time'] = ColDataType.DATETIME
         self.schemaHintsMainTable['username'] = ColDataType.TEXT
-        self.schemaHintsMainTable['downtime_since'] = ColDataType.DATETIME
+        self.schemaHintsMainTable['downtime_for'] = ColDataType.DATETIME
 
         # Students
         self.schemaHintsMainTable['studentID'] = ColDataType.TEXT
@@ -218,9 +219,19 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             try:
                 eventTimeStr = record['time']
                 ip = record['ip']
-                eventDateTime = datetime.datetime.strptime(eventTimeStr, '%Y-%m-%dT%H:%M:%S.%f+00:00')
+                # Time strings in the log may or may not have a UTF extension:
+                # '2013-07-18T08:43:32.573390:+00:00' vs '2013-07-18T08:43:32.573390'
+                # For now we ignore time zone. Observed log samples are
+                # all universal +/- 0:
+                maybeOffsetDir = eventTimeStr[-6]
+                if maybeOffsetDir == '+' or maybeOffsetDir == '-': 
+                    eventTimeStr = eventTimeStr[0:-6]
+                eventDateTime = datetime.datetime.strptime(eventTimeStr, '%Y-%m-%dT%H:%M:%S.%f')
             except KeyError:
                 raise ValueError("No event time or server IP in line %s" % self.jsonToRelationConverter.makeFileCitation())
+            except ValueError:
+                raise ValueError("Bad event time format at %s: '%s'" % (self.jsonToRelationConverter.makeFileCitation(),
+                                                                        eventTimeStr))
             
             try:
                 recentSignOfLife = self.downtimes[ip]
@@ -228,19 +239,19 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 # during which nothing was heard from server:
                 serverQuietTime = eventDateTime - recentSignOfLife
                 if serverQuietTime.seconds > EDX_HEARTBEAT_PERIOD:
-                    self.setValInRow(row, 'downtime_since', str(serverQuietTime))
+                    self.setValInRow(row, 'downtime_for', str(serverQuietTime))
                 # New recently-heard from this IP:
                 self.downtimes[ip] = eventDateTime
             except KeyError:
                 # First sign of life for this IP:
                 self.downtimes[ip] = eventDateTime
                 # Record a time of 0 in downtime detection column:
-                self.setValInRow(row, 'downtime_since', str(datetime.timedelta()))
+                self.setValInRow(row, 'downtime_for', str(datetime.timedelta()))
                 
             
             if eventType == '/heartbeat':
                 # Handled heartbeat above, no further entry needed
-                return self.resultTriplet(row)
+                return
             
             # For any event other than heartbeat, we need to look
             # at the event field, which is an embedded JSON *string*
@@ -261,23 +272,23 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                eventType == 'seq_prev':
             
                 row = self.handleSeqNav(record, row, event, eventType)
-                return self.resultTriplet(row)
+                return
             
             elif eventType == 'problem_check':
                 row = self.handleProblemCheck(record, row, event)
-                return self.resultTriplet(row)
+                return
              
             elif eventType == 'problem_reset':
                 row = self.handleProblemReset(record, row, event)
-                return self.resultTriplet(row)
+                return
             
             elif eventType == 'problem_show':
                 row = self.handleProblemShow(record, row, event)
-                return self.resultTriplet(row)
+                return
             
             elif eventType == 'problem_save':
                 row = self.handleProblemSave(record, row, event)
-                return self.resultTriplet(row)
+                return
             
             elif eventType == 'oe_hide_question' or\
                  eventType == 'oe_hide_problem' or\
@@ -293,42 +304,42 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                  eventType == 'staff_grading_show_problem':
                  
                 row = self.handleQuestionProblemHidingShowing(record, row, event)
-                return self.resultTriplet(row)
+                return
     
             elif eventType == 'rubric_select':
                 row = self.handleRubricSelect(record, row, event)
-                return self.resultTriplet(row)
+                return
             
             elif eventType == 'oe_show_full_feedback' or\
                  eventType == 'oe_show_respond_to_feedback':
                 row = self.handleOEShowFeedback(record, row, event)
-                return self.resultTriplet(row)
+                return
                 
             elif eventType == 'oe_feedback_response_selected':
                 row = self.handleOEFeedbackResponseSelected(record, row, event)
-                return self.resultTriplet(row)
+                return
             
             elif eventType == 'page_close':
                 # No additional info in event field
-                return self.resultTriplet(row)
+                return
             
             elif eventType == 'play_video' or\
                  eventType == 'pause_video' or\
                  eventType == 'load_video':
                 row = self.handleVideoPlayPause(record, row, event)
-                return self.resultTriplet(row)
+                return
                 
             elif eventType == 'book':
                 row = self.handleBook(record, row, event)
-                return self.resultTriplet(row)
+                return
     
             elif eventType == 'showanswer' or eventType == 'show_answer':
                 row = self.handleShowAnswer(record, row, event)
-                return self.resultTriplet(row)
+                return
     
             elif eventType == 'problem_check_fail':
                 self.handleProblemCheckFail(record, row, event)
-                return self.resultTriplet(row)
+                return
             
             # Instructor events:
             elif eventType in ['list-students',  'dump-grades',  'dump-grades-raw',  'dump-grades-csv',
@@ -336,50 +347,51 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                'list-staff',  'list-instructors',  'list-beta-testers']:
                 # These events have no additional info. The event_type says it all,
                 # and that's already been stuck into the table:
-                return self.resultTriplet(row)
+                return
               
             elif eventType == 'rescore-all-submissions' or eventType == 'reset-all-attempts':
                 self.handleRescoreReset(record, row, event)
-                return self.resultTriplet(row)
+                return
                 
             elif eventType == 'delete-student-module-state' or eventType == 'rescore-student-submission':
                 self.handleDeleteStateRescoreSubmission(record, row, event)
-                return self.resultTriplet(row)
+                return
                 
             elif eventType == 'reset-student-attempts':
                 self.handleResetStudentAttempts(record, row, event)
-                return self.resultTriplet(row)
+                return
                 
             elif eventType == 'get-student-progress-page':
                 self.handleGetStudentProgressPage(record, row, event)
-                return self.resultTriplet(row)
+                return
     
             elif eventType == 'add-instructor' or eventType == 'remove-instructor':        
                 self.handleAddRemoveInstructor(record, row, event)
-                return self.resultTriplet(row)
+                return
             
             elif eventType in ['list-forum-admins', 'list-forum-mods', 'list-forum-community-TAs']:
                 self.handleListForumMatters(record, row, event)
-                return self.resultTriplet(row)
+                return
     
             elif eventType in ['remove-forum-admin', 'add-forum-admin', 'remove-forum-mod',
                                'add-forum-mod', 'remove-forum-community-TA',  'add-forum-community-TA']:
                 self.handleForumManipulations(record, row, event)
-                return self.resultTriplet(row)
+                return
     
             elif eventType == 'psychometrics-histogram-generation':
                 self.handlePsychometricsHistogramGen(record, row, event)
-                return self.resultTriplet(row)
+                return
             
             elif eventType == 'add-or-remove-user-group':
                 self.handleAddRemoveUserGroup(record, row, event)
-                return self.resultTriplet(row)
+                return
             
             else:
-                self.logWarn("Unknown event type '%s' in tracklog row %d" % (eventType, self.jsonToRelationConverter.makeFileCitation()))
-                return self.resultTriplet(row)
+                self.logWarn("Unknown event type '%s' in tracklog row %s" % (eventType, self.jsonToRelationConverter.makeFileCitation()))
+                return
         finally:
             self.reportProgressIfNeeded()
+            self.jsonToRelationConverter.pushToTable(self.resultTriplet(row))
         
     def resultTriplet(self, row):
         '''
