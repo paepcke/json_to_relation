@@ -7,6 +7,7 @@ import StringIO
 from collections import OrderedDict
 import json
 import os
+import re
 import tempfile
 import unittest
 
@@ -22,7 +23,9 @@ TEST_ALL = False
 class TestEdxTrackLogJSONParser(unittest.TestCase):
     
     def setUp(self):
-        super(TestEdxTrackLogJSONParser, self).setUp()        
+        super(TestEdxTrackLogJSONParser, self).setUp()  
+        self.uuidRegex = '[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}'
+        self.pattern   = re.compile(self.uuidRegex)
         self.loginEvent = '{"username": "",   "host": "class.stanford.edu",   "event_source": "server",   "event_type": "/accounts/login",   "time": "2013-06-14T00:31:57.661338",   "ip": "98.230.189.66",   "event": "{\\"POST\\": {}, \\"GET\\": {\\"next\\": [\\"/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/80160exxx/\\"]}}",   "agent": "Mozilla/5.0 (Windows NT 5.1; rv:21.0) Gecko/20100101  Firefox/21.0",   "page": null}' 
         self.dashboardEvent = '{"username": "", "host": "class.stanford.edu", "event_source": "server", "event_type": "/accounts/login", "time": "2013-06-10T05:13:37.499008", "ip": "91.210.228.6", "event": "{\\"POST\\": {}, \\"GET\\": {\\"next\\": [\\"/dashboard\\"]}}", "agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1", "page": null}'
         self.videoEvent = '{"username": "smith", "host": "class.stanford.edu", "session": "f011450e5f78d954ce5a475de473a454", "event_source": "browser", "event_type": "speed_change_video",  "time": "2013-06-21T06:31:11.804290+00:00", "ip": "80.216.21.147", "event": "{\\"id\\":\\"i4x-Medicine-HRP258-videoalpha-be496fded4f8424da9aacc553f480fa5\\",\\"code\\": \\"html5\\",\\"currentTime\\":474.524041,\\"old_speed\\":\\"0.25\\",\\"new_speed\\":\\"1.0\\"}", "agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like  Gecko) Chrome/28.0.1500.44 Safari/537.36", "page": "https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/64abcdd9afc54c6089a284e985 3da6ea/2a8de59355e349b7ae40aba97c59736f/"}' 
@@ -120,7 +123,13 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
             strFile = StringIO.StringIO(expected)
         with open(filePath, 'r') as fd:
             for fileLine in fd:
+                # Some events have UUIDs, which are different with each run.
+                # Cut those out of both expected and what we got:
+                uuidMatch = self.pattern.search(fileLine)
                 expectedLine = strFile.readline()
+                if uuidMatch:
+                    expectedLine = expectedLine[0:uuidMatch.start()] + expectedLine[uuidMatch.stop():]
+                    fileLine = fileLine[0:uuidMatch.start()] + fileLine[uuidMatch.stop():]
                 self.assertEqual(expectedLine.strip(), fileLine.strip())
             
             if strFile.readline() != "":

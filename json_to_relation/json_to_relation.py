@@ -308,9 +308,9 @@ class JSONToRelation(object):
         if not isinstance(self.destination, OutputMySQLDump):
             if prependColHeader:
                 savedFinalOutDest = self.destination
-                (tmpFd, tmpFileName)  = tempfile.mkstemp(suffix='.csv',prefix='jsonToRelationTmp')
+                (tmpFd, self.tmpFileName)  = tempfile.NamedTemporaryFile(suffix='.csv',prefix='jsonToRelationTmp')
                 os.close(tmpFd)
-                self.destination = OutputFile(tmpFileName)
+                self.destination = OutputFile(self.tmpFileName)
 
         with self.destination as outFd, self.jsonSource as inFd:
             for jsonStr in inFd:
@@ -320,7 +320,7 @@ class JSONToRelation(object):
                     newRow = self.jsonParserInstance.processOneJSONObject(jsonStr, newRow)
                 except ValueError as e:
                     JSONToRelation.logger.warn('Line %s: bad JSON object: %s' % (self.makeFileCitation(), `e`))
-                self.processFinishedRow(newRow, outFd)
+                self.pushToTable(newRow, outFd)
                 self.bumpLineCounter()
 
             if self.destination.getOutputFormat() == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
@@ -332,10 +332,25 @@ class JSONToRelation(object):
             try:
                 with open(self.destination.name, 'rb') as inFd, OutputDisposition(savedFinalOutDest) as finalOutFd:
                     colHeaders = self.getColHeaders()
-                    self.processFinishedRow(colHeaders, finalOutFd)
+                    self.pushToTable(colHeaders, finalOutFd)
                     shutil.copyfileobj(inFd, finalOutFd.fileHandle)
             finally:
-                os.remove(tmpFileName)
+                self.tmpFileName.close() # This deletes the file
+
+    def pushToTable(self, row, outFd=None):
+        '''
+        Called both from convert(), and from some parsers to add one row to 
+        one table. For CSV outputs the target table is implied: there is only
+        one. But for parsers that generate INSERT statements, the targets
+        might be different tables on each call. 
+        @param row: either an array of CSV values, or a triplet (tableName, insertSig, valsArray) (from MySQL INSERT-generating parsers)
+        @type row: {[<any>] | (String, String, [<any>])
+        @param outFd: subclass of OutputDisposition
+        @type outFd: subclass of OutputDisposition
+        '''
+        if outFd is None:
+            outFd = self.destination
+        self.processFinishedRow(row, outFd)
 
     def processFinishedRow(self, filledNewRow, outFd):
         '''

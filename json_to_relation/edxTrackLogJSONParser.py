@@ -404,7 +404,17 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         return row
 
     def handleSeqNav(self, record, row, event, eventType):
-
+        '''
+        Video navigation
+        @param record:
+        @type record:
+        @param row:
+        @type row:
+        @param event:
+        @type event:
+        @param eventType:
+        @type eventType:
+        '''
         if event is None:
             self.logWarn("Track log line %d: missing event text in sequence navigation event." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
@@ -1034,6 +1044,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             if 'courses' in courseNameFrags:
                 i = courseNameFrags.index('courses')
                 course_id = "/".join(map(str, courseNameFrags[i+1:i+4]))
+        if course_id is None:
+            fullCourseName = None
         return (fullCourseName, course_id)
         
     def getUniqueEventID(self):
