@@ -37,6 +37,13 @@ class GenericJSONParser(object):
         self.totalLinesDoneSoFar = 0
         self.linesSinceLastProgReport = 0
         
+        # Dict mapping table names into arrays of column names of that table.
+        # These arrays are used with setValInRow() to place values into the
+        # correct place in a value row. The entries in the dict get initialized
+        # in subclasses, and the column names are added in setValInRow() as
+        # that method is called to insert values.
+        self.colNamesByTable = {} 
+        
     def processOneJSONObject(self, jsonStr, row):
         '''
         Given a JSON string that is one entire JSON object, parse the
@@ -158,7 +165,7 @@ class GenericJSONParser(object):
         finally:
             self.reportProgressIfNeeded()
 
-    def setValInRow(self, theRow, colName, value):
+    def setValInRow(self, theRow, colName, value, tableName=None):
         '''
         Given a column name, a value and a partially filled row,
         add the column to the row, or set the value in an already
@@ -173,19 +180,23 @@ class GenericJSONParser(object):
         @return: the passed-in row, with the new value added at the proper index.
         @rtype: List<<any>>
         '''
+    
+        if tableName is None:
+            tableName = self.jsonToRelationConverter.mainTableName
+        
         # Assumes caller has called ensureColExistence() on the
         # JSONToRelation object; so the following won't have
         # a key failure:
-        colSpec = self.jsonToRelationConverter.getSchemaHint(colName)
+        colSpec = self.jsonToRelationConverter.getSchemaHint(colName, tableName)
         targetPos = colSpec.colPos
         
         # Is this column name already in the list of 
-        # column names for the INSERT statement?
-        if colName not in self.colsToSet:
-            self.colsToSet.append(colName)
+        # column names for an upcoming INSERT statement?
+        if colName not in self.colNamesByTable[tableName]:
+            self.colNamesByTable[tableName].append(colName)
         
         # Is value to go just beyond the current row len?
-        if (len(theRow) == 0 or len(theRow) == targetPos):
+        if len(theRow) == targetPos:
             theRow.append(value)
             return theRow
         # Is value to go into an already existing column?

@@ -298,7 +298,7 @@ class ColumnSpec(object):
         Return string snippet to use in SQL CREATE TABLE or ALTER TABLE
         statement
         '''
-        return "    %s %s,\n" % (self.getName(), self.getType())
+        return "    %s %s" % (self.getName(), self.getType())
     
     def __str__(self):
         return "<Col %s: %s (position %s)>" % (self.colName, 

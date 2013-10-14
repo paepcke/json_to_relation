@@ -7,13 +7,16 @@
 #TODO: Edx unittest for detecting server downtimes in log
 #TODO: Edx unittest for coursID across all event types
 #TODO: unittesting INSERT output: deal with event IDs always being different
+#TODO: format log msgs
 '''
 Created on Sep 14, 2013
 
 @author: paepcke
 '''
+
 from cStringIO import StringIO
 from collections import OrderedDict
+import copy
 import logging
 import math
 import os
@@ -23,7 +26,8 @@ import tempfile
 
 from col_data_type import ColDataType
 from generic_json_parser import GenericJSONParser
-from input_source import InputSource, InURI, InString, InMongoDB, InPipe #@UnusedImport
+from input_source import InputSource, InURI, InString, InMongoDB, \
+    InPipe #@UnusedImport
 from output_disposition import OutputDisposition, OutputFile, OutputPipe
 
 
@@ -193,6 +197,16 @@ class JSONToRelation(object):
         # Position of column for next col name that is
         # newly encountered: 
         self.nextNewColPos = 0;
+
+    def flush(self):
+        '''
+        MUST be called when no more items are to be converted. Needed
+        because for SQL statements, value insertions are held back to
+        accumulate multiple insert value for use in a single insert
+        statement. This speeds up load times into the databases later.
+        If flush() is not called, output may be missing.
+        '''
+        self.processFinishedRow('FLUSH', self.destination)        
 
     def setupLogging(self, loggingLevel, logFile):
         if JSONToRelation.loggingInitialized:
@@ -442,12 +456,12 @@ class JSONToRelation(object):
                     # Start accumulating values for this new INSERT request:
                     self.currOutTable = tableName
                     self.currInsertSig = insertSig
-                    self.currValsArray.append(valsArray)
+                    self.currValsArray.append(copy.copy(valsArray))
                     return insertStatement
                 else:
                     # Can hold back the new values:
                     self.valsCacheSize = newCacheSize
-                    self.currValsArray.append(valsArray)
+                    self.currValsArray.append(copy.copy(valsArray))
                     return None
             else:
                 # Were accumulating vals, but this call is for a different
@@ -456,7 +470,11 @@ class JSONToRelation(object):
                 # Start accumulating values for this new INSERT request:
                 self.currOutTable = tableName
                 self.currInsertSig = insertSig
-                self.currValsArray.append(valsArray)
+                # Copy the array into the cache buffer: valsArray
+                # is passed by reference, and subsequent changes
+                # would overwrite the cache. Shallow copy suffices,
+                # because all row values are base types:
+                self.currValsArray = [copy.copy(valsArray)]
                 return insertStatement
             
         # We have not yet started to accumulate values:
@@ -472,7 +490,11 @@ class JSONToRelation(object):
             self.valsCacheSize = newCacheSize
             self.currOutTable = tableName
             self.currInsertSig = insertSig
-            self.currValsArray.append(valsArray)
+            # Copy the array into the cache buffer: valsArray
+            # is passed by reference, and subsequent changes
+            # would overwrite the cache. Shallow copy suffices,
+            # because all row values are base types:
+            self.currValsArray = [copy.copy(valsArray)]
             return None
          
     def finalizeInsertStatement(self):

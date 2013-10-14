@@ -19,7 +19,8 @@ from json_to_relation.output_disposition import OutputPipe, OutputDisposition, \
     ColDataType, TableSchemas, ColumnSpec, OutputFile
 
 
-TEST_ALL = True
+TEST_ALL = False
+PRINT_OUTS = False  # Set True to get printouts of CREATE TABLE statements
 
 class TestEdxTrackLogJSONParser(unittest.TestCase):
     
@@ -137,30 +138,94 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         self.fileConverter.setParser(self.edxParser)
         self.fileConverter.convert(prependColHeader=False)
         self.assertFileContentEquals(file('data/edxHeartbeatEventDownTimeTruth.sql'), dest.getFileName())
-        
+
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
-    def testTableCreation(self):
+    def testTableCreationStatementConstruction(self):
+        edxParser = EdXTrackLogJSONParser(self.fileConverter, 'Main')
+        createStatement = edxParser.genOneCreateStatement('Answer', edxParser.schemaAnswerTbl, primaryKeyName='answer_id')
+        self.assertFileContentEquals(file('data/answerTblCreateTruth.sql'), createStatement)
+       
+        foreignKeysDict = OrderedDict()
+        foreignKeysDict['Answer'] = ('student_answer', 'problem_id')
+        foreignKeysDict['CorrectMap'] = ('correct_map', 'correct_map_id')
+        foreignKeysDict['InputState'] = ('input_state', 'input_state_id')
+        
+        createStatement = edxParser.genOneCreateStatement('State', 
+                                                          edxParser.schemaStateTbl, 
+                                                          primaryKeyName='state_id',
+                                                          foreignKeyColNames=foreignKeysDict)
+        self.assertFileContentEquals(file('data/stateTblCreateTruth.sql'), createStatement)
+        
+    @unittest.skipIf(not PRINT_OUTS, "Temporarily disabled")
+    def testAllTableCreation(self):
+        '''
+        This test is being skipped by the decorator above.
+        It would fail any time any of the tables change. But
+        Running it nicely prints all the CREATE TABLE statements
+        that are created.
+        '''
         resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
         # Just use the file name of the tmp file.
         resultFileName = resultFile.name
         resultFile.close()
         dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
-        self.fileConverter = JSONToRelation(InString('This text is unimportant'), 
-                                            dest
-                                            )
-        
+        self.fileConverter = JSONToRelation(InString('This text is unimportant'),dest)
+            
         self.edxParser = EdXTrackLogJSONParser(self.fileConverter, 'Main', replaceTables=True)
 
         with open(dest.getFileName()) as fd:
             for line in fd:
                 sys.stdout.write(line)
-    
-                #--------------------------------------------------------------------------------------------------    
-    def assertFileContentEquals(self, expected, filePath):
+ 
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def testCheckProblemEventType(self):
+
+        testFilePath = os.path.join(os.path.dirname(__file__),"data/problem_checkEventFldOnly.json")
+        stringSource = InURI(testFilePath)
+        
+        resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+        # Just use the file name of the tmp file.
+        resultFileName = resultFile.name
+        resultFile.close()
+        dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+        self.fileConverter = JSONToRelation(stringSource,
+                                            dest,
+                                            mainTableName='Event'
+                                            )
+        # Read the isolated problem_check event:
+        with open(testFilePath) as fd:
+            testProblemCheckEventJSON = fd.readline()
+        event = json.loads(testProblemCheckEventJSON)
+        edxParser = EdXTrackLogJSONParser(self.fileConverter, 'Event')
+        # Pretend a problem_check event had just been found.
+        # Here: record is None, row to fill still empty (would
+        # normally be the main table, partially filled row).
+        edxParser.handleProblemCheck(None, [], event)
+
+        self.fileConverter.flush()
+        dest.close()
+        truthFile = open(os.path.join(os.path.dirname(__file__),"data/problem_checkEventFldOnlyTruth.sql"), 'r')
+        self.assertFileContentEquals(truthFile, dest.name)
+        
+   
+    #--------------------------------------------------------------------------------------------------    
+    def assertFileContentEquals(self, expected, filePathOrStrToCompareTo):
         if isinstance(expected, file):
             strFile = expected
         else:
             strFile = StringIO.StringIO(expected)
+        # Check whether filePathOrStrToCompareTo is a file path or a string:
+        try:
+            open(filePathOrStrToCompareTo, 'r').close()
+            filePath = filePathOrStrToCompareTo
+        except IOError:
+            # We are to compare against a string. Just
+            # write it to a tmp file that deletes itself:
+            tmpFile = tempfile.NamedTemporaryFile()
+            tmpFile.write(filePathOrStrToCompareTo)
+            tmpFile.flush()
+            filePath = tmpFile.name
+        
         with open(filePath, 'r') as fd:
             for fileLine in fd:
                 # Some events have UUIDs, which are different with each run.

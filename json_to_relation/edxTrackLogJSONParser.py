@@ -77,7 +77,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaHintsMainTable['questionLocation'] = ColDataType.TEXT
         
         # Attempts:
-        self.schemaHintsMainTable['attempts'] = ColDataType.TEXT
+        self.schemaHintsMainTable['attempts'] = ColDataType.TINYINT
         
         
         # Answers (in their own table; so this is just a foreign key field):
@@ -133,11 +133,23 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaStateTbl['correct_map'] = ColDataType.UUID
         self.schemaStateTbl['input_state'] = ColDataType.UUID
 
+        # Turn the SQL data types in the dict to column spec objects:
+        for colName in self.schemaStateTbl.keys():
+            colType = self.schemaStateTbl[colName]
+            self.schemaStateTbl[colName] = ColumnSpec(colName, colType, self.jsonToRelationConverter)
+        
+        
         # Schema for Answer table:
         self.schemaAnswerTbl = OrderedDict()
         self.schemaAnswerTbl['answer_id'] = ColDataType.UUID
         self.schemaAnswerTbl['problem_id'] = ColDataType.TEXT
         self.schemaAnswerTbl['answer'] = ColDataType.TEXT
+
+        # Turn the SQL data types in the dict to column spec objects:
+        for colName in self.schemaAnswerTbl.keys():
+            colType = self.schemaAnswerTbl[colName]
+            self.schemaAnswerTbl[colName] = ColumnSpec(colName, colType, self.jsonToRelationConverter)
+
         
         # Schema for CorrectMap table:
         self.schemaCorrectMapTbl = OrderedDict()
@@ -150,11 +162,22 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaCorrectMapTbl['hintmode'] = ColDataType.TINYTEXT
         self.schemaCorrectMapTbl['queuestate'] = ColDataType.TEXT
 
+        # Turn the SQL data types in the dict to column spec objects:
+        for colName in self.schemaCorrectMapTbl.keys():
+            colType = self.schemaCorrectMapTbl[colName]
+            self.schemaCorrectMapTbl[colName] = ColumnSpec(colName, colType, self.jsonToRelationConverter)
+
+
         # Schema for InputState table:
         self.schemaInputStateTbl = OrderedDict()
         self.schemaInputStateTbl['input_state_id'] = ColDataType.UUID
         self.schemaInputStateTbl['problem_id'] = ColDataType.TEXT
         self.schemaInputStateTbl['state'] = ColDataType.TEXT
+
+        # Turn the SQL data types in the dict to column spec objects:
+        for colName in self.schemaInputStateTbl.keys():
+            colType = self.schemaInputStateTbl[colName]
+            self.schemaInputStateTbl[colName] = ColumnSpec(colName, colType, self.jsonToRelationConverter)
 
 
         # Dict<IP,Datetime>: record each IP's most recent
@@ -232,7 +255,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.jsonToRelationConverter.bumpLineCounter()
         # Collect the columns whose values need to be set in 
         # the INSERT statement that results from this event:
-        self.colsToSet = ['eventID'] + self.commonFldNames
+        colsToSet = ['eventID'] + self.commonFldNames
+        self.colNamesByTable[self.mainTableName] = colsToSet
         try:
             # Turn top level JSON object to dict:
             try:
@@ -469,7 +493,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         if colNamesToSet is not None:
             return (targetTableName, ','.join(colNamesToSet), row)
         else:
-            return (targetTableName, ','.join(self.colsToSet), row)
+            return (targetTableName, ','.join(self.colNamesByTable[targetTableName]), row)
         
         
     def pushTableCreations(self, replaceTables):  # @NoSelf
@@ -480,71 +504,115 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                               if False, the CREATE statements will be IF NOT EXISTS
         @type replaceTables: Boolean
         '''
-        if not replaceTables:
-            return
-        
-        self.jsonToRelationConverter.pushString('DROP TABLE IF EXISTS %s, State, Answer, CorrectMap, InputState;\n' % self.mainTableName)        
+        if replaceTables:
+            self.jsonToRelationConverter.pushString('DROP TABLE IF EXISTS %s, State, Answer, CorrectMap, InputState;\n' % self.mainTableName)        
+
+        # Initialize col row arrays for each table. These
+        # are used in GenericJSONParser.setValInRow(), where
+        # the column names are added as values for them are
+        # set:
+        self.colNamesByTable[self.mainTableName] = []
+        self.colNamesByTable['Answer'] = []
+        self.colNamesByTable['CorrectMap'] = []
+        self.colNamesByTable['InputState'] = []
+        self.colNamesByTable['State'] = []
 
         self.createAnswerTable()
         self.createCorrectMapTable()
         self.createInputStateTable()
         self.createStateTable()
         self.createMainTable()
-        
+    
+    def genOneCreateStatement(self, tableName, schemaDict, primaryKeyName=None, foreignKeyColNames=None):
+        '''
+        Given a table name and its ordered schema dict, generate
+        a basic SQL CREATE TABLE statement. Primary and foreign key names may
+        optionally be provided. An example of the most complex create statement generated
+        by this method is::
+        CREATE TABLE myTable
+            col1 VARCHAR(32) NOT NULL Primary Key,
+			col2 TEXT,
+			col3 INT,
+			col4 VARCHAR(32),
+			FOREIGN KEY(col3) REFERENCES OtherTable(int_col_name_there),
+			FOREIGN KEY(col4) REFERENCES YetOtherTable(varchar_col_name_there),
+			);
+		Example for the optional foreign key specification parameter
+		that would create the above example::
+		{'OtherTable' : ('col3', 'int_col_name_there'),
+		 'YetOtherTable : ('col4', 'varchar_col_name_there')
+		 }
+        @param tableName: name of table to be created
+        @type tableName: String
+        @param schemaDict: dict mapping column names to ColumnSpec objects
+        @type schemaDict: Dict<String,ColumnSpec>
+        @param primaryKeyName: name of the primary key column, if any
+        @type primaryKeyName: String
+        @param foreignKeyColNames: dict mapping foreign table names to tuples (localColName, foreignColName)
+        @type foreignKeyColNames: Dict<String,(String,String)>
+        '''
+        createStatement = "CREATE TABLE %s (\n" % tableName
+        for colname in schemaDict.keys():
+            if colname == primaryKeyName:
+                createStatement += "%s NOT NULL Primary Key,\n" % schemaDict[colname].getSQLDefSnippet()
+            else:
+                createStatement += "%s,\n" % schemaDict[colname].getSQLDefSnippet()
+        if foreignKeyColNames is not None:
+            for foreignTableName in foreignKeyColNames.keys():
+                (localFldName, foreignKeyName) = foreignKeyColNames[foreignTableName]
+                createStatement += "    FOREIGN KEY(%s) REFERENCES %s(%s),\n" % (localFldName, foreignTableName, foreignKeyName) 
+                 
+        # Cut away the comma and newline after the last column spec,
+        # and add newline, closing paren, and semicolon:
+        createStatement = createStatement[0:-2] + '\n    );\n'
+        return createStatement 
+            
+
     def createAnswerTable(self):
-        self.jsonToRelationConverter.pushString("CREATE TABLE Answer (\n"\
-                                                "    answer_id VARCHAR(32) NOT NULL Primary Key, \n"\
-                                                "    problem_id VARCHAR(255),\n"\
-                                                "    answer TEXT"\
-                                                "    );\n"
-    )
+        createStatement = self.genOneCreateStatement('Answer', self.schemaAnswerTbl, primaryKeyName='answer_id')
+        self.jsonToRelationConverter.pushString(createStatement)
 
     def createCorrectMapTable(self):
-        self.jsonToRelationConverter.pushString("CREATE Table CorrectMap (\n"\
-                                                "    correct_map_id varchar(32) NOT NULL Primary KEY,\n"\
-                                                "    answer_id TEXT,\n"\
-                                                "    correctness BOOLEAN,\n"\
-                                                "    npoints INTEGER,\n"\
-                                                "    msg TEXT,\n"\
-                                                "    hint TEXT,\n"\
-                                                "    hintmode TINYTEXT,\n"\
-                                                "    queuestate TEXT\n"\
-                                                "    );\n"
-                                                )
+        createStatement = self.genOneCreateStatement('CorrectMap', 
+                                                     self.schemaCorrectMapTbl, 
+                                                     primaryKeyName='correct_map_id')        
+        self.jsonToRelationConverter.pushString(createStatement)
 
     def createInputStateTable(self):
-        self.jsonToRelationConverter.pushString("CREATE Table InputState (\n"\
-												"    input_state_id varchar(32) NOT NULL PRIMARY KEY,\n"\
-												"    problem_id TEXT,\n"\
-												"    state     TEXT\n"\
-												"    );\n"
-                                                )
+        createStatement = self.genOneCreateStatement('InputState', 
+                                                     self.schemaInputStateTbl, 
+                                                     primaryKeyName='input_state_id')        
+        self.jsonToRelationConverter.pushString(createStatement)
+        
     def createStateTable(self):
-        self.jsonToRelationConverter.pushString("CREATE Table State (\n"\
-												"    state_id VARCHAR(32) NOT NULL PRIMARY KEY,\n"\
-												"    seed TINYINT,\n"\
-												"    done BOOLEAN,\n"\
-                                                "    problem_id TEXT,\n"\
-												"    student_answer VARCHAR(32),\n"\
-												"    correct_map VARCHAR(32),\n"\
-												"    input_state VARCHAR(32),\n"\
-												"    FOREIGN KEY(student_answer) REFERENCES Answer(problem_id),\n"\
-												"    FOREIGN KEY(correct_map) REFERENCES CorrectMap(correct_map_id),\n"\
-												"    FOREIGN KEY(input_state) REFERENCES InputState(input_state_id)\n"\
-												"    );\n"
-                                                )
+        # Make the foreign keys information dict ordered. Doesn't
+        # matter to SQL engine, but makes unittesting easier, b/c
+        # order of foreign key declarations will be constant on
+        # each run:
+        foreignKeysDict = OrderedDict()
+        foreignKeysDict['Answer'] = ('student_answer', 'answer_id')
+        foreignKeysDict['CorrectMap'] = ('correct_map', 'correct_map_id')
+        foreignKeysDict['InputState'] = ('input_state', 'input_state_id')
+        createStatement = self.genOneCreateStatement('State', 
+                                                     self.schemaStateTbl, 
+                                                     primaryKeyName='state_id', 
+                                                     foreignKeyColNames=foreignKeysDict)        
+        self.jsonToRelationConverter.pushString(createStatement)
 
     def createMainTable(self):
-        createStr = "CREATE TABLE %s (\n" % self.mainTableName
-        for fldName in self.schemaHintsMainTable:
-            createStr += self.schemaHintsMainTable[fldName].getSQLDefSnippet()
-        # Remove the trailing comma, and add the foreign key declarations and the closing paren:
-        createStr = createStr[0:-2]
-        createStr += '    FOREIGN KEY(correctMapFK) REFERENCES CorrectMap(correct_map_id),\n' + \
-                     '    FOREIGN KEY(answerFK) REFERENCES Answer(answer_id),\n' + \
-                     '    FOREIGN KEY(stateFK) REFERENCES State(state_id)\n' +\
-                     '    )'
-        self.jsonToRelationConverter.pushString(createStr)
+        # Make the foreign keys information dict ordered. Doesn't
+        # matter to SQL engine, but makes unittesting easier, b/c
+        # order of foreign key declarations will be constant on
+        # each run:
+        foreignKeysDict = OrderedDict()
+        foreignKeysDict['CorrectMap'] = ('correctMapFK', 'correct_map_id')
+        foreignKeysDict['Answer'] = ('answerFK', 'answer_id')
+        foreignKeysDict['State'] = ('stateFK', 'state_id')
+        createStatement = self.genOneCreateStatement(self.mainTableName, 
+                                                     self.schemaHintsMainTable, 
+                                                     primaryKeyName='event_id', 
+                                                     foreignKeyColNames=foreignKeysDict)        
+        self.jsonToRelationConverter.pushString(createStatement)
         
     def handleCommonFields(self, record, row):
         # Create a unique event key  for this event:
@@ -661,16 +729,16 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # we ignore non-existing fields.
         success = event.get('success', None)
         if success is not None:
-            self.setValInRow(row, 'success', success)
+            self.setValInRow(row, 'success', success, self.mainTableName)
         attempts = event.get('attempts', None)
         if attempts is not None:
-            self.setValInRow(row, 'attempts', attempts)
+            self.setValInRow(row, 'attempts', attempts, self.mainTableName)
         seed = event.get('seed', None)
         if seed is not None:
             self.setValInRow(row, 'seed', seed)
         problem_id = event.get('problem_id', None)
         if seed is not None:
-            self.setValInRow(row, 'problem_id', problem_id)
+            self.setValInRow(row, 'problemID', problem_id, self.mainTableName)
 
         # correctMap field may consist of many correct maps.
         # Create an entry for each in the CorrectMap table,
@@ -699,8 +767,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # foreign key entries that were created:
         
         generatedAllRows = False
+        indexToFKeys = 0
+        # Generate main table rows that refer to all the
+        # foreign entries we made above to Answer, CorrectMap, and State
+        # We make as few rows as possible by filling in 
+        # columns in all three foreign key entries, until
+        # we run out of all references:
         while not generatedAllRows:
-            indexToFKeys = 0
             try:
                 correctMapFKey = correctMapFKeys[indexToFKeys]
             except IndexError:
@@ -714,13 +787,17 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             except IndexError:
                 stateFKey = None
             
-            self.setValInRow(row, 'correctMapFK', correctMapFKey)
-            self.setValInRow(row, 'answerFK', answerFKey)
-            self.setValInRow(row, 'stateFK', stateFKey)
-            self.resultTriplet(row, self.mainTableName)
-            # Have we created rows to cover all student_answers, correct_maps, and input_states?
             if correctMapFKey is None and answerFKey is None and stateFKey is None:
                 generatedAllRows = True
+                continue
+
+            # Fill in one main table row.
+            self.setValInRow(row, 'correctMapFK', correctMapFKey, self.mainTableName)
+            self.setValInRow(row, 'answerFK', answerFKey, self.mainTableName)
+            self.setValInRow(row, 'stateFK', stateFKey, self.mainTableName)
+            rowInfoTriplet = self.resultTriplet(row, self.mainTableName, self.schemaHintsMainTable.keys())
+            self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
+            # Have we created rows to cover all student_answers, correct_maps, and input_states?
             indexToFKeys += 1
 
     def pushCorrectMaps(self, correctMapsDict):
@@ -756,7 +833,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # will then use them as foreign keys in the Event
         # table:
         correctMapUniqKeys = []
-        for answerKey in correctMapsDict:
+        for answerKey in correctMapsDict.keys():
             answer_id = answerKey
             oneCorrectMapDict = correctMapsDict[answerKey]
             hint = oneCorrectMapDict.get('hint', None)
@@ -772,13 +849,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             correctMapUniqKeys.append(correct_map_id)
             correctMapValues = [correct_map_id,
                                 answer_id,
+                                correctness,
+                                npoints,
+                                msg,
                                 hint,
                                 hintmode,
-                                correctness,
-                                msg,
-                                npoints,
                                 queuestate]
-            self.jsonToRelationConverter.pushToTable(self.resultTriplet(correctMapValues, 'CorrectMap'))
+            self.jsonToRelationConverter.pushToTable(self.resultTriplet(correctMapValues, 'CorrectMap', self.schemaCorrectMapTbl.keys()))
         # Return the array of RorrectMap row unique ids we just
         # created and pushed:
         return correctMapUniqKeys 
@@ -805,7 +882,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                 problemID,             # problem_id fld
                                 answer
                                 ]
-                self.jsonToRelationConverter.pushToTable(self.resultTriplet(answerValues, 'Answer'))
+                self.jsonToRelationConverter.pushToTable(self.resultTriplet(answerValues, 'Answer', self.schemaAnswerTbl.keys()))
         return answersKeys
 
     def pushState(self, stateDict):
@@ -860,7 +937,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             correctMapFKeys = self.pushCorrectMaps(correctMapsDict)
         else:
             correctMapFKeys = []
-        inputStatesDict = stateDict('input_state', None)
+        inputStatesDict = stateDict.get('input_state', None)
         if inputStatesDict is not None:
             inputStatesFKeys = self.pushInputStates(inputStatesDict)
         else:
@@ -873,8 +950,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
         # Unique ID that ties all these related rows together:
         state_id = uuid.uuid4()
+        stateFKeys.append(state_id)
+        indexToFKeys = 0
         while not generatedAllRows:
-            indexToFKeys = 0
             try:
                 studentAnswerFKey = studentAnswersFKeys[indexToFKeys]
             except IndexError:
@@ -886,13 +964,16 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             try:
                 inputStateFKey = inputStatesFKeys[indexToFKeys]
             except IndexError:
-                studentAnswerFKey = None
+                inputStateFKey = None
                 
-            stateValues = [state_id, seed, done, problemID, studentAnswerFKey, correctMapFKey, inputStateFKey]
-            self.resultTriplet(stateValues, 'InputState', self.schemaStateTbl.keys())
             # Have we created rows to cover all student_answers, correct_maps, and input_states?
             if studentAnswerFKey is None and correctMapFKey is None and inputStateFKey is None:
                 generatedAllRows = True
+                continue
+
+            stateValues = [state_id, seed, done, problemID, studentAnswerFKey, correctMapFKey, inputStateFKey]
+            rowInfoTriplet = self.resultTriplet(stateValues, 'State', self.schemaStateTbl.keys())
+            self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
             indexToFKeys += 1
             
         return stateFKeys
@@ -919,7 +1000,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                     problemID,
                                     inputStateProbVal
                                     ]
-                self.jsonToRelationConverter.pushToTable(self.resultTriplet(inputStateValues, 'InputState', self.Inpu****))
+                self.jsonToRelationConverter.pushToTable(self.resultTriplet(inputStateValues, 'InputState', self.schemaInputStateTbl.keys()))
         return inputStateKeys
         
     
