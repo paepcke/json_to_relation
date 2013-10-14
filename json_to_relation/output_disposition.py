@@ -186,6 +186,16 @@ class OutputPipe(OutputDisposition):
                                                      quotechar='"', 
                                                      quoting=csv.QUOTE_MINIMAL)
 
+    def write(self, whatToWrite):
+        '''
+        Write given string straight to the output. No assumption made about the format
+        @param whatToWrite:
+        @type whatToWrite:
+        '''
+        sys.stdout.write(whatToWrite)
+        sys.stdout.flush()
+
+
 class OutputFile(OutputDisposition):
     def __init__(self, fileName, outputFormat, options='ab'):
         super(OutputFile, self).__init__(outputFormat)        
@@ -220,6 +230,15 @@ class OutputFile(OutputDisposition):
         else:
             self.fileHandle.write(colElementArray + '\n')
 
+    def write(self, whatToWrite):
+        '''
+        Write given string straight to the output. No assumption made about the format
+        @param whatToWrite:
+        @type whatToWrite:
+        '''
+        self.fileHandle.write(whatToWrite)
+        self.fileHandle.flush()
+        
     def startNewTable(self, tableName, schemaHintsNewTable):
         '''
         Called when parser needs to create a table beyond
@@ -234,34 +253,6 @@ class OutputFile(OutputDisposition):
                                                      delimiter=',', 
                                                      quotechar='"', 
                                                      quoting=csv.QUOTE_MINIMAL)
-
-
-class OutputMySQLDump(OutputDisposition):
-    
-    def __init__(self, dbName, tbleName):
-        super(OutputMySQLDump, self).__init__()        
-        raise NotImplementedError("MySQL dump not yet implemented")
-        self.tableFiles = {}
-        
-    def close(self):
-        raise NotImplementedError("MySQL connector not yet implemented")
-
-    def __str__(self):
-        return "<OutputMySQLTable--%s>" % self.name
-
-    def writerow(self, fd, colElementArray, tableName=None):
-        raise NotImplementedError("MySQL connector not yet implemented")
-
-    def startNewTable(self, tableName, schemaHintsNewTable):
-        '''
-        Called when parser needs to create a table beyond
-        the main table. 
-        @param schemaHintsNewTable:
-        @type schemaHintsNewTable:
-        '''
-        self.schemaHints[tableName] = schemaHintsNewTable
-        tmpTableFile = self.createTmpTableFile(tableName, 'sql')
-        self.tableFiles[tableName] = tmpTableFile
 
 class ColumnSpec(object):
     '''
@@ -307,7 +298,7 @@ class ColumnSpec(object):
         Return string snippet to use in SQL CREATE TABLE or ALTER TABLE
         statement
         '''
-        return "%s %s" % (self.getName(), self.getType())
+        return "    %s %s,\n" % (self.getName(), self.getType())
     
     def __str__(self):
         return "<Col %s: %s (position %s)>" % (self.colName, 

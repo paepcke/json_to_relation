@@ -6,7 +6,6 @@ Created on Oct 2, 2013
 from collections import OrderedDict
 import datetime
 import json
-import re
 import uuid
 
 from col_data_type import ColDataType
@@ -14,14 +13,14 @@ from generic_json_parser import GenericJSONParser
 from output_disposition import ColumnSpec
 
 
-EDX_HEARTBEAT_PERIOD = 6 # seconds
+EDX_HEARTBEAT_PERIOD = 360 # seconds
 
 class EdXTrackLogJSONParser(GenericJSONParser):
     '''
     Parser specialized for EdX track logs.
     '''
 
-    def __init__(self, jsonToRelationConverter, logfileID='', progressEvery=1000):
+    def __init__(self, jsonToRelationConverter, mainTableName, logfileID='', progressEvery=1000, replaceTables=False):
         '''
         Constructor
         @param jsonToRelationConverter: JSONToRelation instance
@@ -38,6 +37,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                                     progressEvery=progressEvery
                                                     )
         
+        self.mainTableName = mainTableName
         # Prepare as much as possible outside parsing of
         # each line; Build the schema:
         
@@ -46,7 +46,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
         self.schemaHintsMainTable = OrderedDict()
 
-        self.schemaHintsMainTable['eventID'] = ColDataType.TEXT # we generate this one ourselves.
+        self.schemaHintsMainTable['eventID'] = ColDataType.UUID # we generate this one ourselves; xlates to VARCHAR(32)
         self.schemaHintsMainTable['agent'] = ColDataType.TEXT
         self.schemaHintsMainTable['event_source'] = ColDataType.TINYTEXT
         self.schemaHintsMainTable['event_type'] = ColDataType.TEXT
@@ -109,6 +109,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaHintsMainTable['msg'] = ColDataType.TEXT
         self.schemaHintsMainTable['npoints'] = ColDataType.TINYINT
         self.schemaHintsMainTable['queuestate'] = ColDataType.TEXT
+        self.schemaHintsMainTable['correctMapFK'] = ColDataType.UUID
+        self.schemaHintsMainTable['answerFK'] = ColDataType.UUID
+        self.schemaHintsMainTable['stateFK'] = ColDataType.UUID
         
         # Schema hints need to be a dict that maps column names to ColumnSpec 
         # instances. The dict we built so far only the the column types. Go through
@@ -120,6 +123,40 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # Establish the schema for the main table:
         self.jsonToRelationConverter.setSchemaHints(self.schemaHintsMainTable)
 
+        # Schema for State table:
+        self.schemaStateTbl = OrderedDict()
+        self.schemaStateTbl['state_id'] = ColDataType.UUID
+        self.schemaStateTbl['seed'] = ColDataType.TINYINT
+        self.schemaStateTbl['done'] = ColDataType.BOOL
+        self.schemaStateTbl['problem_id'] = ColDataType.TEXT
+        self.schemaStateTbl['student_answer'] = ColDataType.UUID
+        self.schemaStateTbl['correct_map'] = ColDataType.UUID
+        self.schemaStateTbl['input_state'] = ColDataType.UUID
+
+        # Schema for Answer table:
+        self.schemaAnswerTbl = OrderedDict()
+        self.schemaAnswerTbl['answer_id'] = ColDataType.UUID
+        self.schemaAnswerTbl['problem_id'] = ColDataType.TEXT
+        self.schemaAnswerTbl['answer'] = ColDataType.TEXT
+        
+        # Schema for CorrectMap table:
+        self.schemaCorrectMapTbl = OrderedDict()
+        self.schemaCorrectMapTbl['correct_map_id'] = ColDataType.UUID
+        self.schemaCorrectMapTbl['answer_id'] = ColDataType.TEXT
+        self.schemaCorrectMapTbl['correctness'] = ColDataType.BOOL
+        self.schemaCorrectMapTbl['npoints'] = ColDataType.INT
+        self.schemaCorrectMapTbl['msg'] = ColDataType.TEXT
+        self.schemaCorrectMapTbl['hint'] = ColDataType.TEXT
+        self.schemaCorrectMapTbl['hintmode'] = ColDataType.TINYTEXT
+        self.schemaCorrectMapTbl['queuestate'] = ColDataType.TEXT
+
+        # Schema for InputState table:
+        self.schemaInputStateTbl = OrderedDict()
+        self.schemaInputStateTbl['input_state_id'] = ColDataType.UUID
+        self.schemaInputStateTbl['problem_id'] = ColDataType.TEXT
+        self.schemaInputStateTbl['state'] = ColDataType.TEXT
+
+
         # Dict<IP,Datetime>: record each IP's most recent
         # activity timestamp (heartbeat or any other event).
         # Used to detect server downtimes: 
@@ -129,65 +166,68 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # to computer some on-the-fly aggregations:
         self.resultDict = {}
 
+        # Create main and auxiliary tables if appropriate:
+        self.pushTableCreations(replaceTables)
+        
     def processOneJSONObject(self, jsonStr, row):
         '''
-		Given one line from the EdX Track log, produce one row
-		of relational output. Return is an array of values, the 
-		same that is passed in. On the way, the partne JSONToRelation
-		object is called to ensure that JSON fields for which new columns
-		have not been created yet receive a place in the row array.    
-		Different types of JSON records will be passed: server heartbeats,
-		dashboard accesses, account creations, user logins. Example record
-		for the latter::
-		{"username": "", 
-		 "host": "class.stanford.edu", 
-		 "event_source": "server", 
-		 "event_type": "/accounts/login", 
-		 "time": "2013-06-14T00:31:57.661338", 
-		 "ip": "98.230.189.66", 
-		 "event": "{
-		            \"POST\": {}, 
-     		 	    \"GET\": {
-			             \"next\": [\"/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/80160e.../\"]}}", 
-		 "agent": "Mozilla/5.0 (Windows NT 5.1; rv:21.0) Gecko/20100101
-		 Firefox/21.0", 
-		 "page": null}
+        Given one line from the EdX Track log, produce one row
+        of relational output. Return is an array of values, the 
+        same that is passed in. On the way, the partne JSONToRelation
+        object is called to ensure that JSON fields for which new columns
+        have not been created yet receive a place in the row array.    
+        Different types of JSON records will be passed: server heartbeats,
+        dashboard accesses, account creations, user logins. Example record
+        for the latter::
+        {"username": "", 
+         "host": "class.stanford.edu", 
+         "event_source": "server", 
+         "event_type": "/accounts/login", 
+         "time": "2013-06-14T00:31:57.661338", 
+         "ip": "98.230.189.66", 
+         "event": "{
+                    \"POST\": {}, 
+                      \"GET\": {
+                         \"next\": [\"/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/80160e.../\"]}}", 
+         "agent": "Mozilla/5.0 (Windows NT 5.1; rv:21.0) Gecko/20100101
+         Firefox/21.0", 
+         "page": null}
 
         Two more examples to show the variance in the format. Note "event" field:
-		
-		Second example::
-		{"username": "jane", 
-		 "host": "class.stanford.edu", 
-		 "event_source": "server", 
-		 "event_type": "/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/combinedopenended/c415227048464571a99c2c430843a4d6/get_results", 
-		 "time": "2013-07-31T06:27:06.222843+00:00", 
-		 "ip": "67.166.146.73", 
-		 "event": "{\"POST\": {
-		                        \"task_number\": [\"0\"]}, 
-		                        \"GET\": {}}",
-		 "agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.71 Safari/537.36", 
-		 "page": null}
-				
-	    Third example:
-		{"username": "miller", 
-		 "host": "class.stanford.edu", 
-		 "session": "fa715506e8eccc99fddffc6280328c8b", 
-		 "event_source": "browser", 
-		 "event_type": "hide_transcript", 
-		 "time": "2013-07-31T06:27:10.877992+00:00", 
-		 "ip": "27.7.56.215", 
-		 "event": "{\"id\":\"i4x-Medicine-HRP258-videoalpha-09839728fc9c48b5b580f17b5b348edd\",
-		            \"code\":\"fQ3-TeuyTOY\",
-		            \"currentTime\":0}", 
-		 "agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.72 Safari/537.36", 
-		 "page": "https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/495757ee7b25401599b1ef0495b068e4/6fd116e15ab9436fa70b8c22474b3c17/"}
-				
-		@param jsonStr: string of a single, self contained JSON object
-		@type jsonStr: String
-		@param row: partially filled array of values. Passed by reference
-		@type row: List<<any>>
-		@return: the filled-in row
-		@rtype: [<any>]
+        
+        Second example::
+        {"username": "jane", 
+         "host": "class.stanford.edu", 
+         "event_source": "server", 
+         "event_type": "/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/combinedopenended/c415227048464571a99c2c430843a4d6/get_results", 
+         "time": "2013-07-31T06:27:06.222843+00:00", 
+         "ip": "67.166.146.73", 
+         "event": "{\"POST\": {
+                                \"task_number\": [\"0\"]}, 
+                                \"GET\": {}}",
+         "agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.71 Safari/537.36", 
+         "page": null}
+                
+        Third example:
+        {"username": "miller", 
+         "host": "class.stanford.edu", 
+         "session": "fa715506e8eccc99fddffc6280328c8b", 
+         "event_source": "browser", 
+         "event_type": "hide_transcript", 
+         "time": "2013-07-31T06:27:10.877992+00:00", 
+         "ip": "27.7.56.215", 
+         "event": "{\"id\":\"i4x-Medicine-HRP258-videoalpha-09839728fc9c48b5b580f17b5b348edd\",
+                    \"code\":\"fQ3-TeuyTOY\",
+                    \"currentTime\":0}", 
+         "agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.72 Safari/537.36", 
+         "page": "https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/495757ee7b25401599b1ef0495b068e4/6fd116e15ab9436fa70b8c22474b3c17/"}
+                
+        @param jsonStr: string of a single, self contained JSON object
+        @type jsonStr: String
+        @param row: partially filled array of values. Passed by reference
+        @type row: List<<any>>
+        @return: the filled-in row
+        @rtype: [<any>]
         '''
         self.jsonToRelationConverter.bumpLineCounter()
         # Collect the columns whose values need to be set in 
@@ -234,12 +274,14 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                                                         eventTimeStr))
             
             try:
+                doRecordHeartbeat = False
                 recentSignOfLife = self.downtimes[ip]
                 # Get a timedelta obj w/ duration of time
                 # during which nothing was heard from server:
                 serverQuietTime = eventDateTime - recentSignOfLife
                 if serverQuietTime.seconds > EDX_HEARTBEAT_PERIOD:
                     self.setValInRow(row, 'downtime_for', str(serverQuietTime))
+                    doRecordHeartbeat = True
                 # New recently-heard from this IP:
                 self.downtimes[ip] = eventDateTime
             except KeyError:
@@ -247,10 +289,17 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 self.downtimes[ip] = eventDateTime
                 # Record a time of 0 in downtime detection column:
                 self.setValInRow(row, 'downtime_for', str(datetime.timedelta()))
+                doRecordHeartbeat = True
                 
             
             if eventType == '/heartbeat':
-                # Handled heartbeat above, no further entry needed
+                # Handled heartbeat above, we don't transfer the heartbeats
+                # themselves into the relational world. If a server
+                # downtime was detected from the timestamp of this
+                # heartbeat, then above code added a respective warning
+                # into the row, else we just ignore the heartbeat
+                if not doRecordHeartbeat:
+                    row = []
                 return
             
             # For any event other than heartbeat, we need to look
@@ -391,20 +440,111 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 return
         finally:
             self.reportProgressIfNeeded()
-            self.jsonToRelationConverter.pushToTable(self.resultTriplet(row))
+            # If above code generated anything to INSERT into SQL
+            # table, do that now. If row is None, then nothing needs
+            # to be inserted (e.g. heartbeats):
+            if len(row) != 0:
+                self.jsonToRelationConverter.pushToTable(self.resultTriplet(row, self.mainTableName))
         
-    def resultTriplet(self, row):
+    def resultTriplet(self, row, targetTableName, colNamesToSet=None):
         '''
         Given an array of column names, and an array of column values,
         construct the return triplet needed for JSONToRelation instance
         to generate its INSERT statements (see JSONToRelation.prepareMySQLRow()).
-        We assume the values are destined for the main (default) table,
-        whose internal name is None:
         @param row: array of column values 
         @type row: [<any>]
+        @param targetTableName: name of SQL table to which the result is directed. The caller
+                            of processOneJSONObject() will create an INSERT statement
+                            for that table.
+        @type targetTableName: String
+        @param colNamesToSet: array of strings listing column names in the order in which
+                              their values appear in the row parameter. If None, we assume
+                              the values are destined for the main event table, whose
+                              schema is 'well known'.
+        @type colNamesToSet: [String]
         '''
-        return (None, ','.join(self.colsToSet), row)
+        if colNamesToSet is None and targetTableName != self.mainTableName:
+            raise ValueError("If colNamesToSet is None, the target table must be the main table whose name was passed into __init__(); was %s" % targetTableName)
         
+        if colNamesToSet is not None:
+            return (targetTableName, ','.join(colNamesToSet), row)
+        else:
+            return (targetTableName, ','.join(self.colsToSet), row)
+        
+        
+    def pushTableCreations(self, replaceTables):  # @NoSelf
+        '''
+        Pushes SQL statements to caller that create all tables, main and
+        auxiliary. 
+        @param replaceTables: if True, then generated CREATE statements will first DROP the various tables.
+                              if False, the CREATE statements will be IF NOT EXISTS
+        @type replaceTables: Boolean
+        '''
+        if not replaceTables:
+            return
+        
+        self.jsonToRelationConverter.pushString('DROP TABLE IF EXISTS %s, State, Answer, CorrectMap, InputState;\n' % self.mainTableName)        
+
+        self.createAnswerTable()
+        self.createCorrectMapTable()
+        self.createInputStateTable()
+        self.createStateTable()
+        self.createMainTable()
+        
+    def createAnswerTable(self):
+        self.jsonToRelationConverter.pushString("CREATE TABLE Answer (\n"\
+                                                "    answer_id VARCHAR(32) NOT NULL Primary Key, \n"\
+                                                "    problem_id VARCHAR(255),\n"\
+                                                "    answer TEXT"\
+                                                "    );\n"
+    )
+
+    def createCorrectMapTable(self):
+        self.jsonToRelationConverter.pushString("CREATE Table CorrectMap (\n"\
+                                                "    correct_map_id varchar(32) NOT NULL Primary KEY,\n"\
+                                                "    answer_id TEXT,\n"\
+                                                "    correctness BOOLEAN,\n"\
+                                                "    npoints INTEGER,\n"\
+                                                "    msg TEXT,\n"\
+                                                "    hint TEXT,\n"\
+                                                "    hintmode TINYTEXT,\n"\
+                                                "    queuestate TEXT\n"\
+                                                "    );\n"
+                                                )
+
+    def createInputStateTable(self):
+        self.jsonToRelationConverter.pushString("CREATE Table InputState (\n"\
+												"    input_state_id varchar(32) NOT NULL PRIMARY KEY,\n"\
+												"    problem_id TEXT,\n"\
+												"    state     TEXT\n"\
+												"    );\n"
+                                                )
+    def createStateTable(self):
+        self.jsonToRelationConverter.pushString("CREATE Table State (\n"\
+												"    state_id VARCHAR(32) NOT NULL PRIMARY KEY,\n"\
+												"    seed TINYINT,\n"\
+												"    done BOOLEAN,\n"\
+                                                "    problem_id TEXT,\n"\
+												"    student_answer VARCHAR(32),\n"\
+												"    correct_map VARCHAR(32),\n"\
+												"    input_state VARCHAR(32),\n"\
+												"    FOREIGN KEY(student_answer) REFERENCES Answer(problem_id),\n"\
+												"    FOREIGN KEY(correct_map) REFERENCES CorrectMap(correct_map_id),\n"\
+												"    FOREIGN KEY(input_state) REFERENCES InputState(input_state_id)\n"\
+												"    );\n"
+                                                )
+
+    def createMainTable(self):
+        createStr = "CREATE TABLE %s (\n" % self.mainTableName
+        for fldName in self.schemaHintsMainTable:
+            createStr += self.schemaHintsMainTable[fldName].getSQLDefSnippet()
+        # Remove the trailing comma, and add the foreign key declarations and the closing paren:
+        createStr = createStr[0:-2]
+        createStr += '    FOREIGN KEY(correctMapFK) REFERENCES CorrectMap(correct_map_id),\n' + \
+                     '    FOREIGN KEY(answerFK) REFERENCES Answer(answer_id),\n' + \
+                     '    FOREIGN KEY(stateFK) REFERENCES State(state_id)\n' +\
+                     '    )'
+        self.jsonToRelationConverter.pushString(createStr)
         
     def handleCommonFields(self, record, row):
         # Create a unique event key  for this event:
@@ -446,7 +586,342 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         return row
         
     def handleProblemCheck(self, record, row, event):
-        raise NotImplementedError("Problem_check not implemented yet.")
+        '''
+        Gets an event JSON object string like this:
+		{       
+		    "success": "correct",
+		    "correct_map": {
+		        "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {
+		            "hint": "",
+		            "hintmode": null,
+		            "correctness": "correct",
+		            "msg": "",
+		            "npoints": null,
+		            "queuestate": null
+		        },
+		        "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": {
+		            "hint": "",
+		            "hintmode": null,
+		            "correctness": "correct",
+		            "msg": "",
+		            "npoints": null,
+		            "queuestate": null
+		        }
+		    },
+		    "attempts": 2,
+		    "answers": {
+		        "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": "choice_0",
+		        "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": "choice_3"
+		    },
+		    "state": {
+		        "student_answers": {
+		            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": "choice_3",
+		            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": "choice_1"
+		        },
+		        "seed": 1,
+		        "done": true,
+		        "correct_map": {
+		            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {
+		                "hint": "",
+		                "hintmode": null,
+		                "correctness": "incorrect",
+		                "msg": "",
+		                "npoints": null,
+		                "queuestate": null
+		            },
+		            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": {
+		                "hint": "",
+		                "hintmode": null,
+		                "correctness": "incorrect",
+		                "msg": "",
+		                "npoints": null,
+		                "queuestate": null
+		            }
+		        },
+		        "input_state": {
+		            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {},
+		            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": {}
+		        }
+		    },
+		    "problem_id": "i4x://Medicine/HRP258/problem/e194bcb477104d849691d8b336b65ff6"
+		}        
+        @param record:
+        @type record:
+        @param row:
+        @type row:
+        @param event:
+        @type event:
+        '''
+        if event is None:
+            self.logWarn("Track log line %d: missing event text in sequence navigation event." %\
+                         (self.jsonToRelationConverter.makeFileCitation()))
+            return row
+
+        # Go through all the top-level problem_check event fields first;
+        # we ignore non-existing fields.
+        success = event.get('success', None)
+        if success is not None:
+            self.setValInRow(row, 'success', success)
+        attempts = event.get('attempts', None)
+        if attempts is not None:
+            self.setValInRow(row, 'attempts', attempts)
+        seed = event.get('seed', None)
+        if seed is not None:
+            self.setValInRow(row, 'seed', seed)
+        problem_id = event.get('problem_id', None)
+        if seed is not None:
+            self.setValInRow(row, 'problem_id', problem_id)
+
+        # correctMap field may consist of many correct maps.
+        # Create an entry for each in the CorrectMap table,
+        # collecting the resulting foreign keys:
+        
+        correctMapsDict = event.get('correct_map', None)
+        if correctMapsDict is not None:
+            correctMapFKeys = self.pushCorrectMaps(correctMapsDict)
+        else:
+            correctMapFKeys = []    
+        
+        answersDict = event.get('answers', None)
+        if answersDict is not None:
+            answersFKeys = self.pushAnswers(answersDict)
+        else:
+            answersFKeys = []
+        
+        stateDict = event.get('state', None)
+        if stateDict is not None:
+            stateFKeys = self.pushState(stateDict)
+        else:
+            stateFKeys = []
+
+        # Now need to generate enough near-replicas of event
+        # entries to cover all correctMap, answers, and state 
+        # foreign key entries that were created:
+        
+        generatedAllRows = False
+        while not generatedAllRows:
+            indexToFKeys = 0
+            try:
+                correctMapFKey = correctMapFKeys[indexToFKeys]
+            except IndexError:
+                correctMapFKey = None
+            try:
+                answerFKey = answersFKeys[indexToFKeys]
+            except IndexError:
+                answerFKey = None
+            try:
+                stateFKey = stateFKeys[indexToFKeys]
+            except IndexError:
+                stateFKey = None
+            
+            self.setValInRow(row, 'correctMapFK', correctMapFKey)
+            self.setValInRow(row, 'answerFK', answerFKey)
+            self.setValInRow(row, 'stateFK', stateFKey)
+            self.resultTriplet(row, self.mainTableName)
+            # Have we created rows to cover all student_answers, correct_maps, and input_states?
+            if correctMapFKey is None and answerFKey is None and stateFKey is None:
+                generatedAllRows = True
+            indexToFKeys += 1
+
+    def pushCorrectMaps(self, correctMapsDict):
+        '''
+        Get dicts like this::
+		{"i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {
+		        "hint": "",
+		        "hintmode": null,
+		        "correctness": "correct",
+		        "msg": "",
+		        "npoints": null,
+		        "queuestate": null
+		    },
+		    "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": {
+		        "hint": "",
+		        "hintmode": null,
+		        "correctness": "correct",
+		        "msg": "",
+		        "npoints": null,
+		        "queuestate": null
+		    }
+		}
+		The above has two correctmaps.
+        @param correctMapsDict: dict of CorrectMap dicts
+        @type correctMapsDict: Dict<String, Dict<String,String>>
+        @return: array of unique keys, one key for each CorrectMap row the method has added.
+                 In case of the above example that would be two keys (uuids)
+        @rtype: [String]
+        '''
+        # We'll create uuids for each new CorrectMap row
+        # we create. We collect these uuids in the following
+        # array, and return them to the caller. The caller
+        # will then use them as foreign keys in the Event
+        # table:
+        correctMapUniqKeys = []
+        for answerKey in correctMapsDict:
+            answer_id = answerKey
+            oneCorrectMapDict = correctMapsDict[answerKey]
+            hint = oneCorrectMapDict.get('hint', None)
+            hintmode = oneCorrectMapDict.get('hintmode', None)
+            correctness = oneCorrectMapDict.get('correctness', None)
+            msg = oneCorrectMapDict.get('msg', None)
+            npoints = oneCorrectMapDict.get('npoints', None)
+            queuestate = oneCorrectMapDict.get('queuestate', None)
+
+            # Unique key for the CorrectMap entry (and foreign
+            # key for the Event table):
+            correct_map_id = uuid.uuid4()
+            correctMapUniqKeys.append(correct_map_id)
+            correctMapValues = [correct_map_id,
+                                answer_id,
+                                hint,
+                                hintmode,
+                                correctness,
+                                msg,
+                                npoints,
+                                queuestate]
+            self.jsonToRelationConverter.pushToTable(self.resultTriplet(correctMapValues, 'CorrectMap'))
+        # Return the array of RorrectMap row unique ids we just
+        # created and pushed:
+        return correctMapUniqKeys 
+
+    def pushAnswers(self, answersDict):
+        '''
+        Gets structure like this::
+        "answers": {
+            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": "choice_0",
+            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": "choice_3"
+        }
+        @param answersDict:
+        @type answersDict:
+        @return: array of keys created for answers in answersDict
+        @rtype: [String]
+        '''
+        answersKeys = []
+        for problemID in answersDict.keys():
+            answer = answersDict.get(problemID, None)
+            if answer is not None:
+                answersKey = uuid.uuid4()
+                answersKeys.append(answersKey)
+                answerValues = [answersKey,          # answer_id fld 
+                                problemID,             # problem_id fld
+                                answer
+                                ]
+                self.jsonToRelationConverter.pushToTable(self.resultTriplet(answerValues, 'Answer'))
+        return answersKeys
+
+    def pushState(self, stateDict):
+        '''
+        We get a structure like this::
+	    {   
+	        "student_answers": {
+	            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": "choice_3",
+	            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": "choice_1"
+	        },
+	        "seed": 1,
+	        "done": true,
+	        "correct_map": {
+	            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {
+	                "hint": "",
+	                "hintmode": null,
+	                "correctness": "incorrect",
+	                "msg": "",
+	                "npoints": null,
+	                "queuestate": null
+	            },
+	            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": {
+	                "hint": "",
+	                "hintmode": null,
+	                "correctness": "incorrect",
+	                "msg": "",
+	                "npoints": null,
+	                "queuestate": null
+	            }
+	        },
+	        "input_state": {
+	            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {},
+	            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": {}
+	        }
+	    }        
+        @param stateDict:
+        @type stateDict:
+        @return: array of keys into State table that were created in this method
+        @rtype: [String]
+        '''
+        stateFKeys = []
+        studentAnswersDict = stateDict.get('student_answers', None)
+        if studentAnswersDict is not None:
+            studentAnswersFKeys = self.pushAnswers(studentAnswersDict)
+        else:
+            studentAnswersFKeys = []
+        seed = stateDict.get('seed', None)
+        done = stateDict.get('done', None)
+        problemID = stateDict.get('problem_id', None)
+        correctMapsDict = stateDict.get('correct_map', None)
+        if correctMapsDict is not None:
+            correctMapFKeys = self.pushCorrectMaps(correctMapsDict)
+        else:
+            correctMapFKeys = []
+        inputStatesDict = stateDict('input_state', None)
+        if inputStatesDict is not None:
+            inputStatesFKeys = self.pushInputStates(inputStatesDict)
+        else:
+            inputStatesFKeys = []
+
+        # Now generate enough State rows to reference all student_answers,
+        # correctMap, and input_state entries. That is, flatten the JSON
+        # structure across relations State, Answer, CorrectMap, and InputState:
+        generatedAllRows = False
+        
+        # Unique ID that ties all these related rows together:
+        state_id = uuid.uuid4()
+        while not generatedAllRows:
+            indexToFKeys = 0
+            try:
+                studentAnswerFKey = studentAnswersFKeys[indexToFKeys]
+            except IndexError:
+                studentAnswerFKey = None
+            try:
+                correctMapFKey = correctMapFKeys[indexToFKeys]
+            except IndexError:
+                correctMapFKey = None
+            try:
+                inputStateFKey = inputStatesFKeys[indexToFKeys]
+            except IndexError:
+                studentAnswerFKey = None
+                
+            stateValues = [state_id, seed, done, problemID, studentAnswerFKey, correctMapFKey, inputStateFKey]
+            self.resultTriplet(stateValues, 'InputState', self.schemaStateTbl.keys())
+            # Have we created rows to cover all student_answers, correct_maps, and input_states?
+            if studentAnswerFKey is None and correctMapFKey is None and inputStateFKey is None:
+                generatedAllRows = True
+            indexToFKeys += 1
+            
+        return stateFKeys
+        
+    def pushInputStates(self, inputStatesDict):
+        '''
+        Gets structure like this::
+        {
+            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {},
+            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": {}
+        }        
+        @param inputStatesDict:
+        @type inputStatesDict:
+        @return: array of keys created for input state problems.
+        @rtype: [String]
+        '''
+        inputStateKeys = []
+        for problemID in inputStatesDict.keys():
+            inputStateProbVal = inputStatesDict.get(problemID, None)
+            if inputStateProbVal is not None:
+                inputStateKey = uuid.uuid4()
+                inputStateKeys.append(inputStateKey)
+                inputStateValues = [inputStateKey,
+                                    problemID,
+                                    inputStateProbVal
+                                    ]
+                self.jsonToRelationConverter.pushToTable(self.resultTriplet(inputStateValues, 'InputState', self.Inpu****))
+        return inputStateKeys
+        
     
     def handleProblemReset(self, record, row, event):
         '''

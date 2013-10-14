@@ -8,17 +8,18 @@ from collections import OrderedDict
 import json
 import os
 import re
+import sys
 import tempfile
 import unittest
 
 from json_to_relation.edxTrackLogJSONParser import EdXTrackLogJSONParser
-from json_to_relation.input_source import InURI
+from json_to_relation.input_source import InURI, InString
 from json_to_relation.json_to_relation import JSONToRelation
 from json_to_relation.output_disposition import OutputPipe, OutputDisposition, \
     ColDataType, TableSchemas, ColumnSpec, OutputFile
 
 
-TEST_ALL = False
+TEST_ALL = True
 
 class TestEdxTrackLogJSONParser(unittest.TestCase):
     
@@ -34,11 +35,13 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         self.stringSource = None
 
         self.stringSource = InURI(os.path.join(os.path.dirname(__file__),"data/twoJSONRecords.json"))
-        self.fileConverter = JSONToRelation(self.stringSource, 
-                                            OutputPipe(OutputDisposition.OutputFormat.CSV)
+        self.fileConverter = JSONToRelation(self.stringSource,
+                                            OutputPipe(OutputDisposition.OutputFormat.CSV),
+                                            mainTableName='Main'
+
                                             )
          
-        self.edxParser = EdXTrackLogJSONParser(self.fileConverter)
+        self.edxParser = EdXTrackLogJSONParser(self.fileConverter, 'Main')
 
     def tearDown(self):
         if self.stringSource is not None:
@@ -85,21 +88,22 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         self.assertEqual('Medicine/HRP258/Statistics_in_Medicine', courseName)
         
         (fullCourseName, courseName) = self.edxParser.get_course_id(json.loads(self.dashboardEvent))
-        self.assertEqual('/dashboard', fullCourseName)        
+        self.assertIsNone(fullCourseName)        
         self.assertIsNone(courseName)        
 
         (fullCourseName, courseName) = self.edxParser.get_course_id(json.loads(self.heartbeatEvent))
-        self.assertEqual('/heartbeat', fullCourseName)        
+        self.assertIsNone(fullCourseName)        
         self.assertIsNone(courseName)        
 
-    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testProcessOneJSONObject(self):
         row = []
         self.edxParser.processOneJSONObject(self.loginEvent, row)
-        print row
+        #print row
         
-    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testEdxHeartbeat(self):
+        # Test series of heartbeats that did not experience a server outage:
         inFileSource = InURI(os.path.join(os.path.dirname(__file__),"data/edxHeartbeatEvent.json"))
         resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
         # Just use the file name of the tmp file.
@@ -110,9 +114,12 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                             dest
                                             )
         
-        self.edxParser = EdXTrackLogJSONParser(self.fileConverter)
+        self.edxParser = EdXTrackLogJSONParser(self.fileConverter, 'Main')
         self.fileConverter.setParser(self.edxParser)
         self.fileConverter.convert(prependColHeader=False)
+        # We should find no heartbeat info in the table,
+        # except for this heartbeat's IP's first-time-alive
+        # record:
         self.assertFileContentEquals(file('data/edxHeartbeatEventTruth.sql'), dest.getFileName())
         
         # Detecting server downtime:
@@ -126,14 +133,27 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                             dest
                                             )
         
-        self.edxParser = EdXTrackLogJSONParser(self.fileConverter)
+        self.edxParser = EdXTrackLogJSONParser(self.fileConverter, 'Main')
         self.fileConverter.setParser(self.edxParser)
         self.fileConverter.convert(prependColHeader=False)
         self.assertFileContentEquals(file('data/edxHeartbeatEventDownTimeTruth.sql'), dest.getFileName())
         
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def testTableCreation(self):
+        resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+        # Just use the file name of the tmp file.
+        resultFileName = resultFile.name
+        resultFile.close()
+        dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+        self.fileConverter = JSONToRelation(InString('This text is unimportant'), 
+                                            dest
+                                            )
+        
+        self.edxParser = EdXTrackLogJSONParser(self.fileConverter, 'Main', replaceTables=True)
+
         with open(dest.getFileName()) as fd:
             for line in fd:
-                print line
+                sys.stdout.write(line)
     
                 #--------------------------------------------------------------------------------------------------    
     def assertFileContentEquals(self, expected, filePath):

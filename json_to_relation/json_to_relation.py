@@ -24,8 +24,7 @@ import tempfile
 from col_data_type import ColDataType
 from generic_json_parser import GenericJSONParser
 from input_source import InputSource, InURI, InString, InMongoDB, InPipe #@UnusedImport
-from output_disposition import OutputDisposition, OutputMySQLDump, OutputFile, \
-    OutputPipe
+from output_disposition import OutputDisposition, OutputFile, OutputPipe
 
 
 class JSONToRelation(object):
@@ -326,16 +325,21 @@ class JSONToRelation(object):
                 newRow = []
                 try:
                     # processOneJSONObject will call pushtToTable() for all 
-                    # tables necessary for each event type:
+                    # tables necessary for each event type. The method will
+                    # direct the top level event information to the table
+                    # called self.mainTableName.
                     newRow = self.jsonParserInstance.processOneJSONObject(jsonStr, newRow)
                 except ValueError as e:
                     JSONToRelation.logger.warn('Line %s: bad JSON object: %s' % (self.makeFileCitation(), `e`))
                 self.bumpLineCounter()
 
+            # Since we hold back SQL insertion values to include them
+            # all into one INSERT statement, need to flush after last
+            # call to processOneJSONObject:
             if self.destination.getOutputFormat() == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
                 self.processFinishedRow('FLUSH', outFd) 
         
-        # If output to other than MySQL table, check whether
+        # If output to other than MySQL table (e.g. CSV file), check whether
         # we are to prepend the column header row:
         if prependColHeader and savedFinalOutDest is not None:
             try:
@@ -346,6 +350,16 @@ class JSONToRelation(object):
             finally:
                 self.tmpFileName.close() # This deletes the file
 
+    def pushString(self, whatToWrite):
+        '''
+        Pushes the given string straight to the output (pipe or file).
+        No error checking is done. Used by underlying parsers 
+        for SQL other than INSERT statements, such as DROP, CREATE. 
+        @param sqlStatement: a complete SQL statement.
+        @type sqlStatement: String
+        '''
+        self.destination.write(whatToWrite)
+        
     def pushToTable(self, row, outFd=None):
         '''
         Called both from convert(), and from some parsers to add one row to 
@@ -469,20 +483,26 @@ class JSONToRelation(object):
            INSERT INTO myTable (col2, col2) VALUES
               ('foo',10),
               ('bar',20);
+        @return: a fully formed SQL INSERT statement, possibly including multiple values. None if nothing to insert.
+        @rtype: {String | None}
         '''
         
-        if len(self.currValsArray) == 0:
-            raise ValueError("Method finalizeInsertStatement called with empty hold-back values buffer.")
-        
-        valsFileStr = self.constructValuesStr(self.currValsArray)
-        
-        res = "INSERT INTO %s (%s) VALUES %s;" % (self.currOutTable, self.currInsertSig, valsFileStr.getvalue())
-        # We are no longer accumulating INSERT values right now:
-        self.currOutTable = None
-        self.currInsertSig = None
-        self.currValsArray = []
-        self.insertValCacheSize = 0
-        return res
+        try:
+            if len(self.currValsArray) == 0:
+                # Nothing to INSERT:
+                res = None
+                return 
+            
+            valsFileStr = self.constructValuesStr(self.currValsArray)
+            
+            res = "INSERT INTO %s (%s) VALUES %s;" % (self.currOutTable, self.currInsertSig, valsFileStr.getvalue())
+        finally:
+            # We are no longer accumulating INSERT values right now:
+            self.currOutTable = None
+            self.currInsertSig = None
+            self.currValsArray = []
+            self.insertValCacheSize = 0
+            return res
 
     def constructValuesStr(self, valsArrays):
         '''

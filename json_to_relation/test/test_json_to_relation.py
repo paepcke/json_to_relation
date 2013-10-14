@@ -22,8 +22,7 @@ class TestJSONToRelation(unittest.TestCase):
         self.tmpLogFile = tempfile.NamedTemporaryFile()
         self.stringSource = InURI(os.path.join(os.path.dirname(__file__),"data/twoJSONRecords.json"))
         self.fileConverter = JSONToRelation(self.stringSource, 
-                                            OutputPipe(),
-                                            outputFormat=OutputDisposition.OutputFormat.CSV,
+                                            OutputPipe(OutputDisposition.OutputFormat.CSV),
                                             logFile=self.tmpLogFile.name
                                             )
         # Remove various test output files if it exists:

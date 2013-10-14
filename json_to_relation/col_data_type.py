@@ -49,6 +49,7 @@ class ColDataType:
     TIME=12
     DATETIME=13
     BOOL=14        # IF YOU ADD ENTRIES, MODIFY isistance method below
+    UUID=15        # 32 byte key via uuid.uuid4()
         
     strings = {TINYTEXT : "TINYTEXT",
                TEXT     : "TEXT",
@@ -63,12 +64,13 @@ class ColDataType:
                DATE     : "DATE",
                TIME     : "TIME",
                DATETIME : "DATETIME",
-               BOOL     : "BOOL"
+               BOOL     : "BOOL",
+               UUID     : "VARCHAR(32)"
     }
 
     @classmethod
     def isinstance(cls, value):
-        return value >= ColDataType.TINYTEXT and value <= ColDataType.BOOL
+        return value >= ColDataType.TINYTEXT and value <= ColDataType.UUID
 
     def toString(self, val):
         try:
