@@ -636,9 +636,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @type eventType:
         '''
         if event is None:
-            self.logWarn("Track log line %d: missing event text in sequence navigation event." %\
+            self.logWarn("Track log line %s: missing event text in sequence navigation event." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
+        if not isinstance(event, dict):
+            self.logWarn("Track log line %s: event is not a dict in sequence navigation event: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
 
         oldIndex = event.get('old', 0)
         newIndex = event.get('new', 0)
@@ -721,9 +724,14 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @type event:
         '''
         if event is None:
-            self.logWarn("Track log line %d: missing event text in sequence navigation event." %\
+            self.logWarn("Track log line %s: missing event text in problem_check event." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
+
+        if not isinstance(event, dict):
+            self.logWarn("Track log line %s: event is not a dict in problem_check event: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+        
 
         # Go through all the top-level problem_check event fields first;
         # we ignore non-existing fields.
@@ -1018,10 +1026,14 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @type event:
         '''
         if event is None:
-            self.logWarn("Track log line %d: missing event text in event type problem_reset." %\
+            self.logWarn("Track log line %s: missing event text in event type problem_reset." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
         
+        if not isinstance(event, dict):
+            self.logWarn("Track log line %s: event is not a dict in problem_reset event: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+    
         try:
             eventDict = json.loads(event)
         except Exception as e:
@@ -1053,9 +1065,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @type event:
         '''
         if event is None:
-            self.logWarn("Track log line %d: missing event text in event type problem_show." %\
+            self.logWarn("Track log line %s: missing event text in event type problem_show." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
+
+        if not isinstance(event, dict):
+            self.logWarn("Track log line %s: event is not a dict in problem_show event: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
         
         try:
             eventDict = json.loads(event)
@@ -1088,9 +1104,15 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @type event:
         '''
         if event is None:
-            self.logWarn("Track log line %d: missing event text in event type problem_save." %\
+            self.logWarn("Track log line %s: missing event text in event type problem_save." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
+
+        if not isinstance(event, dict):
+            self.logWarn("Track log line %s: event is not a dict in problem_save event: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+
+        
         (problemID, choice) = event.split('=')
         self.setValInRow(row, 'problemID', problemID[1:])  # remove leading double quote
         self.setValInRow(row, 'problemChoice', choice)
@@ -1104,9 +1126,14 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         {u'location': u'i4x://Education/EDUC115N/combinedopenended/c8af7daea1f54436b0b25930b1631845'}
         '''
         if event is None:
-            self.logWarn("Track log line %d: missing event text in question hide or show." %\
+            self.logWarn("Track log line %s: missing event text in question hide or show." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
+
+        if not isinstance(event, dict):
+            self.logWarn("Track log line %s: event is not a dict in problem hide or show event: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+        
         try:
             eventDict = json.loads(event)
         except Exception as e:
