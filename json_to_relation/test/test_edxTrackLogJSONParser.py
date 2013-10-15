@@ -19,7 +19,7 @@ from json_to_relation.output_disposition import OutputPipe, OutputDisposition, \
     ColDataType, TableSchemas, ColumnSpec, OutputFile
 
 
-TEST_ALL = False
+TEST_ALL = True
 PRINT_OUTS = False  # Set True to get printouts of CREATE TABLE statements
 
 class TestEdxTrackLogJSONParser(unittest.TestCase):
@@ -177,7 +177,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
             for line in fd:
                 sys.stdout.write(line)
  
-    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testCheckProblemEventType(self):
 
         testFilePath = os.path.join(os.path.dirname(__file__),"data/problem_checkEventFldOnly.json")
