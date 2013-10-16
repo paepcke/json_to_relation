@@ -15,8 +15,8 @@ import unittest
 from json_to_relation.edxTrackLogJSONParser import EdXTrackLogJSONParser
 from json_to_relation.input_source import InURI, InString
 from json_to_relation.json_to_relation import JSONToRelation
-from json_to_relation.output_disposition import OutputPipe, OutputDisposition, \
-    ColDataType, TableSchemas, ColumnSpec, OutputFile
+from json_to_relation.output_disposition import OutputDisposition, ColDataType, \
+    TableSchemas, ColumnSpec, OutputFile, OutputPipe  # @UnusedImport
 
 
 TEST_ALL = True
@@ -36,13 +36,6 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         self.stringSource = None
 
         self.stringSource = InURI(os.path.join(os.path.dirname(__file__),"data/twoJSONRecords.json"))
-        self.fileConverter = JSONToRelation(self.stringSource,
-                                            OutputPipe(OutputDisposition.OutputFormat.CSV),
-                                            mainTableName='Main'
-
-                                            )
-         
-        self.edxParser = EdXTrackLogJSONParser(self.fileConverter, 'Main')
 
     def tearDown(self):
         if self.stringSource is not None:
@@ -50,6 +43,10 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
 
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testTableSchemaRepo(self):
+        fileConverter = JSONToRelation(self.stringSource,
+                                       OutputFile(os.devnull, OutputDisposition.OutputFormat.CSV),
+                                       mainTableName='Main'
+                                       )
         tblRepo = TableSchemas()
         
         # Should initially have an empty schema for main (default) table:
@@ -57,21 +54,21 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         self.assertEquals(len(tblRepo[None]), 0)
         
         # Add single schema item to an empty repo
-        tblRepo.addColSpec('myTbl', ColumnSpec('myCol', ColDataType.INT, self.fileConverter))
+        tblRepo.addColSpec('myTbl', ColumnSpec('myCol', ColDataType.INT, fileConverter))
         self.assertEqual('INT', tblRepo['myTbl']['myCol'].getType())
         
         # Add single schema item to a non-empty repo:
-        tblRepo.addColSpec('myTbl', ColumnSpec('yourCol', ColDataType.FLOAT, self.fileConverter))
+        tblRepo.addColSpec('myTbl', ColumnSpec('yourCol', ColDataType.FLOAT, fileConverter))
         self.assertEqual('FLOAT', tblRepo['myTbl']['yourCol'].getType())
         
         # Add a dict with one spec to the existing schema:
-        schemaAddition = OrderedDict({'hisCol' : ColumnSpec('hisCol', ColDataType.DATETIME, self.fileConverter)})
+        schemaAddition = OrderedDict({'hisCol' : ColumnSpec('hisCol', ColDataType.DATETIME, fileConverter)})
         tblRepo.addColSpecs('myTbl', schemaAddition)
         self.assertEqual('DATETIME', tblRepo['myTbl']['hisCol'].getType())
         
         # Add a dict with multiple specs to the existing schema:
-        schemaAddition = OrderedDict({'hisCol' : ColumnSpec('hisCol', ColDataType.DATETIME, self.fileConverter),
-                                      'herCol' : ColumnSpec('herCol', ColDataType.LONGTEXT, self.fileConverter)})
+        schemaAddition = OrderedDict({'hisCol' : ColumnSpec('hisCol', ColDataType.DATETIME, fileConverter),
+                                      'herCol' : ColumnSpec('herCol', ColDataType.LONGTEXT, fileConverter)})
         tblRepo.addColSpecs('myTbl', schemaAddition)        
         self.assertEqual('DATETIME', tblRepo['myTbl']['hisCol'].getType())         
         self.assertEqual('LONGTEXT', tblRepo['myTbl']['herCol'].getType())                 
@@ -80,26 +77,40 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testGetCourseID(self):
         #print self.edxParser.get_course_id(json.loads(self.loginEvent))
-        (fullCourseName, courseName) = self.edxParser.get_course_id(json.loads(self.loginEvent))
+        fileConverter = JSONToRelation(self.stringSource,
+                                       OutputFile(os.devnull, OutputDisposition.OutputFormat.CSV),
+                                       mainTableName='Main'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main')
+        fileConverter.setParser(edxParser)
+          
+        (fullCourseName, courseName) = edxParser.get_course_id(json.loads(self.loginEvent))
         self.assertEqual('/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/80160exxx/', fullCourseName)
         self.assertEqual('Medicine/HRP258/Statistics_in_Medicine', courseName)
         
-        (fullCourseName, courseName) = self.edxParser.get_course_id(json.loads(self.videoEvent))
+        (fullCourseName, courseName) = edxParser.get_course_id(json.loads(self.videoEvent))
         self.assertEqual('https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/64abcdd9afc54c6089a284e985 3da6ea/2a8de59355e349b7ae40aba97c59736f/', fullCourseName)
         self.assertEqual('Medicine/HRP258/Statistics_in_Medicine', courseName)
         
-        (fullCourseName, courseName) = self.edxParser.get_course_id(json.loads(self.dashboardEvent))
+        (fullCourseName, courseName) = edxParser.get_course_id(json.loads(self.dashboardEvent))
         self.assertIsNone(fullCourseName)        
         self.assertIsNone(courseName)        
 
-        (fullCourseName, courseName) = self.edxParser.get_course_id(json.loads(self.heartbeatEvent))
+        (fullCourseName, courseName) = edxParser.get_course_id(json.loads(self.heartbeatEvent))
         self.assertIsNone(fullCourseName)        
         self.assertIsNone(courseName)        
 
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testProcessOneJSONObject(self):
+        fileConverter = JSONToRelation(self.stringSource,
+                                       OutputFile(os.devnull, OutputDisposition.OutputFormat.CSV),
+                                       mainTableName='Main'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main')
+        fileConverter.setParser(edxParser)
+        
         row = []
-        self.edxParser.processOneJSONObject(self.loginEvent, row)
+        edxParser.processOneJSONObject(self.loginEvent, row)
         #print row
         
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
@@ -111,13 +122,13 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         resultFileName = resultFile.name
         resultFile.close()
         dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
-        self.fileConverter = JSONToRelation(inFileSource, 
-                                            dest
-                                            )
+        fileConverter = JSONToRelation(inFileSource, 
+                                       dest
+                                       )
         
-        self.edxParser = EdXTrackLogJSONParser(self.fileConverter, 'Main')
-        self.fileConverter.setParser(self.edxParser)
-        self.fileConverter.convert(prependColHeader=False)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main')
+        fileConverter.setParser(edxParser)
+        fileConverter.convert(prependColHeader=False)
         # We should find no heartbeat info in the table,
         # except for this heartbeat's IP's first-time-alive
         # record:
@@ -130,18 +141,22 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         resultFileName = resultFile.name
         resultFile.close()
         dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
-        self.fileConverter = JSONToRelation(inFileSource, 
-                                            dest
-                                            )
+        fileConverter = JSONToRelation(inFileSource, 
+                                       dest
+                                       )
         
-        self.edxParser = EdXTrackLogJSONParser(self.fileConverter, 'Main')
-        self.fileConverter.setParser(self.edxParser)
-        self.fileConverter.convert(prependColHeader=False)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main')
+        fileConverter.setParser(edxParser)
+        fileConverter.convert(prependColHeader=False)
         self.assertFileContentEquals(file('data/edxHeartbeatEventDownTimeTruth.sql'), dest.getFileName())
 
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testTableCreationStatementConstruction(self):
-        edxParser = EdXTrackLogJSONParser(self.fileConverter, 'Main')
+        fileConverter = JSONToRelation(self.stringSource,
+                                       OutputFile(os.devnull, OutputDisposition.OutputFormat.CSV),
+                                       mainTableName='Main'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main')
         createStatement = edxParser.genOneCreateStatement('Answer', edxParser.schemaAnswerTbl, primaryKeyName='answer_id')
         self.assertFileContentEquals(file('data/answerTblCreateTruth.sql'), createStatement)
        
@@ -169,10 +184,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         resultFileName = resultFile.name
         resultFile.close()
         dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
-        self.fileConverter = JSONToRelation(InString('This text is unimportant'),dest)
             
-        self.edxParser = EdXTrackLogJSONParser(self.fileConverter, 'Main', replaceTables=True)
-
         with open(dest.getFileName()) as fd:
             for line in fd:
                 sys.stdout.write(line)
@@ -188,25 +200,40 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         resultFileName = resultFile.name
         resultFile.close()
         dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
-        self.fileConverter = JSONToRelation(stringSource,
-                                            dest,
-                                            mainTableName='Event'
-                                            )
+        fileConverter = JSONToRelation(stringSource,
+                                       dest,
+                                       mainTableName='Event'
+                                       )
         # Read the isolated problem_check event:
         with open(testFilePath) as fd:
             testProblemCheckEventJSON = fd.readline()
         event = json.loads(testProblemCheckEventJSON)
-        edxParser = EdXTrackLogJSONParser(self.fileConverter, 'Event')
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Event')
         # Pretend a problem_check event had just been found.
         # Here: record is None, row to fill still empty (would
         # normally be the main table, partially filled row).
         edxParser.handleProblemCheck(None, [], event)
 
-        self.fileConverter.flush()
+        fileConverter.flush()
         dest.close()
         truthFile = open(os.path.join(os.path.dirname(__file__),"data/problem_checkEventFldOnlyTruth.sql"), 'r')
         self.assertFileContentEquals(truthFile, dest.name)
         
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def testProcessSeq_Goto(self):
+        jsonStr = '{"username": "BetaTester1", "host": "class.stanford.edu", "session": "009e5b5e1bd4ab5a800cafc48bad9e44", "event_source": "browser", "event_type": "seq_goto", "time": "2013-06-08T23:29:58.346222", "ip": "24.5.14.103", "event": "{\\"old\\":2,\\"new\\":1,\\"id\\":\\"i4x://Medicine/HRP258/sequential/53b0357680d24191a60156e74e184be3\\"}", "agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:21.0) Gecko/20100101 Firefox/21.0", "page": "https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/53b0357680d24191a60156e74e184be3/"}'
+        fileConverter = JSONToRelation(InString(jsonStr),
+                                       OutputFile(os.devnull, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS),
+                                       #OutputPipe(OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS),
+                                       mainTableName='Event'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Event')
+        fileConverter.setParser(edxParser)
+        
+        row = []
+        edxParser.processOneJSONObject(jsonStr, row)
+        expected = str(['7634a6e1-a5e5-4758-9b6e-1f64b3696c1a', u'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:21.0) Gecko/20100101 Firefox/21.0', u'browser', u'seq_goto', u'24.5.14.103', u'https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/53b0357680d24191a60156e74e184be3/', u'009e5b5e1bd4ab5a800cafc48bad9e44', u'2013-06-08T23:29:58.346222', u'BetaTester1', '0:00:00', 'null', 'null', 'null', u'i4x://Medicine/HRP258/sequential/53b0357680d24191a60156e74e184be3', 2, 1])
+        self.assertFileContentEquals(expected, str(row))
    
     #--------------------------------------------------------------------------------------------------    
     def assertFileContentEquals(self, expected, filePathOrStrToCompareTo):
@@ -228,11 +255,15 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         
         with open(filePath, 'r') as fd:
             for fileLine in fd:
-                # Some events have UUIDs, which are different with each run.
-                # Cut those out of both expected and what we got:
-                uuidMatch = self.pattern.search(fileLine)
                 expectedLine = strFile.readline()
-                if uuidMatch:
+                # Some events have one or more UUIDs, which are different with each run.
+                # Cut those out of both expected and what we got:
+                uuidsRemoved = False
+                while not uuidsRemoved:
+                    uuidMatch = self.pattern.search(fileLine)
+                    if uuidMatch is None:
+                        uuidsRemoved = True
+                        continue
                     expectedLine = expectedLine[0:uuidMatch.start()] + expectedLine[uuidMatch.end():]
                     fileLine = fileLine[0:uuidMatch.start()] + fileLine[uuidMatch.end():]
                 self.assertEqual(expectedLine.strip(), fileLine.strip())

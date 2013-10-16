@@ -184,20 +184,20 @@ class GenericJSONParser(object):
         if tableName is None:
             tableName = self.jsonToRelationConverter.mainTableName
         
+        if value is None:
+            value = 'null'
+        
         # Assumes caller has called ensureColExistence() on the
         # JSONToRelation object; so the following won't have
         # a key failure:
         colSpec = self.jsonToRelationConverter.getSchemaHint(colName, tableName)
         targetPos = colSpec.colPos
         
-        # Is this column name already in the list of 
-        # column names for an upcoming INSERT statement?
-        if colName not in self.colNamesByTable[tableName]:
-            self.colNamesByTable[tableName].append(colName)
-        
         # Is value to go just beyond the current row len?
         if len(theRow) == targetPos:
             theRow.append(value)
+            # Append the col name to the INSERT column name list:
+            self.colNamesByTable[tableName].append(colName)
             return theRow
         # Is value to go into an already existing column?
         if (len(theRow) > targetPos):
@@ -206,13 +206,23 @@ class GenericJSONParser(object):
         
         # Adding a column beyond the current end of the row, but
         # not just by one position.
-        # Won't usually happen, as we just keep adding cols as
-        # we go, but taking care of this case makes for flexibility:
         # Make a list that spans the missing columns, and fill
         # it with nulls; then concat that list with theRow:
         fillList = ['null']*(targetPos - len(theRow))
         fillList.append(value)
+
+        # Now ensure that we add all col names of columns for which we
+        # inserted nulls, plus the name of the column for which we now
+        # inserted a value (that's the '+1'):
+        for schemaPos in range(len(theRow), targetPos+1):            
+            colSpec = self.jsonToRelationConverter.getSchemaHintByPos(schemaPos, tableName)
+            colName = colSpec.getName()
+            self.colNamesByTable[tableName].append(colName)
+        
+        # Append the series of nulls and value of the new column
+        # to the row we will return:
         theRow.extend(fillList)
+        
         return theRow
 
     def incArrayIndex(self, arrayIndexStack):

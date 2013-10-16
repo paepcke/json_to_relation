@@ -69,7 +69,7 @@ class OutputDisposition(object):
         '''
         self.schemas.addColSpecs(tableName, schemaHints)
 
-    def getSchemaHint(self, colName, tableName=None):
+    def getSchemaHint(self, colName, tableName):
         '''
         Given a column name, and a table name, return the ColumnSpec object
         that describes that column. If tableName is None, the main (default)
@@ -84,7 +84,16 @@ class OutputDisposition(object):
         '''
         return self.schemas[tableName][colName]
 
-    def getSchema(self, tableName=None):
+    def getSchemaHintByPos(self, pos, tableName):
+        try:
+            return self.schemas[tableName].values()[pos]
+        except ValueError:
+            return None
+        except IndexError:
+            raise ValueError("Attempt to access pos %s in schema for table %s, which is shorter than %s: %s") %\
+                (str(pos), tableName, str(pos), self.schemas[tableName].values())
+
+    def getSchema(self, tableName):
         try:
             return self.schemas[tableName].values()
         except ValueError:

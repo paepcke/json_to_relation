@@ -303,6 +303,12 @@ class JSONToRelation(object):
             tableName = self.mainTableName
         return self.destination.getSchemaHint(colName, tableName)
 
+    def getSchemaHintByPos(self, pos, tableName=None):
+        if tableName is None:
+            tableName = self.mainTableName
+        return self.destination.getSchemaHintByPos(pos, tableName)
+        
+    
     def ensureColExistence(self, colName, colDataType, tableName=None):
         if tableName is None:
             tableName = self.mainTableName
