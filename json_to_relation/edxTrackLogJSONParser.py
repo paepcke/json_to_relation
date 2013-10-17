@@ -25,12 +25,18 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         Constructor
         @param jsonToRelationConverter: JSONToRelation instance
         @type jsonToRelationConverter: JSONToRelation
+        @param mainTableName: name wanted for the table into which the bulk of event data is placed
+        @type mainTableName: String
         @param logfileID: an identfier of the tracking log file being processed. Used 
                to build error/warning msgs that cite a file and line number in
                their text
-        @type jsonToRelationConverter: JSONToRelation
+        @type logfileID: String
         @param progressEvery: number of input lines, a.k.a. JSON objects after which logging should report total done
-        @type progressEvery: int 
+        @type progressEvery: int
+        @param replaceTables: determines whether the tables that constitute EdX track logs are to be deleted before inserting entries. Default: False
+        @type  replaceTables: bool
+        @param dbName: database name into which tables will be created (if replaceTables is True), and into which insertions will take place.
+        @type dbName: String
         '''
         super(EdXTrackLogJSONParser, self).__init__(jsonToRelationConverter, 
                                                     logfileID=logfileID, 
@@ -203,48 +209,50 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         Different types of JSON records will be passed: server heartbeats,
         dashboard accesses, account creations, user logins. Example record
         for the latter::
-        {"username": "", 
-         "host": "class.stanford.edu", 
-         "event_source": "server", 
-         "event_type": "/accounts/login", 
-         "time": "2013-06-14T00:31:57.661338", 
-         "ip": "98.230.189.66", 
-         "event": "{
-                    \"POST\": {}, 
-                      \"GET\": {
-                         \"next\": [\"/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/80160e.../\"]}}", 
-         "agent": "Mozilla/5.0 (Windows NT 5.1; rv:21.0) Gecko/20100101
-         Firefox/21.0", 
-         "page": null}
+            {"username": "", 
+             "host": "class.stanford.edu", 
+             "event_source": "server", 
+             "event_type": "/accounts/login", 
+             "time": "2013-06-14T00:31:57.661338", 
+             "ip": "98.230.189.66", 
+             "event": "{
+                        \"POST\": {}, 
+                          \"GET\": {
+                             \"next\": [\"/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/80160e.../\"]}}", 
+             "agent": "Mozilla/5.0 (Windows NT 5.1; rv:21.0) Gecko/20100101
+             Firefox/21.0", 
+             "page": null}
 
         Two more examples to show the variance in the format. Note "event" field:
         
         Second example::
-        {"username": "jane", 
-         "host": "class.stanford.edu", 
-         "event_source": "server", 
-         "event_type": "/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/combinedopenended/c415227048464571a99c2c430843a4d6/get_results", 
-         "time": "2013-07-31T06:27:06.222843+00:00", 
-         "ip": "67.166.146.73", 
-         "event": "{\"POST\": {
-                                \"task_number\": [\"0\"]}, 
-                                \"GET\": {}}",
-         "agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.71 Safari/537.36", 
-         "page": null}
+            {"username": "jane", 
+             "host": "class.stanford.edu", 
+             "event_source": "server", 
+             "event_type": "/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/combinedopenended/c415227048464571a99c2c430843a4d6/get_results", 
+             "time": "2013-07-31T06:27:06.222843+00:00", 
+             "ip": "67.166.146.73", 
+             "event": "{\"POST\": {
+                                    \"task_number\": [\"0\"]}, 
+                                    \"GET\": {}}",
+             "agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.71 Safari/537.36", 
+             "page": null
+             }
                 
-        Third example:
-        {"username": "miller", 
-         "host": "class.stanford.edu", 
-         "session": "fa715506e8eccc99fddffc6280328c8b", 
-         "event_source": "browser", 
-         "event_type": "hide_transcript", 
-         "time": "2013-07-31T06:27:10.877992+00:00", 
-         "ip": "27.7.56.215", 
-         "event": "{\"id\":\"i4x-Medicine-HRP258-videoalpha-09839728fc9c48b5b580f17b5b348edd\",
-                    \"code\":\"fQ3-TeuyTOY\",
-                    \"currentTime\":0}", 
-         "agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.72 Safari/537.36", 
-         "page": "https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/495757ee7b25401599b1ef0495b068e4/6fd116e15ab9436fa70b8c22474b3c17/"}
+        Third example::
+            {"username": "miller", 
+             "host": "class.stanford.edu", 
+             "session": "fa715506e8eccc99fddffc6280328c8b", 
+             "event_source": "browser", 
+             "event_type": "hide_transcript", 
+             "time": "2013-07-31T06:27:10.877992+00:00", 
+             "ip": "27.7.56.215", 
+             "event": "{\"id\":\"i4x-Medicine-HRP258-videoalpha-09839728fc9c48b5b580f17b5b348edd\",
+                        \"code\":\"fQ3-TeuyTOY\",
+                        \"currentTime\":0}", 
+             "agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.72 Safari/537.36", 
+             "page": "https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/495757ee7b25401599b1ef0495b068e4/6fd116e15ab9436fa70b8c22474b3c17/"
+             }
                 
         @param jsonStr: string of a single, self contained JSON object
         @type jsonStr: String
@@ -639,16 +647,17 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleSeqNav(self, record, row, event, eventType):
         '''
         Video navigation. Events look like this::
-        {"username": "BetaTester1", 
-         "host": "class.stanford.edu", 
-         "session": "009e5b5e1bd4ab5a800cafc48bad9e44", 
-         "event_source": "browser", "
-         event_type": "seq_goto", 
-         "time": "2013-06-08T23:29:58.346222", 
-         "ip": "24.5.14.103", 
-         "event": "{\"old\":2,\"new\":1,\"id\":\"i4x://Medicine/HRP258/sequential/53b0357680d24191a60156e74e184be3\"}", 
-         "agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:21.0) Gecko/20100101 Firefox/21.0", 
-         "page": "https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/53b0357680d24191a60156e74e184be3/"}        
+            {"username": "BetaTester1", 
+             "host": "class.stanford.edu", 
+             "session": "009e5b5e1bd4ab5a800cafc48bad9e44", 
+             "event_source": "browser", "
+             event_type": "seq_goto", 
+             "time": "2013-06-08T23:29:58.346222", 
+             "ip": "24.5.14.103", 
+             "event": "{\"old\":2,\"new\":1,\"id\":\"i4x://Medicine/HRP258/sequential/53b0357680d24191a60156e74e184be3\"}", 
+             "agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:21.0) Gecko/20100101 Firefox/21.0", 
+             "page": "https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/53b0357680d24191a60156e74e184be3/"
+             }        
         
         @param record:
         @type record:
@@ -682,8 +691,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
     def handleProblemCheck(self, record, row, event):
         '''
-        Gets an event JSON object string like this:
-		{       
+        Gets an event JSON object string like this::
+		  {       
 		    "success": "correct",
 		    "correct_map": {
 		        "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {
@@ -739,7 +748,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 		        }
 		    },
 		    "problem_id": "i4x://Medicine/HRP258/problem/e194bcb477104d849691d8b336b65ff6"
-		}        
+		  }        
         @param record:
         @type record:
         @param row:
@@ -895,10 +904,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def pushAnswers(self, answersDict):
         '''
         Gets structure like this::
-        "answers": {
-            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": "choice_0",
-            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": "choice_3"
-        }
+            "answers": {
+                "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": "choice_0",
+                "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": "choice_3"
+            }
         @param answersDict:
         @type answersDict:
         @return: array of keys created for answers in answersDict
@@ -1013,10 +1022,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def pushInputStates(self, inputStatesDict):
         '''
         Gets structure like this::
-        {
-            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {},
-            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": {}
-        }        
+            {
+                "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {},
+                "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": {}
+            }        
         @param inputStatesDict:
         @type inputStatesDict:
         @return: array of keys created for input state problems.
@@ -1300,35 +1309,35 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleProblemSetFail(self, record, row, event):
         '''
         Gets events like this::
-        {
-          "failure": "unreset",
-          "state": {
-            "student_answers": {
-              "i4x-Education-EDUC115N-problem-ab38a55d2eb145ae8cec26acebaca27f_2_1": "choice_0"
-            },
-            "seed": 89,
-            "done": true,
-            "correct_map": {
-              "i4x-Education-EDUC115N-problem-ab38a55d2eb145ae8cec26acebaca27f_2_1": {
-                "hint": "",
-                "hintmode": null,
-                "correctness": "correct",
-                "msg": "",
-                "npoints": null,
-                "queuestate": null
+            {
+              "failure": "unreset",
+              "state": {
+                "student_answers": {
+                  "i4x-Education-EDUC115N-problem-ab38a55d2eb145ae8cec26acebaca27f_2_1": "choice_0"
+                },
+                "seed": 89,
+                "done": true,
+                "correct_map": {
+                  "i4x-Education-EDUC115N-problem-ab38a55d2eb145ae8cec26acebaca27f_2_1": {
+                    "hint": "",
+                    "hintmode": null,
+                    "correctness": "correct",
+                    "msg": "",
+                    "npoints": null,
+                    "queuestate": null
+                  }
+                },
+                "input_state": {
+                  "i4x-Education-EDUC115N-problem-ab38a55d2eb145ae8cec26acebaca27f_2_1": {
+                    
+                  }
+                }
+              },
+              "problem_id": "i4x:\/\/Education\/EDUC115N\/problem\/ab38a55d2eb145ae8cec26acebaca27f",
+              "answers": {
+                "i4x-Education-EDUC115N-problem-ab38a55d2eb145ae8cec26acebaca27f_2_1": "choice_0"
               }
-            },
-            "input_state": {
-              "i4x-Education-EDUC115N-problem-ab38a55d2eb145ae8cec26acebaca27f_2_1": {
-                
-              }
-            }
-          },
-          "problem_id": "i4x:\/\/Education\/EDUC115N\/problem\/ab38a55d2eb145ae8cec26acebaca27f",
-          "answers": {
-            "i4x-Education-EDUC115N-problem-ab38a55d2eb145ae8cec26acebaca27f_2_1": "choice_0"
-          }
-        }        
+            }        
         @param record:
         @type record:
         @param row:
@@ -1580,21 +1589,22 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         the course URL, and extract the course name from it.
         A number of different events occur, which do not contain
         course IDs: server heartbeats, account creation, dashboard
-        accesses. Among them are logins, which look like this:
+        accesses. Among them are logins, which look like this::
         
-        {"username": "", 
-         "host": "class.stanford.edu", 
-         "event_source": "server", 
-         "event_type": "/accounts/login", 
-         "time": "2013-06-14T00:31:57.661338", 
-         "ip": "98.230.189.66", 
-         "event": "{
-                    \"POST\": {}, 
-                    \"GET\": {
-                         \"next\": [\"/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/80160e.../\"]}}", 
-         "agent": "Mozilla/5.0 (Windows NT 5.1; rv:21.0) Gecko/20100101
-         Firefox/21.0", 
-         "page": null}
+            {"username": "", 
+             "host": "class.stanford.edu", 
+             "event_source": "server", 
+             "event_type": "/accounts/login", 
+             "time": "2013-06-14T00:31:57.661338", 
+             "ip": "98.230.189.66", 
+             "event": "{
+                        \"POST\": {}, 
+                        \"GET\": {
+                             \"next\": [\"/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/80160e.../\"]}}", 
+             "agent": "Mozilla/5.0 (Windows NT 5.1; rv:21.0) Gecko/20100101
+             Firefox/21.0", 
+             "page": null
+             }
         
         Notice the 'event' key's value being a *string* containing JSON, rather than 
         a nested JSON object. This requires special attention. Buried inside

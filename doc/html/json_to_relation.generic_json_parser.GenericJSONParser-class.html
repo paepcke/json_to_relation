@@ -94,10 +94,30 @@ object --+
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td><span class="summary-sig"><a href="json_to_relation.generic_json_parser.GenericJSONParser-class.html#__init__" class="summary-sig-name">__init__</a>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">jsonToRelationConverter</span>)</span><br />
+        <span class="summary-sig-arg">jsonToRelationConverter</span>,
+        <span class="summary-sig-arg">logfileID</span>=<span class="summary-sig-default"><code class="variable-quote">'</code><code class="variable-string"></code><code class="variable-quote">'</code></span>,
+        <span class="summary-sig-arg">progressEvery</span>=<span class="summary-sig-default">1000</span>)</span><br />
       x.__init__(...) initializes x; see help(type(x)) for signature</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="json_to_relation.generic_json_parser-pysrc.html#GenericJSONParser.__init__">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.generic_json_parser.GenericJSONParser-class.html#getReadyForNextRow" class="summary-sig-name">getReadyForNextRow</a>(<span class="summary-sig-arg">self</span>)</span><br />
+      To be called after one row has been processed in 
+      processOneJSONObject() of this class or one of its subclasses.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.generic_json_parser-pysrc.html#GenericJSONParser.getReadyForNextRow">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -127,14 +147,15 @@ object --+
   </tr>
 <tr>
     <td width="15%" align="right" valign="top" class="summary">
-      <span class="summary-type">&nbsp;</span>
+      <span class="summary-type">List&lt;&lt;any&gt;&gt;</span>
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td><span class="summary-sig"><a href="json_to_relation.generic_json_parser.GenericJSONParser-class.html#setValInRow" class="summary-sig-name">setValInRow</a>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">theRow</span>,
         <span class="summary-sig-arg">colName</span>,
-        <span class="summary-sig-arg">value</span>)</span><br />
+        <span class="summary-sig-arg">value</span>,
+        <span class="summary-sig-arg">tableName</span>=<span class="summary-sig-default">None</span>)</span><br />
       Given a column name, a value and a partially filled row, add the 
       column to the row, or set the value in an already existing row.</td>
           <td align="right" valign="top">
@@ -182,7 +203,7 @@ object --+
   </tr>
 <tr>
     <td width="15%" align="right" valign="top" class="summary">
-      <span class="summary-type">&nbsp;</span>
+      <span class="summary-type">String</span>
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
@@ -192,6 +213,56 @@ object --+
       'item'</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="json_to_relation.generic_json_parser-pysrc.html#GenericJSONParser.removeItemPartOfString">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="reportProgressIfNeeded"></a><span class="summary-sig-name">reportProgressIfNeeded</span>(<span class="summary-sig-arg">self</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.generic_json_parser-pysrc.html#GenericJSONParser.reportProgressIfNeeded">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="logWarn"></a><span class="summary-sig-name">logWarn</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">msg</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.generic_json_parser-pysrc.html#GenericJSONParser.logWarn">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="logInfo"></a><span class="summary-sig-name">logInfo</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">msg</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.generic_json_parser-pysrc.html#GenericJSONParser.logInfo">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -294,7 +365,9 @@ object --+
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr valign="top"><td>
   <h3 class="epydoc"><span class="sig"><span class="sig-name">__init__</span>(<span class="sig-arg">self</span>,
-        <span class="sig-arg">jsonToRelationConverter</span>)</span>
+        <span class="sig-arg">jsonToRelationConverter</span>,
+        <span class="sig-arg">logfileID</span>=<span class="sig-default"><code class="variable-quote">'</code><code class="variable-string"></code><code class="variable-quote">'</code></span>,
+        <span class="sig-arg">progressEvery</span>=<span class="sig-default">1000</span>)</span>
     <br /><em class="fname">(Constructor)</em>
   </h3>
   </td><td align="right" valign="top"
@@ -307,10 +380,36 @@ object --+
     <dt>Parameters:</dt>
     <dd><ul class="nomargin-top">
         <li><strong class="pname"><code>jsonToRelationConverter</code></strong> (JSONToRelation) - JSONToRelation instance</li>
+        <li><strong class="pname"><code>logfileID</code></strong> (String) - an identfier of the tracking log file being processed. Used to 
+          build error/warning msgs that cite a file and line number in 
+          their text</li>
+        <li><strong class="pname"><code>progressEvery</code></strong> (int) - number of input lines, a.k.a. JSON objects after which logging 
+          should report total done</li>
     </ul></dd>
     <dt>Overrides:
         object.__init__
     </dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="getReadyForNextRow"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getReadyForNextRow</span>(<span class="sig-arg">self</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="json_to_relation.generic_json_parser-pysrc.html#GenericJSONParser.getReadyForNextRow">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>To be called after one row has been processed in 
+  processOneJSONObject() of this class or one of its subclasses. Cleans out
+  any datastructures that are only good during creation of one row.</p>
+  <dl class="fields">
   </dl>
 </td></tr></table>
 </div>
@@ -351,6 +450,8 @@ object --+
        @type jsonStr: String
        @param row: partially filled array of values.
        @type row: List&lt;&lt;any&gt;&gt;
+       @return: array of values. Fills into the passed-in row array
+       @rtype: [&lt;any&gt;]
 </pre>
   <dl class="fields">
   </dl>
@@ -366,7 +467,8 @@ object --+
   <h3 class="epydoc"><span class="sig"><span class="sig-name">setValInRow</span>(<span class="sig-arg">self</span>,
         <span class="sig-arg">theRow</span>,
         <span class="sig-arg">colName</span>,
-        <span class="sig-arg">value</span>)</span>
+        <span class="sig-arg">value</span>,
+        <span class="sig-arg">tableName</span>=<span class="sig-default">None</span>)</span>
   </h3>
   </td><td align="right" valign="top"
     ><span class="codelink"><a href="json_to_relation.generic_json_parser-pysrc.html#GenericJSONParser.setValInRow">source&nbsp;code</a></span>&nbsp;
@@ -384,6 +486,8 @@ object --+
         <li><strong class="pname"><code>colName</code></strong> (String) - name of column into which value is to be inserted.</li>
         <li><strong class="pname"><code>value</code></strong> (&lt;any&gt;, as per ColDataType) - the field value</li>
     </ul></dd>
+    <dt>Returns: List&lt;&lt;any&gt;&gt;</dt>
+        <dd>the passed-in row, with the new value added at the proper index.</dd>
   </dl>
 </td></tr></table>
 </div>
@@ -409,6 +513,8 @@ object --+
     <dd><ul class="nomargin-top">
         <li><strong class="pname"><code>label</code></strong> (String) - string from which last 'item' occurrence is to be removed</li>
     </ul></dd>
+    <dt>Returns: String</dt>
+        <dd>label after deletion of the substring</dd>
   </dl>
 </td></tr></table>
 </div>
@@ -473,7 +579,7 @@ re.compile(r'<code class="re-group">(</code>item<code class="re-group">)</code>\
 <table border="0" cellpadding="0" cellspacing="0" width="100%%">
   <tr>
     <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Thu Oct  3 14:52:44 2013
+    Generated by Epydoc 3.0.1 on Wed Oct 16 17:51:59 2013
     </td>
     <td align="right" class="footer">
       <a target="mainFrame" href="http://epydoc.sourceforge.net"

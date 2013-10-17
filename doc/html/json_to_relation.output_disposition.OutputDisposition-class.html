@@ -63,13 +63,14 @@ object --+
 <dl><dt>Known Subclasses:</dt>
 <dd>
       <ul class="subclass-list">
-<li><a href="json_to_relation.output_disposition.OutputFile-class.html">OutputFile</a></li><li>, <a href="json_to_relation.output_disposition.OutputMySQLTable-class.html">OutputMySQLTable</a></li><li>, <a href="json_to_relation.output_disposition.OutputPipe-class.html">OutputPipe</a></li>  </ul>
+<li><a href="json_to_relation.output_disposition.OutputFile-class.html">OutputFile</a></li><li>, <a href="json_to_relation.output_disposition.OutputPipe-class.html">OutputPipe</a></li>  </ul>
 </dd></dl>
 
 <hr />
 <p>Specifications for where completed relation rows should be deposited, 
-  and in which format. Source options are files, stdout, and a MySQL 
-  table.</p>
+  and in which format. Source options are files, stdout, and a MySQL table.
+  This class is abstract, but make sure the subclasses invoke this super's 
+  __init__() when they are initialized.</p>
   <p>Also defined here are available output formats, of which there are 
   two: CSV, and SQL insert statements.</p>
 
@@ -122,7 +123,8 @@ object --+
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td><span class="summary-sig"><a href="json_to_relation.output_disposition.OutputDisposition-class.html#__init__" class="summary-sig-name">__init__</a>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">outputDest</span>)</span><br />
+        <span class="summary-sig-arg">outputFormat</span>,
+        <span class="summary-sig-arg">outputDestObj</span>=<span class="summary-sig-default">None</span>)</span><br />
       x.__init__(...) initializes x; see help(type(x)) for signature</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#OutputDisposition.__init__">source&nbsp;code</a></span>
@@ -161,6 +163,137 @@ object --+
         <span class="summary-sig-arg">excTraceback</span>)</span></td>
           <td align="right" valign="top">
             <span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#OutputDisposition.__exit__">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="getOutputFormat"></a><span class="summary-sig-name">getOutputFormat</span>(<span class="summary-sig-arg">self</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#OutputDisposition.getOutputFormat">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.output_disposition.OutputDisposition-class.html#addSchemaHints" class="summary-sig-name">addSchemaHints</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">tableName</span>,
+        <span class="summary-sig-arg">schemaHints</span>)</span><br />
+      Provide a schema hint dict for the table of the given name.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#OutputDisposition.addSchemaHints">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">(ColumnSpec)</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.output_disposition.OutputDisposition-class.html#getSchemaHint" class="summary-sig-name">getSchemaHint</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">colName</span>,
+        <span class="summary-sig-arg">tableName</span>)</span><br />
+      Given a column name, and a table name, return the ColumnSpec object 
+      that describes that column.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#OutputDisposition.getSchemaHint">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="getSchemaHintByPos"></a><span class="summary-sig-name">getSchemaHintByPos</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">pos</span>,
+        <span class="summary-sig-arg">tableName</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#OutputDisposition.getSchemaHintByPos">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="getSchema"></a><span class="summary-sig-name">getSchema</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">tableName</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#OutputDisposition.getSchema">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.output_disposition.OutputDisposition-class.html#ensureColExistence" class="summary-sig-name">ensureColExistence</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">colName</span>,
+        <span class="summary-sig-arg">colDataType</span>,
+        <span class="summary-sig-arg">jsonToRelationConverter</span>,
+        <span class="summary-sig-arg">tableName</span>=<span class="summary-sig-default">None</span>)</span><br />
+      Given a column name and MySQL datatype name, check whether this 
+      column has previously been encountered.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#OutputDisposition.ensureColExistence">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.output_disposition.OutputDisposition-class.html#createTmpTableFile" class="summary-sig-name">createTmpTableFile</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">tableName</span>,
+        <span class="summary-sig-arg">fileSuffix</span>)</span><br />
+      Used for cases in which parsers must create more than one table.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#OutputDisposition.createTmpTableFile">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -238,7 +371,8 @@ object --+
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr valign="top"><td>
   <h3 class="epydoc"><span class="sig"><span class="sig-name">__init__</span>(<span class="sig-arg">self</span>,
-        <span class="sig-arg">outputDest</span>)</span>
+        <span class="sig-arg">outputFormat</span>,
+        <span class="sig-arg">outputDestObj</span>=<span class="sig-default">None</span>)</span>
     <br /><em class="fname">(Constructor)</em>
   </h3>
   </td><td align="right" valign="top"
@@ -250,11 +384,134 @@ object --+
   <dl class="fields">
     <dt>Parameters:</dt>
     <dd><ul class="nomargin-top">
-        <li><strong class="pname"><code>outputDest</code></strong> (File) - os file descriptor for output</li>
+        <li><strong class="pname"><code>outputDestObj</code></strong> (Subclass(OutputDisposition)) - instance of one of the subclasses</li>
     </ul></dd>
     <dt>Overrides:
         object.__init__
     </dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="addSchemaHints"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">addSchemaHints</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">tableName</span>,
+        <span class="sig-arg">schemaHints</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#OutputDisposition.addSchemaHints">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Provide a schema hint dict for the table of the given name.</p>
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>tableName</code></strong> (String) - name of table to which schema applies. The name may be None, in 
+          which case it refers to the main (default) table.</li>
+        <li><strong class="pname"><code>schemaHints</code></strong> ([ordered]Dict&lt;String,ColumnSpec&gt;) - dict mapping column names to SQL types via ColumnSpec instances</li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="getSchemaHint"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getSchemaHint</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">colName</span>,
+        <span class="sig-arg">tableName</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#OutputDisposition.getSchemaHint">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Given a column name, and a table name, return the ColumnSpec object 
+  that describes that column. If tableName is None, the main (default) 
+  table's schema will be searched for a colName entry</p>
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>colName</code></strong> (String) - name of column whose schema info is sought</li>
+        <li><strong class="pname"><code>tableName</code></strong> (String) - name of table in which the given column resides</li>
+    </ul></dd>
+    <dt>Returns: (ColumnSpec)</dt>
+        <dd>list of ColumnSpec instances</dd>
+    <dt>Raises:</dt>
+    <dd><ul class="nomargin-top">
+        <li><code><strong class='fraise'>KeyError</strong></code> - if table or column are not found</li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="ensureColExistence"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">ensureColExistence</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">colName</span>,
+        <span class="sig-arg">colDataType</span>,
+        <span class="sig-arg">jsonToRelationConverter</span>,
+        <span class="sig-arg">tableName</span>=<span class="sig-default">None</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#OutputDisposition.ensureColExistence">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Given a column name and MySQL datatype name, check whether this column
+  has previously been encountered. If not, a column information object is 
+  created, which will eventually be used to create the column header, or 
+  SQL alter statements.</p>
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>colName</code></strong> (String) - name of the column to consider</li>
+        <li><strong class="pname"><code>colDataType</code></strong> (ColDataType) - datatype of the column.</li>
+        <li><strong class="pname"><code>tableName</code></strong> ({String | None}) - name of table to which the column is to belong; None if for main 
+          table</li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="createTmpTableFile"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">createTmpTableFile</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">tableName</span>,
+        <span class="sig-arg">fileSuffix</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#OutputDisposition.createTmpTableFile">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Used for cases in which parsers must create more than one table. Those
+  tables need to be written to disk, even when output of the main table is 
+  piped.</p>
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>tableName</code></strong> (String) - name by which the table file obj can be retrieved</li>
+        <li><strong class="pname"><code>fileSuffix</code></strong> (String) - suffix for temp file name. Ex. 'csv' for CSV outputs, or 'sql' 
+          for SQL dumps</li>
+    </ul></dd>
   </dl>
 </td></tr></table>
 </div>
@@ -282,7 +539,7 @@ object --+
 <table border="0" cellpadding="0" cellspacing="0" width="100%%">
   <tr>
     <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Thu Oct  3 14:52:44 2013
+    Generated by Epydoc 3.0.1 on Wed Oct 16 17:51:59 2013
     </td>
     <td align="right" class="footer">
       <a target="mainFrame" href="http://epydoc.sourceforge.net"

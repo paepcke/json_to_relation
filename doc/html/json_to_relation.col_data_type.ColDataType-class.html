@@ -114,8 +114,27 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a name="sqlTypeFromValue"></a><span class="summary-sig-name">sqlTypeFromValue</span>(<span class="summary-sig-arg">cls</span>,
+          <td><span class="summary-sig"><a name="isinstance"></a><span class="summary-sig-name">isinstance</span>(<span class="summary-sig-arg">cls</span>,
         <span class="summary-sig-arg">value</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.col_data_type-pysrc.html#ColDataType.isinstance">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.col_data_type.ColDataType-class.html#sqlTypeFromValue" class="summary-sig-name">sqlTypeFromValue</a>(<span class="summary-sig-arg">cls</span>,
+        <span class="summary-sig-arg">value</span>)</span><br />
+      Given a value, return the best fitting MySQL data type Special case: 
+      None: we return TEXT.</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="json_to_relation.col_data_type-pysrc.html#ColDataType.sqlTypeFromValue">source&nbsp;code</a></span>
             
@@ -147,81 +166,176 @@
     <td width="15%" align="right" valign="top" class="summary">
       <span class="summary-type">&nbsp;</span>
     </td><td class="summary">
-        <a name="TEXT"></a><span class="summary-name">TEXT</span> = <code title="0">0</code>
+        <a name="TINYTEXT"></a><span class="summary-name">TINYTEXT</span> = <code title="0">0</code>
     </td>
   </tr>
 <tr>
     <td width="15%" align="right" valign="top" class="summary">
       <span class="summary-type">&nbsp;</span>
     </td><td class="summary">
-        <a name="LONGTEXT"></a><span class="summary-name">LONGTEXT</span> = <code title="1">1</code>
+        <a name="TEXT"></a><span class="summary-name">TEXT</span> = <code title="1">1</code>
     </td>
   </tr>
 <tr>
     <td width="15%" align="right" valign="top" class="summary">
       <span class="summary-type">&nbsp;</span>
     </td><td class="summary">
-        <a name="SMALLINT"></a><span class="summary-name">SMALLINT</span> = <code title="2">2</code>
+        <a name="MEDIUMTEXT"></a><span class="summary-name">MEDIUMTEXT</span> = <code title="2">2</code>
     </td>
   </tr>
 <tr>
     <td width="15%" align="right" valign="top" class="summary">
       <span class="summary-type">&nbsp;</span>
     </td><td class="summary">
-        <a name="INT"></a><span class="summary-name">INT</span> = <code title="3">3</code>
+        <a name="LONGTEXT"></a><span class="summary-name">LONGTEXT</span> = <code title="3">3</code>
     </td>
   </tr>
 <tr>
     <td width="15%" align="right" valign="top" class="summary">
       <span class="summary-type">&nbsp;</span>
     </td><td class="summary">
-        <a name="FLOAT"></a><span class="summary-name">FLOAT</span> = <code title="4">4</code>
+        <a name="TINYINT"></a><span class="summary-name">TINYINT</span> = <code title="4">4</code>
     </td>
   </tr>
 <tr>
     <td width="15%" align="right" valign="top" class="summary">
       <span class="summary-type">&nbsp;</span>
     </td><td class="summary">
-        <a name="DOUBLE"></a><span class="summary-name">DOUBLE</span> = <code title="5">5</code>
+        <a name="SMALLINT"></a><span class="summary-name">SMALLINT</span> = <code title="5">5</code>
     </td>
   </tr>
 <tr>
     <td width="15%" align="right" valign="top" class="summary">
       <span class="summary-type">&nbsp;</span>
     </td><td class="summary">
-        <a name="DATE"></a><span class="summary-name">DATE</span> = <code title="6">6</code>
+        <a name="MEDIUMINT"></a><span class="summary-name">MEDIUMINT</span> = <code title="6">6</code>
     </td>
   </tr>
 <tr>
     <td width="15%" align="right" valign="top" class="summary">
       <span class="summary-type">&nbsp;</span>
     </td><td class="summary">
-        <a name="TIME"></a><span class="summary-name">TIME</span> = <code title="7">7</code>
+        <a name="INT"></a><span class="summary-name">INT</span> = <code title="7">7</code>
     </td>
   </tr>
 <tr>
     <td width="15%" align="right" valign="top" class="summary">
       <span class="summary-type">&nbsp;</span>
     </td><td class="summary">
-        <a name="DATETIME"></a><span class="summary-name">DATETIME</span> = <code title="8">8</code>
+        <a name="BIGINT"></a><span class="summary-name">BIGINT</span> = <code title="8">8</code>
     </td>
   </tr>
 <tr>
     <td width="15%" align="right" valign="top" class="summary">
       <span class="summary-type">&nbsp;</span>
     </td><td class="summary">
-        <a href="json_to_relation.col_data_type.ColDataType-class.html#strings" class="summary-name">strings</a> = <code title="{0: 'TEXT',
- 1: 'LONGTEXT',
- 2: 'SMALLINT',
- 3: 'INT',
- 4: 'FLOAT',
- 5: 'DOUBLE',
- 6: 'DATE',
- 7: 'TIME',
-..."><code class="variable-group">{</code>0<code class="variable-op">: </code><code class="variable-quote">'</code><code class="variable-string">TEXT</code><code class="variable-quote">'</code><code class="variable-op">, </code>1<code class="variable-op">: </code><code class="variable-quote">'</code><code class="variable-string">LONGTEXT</code><code class="variable-quote">'</code><code class="variable-op">, </code>2<code class="variable-op">: </code><code class="variable-quote">'</code><code class="variable-string">SMALLINT</code><code class="variable-quote">'</code><code class="variable-op">, </code>3<code class="variable-op">: </code><code class="variable-quote">'</code><code class="variable-string">INT</code><code class="variable-quote">'</code><code class="variable-op">, </code><code class="variable-ellipsis">...</code></code>
+        <a name="FLOAT"></a><span class="summary-name">FLOAT</span> = <code title="9">9</code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="DOUBLE"></a><span class="summary-name">DOUBLE</span> = <code title="10">10</code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="DATE"></a><span class="summary-name">DATE</span> = <code title="11">11</code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="TIME"></a><span class="summary-name">TIME</span> = <code title="12">12</code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="DATETIME"></a><span class="summary-name">DATETIME</span> = <code title="13">13</code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="BOOL"></a><span class="summary-name">BOOL</span> = <code title="14">14</code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="UUID"></a><span class="summary-name">UUID</span> = <code title="15">15</code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="json_to_relation.col_data_type.ColDataType-class.html#strings" class="summary-name">strings</a> = <code title="{0: 'TINYTEXT',
+ 1: 'TEXT',
+ 2: 'MEDIUMTEXT',
+ 3: 'LONGTEXT',
+ 4: 'TINYINT',
+ 5: 'SMALLINT',
+ 7: 'INT',
+ 8: 'BIGINT',
+..."><code class="variable-group">{</code>0<code class="variable-op">: </code><code class="variable-quote">'</code><code class="variable-string">TINYTEXT</code><code class="variable-quote">'</code><code class="variable-op">, </code>1<code class="variable-op">: </code><code class="variable-quote">'</code><code class="variable-string">TEXT</code><code class="variable-quote">'</code><code class="variable-op">, </code>2<code class="variable-op">: </code><code class="variable-quote">'</code><code class="variable-string">MEDIUMTEXT</code><code class="variable-quote">'</code><code class="variable-op">, </code>3<code class="variable-op">: </code><code class="variable-quote">'</code><code class="variable-string">LONG</code><code class="variable-ellipsis">...</code></code>
     </td>
   </tr>
 </table>
+<!-- ==================== METHOD DETAILS ==================== -->
+<a name="section-MethodDetails"></a>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Method Details</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-MethodDetails"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+</table>
+<a name="sqlTypeFromValue"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">sqlTypeFromValue</span>(<span class="sig-arg">cls</span>,
+        <span class="sig-arg">value</span>)</span>
+    <br /><em class="fname">Class Method</em>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="json_to_relation.col_data_type-pysrc.html#ColDataType.sqlTypeFromValue">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Given a value, return the best fitting MySQL data type Special case: 
+  None: we return TEXT.</p>
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>cls</code></strong> (ColDataType) - ColDataType, makes it a class method</li>
+        <li><strong class="pname"><code>value</code></strong> ({str | unicode | int | float | bool | None}) - example value</li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<br />
 <!-- ==================== CLASS VARIABLE DETAILS ==================== -->
 <a name="section-ClassVariableDetails"></a>
 <table class="details" border="1" cellpadding="3"
@@ -252,14 +366,14 @@
   <dl class="fields">
     <dt>Value:</dt>
       <dd><table><tr><td><pre class="variable">
-<code class="variable-group">{</code>0<code class="variable-op">: </code><code class="variable-quote">'</code><code class="variable-string">TEXT</code><code class="variable-quote">'</code><code class="variable-op">,</code>
- 1<code class="variable-op">: </code><code class="variable-quote">'</code><code class="variable-string">LONGTEXT</code><code class="variable-quote">'</code><code class="variable-op">,</code>
- 2<code class="variable-op">: </code><code class="variable-quote">'</code><code class="variable-string">SMALLINT</code><code class="variable-quote">'</code><code class="variable-op">,</code>
- 3<code class="variable-op">: </code><code class="variable-quote">'</code><code class="variable-string">INT</code><code class="variable-quote">'</code><code class="variable-op">,</code>
- 4<code class="variable-op">: </code><code class="variable-quote">'</code><code class="variable-string">FLOAT</code><code class="variable-quote">'</code><code class="variable-op">,</code>
- 5<code class="variable-op">: </code><code class="variable-quote">'</code><code class="variable-string">DOUBLE</code><code class="variable-quote">'</code><code class="variable-op">,</code>
- 6<code class="variable-op">: </code><code class="variable-quote">'</code><code class="variable-string">DATE</code><code class="variable-quote">'</code><code class="variable-op">,</code>
- 7<code class="variable-op">: </code><code class="variable-quote">'</code><code class="variable-string">TIME</code><code class="variable-quote">'</code><code class="variable-op">,</code>
+<code class="variable-group">{</code>0<code class="variable-op">: </code><code class="variable-quote">'</code><code class="variable-string">TINYTEXT</code><code class="variable-quote">'</code><code class="variable-op">,</code>
+ 1<code class="variable-op">: </code><code class="variable-quote">'</code><code class="variable-string">TEXT</code><code class="variable-quote">'</code><code class="variable-op">,</code>
+ 2<code class="variable-op">: </code><code class="variable-quote">'</code><code class="variable-string">MEDIUMTEXT</code><code class="variable-quote">'</code><code class="variable-op">,</code>
+ 3<code class="variable-op">: </code><code class="variable-quote">'</code><code class="variable-string">LONGTEXT</code><code class="variable-quote">'</code><code class="variable-op">,</code>
+ 4<code class="variable-op">: </code><code class="variable-quote">'</code><code class="variable-string">TINYINT</code><code class="variable-quote">'</code><code class="variable-op">,</code>
+ 5<code class="variable-op">: </code><code class="variable-quote">'</code><code class="variable-string">SMALLINT</code><code class="variable-quote">'</code><code class="variable-op">,</code>
+ 7<code class="variable-op">: </code><code class="variable-quote">'</code><code class="variable-string">INT</code><code class="variable-quote">'</code><code class="variable-op">,</code>
+ 8<code class="variable-op">: </code><code class="variable-quote">'</code><code class="variable-string">BIGINT</code><code class="variable-quote">'</code><code class="variable-op">,</code>
 <code class="variable-ellipsis">...</code>
 </pre></td></tr></table>
 </dd>
@@ -290,7 +404,7 @@
 <table border="0" cellpadding="0" cellspacing="0" width="100%%">
   <tr>
     <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Thu Oct  3 14:52:44 2013
+    Generated by Epydoc 3.0.1 on Wed Oct 16 17:51:59 2013
     </td>
     <td align="right" class="footer">
       <a target="mainFrame" href="http://epydoc.sourceforge.net"

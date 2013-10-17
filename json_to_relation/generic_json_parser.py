@@ -27,7 +27,7 @@ class GenericJSONParser(object):
         @param logfileID: an identfier of the tracking log file being processed. Used 
                to build error/warning msgs that cite a file and line number in
                their text
-        @type jsonToRelationConverter: JSONToRelation
+        @type logfileID: String
         @param progressEvery: number of input lines, a.k.a. JSON objects after which logging should report total done
         @type progressEvery: int 
         '''

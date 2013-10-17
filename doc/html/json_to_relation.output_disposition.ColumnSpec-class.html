@@ -3,7 +3,7 @@
           "DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
-  <title>json_to_relation.input_source.InString</title>
+  <title>json_to_relation.output_disposition.ColumnSpec</title>
   <link rel="stylesheet" href="epydoc.css" type="text/css" />
   <script type="text/javascript" src="epydoc.js"></script>
 </head>
@@ -35,8 +35,8 @@
     <td width="100%">
       <span class="breadcrumbs">
         Package&nbsp;json_to_relation ::
-        <a href="json_to_relation.input_source-module.html">Module&nbsp;input_source</a> ::
-        Class&nbsp;InString
+        <a href="json_to_relation.output_disposition-module.html">Module&nbsp;output_disposition</a> ::
+        Class&nbsp;ColumnSpec
       </span>
     </td>
     <td>
@@ -46,23 +46,25 @@
     onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
         <tr><td align="right"><span class="options"
             >[<a href="frames.html" target="_top">frames</a
-            >]&nbsp;|&nbsp;<a href="json_to_relation.input_source.InString-class.html"
+            >]&nbsp;|&nbsp;<a href="json_to_relation.output_disposition.ColumnSpec-class.html"
             target="_top">no&nbsp;frames</a>]</span></td></tr>
       </table>
     </td>
   </tr>
 </table>
 <!-- ==================== CLASS DESCRIPTION ==================== -->
-<h1 class="epydoc">Class InString</h1><p class="nomargin-top"><span class="codelink"><a href="json_to_relation.input_source-pysrc.html#InString">source&nbsp;code</a></span></p>
+<h1 class="epydoc">Class ColumnSpec</h1><p class="nomargin-top"><span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#ColumnSpec">source&nbsp;code</a></span></p>
 <pre class="base-tree">
- object --+    
-          |    
-<a href="json_to_relation.input_source.InputSource-class.html">InputSource</a> --+
-              |
-             <strong class="uidshort">InString</strong>
+object --+
+         |
+        <strong class="uidshort">ColumnSpec</strong>
 </pre>
 
 <hr />
+<p>Housekeeping class. Each instance represents the name, position, and 
+  datatype of one column. These instances are used to generate column name 
+  headers, Django models, and SQL insert statements.</p>
+
 <!-- ==================== INSTANCE METHODS ==================== -->
 <a name="section-InstanceMethods"></a>
 <table class="summary" border="1" cellpadding="3"
@@ -86,11 +88,13 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a href="json_to_relation.input_source.InString-class.html#__init__" class="summary-sig-name">__init__</a>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">inputStr</span>)</span><br />
-      x.__init__(...) initializes x; see help(type(x)) for signature</td>
+          <td><span class="summary-sig"><a href="json_to_relation.output_disposition.ColumnSpec-class.html#__init__" class="summary-sig-name">__init__</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">colName</span>,
+        <span class="summary-sig-arg">colDataType</span>,
+        <span class="summary-sig-arg">jsonToRelationProcessor</span>)</span><br />
+      Create a ColumnSpec instance.</td>
           <td align="right" valign="top">
-            <span class="codelink"><a href="json_to_relation.input_source-pysrc.html#InString.__init__">source&nbsp;code</a></span>
+            <span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#ColumnSpec.__init__">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -104,11 +108,27 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a href="json_to_relation.input_source.InString-class.html#getSourceName" class="summary-sig-name">getSourceName</a>(<span class="summary-sig-arg">self</span>)</span><br />
-      Identify this source such that logging can identify sources of 
-      errors.</td>
+          <td><span class="summary-sig"><a href="json_to_relation.output_disposition.ColumnSpec-class.html#getName" class="summary-sig-name">getName</a>(<span class="summary-sig-arg">self</span>)</span><br />
+      Return column name</td>
           <td align="right" valign="top">
-            <span class="codelink"><a href="json_to_relation.input_source-pysrc.html#InString.getSourceName">source&nbsp;code</a></span>
+            <span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#ColumnSpec.getName">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">String</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.output_disposition.ColumnSpec-class.html#getType" class="summary-sig-name">getType</a>(<span class="summary-sig-arg">self</span>)</span><br />
+      Return SQL type</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#ColumnSpec.getType">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -122,11 +142,11 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a href="json_to_relation.input_source.InString-class.html#decompress" class="summary-sig-name">decompress</a>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">line</span>)</span><br />
-      No decompression for strings</td>
+          <td><span class="summary-sig"><a name="getSQLDefSnippet"></a><span class="summary-sig-name">getSQLDefSnippet</span>(<span class="summary-sig-arg">self</span>)</span><br />
+      Return string snippet to use in SQL CREATE TABLE or ALTER TABLE 
+      statement</td>
           <td align="right" valign="top">
-            <span class="codelink"><a href="json_to_relation.input_source-pysrc.html#InString.decompress">source&nbsp;code</a></span>
+            <span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#ColumnSpec.getSQLDefSnippet">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -140,9 +160,27 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a name="close"></a><span class="summary-sig-name">close</span>(<span class="summary-sig-arg">self</span>)</span></td>
+          <td><span class="summary-sig"><a href="json_to_relation.output_disposition.ColumnSpec-class.html#__str__" class="summary-sig-name">__str__</a>(<span class="summary-sig-arg">self</span>)</span><br />
+      str(x)</td>
           <td align="right" valign="top">
-            <span class="codelink"><a href="json_to_relation.input_source-pysrc.html#InString.close">source&nbsp;code</a></span>
+            <span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#ColumnSpec.__str__">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.output_disposition.ColumnSpec-class.html#__repr__" class="summary-sig-name">__repr__</a>(<span class="summary-sig-arg">self</span>)</span><br />
+      repr(x)</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#ColumnSpec.__repr__">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -160,50 +198,10 @@
       <code>__new__</code>,
       <code>__reduce__</code>,
       <code>__reduce_ex__</code>,
-      <code>__repr__</code>,
       <code>__setattr__</code>,
       <code>__sizeof__</code>,
-      <code>__str__</code>,
       <code>__subclasshook__</code>
       </p>
-    </td>
-  </tr>
-<tr bgcolor="#e8f0f8" >
-  <th colspan="2" class="group-header"
-    >&nbsp;&nbsp;&nbsp;&nbsp;Inherited from <a href="json_to_relation.input_source.InputSource-class.html">InputSource</a></th></tr>
-<tr>
-    <td width="15%" align="right" valign="top" class="summary">
-      <span class="summary-type">&nbsp;</span>
-    </td><td class="summary">
-      <table width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td><span class="summary-sig"><a name="__enter__"></a><span class="summary-sig-name">__enter__</span>(<span class="summary-sig-arg">self</span>)</span></td>
-          <td align="right" valign="top">
-            <span class="codelink"><a href="json_to_relation.input_source-pysrc.html#InputSource.__enter__">source&nbsp;code</a></span>
-            
-          </td>
-        </tr>
-      </table>
-      
-    </td>
-  </tr>
-<tr>
-    <td width="15%" align="right" valign="top" class="summary">
-      <span class="summary-type">&nbsp;</span>
-    </td><td class="summary">
-      <table width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td><span class="summary-sig"><a name="__exit__"></a><span class="summary-sig-name">__exit__</span>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">excType</span>,
-        <span class="summary-sig-arg">excValue</span>,
-        <span class="summary-sig-arg">excTraceback</span>)</span></td>
-          <td align="right" valign="top">
-            <span class="codelink"><a href="json_to_relation.input_source-pysrc.html#InputSource.__exit__">source&nbsp;code</a></span>
-            
-          </td>
-        </tr>
-      </table>
-      
     </td>
   </tr>
 </table>
@@ -258,67 +256,117 @@
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr valign="top"><td>
   <h3 class="epydoc"><span class="sig"><span class="sig-name">__init__</span>(<span class="sig-arg">self</span>,
-        <span class="sig-arg">inputStr</span>)</span>
+        <span class="sig-arg">colName</span>,
+        <span class="sig-arg">colDataType</span>,
+        <span class="sig-arg">jsonToRelationProcessor</span>)</span>
     <br /><em class="fname">(Constructor)</em>
   </h3>
   </td><td align="right" valign="top"
-    ><span class="codelink"><a href="json_to_relation.input_source-pysrc.html#InString.__init__">source&nbsp;code</a></span>&nbsp;
+    ><span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#ColumnSpec.__init__">source&nbsp;code</a></span>&nbsp;
     </td>
   </tr></table>
   
-  <p>x.__init__(...) initializes x; see help(type(x)) for signature</p>
+  <p>Create a ColumnSpec instance.</p>
   <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>colName</code></strong> (String) - name of column</li>
+        <li><strong class="pname"><code>colDataType</code></strong> (ColumnSpec) - data type of column (an enum)</li>
+        <li><strong class="pname"><code>jsonToRelationProcessor</code></strong> (JSONToRelation) - associated JSON to relation JSONToRelation instance</li>
+    </ul></dd>
     <dt>Overrides:
         object.__init__
+    </dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="getName"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getName</span>(<span class="sig-arg">self</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#ColumnSpec.getName">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Return column name</p>
+  <dl class="fields">
+    <dt>Returns: String</dt>
+        <dd>name of column</dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="getType"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getType</span>(<span class="sig-arg">self</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#ColumnSpec.getType">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Return SQL type</p>
+  <dl class="fields">
+    <dt>Returns: String</dt>
+        <dd>SQL type of colum in upper case</dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="__str__"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">__str__</span>(<span class="sig-arg">self</span>)</span>
+    <br /><em class="fname">(Informal representation operator)</em>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#ColumnSpec.__str__">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>str(x)</p>
+  <dl class="fields">
+    <dt>Overrides:
+        object.__str__
         <dd><em class="note">(inherited documentation)</em></dd>
     </dt>
   </dl>
 </td></tr></table>
 </div>
-<a name="getSourceName"></a>
+<a name="__repr__"></a>
 <div>
 <table class="details" border="1" cellpadding="3"
        cellspacing="0" width="100%" bgcolor="white">
 <tr><td>
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr valign="top"><td>
-  <h3 class="epydoc"><span class="sig"><span class="sig-name">getSourceName</span>(<span class="sig-arg">self</span>)</span>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">__repr__</span>(<span class="sig-arg">self</span>)</span>
+    <br /><em class="fname">(Representation operator)</em>
   </h3>
   </td><td align="right" valign="top"
-    ><span class="codelink"><a href="json_to_relation.input_source-pysrc.html#InString.getSourceName">source&nbsp;code</a></span>&nbsp;
+    ><span class="codelink"><a href="json_to_relation.output_disposition-pysrc.html#ColumnSpec.__repr__">source&nbsp;code</a></span>&nbsp;
     </td>
   </tr></table>
   
-  <p>Identify this source such that logging can identify sources of 
-  errors.</p>
+  <p>repr(x)</p>
   <dl class="fields">
-    <dt>Returns: String</dt>
-        <dd>a string that can be prepended to a line number in error/warn 
-          msgs</dd>
-  </dl>
-</td></tr></table>
-</div>
-<a name="decompress"></a>
-<div>
-<table class="details" border="1" cellpadding="3"
-       cellspacing="0" width="100%" bgcolor="white">
-<tr><td>
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
-  <tr valign="top"><td>
-  <h3 class="epydoc"><span class="sig"><span class="sig-name">decompress</span>(<span class="sig-arg">self</span>,
-        <span class="sig-arg">line</span>)</span>
-  </h3>
-  </td><td align="right" valign="top"
-    ><span class="codelink"><a href="json_to_relation.input_source-pysrc.html#InString.decompress">source&nbsp;code</a></span>&nbsp;
-    </td>
-  </tr></table>
-  
-  <p>No decompression for strings</p>
-  <dl class="fields">
-    <dt>Parameters:</dt>
-    <dd><ul class="nomargin-top">
-        <li><strong class="pname"><code>line</code></strong> ()</li>
-    </ul></dd>
+    <dt>Overrides:
+        object.__repr__
+        <dd><em class="note">(inherited documentation)</em></dd>
+    </dt>
   </dl>
 </td></tr></table>
 </div>

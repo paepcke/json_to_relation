@@ -78,8 +78,7 @@
 <a name="L23"></a><tt class="py-lineno"> 23</tt>  <tt class="py-line">         </tt>
 <a name="L24"></a><tt class="py-lineno"> 24</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">cursors</tt> <tt class="py-op">=</tt> <tt class="py-op">[</tt><tt class="py-op">]</tt> </tt>
 <a name="L25"></a><tt class="py-lineno"> 25</tt>  <tt class="py-line">        <tt class="py-keyword">try</tt><tt class="py-op">:</tt> </tt>
-<a name="L26"></a><tt class="py-lineno"> 26</tt>  <tt class="py-line">            <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">connection</tt> <tt class="py-op">=</tt> <tt class="py-name">pymysql</tt><tt class="py-op">.</tt><tt id="link-0" class="py-name" targets="Method json_to_relation.input_source.InMongoDB.connect()=json_to_relation.input_source.InMongoDB-class.html#connect,Method json_to_relation.output_disposition.OutputMySQLTable.connect()=json_to_relation.output_disposition.OutputMySQLTable-class.html#connect"><a title="json_to_relation.input_source.InMongoDB.connect
-json_to_relation.output_disposition.OutputMySQLTable.connect" class="py-name" href="#" onclick="return doclink('link-0', 'connect', 'link-0');">connect</a></tt><tt class="py-op">(</tt><tt class="py-name">host</tt><tt class="py-op">=</tt><tt class="py-name">host</tt><tt class="py-op">,</tt> <tt class="py-name">port</tt><tt class="py-op">=</tt><tt class="py-name">port</tt><tt class="py-op">,</tt> <tt class="py-name">user</tt><tt class="py-op">=</tt><tt class="py-name">user</tt><tt class="py-op">,</tt> <tt class="py-name">passwd</tt><tt class="py-op">=</tt><tt class="py-name">passwd</tt><tt class="py-op">,</tt> <tt class="py-name">db</tt><tt class="py-op">=</tt><tt class="py-name">db</tt><tt class="py-op">)</tt> </tt>
+<a name="L26"></a><tt class="py-lineno"> 26</tt>  <tt class="py-line">            <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">connection</tt> <tt class="py-op">=</tt> <tt class="py-name">pymysql</tt><tt class="py-op">.</tt><tt id="link-0" class="py-name" targets="Method json_to_relation.input_source.InMongoDB.connect()=json_to_relation.input_source.InMongoDB-class.html#connect"><a title="json_to_relation.input_source.InMongoDB.connect" class="py-name" href="#" onclick="return doclink('link-0', 'connect', 'link-0');">connect</a></tt><tt class="py-op">(</tt><tt class="py-name">host</tt><tt class="py-op">=</tt><tt class="py-name">host</tt><tt class="py-op">,</tt> <tt class="py-name">port</tt><tt class="py-op">=</tt><tt class="py-name">port</tt><tt class="py-op">,</tt> <tt class="py-name">user</tt><tt class="py-op">=</tt><tt class="py-name">user</tt><tt class="py-op">,</tt> <tt class="py-name">passwd</tt><tt class="py-op">=</tt><tt class="py-name">passwd</tt><tt class="py-op">,</tt> <tt class="py-name">db</tt><tt class="py-op">=</tt><tt class="py-name">db</tt><tt class="py-op">)</tt> </tt>
 <a name="L27"></a><tt class="py-lineno"> 27</tt>  <tt class="py-line">        <tt class="py-keyword">except</tt> <tt class="py-name">pymysql</tt><tt class="py-op">.</tt><tt class="py-name">OperationalError</tt><tt class="py-op">:</tt> </tt>
 <a name="L28"></a><tt class="py-lineno"> 28</tt>  <tt class="py-line">            <tt class="py-name">pwd</tt> <tt class="py-op">=</tt> <tt class="py-string">'...............'</tt> <tt class="py-keyword">if</tt> <tt class="py-name">len</tt><tt class="py-op">(</tt><tt class="py-name">passwd</tt><tt class="py-op">)</tt> <tt class="py-op">&gt;</tt> <tt class="py-number">0</tt> <tt class="py-keyword">else</tt> <tt class="py-string">'&lt;no password&gt;'</tt> </tt>
 <a name="L29"></a><tt class="py-lineno"> 29</tt>  <tt class="py-line">            <tt class="py-keyword">raise</tt> <tt class="py-name">ValueError</tt><tt class="py-op">(</tt><tt class="py-string">'Cannot reach MySQL server with host:%s, port:%s, user:%s, pwd:%s, db:%s'</tt> <tt class="py-op">%</tt> </tt>
@@ -91,14 +90,13 @@ json_to_relation.output_disposition.OutputMySQLTable.connect" class="py-name" hr
 <a name="L35"></a><tt class="py-lineno"> 35</tt>  <tt class="py-line"><tt class="py-docstring">        '''</tt> </tt>
 <a name="L36"></a><tt class="py-lineno"> 36</tt>  <tt class="py-line">        <tt class="py-keyword">for</tt> <tt class="py-name">cursor</tt> <tt class="py-keyword">in</tt> <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">cursors</tt><tt class="py-op">:</tt> </tt>
 <a name="L37"></a><tt class="py-lineno"> 37</tt>  <tt class="py-line">            <tt class="py-keyword">try</tt><tt class="py-op">:</tt> </tt>
-<a name="L38"></a><tt class="py-lineno"> 38</tt>  <tt class="py-line">                <tt class="py-name">cursor</tt><tt class="py-op">.</tt><tt id="link-1" class="py-name" targets="Method json_to_relation.input_source.InMongoDB.close()=json_to_relation.input_source.InMongoDB-class.html#close,Method json_to_relation.input_source.InPipe.close()=json_to_relation.input_source.InPipe-class.html#close,Method json_to_relation.input_source.InString.close()=json_to_relation.input_source.InString-class.html#close,Method json_to_relation.input_source.InURI.close()=json_to_relation.input_source.InURI-class.html#close,Method json_to_relation.mongodb.MongoDB.close()=json_to_relation.mongodb.MongoDB-class.html#close,Method json_to_relation.mysqldb.MySQLDB.close()=json_to_relation.mysqldb.MySQLDB-class.html#close,Method json_to_relation.output_disposition.OutputFile.close()=json_to_relation.output_disposition.OutputFile-class.html#close,Method json_to_relation.output_disposition.OutputMySQLTable.close()=json_to_relation.output_disposition.OutputMySQLTable-class.html#close,Method json_to_relation.output_disposition.OutputPipe.close()=json_to_relation.output_disposition.OutputPipe-class.html#close"><a title="json_to_relation.input_source.InMongoDB.close
+<a name="L38"></a><tt class="py-lineno"> 38</tt>  <tt class="py-line">                <tt class="py-name">cursor</tt><tt class="py-op">.</tt><tt id="link-1" class="py-name" targets="Method json_to_relation.input_source.InMongoDB.close()=json_to_relation.input_source.InMongoDB-class.html#close,Method json_to_relation.input_source.InPipe.close()=json_to_relation.input_source.InPipe-class.html#close,Method json_to_relation.input_source.InString.close()=json_to_relation.input_source.InString-class.html#close,Method json_to_relation.input_source.InURI.close()=json_to_relation.input_source.InURI-class.html#close,Method json_to_relation.mongodb.MongoDB.close()=json_to_relation.mongodb.MongoDB-class.html#close,Method json_to_relation.mysqldb.MySQLDB.close()=json_to_relation.mysqldb.MySQLDB-class.html#close,Method json_to_relation.output_disposition.OutputFile.close()=json_to_relation.output_disposition.OutputFile-class.html#close,Method json_to_relation.output_disposition.OutputPipe.close()=json_to_relation.output_disposition.OutputPipe-class.html#close"><a title="json_to_relation.input_source.InMongoDB.close
 json_to_relation.input_source.InPipe.close
 json_to_relation.input_source.InString.close
 json_to_relation.input_source.InURI.close
 json_to_relation.mongodb.MongoDB.close
 json_to_relation.mysqldb.MySQLDB.close
 json_to_relation.output_disposition.OutputFile.close
-json_to_relation.output_disposition.OutputMySQLTable.close
 json_to_relation.output_disposition.OutputPipe.close" class="py-name" href="#" onclick="return doclink('link-1', 'close', 'link-1');">close</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
 <a name="L39"></a><tt class="py-lineno"> 39</tt>  <tt class="py-line">            <tt class="py-keyword">except</tt><tt class="py-op">:</tt> </tt>
 <a name="L40"></a><tt class="py-lineno"> 40</tt>  <tt class="py-line">                <tt class="py-keyword">pass</tt> </tt>
@@ -129,7 +127,6 @@ json_to_relation.input_source.InURI.close
 json_to_relation.mongodb.MongoDB.close
 json_to_relation.mysqldb.MySQLDB.close
 json_to_relation.output_disposition.OutputFile.close
-json_to_relation.output_disposition.OutputMySQLTable.close
 json_to_relation.output_disposition.OutputPipe.close" class="py-name" href="#" onclick="return doclink('link-2', 'close', 'link-1');">close</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
 </div><a name="L62"></a><tt class="py-lineno"> 62</tt>  <tt class="py-line"> </tt>
 <a name="MySQLDB.dropTable"></a><div id="MySQLDB.dropTable-def"><a name="L63"></a><tt class="py-lineno"> 63</tt> <a class="py-toggle" href="#" id="MySQLDB.dropTable-toggle" onclick="return toggle('MySQLDB.dropTable');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.mysqldb.MySQLDB-class.html#dropTable">dropTable</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">tableName</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
@@ -150,7 +147,6 @@ json_to_relation.input_source.InURI.close
 json_to_relation.mongodb.MongoDB.close
 json_to_relation.mysqldb.MySQLDB.close
 json_to_relation.output_disposition.OutputFile.close
-json_to_relation.output_disposition.OutputMySQLTable.close
 json_to_relation.output_disposition.OutputPipe.close" class="py-name" href="#" onclick="return doclink('link-3', 'close', 'link-1');">close</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
 </div><a name="L75"></a><tt class="py-lineno"> 75</tt>  <tt class="py-line"> </tt>
 <a name="MySQLDB.insert"></a><div id="MySQLDB.insert-def"><a name="L76"></a><tt class="py-lineno"> 76</tt> <a class="py-toggle" href="#" id="MySQLDB.insert-toggle" onclick="return toggle('MySQLDB.insert');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.mysqldb.MySQLDB-class.html#insert">insert</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">tblName</tt><tt class="py-op">,</tt> <tt class="py-param">colnameValueDict</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
@@ -176,7 +172,6 @@ json_to_relation.input_source.InURI.close
 json_to_relation.mongodb.MongoDB.close
 json_to_relation.mysqldb.MySQLDB.close
 json_to_relation.output_disposition.OutputFile.close
-json_to_relation.output_disposition.OutputMySQLTable.close
 json_to_relation.output_disposition.OutputPipe.close" class="py-name" href="#" onclick="return doclink('link-5', 'close', 'link-1');">close</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
 </div><a name="L93"></a><tt class="py-lineno"> 93</tt>  <tt class="py-line">         </tt>
 <a name="MySQLDB.ensureSQLTyping"></a><div id="MySQLDB.ensureSQLTyping-def"><a name="L94"></a><tt class="py-lineno"> 94</tt> <a class="py-toggle" href="#" id="MySQLDB.ensureSQLTyping-toggle" onclick="return toggle('MySQLDB.ensureSQLTyping');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="json_to_relation.mysqldb.MySQLDB-class.html#ensureSQLTyping">ensureSQLTyping</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">,</tt> <tt class="py-param">colVals</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
@@ -190,7 +185,7 @@ json_to_relation.output_disposition.OutputPipe.close" class="py-name" href="#" o
 <a name="L102"></a><tt class="py-lineno">102</tt>  <tt class="py-line"><tt class="py-docstring">        '''</tt> </tt>
 <a name="L103"></a><tt class="py-lineno">103</tt>  <tt class="py-line">        <tt class="py-name">resList</tt> <tt class="py-op">=</tt> <tt class="py-op">[</tt><tt class="py-op">]</tt> </tt>
 <a name="L104"></a><tt class="py-lineno">104</tt>  <tt class="py-line">        <tt class="py-keyword">for</tt> <tt class="py-name">el</tt> <tt class="py-keyword">in</tt> <tt class="py-name">colVals</tt><tt class="py-op">:</tt> </tt>
-<a name="L105"></a><tt class="py-lineno">105</tt>  <tt class="py-line">            <tt class="py-keyword">if</tt> <tt class="py-name">isinstance</tt><tt class="py-op">(</tt><tt class="py-name">el</tt><tt class="py-op">,</tt> <tt class="py-name">basestring</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+<a name="L105"></a><tt class="py-lineno">105</tt>  <tt class="py-line">            <tt class="py-keyword">if</tt> <tt id="link-6" class="py-name" targets="Class Method json_to_relation.col_data_type.ColDataType.isinstance()=json_to_relation.col_data_type.ColDataType-class.html#isinstance"><a title="json_to_relation.col_data_type.ColDataType.isinstance" class="py-name" href="#" onclick="return doclink('link-6', 'isinstance', 'link-6');">isinstance</a></tt><tt class="py-op">(</tt><tt class="py-name">el</tt><tt class="py-op">,</tt> <tt class="py-name">basestring</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
 <a name="L106"></a><tt class="py-lineno">106</tt>  <tt class="py-line">                <tt class="py-name">resList</tt><tt class="py-op">.</tt><tt class="py-name">append</tt><tt class="py-op">(</tt><tt class="py-string">'"%s"'</tt> <tt class="py-op">%</tt> <tt class="py-name">el</tt><tt class="py-op">)</tt> </tt>
 <a name="L107"></a><tt class="py-lineno">107</tt>  <tt class="py-line">            <tt class="py-keyword">else</tt><tt class="py-op">:</tt> </tt>
 <a name="L108"></a><tt class="py-lineno">108</tt>  <tt class="py-line">                <tt class="py-name">resList</tt><tt class="py-op">.</tt><tt class="py-name">append</tt><tt class="py-op">(</tt><tt class="py-name">el</tt><tt class="py-op">)</tt> </tt>
@@ -210,15 +205,14 @@ json_to_relation.output_disposition.OutputPipe.close" class="py-name" href="#" o
 <a name="L122"></a><tt class="py-lineno">122</tt>  <tt class="py-line">        <tt class="py-keyword">while</tt> <tt class="py-name">True</tt><tt class="py-op">:</tt> </tt>
 <a name="L123"></a><tt class="py-lineno">123</tt>  <tt class="py-line">            <tt class="py-name">nextRes</tt> <tt class="py-op">=</tt> <tt class="py-name">cursor</tt><tt class="py-op">.</tt><tt class="py-name">fetchone</tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
 <a name="L124"></a><tt class="py-lineno">124</tt>  <tt class="py-line">            <tt class="py-keyword">if</tt> <tt class="py-name">nextRes</tt> <tt class="py-keyword">is</tt> <tt class="py-name">None</tt><tt class="py-op">:</tt> </tt>
-<a name="L125"></a><tt class="py-lineno">125</tt>  <tt class="py-line">                <tt class="py-name">cursor</tt><tt class="py-op">.</tt><tt id="link-6" class="py-name"><a title="json_to_relation.input_source.InMongoDB.close
+<a name="L125"></a><tt class="py-lineno">125</tt>  <tt class="py-line">                <tt class="py-name">cursor</tt><tt class="py-op">.</tt><tt id="link-7" class="py-name"><a title="json_to_relation.input_source.InMongoDB.close
 json_to_relation.input_source.InPipe.close
 json_to_relation.input_source.InString.close
 json_to_relation.input_source.InURI.close
 json_to_relation.mongodb.MongoDB.close
 json_to_relation.mysqldb.MySQLDB.close
 json_to_relation.output_disposition.OutputFile.close
-json_to_relation.output_disposition.OutputMySQLTable.close
-json_to_relation.output_disposition.OutputPipe.close" class="py-name" href="#" onclick="return doclink('link-6', 'close', 'link-1');">close</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+json_to_relation.output_disposition.OutputPipe.close" class="py-name" href="#" onclick="return doclink('link-7', 'close', 'link-1');">close</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
 <a name="L126"></a><tt class="py-lineno">126</tt>  <tt class="py-line">                <tt class="py-keyword">return</tt> </tt>
 <a name="L127"></a><tt class="py-lineno">127</tt>  <tt class="py-line">            <tt class="py-keyword">yield</tt> <tt class="py-name">nextRes</tt> </tt>
 </div></div><a name="L128"></a><tt class="py-lineno">128</tt>  <tt class="py-line"> </tt><script type="text/javascript">
@@ -251,7 +245,7 @@ expandto(location.href);
 <table border="0" cellpadding="0" cellspacing="0" width="100%%">
   <tr>
     <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Thu Oct  3 14:52:44 2013
+    Generated by Epydoc 3.0.1 on Wed Oct 16 17:51:59 2013
     </td>
     <td align="right" class="footer">
       <a target="mainFrame" href="http://epydoc.sourceforge.net"

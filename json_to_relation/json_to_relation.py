@@ -375,8 +375,8 @@ class JSONToRelation(object):
         Pushes the given string straight to the output (pipe or file).
         No error checking is done. Used by underlying parsers 
         for SQL other than INSERT statements, such as DROP, CREATE. 
-        @param sqlStatement: a complete SQL statement.
-        @type sqlStatement: String
+        @param whatToWrite: a complete SQL statement.
+        @type whatToWrite: String
         '''
         self.destination.write(whatToWrite)
         
@@ -387,7 +387,7 @@ class JSONToRelation(object):
         one. But for parsers that generate INSERT statements, the targets
         might be different tables on each call. 
         @param row: either an array of CSV values, or a triplet (tableName, insertSig, valsArray) (from MySQL INSERT-generating parsers)
-        @type row: {[<any>] | (String, String, [<any>])
+        @type row: {[<any>] | (String, String, [<any>])}
         @param outFd: subclass of OutputDisposition
         @type outFd: subclass of OutputDisposition
         '''
