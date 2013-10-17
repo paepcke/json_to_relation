@@ -1,9 +1,10 @@
-CREATE TABLE Answer (
+USE test;
+CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(32) NOT NULL Primary Key,
     problem_id TEXT,
     answer TEXT
     );
-CREATE TABLE CorrectMap (
+CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(32) NOT NULL Primary Key,
     answer_id TEXT,
     correctness BOOL,
@@ -13,12 +14,12 @@ CREATE TABLE CorrectMap (
     hintmode TINYTEXT,
     queuestate TEXT
     );
-CREATE TABLE InputState (
+CREATE TABLE IF NOT EXISTS InputState (
     input_state_id VARCHAR(32) NOT NULL Primary Key,
     problem_id TEXT,
     state TEXT
     );
-CREATE TABLE State (
+CREATE TABLE IF NOT EXISTS State (
     state_id VARCHAR(32) NOT NULL Primary Key,
     seed TINYINT,
     done BOOL,
@@ -30,7 +31,7 @@ CREATE TABLE State (
     FOREIGN KEY(correct_map) REFERENCES CorrectMap(correct_map_id),
     FOREIGN KEY(input_state) REFERENCES InputState(input_state_id)
     );
-CREATE TABLE Main (
+CREATE TABLE IF NOT EXISTS Main (
     eventID VARCHAR(32),
     agent TEXT,
     event_source TINYTEXT,
@@ -76,5 +77,5 @@ CREATE TABLE Main (
     FOREIGN KEY(stateFK) REFERENCES State(state_id)
     );
 INSERT INTO Main (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for) VALUES 
-    ('aebf6f3b-f5b2-4cbd-a5ab-677407aa1832','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',None,None,'2013-07-18T08:43:32.573390+00:00','','0:00:00'),
-    ('cd0355d6-0cd8-4d9e-bdc1-387e76488122','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',None,None,'2013-07-18T09:45:37.573390+00:00','','1:02:05');
+    ('aebf6f3b-f5b2-4cbd-a5ab-677407aa1832','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T08:43:32.573390+00:00','','0:00:00'),
+    ('cd0355d6-0cd8-4d9e-bdc1-387e76488122','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T09:45:37.573390+00:00','','1:02:05');

@@ -7,7 +7,7 @@
 #TODO: Edx unittest for detecting server downtimes in log
 #TODO: Edx unittest for coursID across all event types
 #TODO: unittesting INSERT output: deal with event IDs always being different
-#TODO: format log msgs
+#TODO: In tracking.log-20130805.gz, ~ line 46: event is not a dict:'input_i4x-Medicine-HRP258-problem-75edd241d7c849ddb92bb7176fb27d0c_2_1=choice_1'
 '''
 Created on Sep 14, 2013
 
@@ -564,8 +564,15 @@ class JSONToRelation(object):
                     isFirstVal = False
                 else:
                     valsFileStr.write(str(','))
-                # Ensure that strings get a quote char arround them:
-                valsFileStr.write("'" + insertVal + "'" if isinstance(insertVal,basestring) else str(insertVal))
+                # Ensure that strings get a quote char arround them, except
+                # for 'null', which needs to be written without quotes:
+                if insertVal == 'null':
+                    valsFileStr.write(insertVal)
+                # Turn 'None' entries from JSON-converted empty JSON flds to null: 
+                elif insertVal == None:
+                    valsFileStr.write('null')
+                else:
+                    valsFileStr.write("'" + insertVal + "'" if isinstance(insertVal,basestring) else str(insertVal))
             valsFileStr.write(')')
             isFirstVal = True
         return valsFileStr

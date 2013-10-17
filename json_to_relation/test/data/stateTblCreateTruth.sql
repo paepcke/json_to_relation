@@ -1,4 +1,4 @@
-CREATE TABLE State (
+CREATE TABLE IF NOT EXISTS State (
     state_id VARCHAR(32) NOT NULL Primary Key,
     seed TINYINT,
     done BOOL,

@@ -19,7 +19,8 @@ if __name__ == "__main__":
     jsonConverter = JSONToRelation(InPipe(),
                                    OutputPipe(OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS),
 				   mainTableName='Event',
-				   logFile='/tmp/j2s.log',
+				   logFile='/tmp/j2s.log'
                                    )
-    jsonConverter.setParser(EdXTrackLogJSONParser(jsonConverter, 'Event'))
+    jsonConverter.setParser(EdXTrackLogJSONParser(jsonConverter, 'Event', replaceTables=True, dbName='FreezeTracking_log_20130609_gz'
+))
     jsonConverter.convert()

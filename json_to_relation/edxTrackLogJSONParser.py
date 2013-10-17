@@ -256,8 +256,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.jsonToRelationConverter.bumpLineCounter()
         # Collect the columns whose values need to be set in 
         # the INSERT statement that results from this event:
-        colsToSet = ['eventID'] + self.commonFldNames
-        self.colNamesByTable[self.mainTableName] = colsToSet
+        #********colsToSet = ['eventID'] + self.commonFldNames
+        #********self.colNamesByTable[self.mainTableName] = colsToSet
         try:
             # Turn top level JSON object to dict:
             try:
@@ -265,8 +265,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             except ValueError as e:
                 raise ValueError('Ill formed JSON in track log, line %s: %s' % (self.jsonToRelationConverter.makeFileCitation(), `e`))
     
-            eventID = self.getUniqueEventID()
-            self.setValInRow(row, 'eventID', eventID)
+            #******eventID = self.getUniqueEventID()
+            #******self.setValInRow(row, 'eventID', eventID)
                     
             # Dispense with the fields common to all events, except event,
             # which is a nested JSON string. Results will be 
@@ -348,7 +348,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 row = self.handleSeqNav(record, row, event, eventType)
                 return
             
-            elif eventType == '/account/login':
+            elif eventType == '/accounts/login':
                 # Already recorded everything needed in common-fields
                 return
             
@@ -474,6 +474,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             # to be inserted (e.g. heartbeats):
             if len(row) != 0:
                 self.jsonToRelationConverter.pushToTable(self.resultTriplet(row, self.mainTableName))
+            # Clean out data structures in preparation for next 
+            # call to this method:
+            self.getReadyForNextRow()
         
     def resultTriplet(self, row, targetTableName, colNamesToSet=None):
         '''
@@ -514,7 +517,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             # Need to suppress foreign key checks, so that we
             # can DROP the tables:
             self.jsonToRelationConverter.pushString('SET foreign_key_checks = 0;\n')
-            self.jsonToRelationConverter.pushString('DROP TABLE IF EXISTS %s, Answer, InputState, CorrectMap, State, %s;\n' % self.mainTableName)
+            self.jsonToRelationConverter.pushString('DROP TABLE IF EXISTS %s, Answer, InputState, CorrectMap, State;\n' % self.mainTableName)
             self.jsonToRelationConverter.pushString('SET foreign_key_checks = 1;\n')        
 
         # Initialize col row arrays for each table. These

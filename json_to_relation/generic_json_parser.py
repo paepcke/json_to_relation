@@ -43,7 +43,19 @@ class GenericJSONParser(object):
         # in subclasses, and the column names are added in setValInRow() as
         # that method is called to insert values.
         self.colNamesByTable = {} 
-        
+    
+    def getReadyForNextRow(self):
+        '''
+        To be called after one row has been processed in
+        processOneJSONObject() of this class or one of
+        its subclasses. Cleans out any datastructures that
+        are only good during creation of one row.
+        '''
+        # So far, no column has been entered into 
+        # any table:
+        for tableName in self.colNamesByTable.keys():
+            self.colNamesByTable[tableName] = []
+    
     def processOneJSONObject(self, jsonStr, row):
         '''
         Given a JSON string that is one entire JSON object, parse the
@@ -164,6 +176,7 @@ class GenericJSONParser(object):
             return row
         finally:
             self.reportProgressIfNeeded()
+            self.getReadyForNextRow()
 
     def setValInRow(self, theRow, colName, value, tableName=None):
         '''
