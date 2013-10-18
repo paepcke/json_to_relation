@@ -273,7 +273,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             except ValueError as e:
                 raise ValueError('Ill formed JSON in track log, line %s: %s' % (self.jsonToRelationConverter.makeFileCitation(), `e`))
     
-            #******eventID = self.getUniqueEventID()
+            #******eventID = self.getUniqueID()
             #******self.setValInRow(row, 'eventID', eventID)
                     
             # Dispense with the fields common to all events, except event,
@@ -480,7 +480,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             # If above code generated anything to INSERT into SQL
             # table, do that now. If row is None, then nothing needs
             # to be inserted (e.g. heartbeats):
-            if len(row) != 0:
+            if row is not None and len(row) != 0:
                 self.jsonToRelationConverter.pushToTable(self.resultTriplet(row, self.mainTableName))
             # Clean out data structures in preparation for next 
             # call to this method:
@@ -641,7 +641,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
     def handleCommonFields(self, record, row):
         # Create a unique event key  for this event:
-        self.setValInRow(row, 'eventID', self.getUniqueEventID())
+        self.setValInRow(row, 'eventID', self.getUniqueID())
         for fldName in self.commonFldNames:
             # Default non-existing flds to null:
             val = record.get(fldName, None)
@@ -961,7 +961,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
             # Unique key for the CorrectMap entry (and foreign
             # key for the Event table):
-            correct_map_id = uuid.uuid4()
+            correct_map_id = self.getUniqueID()
             correctMapUniqKeys.append(correct_map_id)
             correctMapValues = [correct_map_id,
                                 answer_id,
@@ -992,7 +992,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         for problemID in answersDict.keys():
             answer = answersDict.get(problemID, None)
             if answer is not None:
-                answersKey = uuid.uuid4()
+                answersKey = self.getUniqueID()
                 answersKeys.append(answersKey)
                 answerValues = [answersKey,          # answer_id fld 
                                 problemID,             # problem_id fld
@@ -1065,7 +1065,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         generatedAllRows = False
         
         # Unique ID that ties all these related rows together:
-        state_id = uuid.uuid4()
+        state_id = self.getUniqueID()
         stateFKeys.append(state_id)
         indexToFKeys = 0
         while not generatedAllRows:
@@ -1110,7 +1110,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         for problemID in inputStatesDict.keys():
             inputStateProbVal = inputStatesDict.get(problemID, None)
             if inputStateProbVal is not None:
-                inputStateKey = uuid.uuid4()
+                inputStateKey = self.getUniqueID()
                 inputStateKeys.append(inputStateKey)
                 inputStateValues = [inputStateKey,
                                     problemID,
@@ -1181,6 +1181,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         except KeyError:
             self.logWarn("Track log line %s with event type problem_show contains event without problem ID: '%s'" %
                          (self.jsonToRelationConverter.makeFileCitation(), event))
+            return row
         self.setValInRow(row, 'problemID', problemID)
         return row
 
@@ -1232,7 +1233,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             return row
         
         # Get location:
-        location = event['location']
+        try:
+            location = event['location']
+        except KeyError:
+            self.logWarn("Track log line %s: no location field provided in problem hide or show event: '%s'" %\
+             (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
+
         self.setValInRow(row, 'questionLocation', location)
         return row
         
@@ -1712,6 +1719,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             fullCourseName = None
         return (fullCourseName, course_id)
         
-    def getUniqueEventID(self):
-        return str(uuid.uuid4())
+    def getUniqueID(self):
+        '''
+        Generate a universally unique key with
+        all characters being legal in MySQL identifiers. 
+        '''
+        return str(uuid.uuid4()).replace('-','_')
         
