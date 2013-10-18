@@ -515,7 +515,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def pushTableCreations(self, replaceTables):  # @NoSelf
         '''
         Pushes SQL statements to caller that create all tables, main and
-        auxiliary. 
+        auxiliary. After these CREATE statements, 'START TRANSACTION;\n' is
+        pushed. The caller is responsible for pushing 'COMMIT;\n' when all
+        subsequent INSERT statements have been pushed.  
         @param replaceTables: if True, then generated CREATE statements will first DROP the various tables.
                               if False, the CREATE statements will be IF NOT EXISTS
         @type replaceTables: Boolean
@@ -543,6 +545,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.createInputStateTable()
         self.createStateTable()
         self.createMainTable()
+        
+        self.jsonToRelationConverter.pushString('START TRANSACTION;\n')
     
     def genOneCreateStatement(self, tableName, schemaDict, primaryKeyName=None, foreignKeyColNames=None):
         '''
@@ -691,7 +695,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
     def handleProblemCheck(self, record, row, event):
         '''
-        Gets an event JSON object string like this::
+        The problem_check event comes in two flavors (assertained by observation):
+        The most complex is this one::
 		  {       
 		    "success": "correct",
 		    "correct_map": {
@@ -748,8 +753,25 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 		        }
 		    },
 		    "problem_id": "i4x://Medicine/HRP258/problem/e194bcb477104d849691d8b336b65ff6"
-		  }        
-        @param record:
+		  }
+		  
+		The simpler version is like this, in which the answers are styled as HTTP GET parameters::
+		  {"username": "smitch", 
+		   "host": "class.stanford.edu", 
+		   "session": "75a8c9042ba10156301728f61e487414", 
+		   "event_source": "browser", 
+		   "event_type": "problem_check", 
+		   "time": "2013-08-04T06:27:13.660689+00:00", 
+		   "ip": "66.172.116.216", 
+		   "event": "\"input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_2_1=choice_2&
+		               input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_3_1=choice_2\"", 
+		   "agent": "Mozilla/5.0 (Windows NT 6.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36", 
+		   "page": "https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/de472d1448a74e639a41fa584c49b91e/ed52812e4f96445383bfc556d15cb902/"
+		   }	        
+
+        We handle the complex version here, but call problemCheckSimpleCase() 
+        for the simple case.
+		@param record:
         @type record:
         @param row:
         @type row:
@@ -761,6 +783,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
 
+        if isinstance(event, basestring):
+            # Simple case:
+            return self.handleProblemCheckSimpleCase(row, event)
+
+        # Complex case: event field should be a dict:
         if not isinstance(event, dict):
             self.logWarn("Track log line %s: event is not a dict in problem_check event: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
@@ -828,6 +855,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             except IndexError:
                 stateFKey = None
             
+            # Have we created rows to cover all student_answers, correct_maps, and input_states?
             if correctMapFKey is None and answerFKey is None and stateFKey is None:
                 generatedAllRows = True
                 continue
@@ -838,8 +866,55 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             self.setValInRow(row, 'stateFK', stateFKey, self.mainTableName)
             rowInfoTriplet = self.resultTriplet(row, self.mainTableName, self.schemaHintsMainTable.keys())
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
-            # Have we created rows to cover all student_answers, correct_maps, and input_states?
             indexToFKeys += 1
+        # Return empty row, b/c we already pushed all necessary rows:
+        return []
+
+    def handleProblemCheckSimpleCase(self, row, event):
+        '''
+        Handle the simple case of problem_check type events. 
+        Their event field has this form::
+		   "event": "\"input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_2_1=choice_2&
+		               input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_3_1=choice_2\"", 
+        The problems and proposed solutions are styled like HTTP GET request parameters.        
+        @param row:
+        @type row:
+        @param event:
+        @type event:
+        '''
+        # Easy case: event field is GET-styled list of problem ID/choices.
+        # Separate all (&-separated) answers into strings like 'problem10=choice_2':
+        problemAnswers = event.split('&')
+        # Build a map problemID-->answer:
+        answersDict = {}            
+        for problemID_choice in problemAnswers:
+            try:
+                # Pull elements out from GET parameter strings like 'problemID=choice_2' 
+                (problemID, answerChoice) = problemID_choice.split('=')
+                answersDict[problemID] = answerChoice
+            except ValueError:
+                # Badly formatted GET parameter element:
+                self.logWarn("Track log line %s: badly formatted problemID/answerChoice GET parameter pair: %s." %\
+                             (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+                return row
+        if len(answersDict) > 0:
+            # Enter all answers into the Answer table,
+            # receiving an array of the Answer table's keys
+            # that were generated:
+            answersFKeys = self.pushAnswers(answersDict)
+        else:
+            answersFKeys = []
+        # Now need to generate enough near-replicas of event
+        # entries to cover all answers, putting one Answer
+        # table key into the answers foreign key column each
+        # time:
+        for answerFKey in answersFKeys:
+            # Fill in one main table row.
+            self.setValInRow(row, 'answerFK', answerFKey, self.mainTableName)
+            rowInfoTriplet = self.resultTriplet(row, self.mainTableName, self.schemaHintsMainTable.keys())
+            self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
+        # Return empty row, b/c we already pushed all necessary rows:
+        return []
 
     def pushCorrectMaps(self, correctMapsDict):
         '''

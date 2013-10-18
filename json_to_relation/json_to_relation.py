@@ -348,16 +348,17 @@ class JSONToRelation(object):
                     # tables necessary for each event type. The method will
                     # direct the top level event information to the table
                     # called self.mainTableName.
-                    newRow = self.jsonParserInstance.processOneJSONObject(jsonStr, newRow)
+                    self.jsonParserInstance.processOneJSONObject(jsonStr, newRow)
                 except ValueError as e:
                     JSONToRelation.logger.warn('Line %s: bad JSON object: %s' % (self.makeFileCitation(), `e`))
                 self.bumpLineCounter()
 
             # Since we hold back SQL insertion values to include them
             # all into one INSERT statement, need to flush after last
-            # call to processOneJSONObject:
+            # call to processOneJSONObject, after pushing COMMIT:
             if self.destination.getOutputFormat() == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
                 self.processFinishedRow('FLUSH', outFd) 
+                self.pushString('COMMIT;\n')
         
         # If output to other than MySQL table (e.g. CSV file), check whether
         # we are to prepend the column header row:
@@ -369,6 +370,7 @@ class JSONToRelation(object):
                     shutil.copyfileobj(inFd, finalOutFd.fileHandle)
             finally:
                 self.tmpFileName.close() # This deletes the file
+                
 
     def pushString(self, whatToWrite):
         '''

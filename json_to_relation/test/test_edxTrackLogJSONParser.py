@@ -190,7 +190,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                 sys.stdout.write(line)
  
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
-    def testCheckProblemEventType(self):
+    def testProblemCheckEventTypeComplexCase(self):
 
         testFilePath = os.path.join(os.path.dirname(__file__),"data/problem_checkEventFldOnly.json")
         stringSource = InURI(testFilePath)
@@ -218,6 +218,32 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         dest.close()
         truthFile = open(os.path.join(os.path.dirname(__file__),"data/problem_checkEventFldOnlyTruth.sql"), 'r')
         self.assertFileContentEquals(truthFile, dest.name)
+        
+        
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")        
+    def testProblemCheckSimpleCase(self):        
+        # Another case that gave problems at some point; this 
+        # time go through entire machinery:
+        testFilePath = os.path.join(os.path.dirname(__file__),"data/problem_checkSimpleCase.json")
+        stringSource = InURI(testFilePath)
+        
+        resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+        # Just use the file name of the tmp file.
+        resultFileName = resultFile.name
+        resultFile.close()
+        dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+        fileConverter = JSONToRelation(stringSource,
+                                       dest,
+                                       mainTableName='Event'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Event')
+        fileConverter.setParser(edxParser)
+        fileConverter.convert()
+        dest.close()
+        truthFile = open(os.path.join(os.path.dirname(__file__),"data/problem_checkSimpleCaseTruth.sql"), 'r')
+        self.assertFileContentEquals(truthFile, dest.name)
+
+        
         
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testProcessSeq_Goto(self):
@@ -272,7 +298,10 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                 # expected is longer than what's in the file:
                 self.fail("Expected string is longer than content of output file %s" % filePath)
 
-    
+    def printFile(self, fileName):
+        with open(fileName, 'r') as fd:
+            print(fd.readline())
+             
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testGetCourseID']
     unittest.main()

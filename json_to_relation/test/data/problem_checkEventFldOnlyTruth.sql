@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS Event (
     FOREIGN KEY(answerFK) REFERENCES Answer(answer_id),
     FOREIGN KEY(stateFK) REFERENCES State(state_id)
     );
+START TRANSACTION;
 INSERT INTO CorrectMap (correct_map_id,answer_id,correctness,npoints,msg,hint,hintmode,queuestate) VALUES 
     (83552ed0-8bdb-4fdd-9f4e-9bf162a630d8,'i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1','correct',null,'','',null,null),
     (bf033fef-b220-4f69-8d56-27cfcf4e82f9,'i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1','correct',null,'','',null,null);
