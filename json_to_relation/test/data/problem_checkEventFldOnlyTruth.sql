@@ -78,22 +78,22 @@ CREATE TABLE IF NOT EXISTS Event (
     );
 START TRANSACTION;
 INSERT INTO CorrectMap (correct_map_id,answer_id,correctness,npoints,msg,hint,hintmode,queuestate) VALUES 
-    (83552ed0-8bdb-4fdd-9f4e-9bf162a630d8,'i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1','correct',null,'','',null,null),
-    (bf033fef-b220-4f69-8d56-27cfcf4e82f9,'i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1','correct',null,'','',null,null);
+    ('83552ed0_8bdb_4fdd_9f4e_9bf162a630d8','i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1','correct',null,'','',null,null),
+    ('bf033fef_b220_4f69_8d56_27cfcf4e82f9','i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1','correct',null,'','',null,null);
 INSERT INTO Answer (answer_id,problem_id,answer) VALUES 
-    (8c1e79df-a863-4371-98ce-fc9b5b0b478a,'i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1','choice_0'),
-    (e3dfc629-4562-4260-b001-789132b2c6b6,'i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1','choice_3'),
-    (70725a11-403f-400a-b63e-84c6d132aa8e,'i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1','choice_3'),
-    (5be1502d-0f53-4cee-8676-a74539569e02,'i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1','choice_1');
+    ('8c1e79df_a863_4371_98ce_fc9b5b0b478a','i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1','choice_0'),
+    ('e3dfc629_4562_4260_b001_789132b2c6b6','i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1','choice_3'),
+    ('70725a11_403f_400a_b63e_84c6d132aa8e','i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1','choice_3'),
+    ('5be1502d_0f53_4cee_8676_a74539569e02','i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1','choice_1');
 INSERT INTO CorrectMap (correct_map_id,answer_id,correctness,npoints,msg,hint,hintmode,queuestate) VALUES 
-    (e4c46632-137c-470f-8009-fb91619d5a0d,'i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1','incorrect',null,'','',null,null),
-    (ace84468-a40a-4504-ab67-f84c2c1fa631,'i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1','incorrect',null,'','',null,null);
+    ('e4c46632_137c_470f_8009_fb91619d5a0d','i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1','incorrect',null,'','',null,null),
+    ('ace84468_a40a_4504_ab67_f84c2c1fa631','i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1','incorrect',null,'','',null,null);
 INSERT INTO InputState (input_state_id,problem_id,state) VALUES 
-    (1adee9ea-4be0-419b-a2ce-7f570b66cd04,'i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1',{}),
-    (2a077c63-1e13-442a-b1cb-225e98acde92,'i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1',{});
+    ('1adee9ea_4be0_419b_a2ce_7f570b66cd04','i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1',{}),
+    ('2a077c63_1e13_442a_b1cb_225e98acde92','i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1',{});
 INSERT INTO State (state_id,seed,done,problem_id,student_answer,correct_map,input_state) VALUES 
-    (6ee97dbe-8447-4420-bc1b-eff461f9d327,1,True,null,70725a11-403f-400a-b63e-84c6d132aa8e,e4c46632-137c-470f-8009-fb91619d5a0d,1adee9ea-4be0-419b-a2ce-7f570b66cd04),
-    (6ee97dbe-8447-4420-bc1b-eff461f9d327,1,True,null,5be1502d-0f53-4cee-8676-a74539569e02,ace84468-a40a-4504-ab67-f84c2c1fa631,2a077c63-1e13-442a-b1cb-225e98acde92);
+    ('6ee97dbe_8447_4420_bc1b_eff461f9d327',1,True,null,'70725a11_403f_400a_b63e_84c6d132aa8e','e4c46632_137c_470f_8009_fb91619d5a0d','1adee9ea_4be0_419b_a2ce_7f570b66cd04'),
+    ('6ee97dbe_8447_4420_bc1b_eff461f9d327',1,True,null,'5be1502d_0f53_4cee_8676_a74539569e02','ace84468_a40a_4504_ab67_f84c2c1fa631','2a077c63_1e13_442a_b1cb_225e98acde92');
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,attempts,feedback,feedbackResponseSelected,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime,videoSpeed,bookInteractionType,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,correctMapFK,answerFK,stateFK) VALUES 
-    (null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,2,null,null,null,null,null,null,null,null,null,'correct',null,null,null,null,null,null,null,83552ed0-8bdb-4fdd-9f4e-9bf162a630d8,8c1e79df-a863-4371-98ce-fc9b5b0b478a,6ee97dbe-8447-4420-bc1b-eff461f9d327),
-    (null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,2,null,null,null,null,null,null,null,null,null,'correct',null,null,null,null,null,null,null,bf033fef-b220-4f69-8d56-27cfcf4e82f9,e3dfc629-4562-4260-b001-789132b2c6b6,null);
+    (null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,2,null,null,null,null,null,null,null,null,null,'correct',null,null,null,null,null,null,null,'83552ed0_8bdb_4fdd_9f4e_9bf162a630d8','8c1e79df_a863_4371_98ce_fc9b5b0b478a','6ee97dbe_8447_4420_bc1b_eff461f9d327'),
+    (null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,2,null,null,null,null,null,null,null,null,null,'correct',null,null,null,null,null,null,null,'bf033fef_b220_4f69_8d56_27cfcf4e82f9','e3dfc629_4562_4260_b001_789132b2c6b6',null);

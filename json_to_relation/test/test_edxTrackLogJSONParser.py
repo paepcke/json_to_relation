@@ -19,14 +19,14 @@ from json_to_relation.output_disposition import OutputDisposition, ColDataType, 
     TableSchemas, ColumnSpec, OutputFile, OutputPipe  # @UnusedImport
 
 
-TEST_ALL = True
+TEST_ALL = False
 PRINT_OUTS = False  # Set True to get printouts of CREATE TABLE statements
 
 class TestEdxTrackLogJSONParser(unittest.TestCase):
     
     def setUp(self):
         super(TestEdxTrackLogJSONParser, self).setUp()  
-        self.uuidRegex = '[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}'
+        self.uuidRegex = '[a-f0-9]{8}_[a-f0-9]{4}_[a-f0-9]{4}_[a-f0-9]{4}_[a-f0-9]{12}'
         self.pattern   = re.compile(self.uuidRegex)
         self.loginEvent = '{"username": "",   "host": "class.stanford.edu",   "event_source": "server",   "event_type": "/accounts/login",   "time": "2013-06-14T00:31:57.661338",   "ip": "98.230.189.66",   "event": "{\\"POST\\": {}, \\"GET\\": {\\"next\\": [\\"/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/80160exxx/\\"]}}",   "agent": "Mozilla/5.0 (Windows NT 5.1; rv:21.0) Gecko/20100101  Firefox/21.0",   "page": null}' 
         self.dashboardEvent = '{"username": "", "host": "class.stanford.edu", "event_source": "server", "event_type": "/accounts/login", "time": "2013-06-10T05:13:37.499008", "ip": "91.210.228.6", "event": "{\\"POST\\": {}, \\"GET\\": {\\"next\\": [\\"/dashboard\\"]}}", "agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1", "page": null}'
@@ -220,7 +220,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         self.assertFileContentEquals(truthFile, dest.name)
         
         
-    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")        
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")        
     def testProblemCheckSimpleCase(self):        
         # Another case that gave problems at some point; this 
         # time go through entire machinery:
