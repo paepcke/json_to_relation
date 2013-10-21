@@ -87,8 +87,14 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaHintsMainTable['attempts'] = ColDataType.TINYINT
         
         
-        # Answers (in their own table; so this is just a foreign key field):
-        # use problemID 
+        # Answers 
+        # Multiple choice answers are in their own table,
+        # called Answer. In this main table answerFK points
+        # to one entry in that table.
+        
+        self.schemaHintsMainTable['longAnswer'] = ColDataType.TEXT # essay answers
+        self.schemaHintsMainTable['studentFile'] = ColDataType.TEXT
+        self.schemaHintsMainTable['canUploadFile'] = ColDataType.TINYTEXT
         
         # Feedback
         self.schemaHintsMainTable['feedback'] = ColDataType.TEXT
@@ -134,6 +140,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaHintsMainTable['event_name'] = ColDataType.TINYTEXT
         self.schemaHintsMainTable['group_user'] = ColDataType.TINYTEXT
         self.schemaHintsMainTable['group_action'] = ColDataType.TINYTEXT #'add', 'remove'; called 'event' in JSON
+        
+        # ajax
+        self.schemaHintsMainTable['position'] = ColDataType.INT # used in event ajax goto_position
 
         # Foreign keys to auxiliary tables:
         self.schemaHintsMainTable['correctMapFK'] = ColDataType.UUID
@@ -385,6 +394,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             if eventType == '/':
                 row = []
                 return
+            elif eventType == 'page_close':
+                # The page ID was already recorded in the common fields:
+                return
             
             # For any event other than heartbeat, we need to look
             # at the event field, which is an embedded JSON *string*
@@ -404,6 +416,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             except Exception as e:
                 raise ValueError("Track log line %s of event type %s has non-parsable JSON event field: %s" %\
                                  (self.jsonToRelationConverter.makeFileCitation(), eventType, `e`))
+                return
             
             if eventType == 'seq_goto' or\
                eventType == 'seq_next' or\
@@ -416,7 +429,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 # Already recorded everything needed in common-fields
                 return
             
+            elif eventType == '/login_ajax':
+                row = self.handleAjaxLogin(record, row, event, eventType)
+                return
+            
             elif eventType == 'problem_check':
+                # Note: some problem_check cases are also handled in handleAjaxLogin()
                 row = self.handleProblemCheck(record, row, event)
                 return
              
@@ -461,12 +479,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 row = self.handleOEFeedbackResponseSelected(record, row, event)
                 return
             
-            elif eventType == 'show_transcript':
-                row = self.handleShowTranscript(record, row, event)
-                return
-            
-            elif eventType == 'page_close':
-                # No additional info in event field
+            elif eventType == 'show_transcript' or eventType == 'hide_transcript':
+                row = self.handleShowHideTranscript(record, row, event)
                 return
             
             elif eventType == 'play_video' or\
@@ -477,6 +491,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
             elif eventType == 'seek_video':
                 row = self.handleVideoSeek(record, row, event)
+                return
+                
+            elif eventType == '/dashboard':
+                # Nothing additional to grab:
                 return
                 
             elif eventType == 'book':
@@ -556,6 +574,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             
             elif eventType == '/create_account':
                 self.handleCreateAccount(record, row, event)
+                return
+            
+            elif eventType[0] == '/':
+                self.handlePathStyledEventTypes(record, row, event)
                 return
             
             else:
@@ -744,6 +766,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         for fldName in self.commonFldNames:
             # Default non-existing flds to null:
             val = record.get(fldName, None)
+            # Ensure there are no embedded single quotes or CR/LFs;
+            # takes care of name = O'Brian 
+            if isinstance(val, basestring):
+                val = val.replace("'", "\\'").replace('\n', "; ").replace('\r', "; ").replace(',', "\\,")
             # if the event_type starts with a '/', followed by a 
             # class ID and '/about', treat separately:
             if fldName == 'event_type' and val is not None:
@@ -756,7 +782,16 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                     self.finishedRow = True
                 elif val == '/networking/':
                     val = 'networking'
-                    self.finishedRow = True                    
+                    self.finishedRow = True
+            elif fldName == 'courseID':
+                (fullCourseName, course_id) = self.get_course_id(record.get('event', None))  # @UnusedVariable
+                val = course_id
+            elif fldName == 'page':
+                # Try to extract a nice course name:
+                course_id = self.extractShortCourseID(val)
+                if course_id is not None:
+                    val = course_id
+                
             self.setValInRow(row, fldName, val)
         return row
 
@@ -1510,7 +1545,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
 
-        if not isinstance(event, dict):
+        if isinstance(event, dict):
+            valsDict = event
+        else:
             try:
                 # Maybe it's a string: make a dict from the string:
                 valsDict = eval(event)
@@ -1518,18 +1555,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 self.logWarn("Track log line %s: event is not a dict in video play/pause: '%s' (%s)" %\
                              (self.jsonToRelationConverter.makeFileCitation(), str(event), `e`))
                 return row
-        else:
-            valsDict = event
         
-        try:
-            videoID = valsDict['id']
-            videoCode = valsDict['code']
-            videoCurrentTime = valsDict['currentTime']
-            videoSpeed = valsDict['speed']
-        except KeyError:
-            self.logWarn("Track log line %s: missing video ID, code, currentTime, or speed in video event." %\
-                         (self.jsonToRelationConverter.makeFileCitation()))
-            return row
+        videoID = valsDict.get('id', None)
+        videoCode = valsDict.get('code', None)
+        videoCurrentTime = valsDict.get('currentTime', None)
+        videoSpeed = valsDict.get('speed', None)
+
         self.setValInRow(row, 'videoID', videoID)
         self.setValInRow(row, 'videoCode', videoCode)
         self.setValInRow(row, 'videoCurrentTime', videoCurrentTime)
@@ -1571,13 +1602,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.setValInRow(row, 'videoCode', videoCode)
         try:
             videoOldTime = float(videoOldTime)
-        except ValueError:
+        except TypeError:
                 self.logWarn("Track log line %s: oldTime in event seek_video: '%s' is expected to be a float" %\
                              (self.jsonToRelationConverter.makeFileCitation(), str(videoOldTime)))
                 videoOldTime = -1.0
         try:
             videoNewTime = float(videoNewTime)
-        except ValueError:
+        except TypeError:
                 self.logWarn("Track log line %s: newTime in event seek_video: '%s' is expected to be a float" %\
                              (self.jsonToRelationConverter.makeFileCitation(), str(videoNewTime)))
                 videoOldTime = -1.0
@@ -1640,12 +1671,14 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.setValInRow(row, 'problemID', problem_id)
         return row
 
-    def handleShowTranscript(self, record, row, event):
+    def handleShowHideTranscript(self, record, row, event):
         '''
         Events look like this::
             "{\"id\":\"i4x-Medicine-HRP258-videoalpha-c26e4247f7724cc3bc407a7a3541ed90\",
               \"code\":\"q3cxPJGX4gc\",
-              \"currentTime\":0}"        
+              \"currentTime\":0}"
+              
+        Same for hide_transcript
         @param record:
         @type record:
         @param row:
@@ -1654,12 +1687,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @type event:
         '''
         if event is None:
-            self.logWarn("Track log line %s: missing event info in show_transcript." %\
+            self.logWarn("Track log line %s: missing event info in show_transcript or hide_transcript." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
 
         if not isinstance(event, dict):
-            self.logWarn("Track log line %s: event is not a dict in show_transcript: '%s'" %\
+            self.logWarn("Track log line %s: event is not a dict in show_transcript or hide_transcript: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
 
@@ -2333,10 +2366,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
         # Escape single quotes and CR/LFs in the various fields, so that MySQL won't throw up.
         # Also replace newlines with ", ":
-        accountDict['goals'] = accountDict['goals'].replace("'", "\\'").replace('\n', ", ").replace('\r', ", ")
-        accountDict['username'] = accountDict['username'].replace("'", "\\'").replace('\n', ", ").replace('\r', ", ")
-        accountDict['mailing_address'] = accountDict['mailing_address'].replace('\n', ", ").replace('\r', ", ")
-        
+        if isinstance(accountDict.get('goals', None), basestring):
+            accountDict['goals'] = accountDict['goals'].replace("'", "\\'").replace('\n', "; ").replace('\r', "; ").replace(',', "\\,")
+        if isinstance(accountDict.get('username', None), basestring):
+            accountDict['username'] = accountDict['username'].replace("'", "\\'").replace('\n', "; ").replace('\r', "; ").replace(',', "\\,")
+        if isinstance(accountDict.get('mailing_address', None), basestring):
+            accountDict['mailing_address'] = accountDict['mailing_address'].replace('\n', "; ").replace('\r', "; ").replace(',', "\\,")
         
         # Get the (only) Account table foreign key.
         # Returned in an array for conformance with the
@@ -2346,6 +2381,275 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 
         return row
 
+    def handlePathStyledEventTypes(self, record, row, event):
+        '''
+        Called when an event type is a long path-like string.
+        Examples::
+          /courses/OpenEdX/200/Stanford_Sandbox/modx/i4x://OpenEdX/200/combinedopenended/5fb3b40e76a14752846008eeaca05bdf/check_for_score
+          /courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/peergrading/ef6ba7f803bb46ebaaf008cde737e3e9/is_student_calibrated",
+          /courses/Education/EDUC115N/How_to_Learn_Math/courseware
+        Most have action instructions at the end, some don't. The ones that don't 
+        have no additional information. We drop those events.
+        @param record:
+        @type record:
+        @param row:
+        @type row:
+        @param event:
+        @type event:
+        '''
+        if event is None:
+            self.logWarn("Track log line %s: missing event text in event %s." %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
+
+        if not isinstance(event, dict):
+            try:
+                # Maybe it's a string: make a dict from the string:
+                eventDict = eval(event)
+            except Exception as e:
+                self.logWarn("Track log line %s: event is not a dict in path-styled event: '%s' (%s)" %\
+                             (self.jsonToRelationConverter.makeFileCitation(), str(event), `e`))
+                return row
+        else:
+            eventDict = event
+        try:
+            postDict = eventDict['POST']
+        except KeyError:
+            self.logWarn("Track log line %s: event in path-styled event is not GET styled: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
+            
+        # Grab the 'verb' at the end, if there is one:
+        eventType = record['event_type']
+        if eventType is None or not isinstance(eventType, basestring):
+            return row 
+        pieces = eventType.split('/')
+        verb   = pieces[-1]
+        if verb == 'is_student_calibrated':
+            return self.subHandleIsStudentCalibrated(row, postDict)
+        elif verb == 'goto_position':
+            return self.subHandleGotoPosition(row, postDict)
+        elif verb == 'get_last_response':
+            # No additional info to get
+            return row
+        elif verb == 'problem':
+            return self.subHandleProblem(row, postDict)
+        elif verb == 'save_answer':
+            return self.subHandleSaveAnswer(row, postDict)
+        elif verb == 'check_for_score':
+            # No additional info to get
+            return row
+        elif verb == 'problem_get':
+            # No additional info to get
+            return row
+        elif verb == 'get_legend':
+            # No additional info to get
+            return row
+        elif verb == 'problem_show':
+            # No additional info to get
+            return row
+        elif verb == 'problem_check':
+            return self.subHandleProblemCheckInPath(row, postDict)
+        
+    def subHandleIsStudentCalibrated(self, row, eventDict):
+        '''
+        Called from handlePathStyledEventTypes(). Event dict looks like this::
+           {\"location\": [\"i4x://Education/EDUC115N/combinedopenended/0d67667941cd4e14ba29abd1542a9c5f\"]}, \"GET\": {}"        
+        The caller is expected to have verified the legitimacy of EventDict
+        @param row:
+        @type row:
+        @param event:
+        @type event:
+        '''
+
+        # Get location:
+        try:
+            location = eventDict['location']
+        except KeyError:
+            self.logWarn("Track log line %s: no location field provided in is_student_calibrated event: '%s'" %\
+             (self.jsonToRelationConverter.makeFileCitation(), str(eventDict)))
+            return row
+        try:
+            # The 'location' is an array of strings. Turn them into one string:
+            location = '; '.join(location)
+            self.setValInRow(row, 'questionLocation', location)
+        except TypeError:
+            self.logWarn("Track log line %s: location field provided in is_student_calibrated event contains a non-string: '%s'" %\
+             (self.jsonToRelationConverter.makeFileCitation(), str(eventDict)))
+            return row
+            
+        return row
+
+    def subHandleGotoPosition(self, row, eventDict):
+        '''
+        Called from handlePathStyledEventTypes(). Event dict looks like this::
+           {\"position\": [\"2\"]}, \"GET\": {}}"
+        The caller is expected to have verified the legitimacy of EventDict
+        @param row:
+        @type row:
+        @param event:
+        @type event:
+        '''
+
+        # Get location:
+        try:
+            position = eventDict['position']
+        except KeyError:
+            self.logWarn("Track log line %s: no position field provided in got_position event: '%s'" %\
+             (self.jsonToRelationConverter.makeFileCitation(), str(eventDict)))
+            return row
+        try:
+            # The 'position' is an array of ints. Turn them into one string:
+            position = '; '.join(position)
+            self.setValInRow(row, 'position', position)
+        except TypeError:
+            self.logWarn("Track log line %s: position field provided in goto_position event contains a non-string: '%s'" %\
+             (self.jsonToRelationConverter.makeFileCitation(), str(eventDict)))
+            return row
+            
+        return row
+
+    def subHandleProblem(self, row, eventDict):
+        '''
+        Called from handlePathStyledEventTypes(). Event dict looks like this::
+           {\"location\": [\"i4x://Education/EDUC115N/combinedopenended/0d67667941cd4e14ba29abd1542a9c5f\"]}, \"GET\": {}}"
+        The caller is expected to have verified the legitimacy of EventDict
+        @param row:
+        @type row:
+        @param event:
+        @type event:
+        '''
+
+        # Get location:
+        try:
+            location = eventDict['location']
+        except KeyError:
+            self.logWarn("Track log line %s: no location field provided in is_student_calibrated event: '%s'" %\
+             (self.jsonToRelationConverter.makeFileCitation(), str(eventDict)))
+            return row
+        try:
+            # The 'location' is an array of strings. Turn them into one string:
+            location = '; '.join(location)
+            self.setValInRow(row, 'questionLocation', location)
+        except TypeError:
+            self.logWarn("Track log line %s: location field provided in is_student_calibrated event contains a non-string: '%s'" %\
+             (self.jsonToRelationConverter.makeFileCitation(), str(eventDict)))
+            return row
+            
+        return row
+
+    def subHandleSaveAnswer(self, row, eventDict):
+        '''
+        Called from handlePathStyledEventTypes(). Event dict looks like this::
+           {\"student_file\": [\"\"], 
+            \"student_answer\": [\"Students will have to use higher level thinking to describe the...in the race. \"], 
+            \"can_upload_files\": [\"false\"]}, \"GET\": {}}"        
+        The caller is expected to have verified the legitimacy of EventDict
+        @param row:
+        @type row:
+        @param event:
+        @type event:
+        '''
+
+        student_file = eventDict.get('student_file', None)
+        student_answer = eventDict.get('student_answer', None)
+        can_upload_file = eventDict.get('can_upload_files', None)
+
+        # All three values are arrays. Turn them each into a semicolon-
+        # separated string:
+        try:
+            student_file = '; '.join(student_file)
+        except TypeError:
+            self.logWarn("Track log line %s: student_file field provided in save_answer event contains a non-string: '%s'" %\
+             (self.jsonToRelationConverter.makeFileCitation(), str(eventDict)))
+            student_file = None
+        self.setValInRow(row, 'studentFile', student_file)
+
+        try:
+            student_answer = '; '.join(student_answer)
+            # Ensure escape of comma, quotes, and CR/LF:
+            student_answer = student_answer.replace("'", "\\'").replace('\n', "; ").replace('\r', "; ").replace(',', "\\,")
+        except TypeError:
+            self.logWarn("Track log line %s: student_answer field provided in save_answer event contains a non-string: '%s'" %\
+             (self.jsonToRelationConverter.makeFileCitation(), str(eventDict)))
+            student_answer = None
+        self.setValInRow(row, 'longAnswer', student_answer)
+            
+        try:
+            can_upload_file = '; '.join(can_upload_file)
+        except TypeError:
+            self.logWarn("Track log line %s: can_upload_file field provided in save_answer event contains a non-string: '%s'" %\
+             (self.jsonToRelationConverter.makeFileCitation(), str(eventDict)))
+            can_upload_file = None
+        self.setValInRow(row, 'canUploadFile', can_upload_file)
+            
+        return row
+
+    def subHandleProblemCheckInPath(self, row, answersDict):
+        '''
+        Get dict like this:
+           {\"input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1\": [\"choice_3\"]}, 
+            \"GET\": {}}"        
+        @param row:
+        @type row:
+        @param answersDict:
+        @type answersDict:
+        '''
+        if answersDict is not None:
+            answersFKeys = self.pushAnswers(answersDict)
+        for answerFKey in answersFKeys:
+            self.setValInRow(row, 'answerFK', answerFKey, self.mainTableName)            
+        return row
+
+    def handleAjaxLogin(self, record, row, event, eventType):
+        '''
+        Events look like this:
+            "{\"POST\": {\"password\": \"********\", \"email\": [\"emil.smith@gmail.com\"], \"remember\": [\"true\"]}, \"GET\": {}}"        
+        @param record:
+        @type record:
+        @param row:
+        @type row:
+        @param event:
+        @type event:
+        @param eventType:
+        @type eventType:
+        '''
+        if event is None:
+            self.logWarn("Track log line %s: missing event text in event %s." %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
+
+        if not isinstance(event, dict):
+            try:
+                # Maybe it's a string: make a dict from the string:
+                eventDict = eval(event)
+            except Exception as e:
+                self.logWarn("Track log line %s: event is not a dict in event: '%s' (%s)" %\
+                             (self.jsonToRelationConverter.makeFileCitation(), str(event), `e`))
+                return row
+        else:
+            eventDict = event
+        try:
+            postDict = eventDict['POST']
+        except KeyError:
+            self.logWarn("Track log line %s: event in login_ajax is not GET styled: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
+        email = postDict.get('email', None)
+        # We get remember here, but don't carry it to the relational world:
+        remember = postDict.get('remember', None)  # @UnusedVariable
+        if email is not None:
+            # Stick email into the username field. But flatten
+            # the array of email addresses to a string (I've only
+            # seen single-element arrays anyway):
+            try:
+                email = '; '.join(email)
+            except TypeError:
+                pass
+            self.setValInRow(row, 'username', email)
+        return row
+        
+    
     def get_course_id(self, event):
         '''
         Given a 'pythonized' JSON tracking event object, find
@@ -2392,13 +2696,21 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         else:
             fullCourseName = event['page']
         if fullCourseName:
-            courseNameFrags = fullCourseName.split('/')
-            if 'courses' in courseNameFrags:
-                i = courseNameFrags.index('courses')
-                course_id = "/".join(map(str, courseNameFrags[i+1:i+4]))
+            course_id = self.extractShortCourseID(fullCourseName)
         if course_id is None:
             fullCourseName = None
         return (fullCourseName, course_id)
+        
+    def extractShortCourseID(self, fullCourseStr):
+        if fullCourseStr is None:
+            return None
+        courseNameFrags = fullCourseStr.split('/')
+        course_id = None
+        if 'courses' in courseNameFrags:
+            i = courseNameFrags.index('courses')
+            course_id = "/".join(map(str, courseNameFrags[i+1:i+4]))
+        return course_id        
+        
         
     def getUniqueID(self):
         '''
