@@ -116,10 +116,24 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaHintsMainTable['msg'] = ColDataType.TEXT
         self.schemaHintsMainTable['npoints'] = ColDataType.TINYINT
         self.schemaHintsMainTable['queuestate'] = ColDataType.TEXT
+        
+        # Used in problem_rescore:
+        self.schemaHintsMainTable['orig_score'] = ColDataType.INT
+        self.schemaHintsMainTable['new_score'] = ColDataType.INT
+        self.schemaHintsMainTable['orig_total'] = ColDataType.INT
+        self.schemaHintsMainTable['new_total'] = ColDataType.INT
+        
+        # For user group manipulations:
+        self.schemaHintsMainTable['event_name'] = ColDataType.TINYTEXT
+        self.schemaHintsMainTable['group_user'] = ColDataType.TINYTEXT
+        self.schemaHintsMainTable['group_action'] = ColDataType.TINYTEXT #'add', 'remove'; called 'event' in JSON
+
+        # Foreign keys to auxiliary tables:
         self.schemaHintsMainTable['correctMapFK'] = ColDataType.UUID
         self.schemaHintsMainTable['answerFK'] = ColDataType.UUID
         self.schemaHintsMainTable['stateFK'] = ColDataType.UUID
-        
+        self.schemaHintsMainTable['accountFK'] = ColDataType.UUID
+
         # Schema hints need to be a dict that maps column names to ColumnSpec 
         # instances. The dict we built so far only the the column types. Go through
         # and turn the dict's values into ColumnSpec instances:
@@ -186,6 +200,26 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             colType = self.schemaInputStateTbl[colName]
             self.schemaInputStateTbl[colName] = ColumnSpec(colName, colType, self.jsonToRelationConverter)
 
+        # Schema for Account table:
+        self.schemaAccountTbl = OrderedDict()
+        self.schemaAccountTbl['account_id'] = ColDataType.UUID
+        self.schemaAccountTbl['username'] = ColDataType.TEXT
+        self.schemaAccountTbl['name'] = ColDataType.TEXT
+        self.schemaAccountTbl['mailing_address'] = ColDataType.TEXT
+        self.schemaAccountTbl['gender'] = ColDataType.TINYTEXT
+        self.schemaAccountTbl['year_of_birth'] = ColDataType.TINYINT
+        self.schemaAccountTbl['level_of_education'] = ColDataType.TINYTEXT
+        self.schemaAccountTbl['goals'] = ColDataType.TEXT
+        self.schemaAccountTbl['honor_code'] = ColDataType.BOOL
+        self.schemaAccountTbl['terms_of_service'] = ColDataType.BOOL
+        self.schemaAccountTbl['course_id'] = ColDataType.TEXT
+        self.schemaAccountTbl['enrollment_action'] = ColDataType.TINYTEXT
+        self.schemaAccountTbl['email'] = ColDataType.TEXT
+
+        # Turn the SQL data types in the dict to column spec objects:
+        for colName in self.schemaAccountTbl.keys():
+            colType = self.schemaAccountTbl[colName]
+            self.schemaAccountTbl[colName] = ColumnSpec(colName, colType, self.jsonToRelationConverter)
 
         # Dict<IP,Datetime>: record each IP's most recent
         # activity timestamp (heartbeat or any other event).
@@ -269,7 +303,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         try:
             # Turn top level JSON object to dict:
             try:
-                record = json.loads(jsonStr)
+                record = json.loads(str(jsonStr))
             except ValueError as e:
                 raise ValueError('Ill formed JSON in track log, line %s: %s' % (self.jsonToRelationConverter.makeFileCitation(), `e`))
     
@@ -280,6 +314,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             # which is a nested JSON string. Results will be 
             # in self.resultDict:
             self.handleCommonFields(record, row)
+            
+            # If the event was fully handled in
+            # handleCommonFields(), then we're done:
+            if self.finishedRow:
+                return
             
             # Now handle the different types of events:
             
@@ -335,16 +374,26 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                     row = []
                 return
             
+            # If eventType is "/" then it was a ping, no more to be done:
+            if eventType == '/':
+                row = []
+                return
+            
             # For any event other than heartbeat, we need to look
             # at the event field, which is an embedded JSON *string*
-            # Turn that string into a (nested) Python dict:
+            # Turn that string into a (nested) Python dict. Though
+            # *sometimes* the even *is* a dict, not a string, as in
+            # problem_check_fail:
             try:
-                eventJSONStr = record['event']
+                eventJSONStrOrDict = record['event']
             except KeyError:
                 raise ValueError("Track log line %s of event type %s has no event field" % (self.jsonToRelationConverter.makeFileCitation(), eventType))
             
             try:
-                event = json.loads(eventJSONStr)
+                event = json.loads(eventJSONStrOrDict)
+            except TypeError:
+                # Was already a dict
+                event = eventJSONStrOrDict
             except Exception as e:
                 raise ValueError("Track log line %s of event type %s has non-parsable JSON event field: %s" %\
                                  (self.jsonToRelationConverter.makeFileCitation(), eventType, `e`))
@@ -427,6 +476,24 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 self.handleProblemCheckFail(record, row, event)
                 return
             
+            elif eventType == 'problem_rescore_fail':
+                row = self.handleProblemRescoreFail(record, row, event)
+                return
+            
+            elif eventType == 'problem_rescore':
+                row = self.handleProblemRescore(record, row, event)
+                return
+            
+            elif eventType == 'save_problem_fail' or\
+                 eventType == 'save_problem_success' or\
+                 eventType == 'reset_problem_fail':
+                row = self.handleSaveProblemFailSuccessOrReset(record, row, event)
+                return
+            
+            elif eventType == 'reset_problem':
+                row = self.handleResetProblem(record, row, event)
+                return
+            
             # Instructor events:
             elif eventType in ['list-students',  'dump-grades',  'dump-grades-raw',  'dump-grades-csv',
                                'dump-grades-csv-raw', 'dump-answer-dist-csv', 'dump-graded-assignments-config',
@@ -472,6 +539,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 self.handleAddRemoveUserGroup(record, row, event)
                 return
             
+            elif eventType == '/create_account':
+                self.handleCreateAccount(record, row, event)
+                return
+            
             else:
                 self.logWarn("Unknown event type '%s' in tracklog row %s" % (eventType, self.jsonToRelationConverter.makeFileCitation()))
                 return
@@ -502,6 +573,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                               the values are destined for the main event table, whose
                               schema is 'well known'.
         @type colNamesToSet: [String]
+        @return: table name, string with all comma-separated column names, and values as a 3-tuple
+        @rtype: (String, String, [<any>])
         '''
         if colNamesToSet is None and targetTableName != self.mainTableName:
             raise ValueError("If colNamesToSet is None, the target table must be the main table whose name was passed into __init__(); was %s" % targetTableName)
@@ -527,7 +600,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             # Need to suppress foreign key checks, so that we
             # can DROP the tables:
             self.jsonToRelationConverter.pushString('SET foreign_key_checks = 0;\n')
-            self.jsonToRelationConverter.pushString('DROP TABLE IF EXISTS %s, Answer, InputState, CorrectMap, State;\n' % self.mainTableName)
+            self.jsonToRelationConverter.pushString('DROP TABLE IF EXISTS %s, Answer, InputState, CorrectMap, State, Account;\n' % self.mainTableName)
             self.jsonToRelationConverter.pushString('SET foreign_key_checks = 1;\n')        
 
         # Initialize col row arrays for each table. These
@@ -539,11 +612,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.colNamesByTable['CorrectMap'] = []
         self.colNamesByTable['InputState'] = []
         self.colNamesByTable['State'] = []
+        self.colNamesByTable['Account'] = []
 
         self.createAnswerTable()
         self.createCorrectMapTable()
         self.createInputStateTable()
         self.createStateTable()
+        self.createAccountTable()        
         self.createMainTable()
         
         self.jsonToRelationConverter.pushString('START TRANSACTION;\n')
@@ -624,6 +699,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                                      foreignKeyColNames=foreignKeysDict)        
         self.jsonToRelationConverter.pushString(createStatement)
 
+    def createAccountTable(self):
+        createStatement = self.genOneCreateStatement('Account', 
+                                                     self.schemaAccountTbl, 
+                                                     primaryKeyName='account_id'
+                                                     ) 
+        self.jsonToRelationConverter.pushString(createStatement)
+
     def createMainTable(self):
         # Make the foreign keys information dict ordered. Doesn't
         # matter to SQL engine, but makes unittesting easier, b/c
@@ -633,6 +715,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         foreignKeysDict['CorrectMap'] = ('correctMapFK', 'correct_map_id')
         foreignKeysDict['Answer'] = ('answerFK', 'answer_id')
         foreignKeysDict['State'] = ('stateFK', 'state_id')
+        foreignKeysDict['Account'] = ('accountFK', 'account_id')
         createStatement = self.genOneCreateStatement(self.mainTableName, 
                                                      self.schemaHintsMainTable, 
                                                      primaryKeyName='event_id', 
@@ -642,9 +725,23 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleCommonFields(self, record, row):
         # Create a unique event key  for this event:
         self.setValInRow(row, 'eventID', self.getUniqueID())
+        self.finishedRow = False
         for fldName in self.commonFldNames:
             # Default non-existing flds to null:
             val = record.get(fldName, None)
+            # if the event_type starts with a '/', followed by a 
+            # class ID and '/about', treat separately:
+            if fldName == 'event_type' and val is not None:
+                if val[0] == '/' and val[-6:] == '/about':
+                    self.setValInRow(row, 'courseID', val[0:-6])
+                    val = 'about'
+                    self.finishedRow = True
+                elif val.find('/password_reset_confirm') == 0:
+                    val = 'password_reset_confirm'
+                    self.finishedRow = True
+                elif val == '/networking/':
+                    val = 'networking'
+                    self.finishedRow = True                    
             self.setValInRow(row, fldName, val)
         return row
 
@@ -864,7 +961,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             self.setValInRow(row, 'correctMapFK', correctMapFKey, self.mainTableName)
             self.setValInRow(row, 'answerFK', answerFKey, self.mainTableName)
             self.setValInRow(row, 'stateFK', stateFKey, self.mainTableName)
-            rowInfoTriplet = self.resultTriplet(row, self.mainTableName, self.schemaHintsMainTable.keys())
+            rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
             indexToFKeys += 1
         # Return empty row, b/c we already pushed all necessary rows:
@@ -911,7 +1008,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         for answerFKey in answersFKeys:
             # Fill in one main table row.
             self.setValInRow(row, 'answerFK', answerFKey, self.mainTableName)
-            rowInfoTriplet = self.resultTriplet(row, self.mainTableName, self.schemaHintsMainTable.keys())
+            rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
         # Return empty row, b/c we already pushed all necessary rows:
         return []
@@ -991,11 +1088,20 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         answersKeys = []
         for problemID in answersDict.keys():
             answer = answersDict.get(problemID, None)
+            # answer could be an array of Unicode strings, or
+            # a single string: u'choice_1', or [u'choice_1'] or [u'choice_1', u'choice_2']
+            # below: turn into latin1, comma separated single string.
+            # Else Python prints the "u'" into the INSERT statement
+            # and makes MySQL unhappy:
             if answer is not None:
+                if isinstance(answer, list):
+                    answer = ','.join(answer).encode('latin1')
+                else:
+                    answer = answer.encode('latin1')
                 answersKey = self.getUniqueID()
                 answersKeys.append(answersKey)
                 answerValues = [answersKey,          # answer_id fld 
-                                problemID,             # problem_id fld
+                                problemID,           # problem_id fld
                                 answer
                                 ]
                 self.jsonToRelationConverter.pushToTable(self.resultTriplet(answerValues, 'Answer', self.schemaAnswerTbl.keys()))
@@ -1064,9 +1170,6 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # structure across relations State, Answer, CorrectMap, and InputState:
         generatedAllRows = False
         
-        # Unique ID that ties all these related rows together:
-        state_id = self.getUniqueID()
-        stateFKeys.append(state_id)
         indexToFKeys = 0
         while not generatedAllRows:
             try:
@@ -1087,6 +1190,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 generatedAllRows = True
                 continue
 
+            # Unique ID that ties all these related rows together:
+            state_id = self.getUniqueID()
+            stateFKeys.append(state_id)
             stateValues = [state_id, seed, done, problemID, studentAnswerFKey, correctMapFKey, inputStateFKey]
             rowInfoTriplet = self.resultTriplet(stateValues, 'State', self.schemaStateTbl.keys())
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
@@ -1110,6 +1216,15 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         for problemID in inputStatesDict.keys():
             inputStateProbVal = inputStatesDict.get(problemID, None)
             if inputStateProbVal is not None:
+                # If prob value is an empty dict (as in example above),
+                # then make it null, else the value will show up as
+                # {} in the VALUES part of the INSERT statements, and
+                # MySQL will get cranky:
+                try:
+                    if len(inputStateProbVal) == 0:
+                        inputStateProbVal = 'null'
+                except:
+                    pass
                 inputStateKey = self.getUniqueID()
                 inputStateKeys.append(inputStateKey)
                 inputStateValues = [inputStateKey,
@@ -1118,6 +1233,23 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                     ]
                 self.jsonToRelationConverter.pushToTable(self.resultTriplet(inputStateValues, 'InputState', self.schemaInputStateTbl.keys()))
         return inputStateKeys
+        
+    def pushAccountInfo(self, accountDict):
+        '''
+        Takes an ordered dict with the fields of
+        a create_account event. Pushes the values
+        (name, address, email, etc.) as a row to the
+        Account table, and returns the resulting row
+        primary key for inclusion in the main table's
+        accountFKey field. 
+        @param accountDict:
+        @type accountDict:
+        @return: array of keys created for account table (only 1)
+        @rtype: [String]
+        '''
+        accountDict['account_id'] = self.getUniqueID()
+        self.jsonToRelationConverter.pushToTable(self.resultTriplet(accountDict.values(), 'Account', self.schemaAccountTbl.keys()))
+        return [accountDict['account_id']]
         
     
     def handleProblemReset(self, record, row, event):
@@ -1138,13 +1270,18 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
         
-        if not isinstance(event, dict):
-            self.logWarn("Track log line %s: event is not a dict in problem_reset event: '%s'" %\
-                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+        try:
+            # From "{\"POST\": {\"id\": [\"i4x://Engineering/EE368/problem/ab656f3cb49e4c48a6122dc724267cb6@draft\"]}, \"GET\": {}}"
+            # make a dict:
+            postGetDict = eval(event)
+        except Exception as e:
+            self.logWarn("Track log line %s: event is not a dict in problem_reset event: '%s' (%s)" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event), `e`))
+            return row
     
         # Get the POST field's problem id array:
         try:
-            problemIDs = event['POST']['id']
+            problemIDs = postGetDict['POST']['id']
         except KeyError:
             self.logWarn("Track log line %s with event type problem_reset contains event without problem ID array: '%s'" %
                          (self.jsonToRelationConverter.makeFileCitation(), event))
@@ -1171,13 +1308,18 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
 
-        if not isinstance(event, dict):
-            self.logWarn("Track log line %s: event is not a dict in problem_show event: '%s'" %\
-                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
-        
+        try:
+            # From "{\"POST\": {\"id\": [\"i4x://Engineering/EE368/problem/ab656f3cb49e4c48a6122dc724267cb6@draft\"]}, \"GET\": {}}"
+            # make a dict:
+            postGetDict = eval(event)
+        except Exception as e:
+            self.logWarn("Track log line %s: event is not a dict in problem_show event: '%s' (%s)" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event), `e`))
+            return row
+
         # Get the problem id:
         try:
-            problemID = event['POST']['problem']
+            problemID = postGetDict['POST']['problem']
         except KeyError:
             self.logWarn("Track log line %s with event type problem_show contains event without problem ID: '%s'" %
                          (self.jsonToRelationConverter.makeFileCitation(), event))
@@ -1188,10 +1330,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleProblemSave(self, record, row, event):
         '''
         Gets a event string like this::
-        "\"input_i4x-Education-EDUC115N-problem-44b3fb5f49884be7bc35712b176e50c4_2_1=choice_1\""
-        
-        After splitting this string on '=':
-        ['"input_i4x-Education-EDUC115N-problem-44b3fb5f49884be7bc35712b176e50c4_2_1', 'choice_1"']
+		   "\"input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_2_1=13.4&
+		      input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_3_1=2.49&
+		      input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_4_1=13.5&
+		      input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_5_1=3\""        
+		           
+        After splitting this string on '&', and then each result on '=', we add the 
+        problemID/solution pairs to the Answer table:
 
         @param record:
         @type record:
@@ -1205,15 +1350,34 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
 
-        if not isinstance(event, dict):
-            self.logWarn("Track log line %s: event is not a dict in problem_save event: '%s'" %\
+        if not isinstance(event, basestring):
+            self.logWarn("Track log line %s: event is not a string in problem save event: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
 
-        
-        (problemID, choice) = event.split('=')
-        self.setValInRow(row, 'problemID', problemID[1:])  # remove leading double quote
-        self.setValInRow(row, 'problemChoice', choice)
+        probIDSolPairs = event.split('&')
+        answersDict = {}
+        for probIDSolPair in probIDSolPairs: 
+            (problemID, choice) = probIDSolPair.split('=')
+            answersDict[problemID] = choice
+
+        # Add answer/solutions to Answer table, and
+        # get list of all resulting foreign keys:
+        if len(answersDict) > 0:
+            answersFKeys = self.pushAnswers(answersDict)
+        else:
+            answersFKeys = []
+
+        # Now need to generate enough near-replicas of event
+        # entries to cover all answer 
+        # foreign key entries that were created:
+        for answerFKey in answersFKeys: 
+            # Fill in one main table row.
+            self.setValInRow(row, 'answerFK', answerFKey, self.mainTableName)
+
+        # Return empty row, b/c we already pushed all necessary rows:
         return row
+
 
     def handleQuestionProblemHidingShowing(self, record, row, event):
         '''
@@ -1227,14 +1391,18 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
 
-        if not isinstance(event, dict):
-            self.logWarn("Track log line %s: event is not a dict in problem hide or show event: '%s'" %\
-                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+        try:
+            "{\"location\":\"i4x://Education/EDUC115N/combinedopenended/4abb8b47b03d4e3b8c8189b3487f4e8d\"}"
+            # make a dict:
+            locationDict = eval(event)
+        except Exception as e:
+            self.logWarn("Track log line %s: event is not a dict in problem_show/hide event: '%s' (%s)" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event), `e`))
             return row
-        
+
         # Get location:
         try:
-            location = event['location']
+            location = locationDict['location']
         except KeyError:
             self.logWarn("Track log line %s: no location field provided in problem hide or show event: '%s'" %\
              (self.jsonToRelationConverter.makeFileCitation(), str(event)))
@@ -1255,15 +1423,19 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
 
-        if not isinstance(event, dict):
-            self.logWarn("Track log line %s: event is not a dict in select rubric event: '%s'" %\
-                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+        try:
+            # From "{\"location\":\"i4x://Education/EDUC115N/combinedopenended/4abb8b47b03d4e3b8c8189b3487f4e8d\",\"selection\":\"1\",\"category\":0}"
+            # make a dict:
+            locationDict = eval(event)
+        except Exception as e:
+            self.logWarn("Track log line %s: event is not a dict in select_rubric event: '%s' (%s)" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event), `e`))
             return row
         
         try:
-            location = event['location']
-            selection = event['selection']
-            category = event['category']
+            location = locationDict['location']
+            selection = locationDict['selection']
+            category = locationDict['category']
         except KeyError:
             self.logWarn("Track log line %s: missing location, selection, or category in event type select_rubric." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
@@ -1292,13 +1464,17 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
         
-        if not isinstance(event, dict):
-            self.logWarn("Track log line %s: event is not a dict in oe_feedback_response event: '%s'" %\
-                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+        try:
+            # From "{\"value\":\"5\"}"
+            # make a dict:
+            valDict = eval(event)
+        except Exception as e:
+            self.logWarn("Track log line %s: event is not a dict in oe_feedback_response_selected event: '%s' (%s)" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event), `e`))
             return row
         
         try:
-            value = event['value']
+            value = valDict['value']
         except KeyError:
             self.logWarn("Track log line %s: missing 'value' field in event type oe_feedback_response_selected." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
@@ -1320,17 +1496,23 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             return row
 
         if not isinstance(event, dict):
-            self.logWarn("Track log line %s: event is not a dict in video play/pause event: '%s'" %\
-                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
-            return row
-
+            try:
+                # Maybe it's a string: make a dict from the string:
+                valsDict = eval(event)
+            except Exception as e:
+                self.logWarn("Track log line %s: event is not a dict in video play/pause: '%s' (%s)" %\
+                             (self.jsonToRelationConverter.makeFileCitation(), str(event), `e`))
+                return row
+        else:
+            valsDict = event
+        
         try:
-            videoID = event['id']
-            videoCode = event['code']
-            videoCurrentTime = event['currentTime']
-            videoSpeed = event['speed']
+            videoID = valsDict['id']
+            videoCode = valsDict['code']
+            videoCurrentTime = valsDict['currentTime']
+            videoSpeed = valsDict['speed']
         except KeyError:
-            self.logWarn("Track log line %s: missing location, selection, or category in event type select_rubric." %\
+            self.logWarn("Track log line %s: missing video ID, code, currentTime, or speed in video event." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
         self.setValInRow(row, 'videoID', videoID)
@@ -1348,14 +1530,17 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
         
-        if not isinstance(event, dict):
-            self.logWarn("Track log line %s: event is not a dict in book event: '%s'" %\
-                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+        try:
+            # Make a dict from the string:
+            valsDict = eval(event)
+        except Exception as e:
+            self.logWarn("Track log line %s: event is not a dict in book event: '%s' (%s)" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event), `e`))
             return row
 
-        bookInteractionType = event.get('type', None)
-        bookOld = event.get('old', None)
-        bookNew = event.get('new', None)
+        bookInteractionType = valsDict.get('type', None)
+        bookOld = valsDict.get('old', None)
+        bookNew = valsDict.get('new', None)
         if bookInteractionType is not None:
             self.setValInRow(row, 'bookInteractionType', bookInteractionType)
         if bookOld is not None:            
@@ -1375,20 +1560,21 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             return row
         
         if not isinstance(event, dict):
-            self.logWarn("Track log line %s: event is not a dict in show answer event: '%s'" %\
+            self.logWarn("Track log line %s: event is not a dict in handle showanswer event: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
-        
+
         try:
             problem_id = event['problem_id']
         except KeyError:
-            self.logWarn("Track log line %s: missing problem_id in event type showanswer (or show_answer)." %\
-                         (self.jsonToRelationConverter.makeFileCitation()))
+            self.logWarn("Track log line %s: showanswer event does not include a problem ID: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
+
         self.setValInRow(row, 'problemID', problem_id)
         return row
 
-    def handleProblemSetFail(self, record, row, event):
+    def handleProblemCheckFail(self, record, row, event):
         '''
         Gets events like this::
             {
@@ -1427,8 +1613,270 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @param event:
         @type event:
         '''
-        raise NotImplementedError("handleProblemCheckFail() not yet implemented")
+        if event is None:
+            self.logWarn("Track log line %s: missing event text in problem_check event." %\
+                         (self.jsonToRelationConverter.makeFileCitation()))
+            return row
+        
+        if not isinstance(event, dict):
+            self.logWarn("Track log line %s: event is not a dict in handle problem_check event: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
 
+        problem_id = event.get('problem_id', None)
+        success    = event.get('failure', None)  # 'closed' or 'unreset'
+        self.setValInRow(row, 'problemID', problem_id)
+        self.setValInRow(row, 'success', success)
+        
+        answersDict = event.get('answers', None)
+        stateDict = event.get('state', None)
+        
+        if isinstance(answersDict, dict) and len(answersDict) > 0:
+            answersFKeys = self.pushAnswers(answersDict)
+        else:
+            answersFKeys = []
+            
+        if isinstance(stateDict, dict) and len(stateDict) > 0:
+            stateFKeys = self.pushState(stateDict)
+        else:
+            stateFKeys = []
+            
+        generatedAllRows = False
+        indexToFKeys = 0
+        # Generate main table rows that refer to all the
+        # foreign entries we made above to tables Answer, and State
+        # We make as few rows as possible by filling in 
+        # columns in all three foreign key entries, until
+        # we run out of all references:
+        while not generatedAllRows:
+            try:
+                answerFKey = answersFKeys[indexToFKeys]
+            except IndexError:
+                answerFKey = None
+            try:
+                stateFKey = stateFKeys[indexToFKeys]
+            except IndexError:
+                stateFKey = None
+            
+            # Have we created rows to cover all answers, and states?
+            if answerFKey is None and stateFKey is None:
+                generatedAllRows = True
+                continue
+
+            # Fill in one main table row.
+            self.setValInRow(row, 'answerFK', answerFKey, self.mainTableName)
+            self.setValInRow(row, 'stateFK', stateFKey, self.mainTableName)
+            rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
+            self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
+            indexToFKeys += 1
+        return row
+
+    def handleProblemRescoreFail(self, record, row, event):
+        '''
+        No example available. Records reportedly include:
+        state, problem_id, and failure reason
+        @param record:
+        @type record:
+        @param row:
+        @type row:
+        @param event:
+        @type event:
+        '''
+        if event is None:
+            self.logWarn("Track log line %s: missing event info in problem_rescore_fail." %\
+                         (self.jsonToRelationConverter.makeFileCitation()))
+            return row
+        problem_id = event.get('problem_id', None)
+        failure    = event.get('failure', None)  # 'closed' or 'unreset'
+        self.setValInRow(row, 'problemID', problem_id)
+        self.setValInRow(row, 'failure', failure)
+        
+        stateDict = event.get('state', None)
+        
+        if isinstance(stateDict, dict) and len(stateDict) > 0:
+            stateFKeys = self.pushState(stateDict)
+        else:
+            stateFKeys = []
+        for stateFKey in stateFKeys:
+            # Fill in one main table row.
+            self.setValInRow(row, 'stateFK', stateFKey, self.mainTableName)
+            rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
+            self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
+        return row
+
+    def handleProblemRescore(self, record, row, event):
+        '''
+        No example available
+        Fields: state, problemID, orig_score (int), orig_total(int), new_score(int),
+        new_total(int), correct_map, success (string 'correct' or 'incorrect'), and
+        attempts(int)
+        @param record:
+        @type record:
+        @param row:
+        @type row:
+        @param event:
+        @type event:
+        '''
+        if event is None:
+            self.logWarn("Track log line %s: missing event text in problem_rescore event." %\
+                         (self.jsonToRelationConverter.makeFileCitation()))
+            return row
+        
+        if not isinstance(event, dict):
+            self.logWarn("Track log line %s: event is not a dict in handle problem_rescore event: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
+
+        problem_id = event.get('problem_id', None)
+        success    = event.get('success', None)  # 'correct' or 'incorrect'
+        attempts   = event.get('attempts', None)
+        orig_score = event.get('orig_score', None)
+        orig_total = event.get('orig_total', None)
+        new_score  = event.get('new_score', None)
+        new_total  = event.get('new_total', None)
+        correctMapsDict = event.get('correct_map', None)
+        
+        # Store the top-level vals in the main table:
+        self.setValInRow(row, 'problemID', problem_id)
+        self.setValInRow(row, 'success', success)
+        self.setValInRow(row, 'attempts', attempts)
+        self.setValInRow(row, 'orig_score', orig_score)
+        self.setValInRow(row, 'orig_total', orig_total)
+        self.setValInRow(row, 'new_score', new_score)
+        self.setValInRow(row, 'new_total', new_total)
+        
+        # And the correctMap, which goes into a different table:
+        if isinstance(correctMapsDict, dict) and len(correctMapsDict) > 0:
+            correctMapsFKeys = self.pushCorrectMaps(correctMapsDict)
+        else:
+            correctMapsFKeys = []
+
+        # Replicate main table row if needed:            
+        for correctMapFKey in correctMapsFKeys:
+            # Fill in one main table row.
+            self.setValInRow(row, 'correctMapFK', correctMapFKey, self.mainTableName)
+            rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
+            self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
+        return row
+         
+    def handleSaveProblemFailSuccessOrReset(self, record, row, event):
+        '''
+        Do have examples. event has fields state, problem_id, failure, and answers.
+        For save_problem_success there is no failure field 
+        @param record:
+        @type record:
+        @param row:
+        @type row:
+        @param event:
+        @type event:
+        '''
+        if event is None:
+            self.logWarn("Track log line %s: missing event text in save_problem_fail, save_problem_success, or reset_problem_fail." %\
+                         (self.jsonToRelationConverter.makeFileCitation()))
+            return row
+        
+        if not isinstance(event, dict):
+            self.logWarn("Track log line %s: event is not a dict in handle save_problem_fail, save_problem_success, or reset_problem_fail event: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
+
+        problem_id = event.get('problem_id', None)
+        success    = event.get('failure', None)  # 'closed' or 'unreset'
+        self.setValInRow(row, 'problemID', problem_id)
+        self.setValInRow(row, 'success', success)
+        
+        answersDict = event.get('answers', None)
+        stateDict = event.get('state', None)
+        
+        if isinstance(answersDict, dict) and len(answersDict) > 0:
+            answersFKeys = self.pushAnswers(answersDict)
+        else:
+            answersFKeys = []
+            
+        if isinstance(stateDict, dict) and len(stateDict) > 0:
+            stateFKeys = self.pushState(stateDict)
+        else:
+            stateFKeys = []
+            
+        generatedAllRows = False
+        indexToFKeys = 0
+        # Generate main table rows that refer to all the
+        # foreign entries we made above to tables Answer, and State
+        # We make as few rows as possible by filling in 
+        # columns in all three foreign key entries, until
+        # we run out of all references:
+        while not generatedAllRows:
+            try:
+                answerFKey = answersFKeys[indexToFKeys]
+            except IndexError:
+                answerFKey = None
+            try:
+                stateFKey = stateFKeys[indexToFKeys]
+            except IndexError:
+                stateFKey = None
+            
+            # Have we created rows to cover all answers, and states?
+            if answerFKey is None and stateFKey is None:
+                generatedAllRows = True
+                continue
+
+            # Fill in one main table row.
+            self.setValInRow(row, 'answerFK', answerFKey, self.mainTableName)
+            self.setValInRow(row, 'stateFK', stateFKey, self.mainTableName)
+            rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
+            self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
+            indexToFKeys += 1
+        return row
+        
+    def handleResetProblem(self, record, row, event):
+        '''
+        Events look like this::
+            {"old_state": 
+                {"student_answers": {"i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1": "choice_2"}, 
+                 "seed": 811, 
+                 "done": true, 
+                 "correct_map": {"i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1": {"hint": "", 
+                                                                                               "hintmode": null, 
+                                                                                               ...
+                                                    }}, 
+                
+              "problem_id": "i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33", 
+              "new_state": {"student_answers": {}, "seed": 93, "done": false, "correct_map": {}, "input_state": {"i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1": {}}}}   
+        @param record:
+        @type record:
+        @param row:
+        @type row:
+        @param event:
+        @type event:
+        '''
+        if event is None:
+            self.logWarn("Track log line %s: missing event text in reset_problem." %\
+                         (self.jsonToRelationConverter.makeFileCitation()))
+            return row
+        
+        if not isinstance(event, dict):
+            self.logWarn("Track log line %s: event is not a dict in handle reset_problem event: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
+
+        problem_id = event.get('problem_id', None)
+        self.setValInRow(row, 'problemID', problem_id)
+        
+        oldStateDict = event.get('old_state', None)
+        newStateDict = event.get('new_state', None)
+        
+        stateFKeys = []
+        if isinstance(oldStateDict, dict) and len(oldStateDict) > 0:
+            stateFKeys.extend(self.pushState(oldStateDict))
+        if isinstance(newStateDict, dict) and len(newStateDict) > 0:
+            stateFKeys.extend(self.pushState(newStateDict))
+            
+        for stateFKey in stateFKeys:
+            # Fill in one main table row.
+            self.setValInRow(row, 'stateFK', stateFKey, self.mainTableName)
+            rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
+            self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
+        return row
 
     def handleRescoreReset(self, record, row, event):
         if event is None:
@@ -1636,6 +2084,22 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         return row
     
     def handleAddRemoveUserGroup(self, record, row, event):
+        '''
+        This event looks like this::
+           {"event_name": "beta-tester", 
+            "user": "smith", 
+            "event": "add"}
+        Note that the 'user' is different from the username. The latter triggered
+        the event. User is the group member being talked about. For clarity,
+        'user' is called 'group_user', and 'event' is called 'group_event' in the
+        main table.
+        @param record:
+        @type record:
+        @param row:
+        @type row:
+        @param event:
+        @type event:
+        '''
         if event is None:
             self.logWarn("Track log line %s: missing event info add-or-remove-user-group" %\
                          (self.jsonToRelationConverter.makeFileCitation()))
@@ -1661,10 +2125,108 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             
         self.setValInRow(row, 'event_name', eventName)
-        self.setValInRow(row, 'user', user)
-        self.setValInRow(row, 'event', event)
+        self.setValInRow(row, 'group_user', user)
+        self.setValInRow(row, 'group_action', event)
         return row        
+    
+    def handleCreateAccount(self, record, row, event):
+        '''
+        Get event structure like this (fictitious values)::
+           "{\"POST\": {\"username\": [\"luisXIV\"], 
+                        \"name\": [\"Roy Luigi Cannon\"], 
+                        \"mailing_address\": [\"3208 Dead St\\r\\nParis, GA 30243\"], 
+                        \"gender\": [\"f\"], 
+                        \"year_of_birth\": [\"1986\"], 
+                        \"level_of_education\": [\"p\"], 
+                        \"goals\": [\"flexibility, cost, 'prestige' and course of study\"], 
+                        \"honor_code\": [\"true\"], 
+                        \"terms_of_service\": [\"true\"], 
+                        \"course_id\": [\"Medicine/HRP258/Statistics_in_Medicine\"], 
+                        \"password\": \"********\", 
+                        \"enrollment_action\": [\"enroll\"], 
+                        \"email\": [\"luig.cannon@yahoo.com\"]}, \"GET\": {}}"        
+        @param record:
+        @type record:
+        @param row:
+        @type row:
+        @param event:
+        @type event:
+        '''
+        if event is None:
+            self.logWarn("Track log line %s: missing event text in event type create_account." %\
+                         (self.jsonToRelationConverter.makeFileCitation()))
+            return row
         
+        try:
+            # From {\"POST\": {\"username\": ... , \"GET\": {}}
+            # get the inner dict, i.e. the value of 'POST':
+            # Like this:
+            # {'username': ['luisXIV'], 
+            #  'mailing_address': ['3208 Dead St\r\nParis, GA 30243'], 
+            #  ...
+            # }
+            postDict = event['POST']
+        except Exception as e:
+            self.logWarn("Track log line %s: event is not a dict in create_account event: '%s' (%s)" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event), `e`))
+            return row
+
+        # Get the POST field's entries into an ordered
+        # dict as expected by pushAccountInfo():
+        accountDict = OrderedDict()
+        accountDict['account_id'] = None # filled in by pushAccountInfo()
+        accountDict['username'] = postDict.get('username', None)
+        accountDict['name'] = postDict.get('name', None)
+        accountDict['mailing_address'] = postDict.get('mailing_address', None)
+        accountDict['gender'] = postDict.get('gender', None)
+        accountDict['year_of_birth'] = postDict.get('year_of_birth', None)
+        accountDict['level_of_education'] = postDict.get('level_of_education', None)
+        accountDict['goals'] = postDict.get('goals', None)
+        accountDict['honor_code'] = postDict.get('honor_code', None)
+        accountDict['terms_of_service'] = postDict.get('terms_of_service', None)
+        accountDict['course_id'] = postDict.get('course_id', None)
+        accountDict['enrollment_action'] = postDict.get('enrollment', None)
+        accountDict['email'] = postDict.get('email', None) 
+
+        # Some values in create_account are arrays. Replace those
+        # values' entries in accountDict with the arrays' first element:
+        for fldName in accountDict.keys():
+            if isinstance(accountDict[fldName], list):
+                accountDict[fldName] = accountDict[fldName][0]
+
+        # Convert some values into more convenient types
+        # (that conform to the SQL types we declared in
+        # self.schemaAccountTbl:
+        try:
+            accountDict['year_of_birth'] = int(postDict['year_of_birth'])
+        except:
+            accountDict['year_of_birth'] = 0
+
+        try:
+            accountDict['terms_of_service'] = 1 if postDict['terms_of_service'] == 'true' else 0
+        except:
+            pass
+
+        try:
+            accountDict['honor_code'] = 1 if postDict['honor_code'] == 'true' else 0
+        except:
+            pass
+        
+        # Escape single quotes and CR/LFs in the various fields, so that MySQL won't throw up.
+        # Also replace newlines with ", ":
+        accountDict['goals'] = accountDict['goals'].replace("'", "\\'").replace('\n', ", ").replace('\r', ", ")
+        accountDict['username'] = accountDict['username'].replace("'", "\\'").replace('\n', ", ").replace('\r', ", ")
+        accountDict['mailing_address'] = accountDict['mailing_address'].replace('\n', ", ").replace('\r', ", ")
+        
+        
+        # Get the (only) Account table foreign key.
+        # Returned in an array for conformance with the
+        # other push<TableName>Info()
+        accountKeyArray = self.pushAccountInfo(accountDict)
+        self.setValInRow(row, 'accountFK', accountKeyArray[0])
+                
+        return row
+
     def get_course_id(self, event):
         '''
         Given a 'pythonized' JSON tracking event object, find
@@ -1704,7 +2266,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         if event['event_source'] == 'server':
             # get course_id from event type
             if event['event_type'] == u'/accounts/login':
-                post = json.loads(event['event'])
+                post = json.loads(str(event['event']))
                 fullCourseName = post['GET']['next'][0]
             else:
                 fullCourseName = event['event_type']

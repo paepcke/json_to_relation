@@ -1,0 +1,1 @@
+{"username": "smith", "host": "class.stanford.edu", "event_source": "server", "event_type": "add-or-remove-user-group", "time": "2013-08-14T01:09:48.026904+00:00", "ip": "181.64.60.42", "event": {"event_name": "beta-tester", "user": "jones", "event": "add"}, "agent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0", "page": "idashboard"}

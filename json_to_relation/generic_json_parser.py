@@ -202,8 +202,14 @@ class GenericJSONParser(object):
         
         # Assumes caller has called ensureColExistence() on the
         # JSONToRelation object; so the following won't have
-        # a key failure:
-        colSpec = self.jsonToRelationConverter.getSchemaHint(colName, tableName)
+        # a key failure (but check anyway):
+        try:
+            colSpec = self.jsonToRelationConverter.getSchemaHint(colName, tableName)
+        except KeyError:
+            self.logWarn("Unanticipated field name '%s' intended for table '%s' (%s)" %\
+                         (colName, tableName, self.jsonToRelationConverter.makeFileCitation()))
+            return theRow
+            
         targetPos = colSpec.colPos
         
         # Is value to go just beyond the current row len?

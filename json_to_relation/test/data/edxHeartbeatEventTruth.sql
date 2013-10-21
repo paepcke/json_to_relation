@@ -72,6 +72,10 @@ CREATE TABLE IF NOT EXISTS Main (
     correctMapFK VARCHAR(32),
     answerFK VARCHAR(32),
     stateFK VARCHAR(32),
+    orig_score INT,
+    new_score INT,
+    orig_total INT,
+    new_total INT,
     FOREIGN KEY(correctMapFK) REFERENCES CorrectMap(correct_map_id),
     FOREIGN KEY(answerFK) REFERENCES Answer(answer_id),
     FOREIGN KEY(stateFK) REFERENCES State(state_id)

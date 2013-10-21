@@ -31,6 +31,21 @@ CREATE TABLE IF NOT EXISTS State (
     FOREIGN KEY(correct_map) REFERENCES CorrectMap(correct_map_id),
     FOREIGN KEY(input_state) REFERENCES InputState(input_state_id)
     );
+CREATE TABLE IF NOT EXISTS Account (
+    account_id VARCHAR(32) NOT NULL Primary Key,
+    username TEXT,
+    name TEXT,
+    mailing_address TEXT,
+    gender TINYTEXT,
+    year_of_birth TINYINT,
+    level_of_education TINYTEXT,
+    goals TEXT,
+    honor_code BOOL,
+    terms_of_service BOOL,
+    course_id TEXT,
+    enrollment_action TINYTEXT,
+    email TEXT
+    );
 CREATE TABLE IF NOT EXISTS Event (
     eventID VARCHAR(32),
     agent TEXT,
@@ -72,19 +87,22 @@ CREATE TABLE IF NOT EXISTS Event (
     correctMapFK VARCHAR(32),
     answerFK VARCHAR(32),
     stateFK VARCHAR(32),
+    accountFK VARCHAR(32),
     orig_score INT,
     new_score INT,
     orig_total INT,
     new_total INT,
+    event_name TINYTEXT,
+    group_user TINYTEXT,
+    group_action TINYTEXT,
     FOREIGN KEY(correctMapFK) REFERENCES CorrectMap(correct_map_id),
     FOREIGN KEY(answerFK) REFERENCES Answer(answer_id),
-    FOREIGN KEY(stateFK) REFERENCES State(state_id)
+    FOREIGN KEY(stateFK) REFERENCES State(state_id),
+    FOREIGN KEY(accountFK) REFERENCES Account(account_id)
     );
 START TRANSACTION;
-INSERT INTO Answer (answer_id,problem_id,answer) VALUES 
-    ('692235bf_b9a1_4d59_82d0_77eda63f22d5','input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_2_1','choice_2'),
-    ('0f2282d0_fd66_40cf_809c_92446bb9669f','input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_3_1','choice_2');
-INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,attempts,feedback,feedbackResponseSelected,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime,videoSpeed,bookInteractionType,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,correctMapFK,answerFK) VALUES 
-    ('1019d032_2a75_4c50_a140_59c2981e6644','Mozilla/5.0 (Windows NT 6.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36','browser','problem_check','66.172.116.216','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/de472d1448a74e639a41fa584c49b91e/ed52812e4f96445383bfc556d15cb902/','75a8c9042ba10156301728f61e487414','2013-08-04T06:27:13.660689+00:00','trobinspire','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'692235bf_b9a1_4d59_82d0_77eda63f22d5'),
-    ('1019d032_2a75_4c50_a140_59c2981e6644','Mozilla/5.0 (Windows NT 6.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36','browser','problem_check','66.172.116.216','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/de472d1448a74e639a41fa584c49b91e/ed52812e4f96445383bfc556d15cb902/','75a8c9042ba10156301728f61e487414','2013-08-04T06:27:13.660689+00:00','trobinspire','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'0f2282d0_fd66_40cf_809c_92446bb9669f');
+INSERT INTO Account (account_id,username,name,mailing_address,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email) VALUES 
+    ('4bd80595_c022_4fcf_8d75_8d116b2a66c5','luisX!V','Roy Luigi Cannon','3208 Dead St, , Paris, GA 30243','f',0,'p','flexibility, cost, \'glory\', and course of study',0,0,'Medicine/HRP258/Statistics_in_Medicine',null,'marykatherine.brown@gmail.com');
+INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,attempts,feedback,feedbackResponseSelected,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime,videoSpeed,bookInteractionType,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,correctMapFK,answerFK,stateFK,accountFK) VALUES 
+    ('0165cc87_5f57_4af1_bad3_59dd63109bc7','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/create_account','192.35.46.1',null,null,'2013-06-10T14:38:48.529921','','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'4bd80595_c022_4fcf_8d75_8d116b2a66c5');
 COMMIT;

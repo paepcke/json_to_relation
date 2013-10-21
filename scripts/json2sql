@@ -18,9 +18,9 @@ if __name__ == "__main__":
     # and pumping output to stdout. Format output as SQL dump statements.
     jsonConverter = JSONToRelation(InPipe(),
                                    OutputPipe(OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS),
-				   mainTableName='Event',
+				   mainTableName='EdxTrackEvent',
 				   logFile='/tmp/j2s.log'
                                    )
-    jsonConverter.setParser(EdXTrackLogJSONParser(jsonConverter, 'Event', replaceTables=True, dbName='test'
+    jsonConverter.setParser(EdXTrackLogJSONParser(jsonConverter, 'EdxTrackEvent', replaceTables=True, dbName='test'
 ))
     jsonConverter.convert()
