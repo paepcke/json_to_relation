@@ -1,13 +1,8 @@
 #!/usr/bin/env python
-#TODO: Edx problem_check_fail
-#TODO: Edx problem_check
-#TODO: Edx save_problem_check
-#TODO: Edx problem_rescore_fail
-#TODO: Edx problem_rescore
 #TODO: Edx unittest for detecting server downtimes in log
 #TODO: Edx unittest for coursID across all event types
-#TODO: unittesting INSERT output: deal with event IDs always being different
-#TODO: In tracking.log-20130805.gz, ~ line 46: event is not a dict:'input_i4x-Medicine-HRP258-problem-75edd241d7c849ddb92bb7176fb27d0c_2_1=choice_1'
+#TODO: add courseID in common flds
+#TODO: video_seek: seek counter floats are output to 8 sig digs, but they are 12 sig digs in json 
 '''
 Created on Sep 14, 2013
 
@@ -26,8 +21,7 @@ import tempfile
 
 from col_data_type import ColDataType
 from generic_json_parser import GenericJSONParser
-from input_source import InputSource, InURI, InString, InMongoDB, \
-    InPipe #@UnusedImport
+from input_source import InputSource, InURI, InString, InMongoDB, InPipe #@UnusedImport
 from output_disposition import OutputDisposition, OutputFile, OutputPipe
 
 

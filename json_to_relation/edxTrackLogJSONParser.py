@@ -94,6 +94,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaHintsMainTable['feedback'] = ColDataType.TEXT
         self.schemaHintsMainTable['feedbackResponseSelected'] = ColDataType.TINYINT
         
+        # Transcript
+        self.schemaHintsMainTable['transcriptID'] = ColDataType.TEXT
+        self.schemaHintsMainTable['transcriptCode'] = ColDataType.TINYTEXT
+        
         # Rubrics:
         self.schemaHintsMainTable['rubricSelection'] = ColDataType.INT
         self.schemaHintsMainTable['rubricCategory'] = ColDataType.INT
@@ -103,6 +107,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaHintsMainTable['videoCode'] = ColDataType.TEXT
         self.schemaHintsMainTable['videoCurrentTime'] = ColDataType.FLOAT
         self.schemaHintsMainTable['videoSpeed'] = ColDataType.TINYTEXT
+        self.schemaHintsMainTable['videoOldTime'] = ColDataType.FLOAT
+        self.schemaHintsMainTable['videoNewTime'] = ColDataType.FLOAT
+        self.schemaHintsMainTable['videoSeekType'] = ColDataType.TINYTEXT
 
         # Book (PDF) reading:
         self.schemaHintsMainTable['bookInteractionType'] = ColDataType.TINYTEXT
@@ -454,6 +461,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 row = self.handleOEFeedbackResponseSelected(record, row, event)
                 return
             
+            elif eventType == 'show_transcript':
+                row = self.handleShowTranscript(record, row, event)
+                return
+            
             elif eventType == 'page_close':
                 # No additional info in event field
                 return
@@ -462,6 +473,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                  eventType == 'pause_video' or\
                  eventType == 'load_video':
                 row = self.handleVideoPlayPause(record, row, event)
+                return
+
+            elif eventType == 'seek_video':
+                row = self.handleVideoSeek(record, row, event)
                 return
                 
             elif eventType == 'book':
@@ -1484,11 +1499,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleVideoPlayPause(self, record, row, event):
         '''
         For play_video, event looks like this::
-        "{\"id\":\"i4x-Education-EDUC115N-videoalpha-c41e588863ff47bf803f14dec527be70\",\"code\":\"html5\",\"currentTime\":0}"
+            "{\"id\":\"i4x-Education-EDUC115N-videoalpha-c41e588863ff47bf803f14dec527be70\",\"code\":\"html5\",\"currentTime\":0}"
         For pause_video:
-        "{\"id\":\"i4x-Education-EDUC115N-videoalpha-c5f2fd6ee9784df0a26984977658ad1d\",\"code\":\"html5\",\"currentTime\":124.017784}"
+            "{\"id\":\"i4x-Education-EDUC115N-videoalpha-c5f2fd6ee9784df0a26984977658ad1d\",\"code\":\"html5\",\"currentTime\":124.017784}"
         For load_video:
-        "{\"id\":\"i4x-Education-EDUC115N-videoalpha-003bc44b4fd64cb79cdfd459e93a8275\",\"code\":\"4GlF1t_5EwI\"}"
+            "{\"id\":\"i4x-Education-EDUC115N-videoalpha-003bc44b4fd64cb79cdfd459e93a8275\",\"code\":\"4GlF1t_5EwI\"}"
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text in video play or pause." %\
@@ -1519,6 +1534,57 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.setValInRow(row, 'videoCode', videoCode)
         self.setValInRow(row, 'videoCurrentTime', videoCurrentTime)
         self.setValInRow(row, 'videoSpeed', videoSpeed)
+        return row
+
+    def handleVideoSeek(self, record, row, event):
+        '''
+        For play_video, event looks like this::
+           "{\"id\":\"i4x-Medicine-HRP258-videoalpha-413d6a45b82848339ab5fd3836dfb928\",
+             \"code\":\"html5\",
+             \"old_time\":308.506103515625,
+             \"new_time\":290,
+             \"type\":\"slide_seek\"}"        
+        '''
+        if event is None:
+            self.logWarn("Track log line %s: missing event text in video seek." %\
+                         (self.jsonToRelationConverter.makeFileCitation()))
+            return row
+
+        if not isinstance(event, dict):
+            try:
+                # Maybe it's a string: make a dict from the string:
+                valsDict = eval(event)
+            except Exception as e:
+                self.logWarn("Track log line %s: event is not a dict in video play/pause: '%s' (%s)" %\
+                             (self.jsonToRelationConverter.makeFileCitation(), str(event), `e`))
+                return row
+        else:
+            valsDict = event
+        
+        videoID = valsDict.get('id', None)
+        videoCode = valsDict.get('code', None)
+        videoOldTime = valsDict.get('old_time', None)
+        videoNewTime = valsDict.get('new_time', None)
+        videoSeekType = valsDict.get('type', None)
+            
+        self.setValInRow(row, 'videoID', videoID)
+        self.setValInRow(row, 'videoCode', videoCode)
+        try:
+            videoOldTime = float(videoOldTime)
+        except ValueError:
+                self.logWarn("Track log line %s: oldTime in event seek_video: '%s' is expected to be a float" %\
+                             (self.jsonToRelationConverter.makeFileCitation(), str(videoOldTime)))
+                videoOldTime = -1.0
+        try:
+            videoNewTime = float(videoNewTime)
+        except ValueError:
+                self.logWarn("Track log line %s: newTime in event seek_video: '%s' is expected to be a float" %\
+                             (self.jsonToRelationConverter.makeFileCitation(), str(videoNewTime)))
+                videoOldTime = -1.0
+                
+        self.setValInRow(row, 'videoOldTime', videoOldTime)
+        self.setValInRow(row, 'videoNewTime', videoNewTime)
+        self.setValInRow(row, 'videoSeekType', videoSeekType)
         return row
         
     def handleBook(self, record, row, event):
@@ -1573,6 +1639,36 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
         self.setValInRow(row, 'problemID', problem_id)
         return row
+
+    def handleShowTranscript(self, record, row, event):
+        '''
+        Events look like this::
+            "{\"id\":\"i4x-Medicine-HRP258-videoalpha-c26e4247f7724cc3bc407a7a3541ed90\",
+              \"code\":\"q3cxPJGX4gc\",
+              \"currentTime\":0}"        
+        @param record:
+        @type record:
+        @param row:
+        @type row:
+        @param event:
+        @type event:
+        '''
+        if event is None:
+            self.logWarn("Track log line %s: missing event info in show_transcript." %\
+                         (self.jsonToRelationConverter.makeFileCitation()))
+            return row
+
+        if not isinstance(event, dict):
+            self.logWarn("Track log line %s: event is not a dict in show_transcript: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
+
+        xcriptID = event.get('id', None)
+        code  = event.get('code', None)
+        self.setValInRow(row, 'transcriptID', xcriptID)
+        self.setValInRow(row, 'transcriptCode', code)
+        return row
+        
 
     def handleProblemCheckFail(self, record, row, event):
         '''
@@ -1900,6 +1996,29 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.setValInRow(row, 'problemID', problemID)
         self.setValInRow(row, 'courseID', courseID)
         return row
+                
+        if event is None:
+            self.logWarn("Track log line %s: missing event info in show_transcript." %\
+                         (self.jsonToRelationConverter.makeFileCitation()))
+            return row
+
+        if not isinstance(event, dict):
+            self.logWarn("Track log line %s: event is not a dict in handle resource event: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
+
+        problemID = event.get('problem', None)
+        courseID  = event.get('course', None)
+        if problemID is None:
+            self.logWarn("Track log line %s: missing problem ID in rescore-all-submissions or reset-all-attempts." %\
+                         (self.jsonToRelationConverter.makeFileCitation()))
+        if problemID is None:
+            self.logWarn("Track log line %s: missing course ID in rescore-all-submissions or reset-all-attempts." %\
+                         (self.jsonToRelationConverter.makeFileCitation()))
+        self.setValInRow(row, 'problemID', problemID)
+        self.setValInRow(row, 'courseID', courseID)
+        return row
+                
                 
     def handleDeleteStateRescoreSubmission(self, record, row, event):
         if event is None:

@@ -368,7 +368,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         truthFile = open(os.path.join(os.path.dirname(__file__),"data/createAccountTestTruth.sql"), 'r')
         self.assertFileContentEquals(truthFile, dest.name)
 
-    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testAbout(self):
         testFilePath = os.path.join(os.path.dirname(__file__),"data/aboutTest.json")
         stringSource = InURI(testFilePath)
@@ -387,6 +387,48 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         fileConverter.convert()
         dest.close()
         truthFile = open(os.path.join(os.path.dirname(__file__),"data/aboutTestTruth.sql"), 'r')
+        self.assertFileContentEquals(truthFile, dest.name)
+
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def testSeekVideo(self):
+        testFilePath = os.path.join(os.path.dirname(__file__),"data/seekVideo.json")
+        stringSource = InURI(testFilePath)
+        
+        resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+        # Just use the file name of the tmp file.
+        resultFileName = resultFile.name
+        resultFile.close()
+        dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+        fileConverter = JSONToRelation(stringSource,
+                                       dest,
+                                       mainTableName='Event'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Event')
+        fileConverter.setParser(edxParser)
+        fileConverter.convert()
+        dest.close()
+        truthFile = open(os.path.join(os.path.dirname(__file__),"data/seekVideoTruth.sql"), 'r')
+        self.assertFileContentEquals(truthFile, dest.name)
+
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def testShowTranscript(self):
+        testFilePath = os.path.join(os.path.dirname(__file__),"data/showTranscript.json")
+        stringSource = InURI(testFilePath)
+        
+        resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+        # Just use the file name of the tmp file.
+        resultFileName = resultFile.name
+        resultFile.close()
+        dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+        fileConverter = JSONToRelation(stringSource,
+                                       dest,
+                                       mainTableName='Event'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Event')
+        fileConverter.setParser(edxParser)
+        fileConverter.convert()
+        dest.close()
+        truthFile = open(os.path.join(os.path.dirname(__file__),"data/showTranscriptTruth.sql"), 'r')
         self.assertFileContentEquals(truthFile, dest.name)
 
        
