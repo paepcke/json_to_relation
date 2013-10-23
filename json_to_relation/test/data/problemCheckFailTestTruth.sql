@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS Answer (
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(32) NOT NULL Primary Key,
     answer_id TEXT,
-    correctness BOOL,
+    correctness TINYTEXT,
     npoints INT,
     msg TEXT,
     hint TEXT,

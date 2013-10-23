@@ -2,7 +2,8 @@
 #TODO: Edx unittest for detecting server downtimes in log
 #TODO: Edx unittest for coursID across all event types
 #TODO: add courseID in common flds
-#TODO: video_seek: seek counter floats are output to 8 sig digs, but they are 12 sig digs in json 
+#TODO: video_seek: seek counter floats are output to 8 sig digs, but they are 12 sig digs in json
+#TODO: correctness in correctMap
 '''
 Created on Sep 14, 2013
 

@@ -192,7 +192,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaCorrectMapTbl = OrderedDict()
         self.schemaCorrectMapTbl['correct_map_id'] = ColDataType.UUID
         self.schemaCorrectMapTbl['answer_id'] = ColDataType.TEXT
-        self.schemaCorrectMapTbl['correctness'] = ColDataType.BOOL
+        self.schemaCorrectMapTbl['correctness'] = ColDataType.TINYTEXT
         self.schemaCorrectMapTbl['npoints'] = ColDataType.INT
         self.schemaCorrectMapTbl['msg'] = ColDataType.TEXT
         self.schemaCorrectMapTbl['hint'] = ColDataType.TEXT
@@ -967,7 +967,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
         answersDict = event.get('answers', None)
         if answersDict is not None:
-            answersFKeys = self.pushAnswers(answersDict)
+            # Receive all the Answer table keys generated for
+            # the answers, and a dict mapping each key
+            # to the problem ID to which that key's row
+            # in the Answer refers:
+            (answersFKeys, answerToProblemMap) = self.pushAnswers(answersDict)
         else:
             answersFKeys = []
         
@@ -1010,6 +1014,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             # Fill in one main table row.
             self.setValInRow(row, 'correctMapFK', correctMapFKey, self.mainTableName)
             self.setValInRow(row, 'answerFK', answerFKey, self.mainTableName)
+            if answerFKey is not None:
+                # For convenience: enter the Answer's problem ID 
+                # in the main table's problemID field:
+                self.setValInRow(row, 'problemID', answerToProblemMap[answerFKey])
             self.setValInRow(row, 'stateFK', stateFKey, self.mainTableName)
             rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
@@ -1045,10 +1053,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                              (self.jsonToRelationConverter.makeFileCitation(), str(event)))
                 return row
         if len(answersDict) > 0:
-            # Enter all answers into the Answer table,
-            # receiving an array of the Answer table's keys
-            # that were generated:
-            answersFKeys = self.pushAnswers(answersDict)
+            # Receive all the Answer table keys generated for
+            # the answers, and a dict mapping each key
+            # to the problem ID to which that key's row
+            # in the Answer refers:
+            
+            (answersFKeys, answerToProblemMap) = self.pushAnswers(answersDict)
         else:
             answersFKeys = []
         # Now need to generate enough near-replicas of event
@@ -1058,6 +1068,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         for answerFKey in answersFKeys:
             # Fill in one main table row.
             self.setValInRow(row, 'answerFK', answerFKey, self.mainTableName)
+            if answerFKey is not None:
+                # For convenience: enter the Answer's problem ID 
+                # in the main table's problemID field:
+                self.setValInRow(row, 'problemID', answerToProblemMap[answerFKey])
             rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
         # Return empty row, b/c we already pushed all necessary rows:
@@ -1132,10 +1146,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             }
         @param answersDict:
         @type answersDict:
-        @return: array of keys created for answers in answersDict
-        @rtype: [String]
+        @return: array of keys created for answers in answersDict, and a dict mapping each key to the 
+                 corresponding problem ID
+        @rtype: ([String], Dict<String,String>
         '''
         answersKeys = []
+        answerToProblemMap = {}
         for problemID in answersDict.keys():
             answer = answersDict.get(problemID, None)
             # answer could be an array of Unicode strings, or
@@ -1149,13 +1165,14 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 else:
                     answer = answer.encode('latin1')
                 answersKey = self.getUniqueID()
+                answerToProblemMap[answersKey] = problemID
                 answersKeys.append(answersKey)
                 answerValues = [answersKey,          # answer_id fld 
                                 problemID,           # problem_id fld
                                 answer
                                 ]
                 self.jsonToRelationConverter.pushToTable(self.resultTriplet(answerValues, 'Answer', self.schemaAnswerTbl.keys()))
-        return answersKeys
+        return (answersKeys, answerToProblemMap)
 
     def pushState(self, stateDict):
         '''
@@ -1198,7 +1215,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         stateFKeys = []
         studentAnswersDict = stateDict.get('student_answers', None)
         if studentAnswersDict is not None:
-            studentAnswersFKeys = self.pushAnswers(studentAnswersDict)
+            # Receive all the Answer table keys generated for
+            # the answers, and a dict mapping each key
+            # to the problem ID to which that key's row
+            # in the Answer refers:
+            (studentAnswersFKeys, answerToProblemMap) = self.pushAnswers(studentAnswersDict)  # @UnusedVariable
         else:
             studentAnswersFKeys = []
         seed = stateDict.get('seed', None)
@@ -1411,10 +1432,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             (problemID, choice) = probIDSolPair.split('=')
             answersDict[problemID] = choice
 
-        # Add answer/solutions to Answer table, and
-        # get list of all resulting foreign keys:
+        # Add answer/solutions to Answer table.
+        # Receive all the Answer table keys generated for
+        # the answers, and a dict mapping each key
+        # to the problem ID to which that key's row
+        # in the Answer refers:
         if len(answersDict) > 0:
-            answersFKeys = self.pushAnswers(answersDict)
+            (answersFKeys, answerToProblemMap) = self.pushAnswers(answersDict)
         else:
             answersFKeys = []
 
@@ -1424,6 +1448,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         for answerFKey in answersFKeys: 
             # Fill in one main table row.
             self.setValInRow(row, 'answerFK', answerFKey, self.mainTableName)
+            if answerFKey is not None:
+                # For convenience: enter the Answer's problem ID 
+                # in the main table's problemID field:
+                self.setValInRow(row, 'problemID', answerToProblemMap[answerFKey])
+            
 
         # Return empty row, b/c we already pushed all necessary rows:
         return row
@@ -1761,7 +1790,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         stateDict = event.get('state', None)
         
         if isinstance(answersDict, dict) and len(answersDict) > 0:
-            answersFKeys = self.pushAnswers(answersDict)
+            # Receive all the Answer table keys generated for
+            # the answers, and a dict mapping each key
+            # to the problem ID to which that key's row
+            # in the Answer refers:
+            (answersFKeys, answerToProblemMap) = self.pushAnswers(answersDict)
         else:
             answersFKeys = []
             
@@ -1793,8 +1826,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 continue
 
             # Fill in one main table row.
-            self.setValInRow(row, 'answerFK', answerFKey, self.mainTableName)
-            self.setValInRow(row, 'stateFK', stateFKey, self.mainTableName)
+            self.setValInRow(row, 'answerFK', answerFKey)
+            if answerFKey is not None:
+                # For convenience: enter the Answer's problem ID 
+                # in the main table's problemID field:
+                self.setValInRow(row, 'problemID', answerToProblemMap[answerFKey])
+            self.setValInRow(row, 'stateFK', stateFKey)
             rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
             indexToFKeys += 1
@@ -1918,7 +1955,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         stateDict = event.get('state', None)
         
         if isinstance(answersDict, dict) and len(answersDict) > 0:
-            answersFKeys = self.pushAnswers(answersDict)
+            # Receive all the Answer table keys generated for
+            # the answers, and a dict mapping each key
+            # to the problem ID to which that key's row
+            # in the Answer refers:
+            (answersFKeys, answerToProblemMap) = self.pushAnswers(answersDict)
         else:
             answersFKeys = []
             
@@ -1951,6 +1992,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
             # Fill in one main table row.
             self.setValInRow(row, 'answerFK', answerFKey, self.mainTableName)
+            if answerFKey is not None:
+                # For convenience: enter the Answer's problem ID 
+                # in the main table's problemID field:
+                self.setValInRow(row, 'problemID', answerToProblemMap[answerFKey])
             self.setValInRow(row, 'stateFK', stateFKey, self.mainTableName)
             rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
@@ -2596,9 +2641,17 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @type answersDict:
         '''
         if answersDict is not None:
-            answersFKeys = self.pushAnswers(answersDict)
+            # Receive all the Answer table keys generated for
+            # the answers, and a dict mapping each key
+            # to the problem ID to which that key's row
+            # in the Answer refers:
+            (answersFKeys, answerToProblemMap) = self.pushAnswers(answersDict)
         for answerFKey in answersFKeys:
-            self.setValInRow(row, 'answerFK', answerFKey, self.mainTableName)            
+            self.setValInRow(row, 'answerFK', answerFKey, self.mainTableName)
+            if answerFKey is not None:
+                # For convenience: enter the Answer's problem ID 
+                # in the main table's problemID field:
+                self.setValInRow(row, 'problemID', answerToProblemMap[answerFKey])
         return row
 
     def handleAjaxLogin(self, record, row, event, eventType):
