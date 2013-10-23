@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS Answer (
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(32) NOT NULL Primary Key,
     answer_id TEXT,
-    correctness BOOL,
+    correctness TINYTEXT,
     npoints INT,
     msg TEXT,
     hint TEXT,
@@ -31,6 +31,21 @@ CREATE TABLE IF NOT EXISTS State (
     FOREIGN KEY(correct_map) REFERENCES CorrectMap(correct_map_id),
     FOREIGN KEY(input_state) REFERENCES InputState(input_state_id)
     );
+CREATE TABLE IF NOT EXISTS Account (
+    account_id VARCHAR(32) NOT NULL Primary Key,
+    username TEXT,
+    name TEXT,
+    mailing_address TEXT,
+    gender TINYTEXT,
+    year_of_birth TINYINT,
+    level_of_education TINYTEXT,
+    goals TEXT,
+    honor_code BOOL,
+    terms_of_service BOOL,
+    course_id TEXT,
+    enrollment_action TINYTEXT,
+    email TEXT
+    );
 CREATE TABLE IF NOT EXISTS Main (
     eventID VARCHAR(32),
     agent TEXT,
@@ -52,14 +67,22 @@ CREATE TABLE IF NOT EXISTS Main (
     problemChoice TEXT,
     questionLocation TEXT,
     attempts TINYINT,
+    longAnswer TEXT,
+    studentFile TEXT,
+    canUploadFile TINYTEXT,
     feedback TEXT,
     feedbackResponseSelected TINYINT,
+    transcriptID TEXT,
+    transcriptCode TINYTEXT,
     rubricSelection INT,
     rubricCategory INT,
     videoID TEXT,
     videoCode TEXT,
     videoCurrentTime FLOAT,
     videoSpeed TINYTEXT,
+    videoOldTime FLOAT,
+    videoNewTime FLOAT,
+    videoSeekType TINYTEXT,
     bookInteractionType TINYTEXT,
     success TINYTEXT,
     answer_id TEXT,
@@ -69,19 +92,25 @@ CREATE TABLE IF NOT EXISTS Main (
     msg TEXT,
     npoints TINYINT,
     queuestate TEXT,
-    correctMapFK VARCHAR(32),
-    answerFK VARCHAR(32),
-    stateFK VARCHAR(32),
     orig_score INT,
     new_score INT,
     orig_total INT,
     new_total INT,
+    event_name TINYTEXT,
+    group_user TINYTEXT,
+    group_action TINYTEXT,
+    position INT,
+    correctMapFK VARCHAR(32),
+    answerFK VARCHAR(32),
+    stateFK VARCHAR(32),
+    accountFK VARCHAR(32),
     FOREIGN KEY(correctMapFK) REFERENCES CorrectMap(correct_map_id),
     FOREIGN KEY(answerFK) REFERENCES Answer(answer_id),
-    FOREIGN KEY(stateFK) REFERENCES State(state_id)
+    FOREIGN KEY(stateFK) REFERENCES State(state_id),
+    FOREIGN KEY(accountFK) REFERENCES Account(account_id)
     );
 START TRANSACTION;
 INSERT INTO Main (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for) VALUES 
-    ('aebf6f3b_f5b2_4cbd_a5ab_677407aa1832','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T08:43:32.573390+00:00','','0:00:00'),
-    ('cd0355d6_0cd8_4d9e_bdc1_387e76488122','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T09:45:37.573390+00:00','','1:02:05');
+    ('59af6c33_5221_4409_8e70_978d0f63f1ff','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T08:43:32.573390+00:00','','0:00:00'),
+    ('9c247a60_abc2_4908_8ca2_f6ed8eaa0cae','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T09:45:37.573390+00:00','','1:02:05');
 COMMIT;

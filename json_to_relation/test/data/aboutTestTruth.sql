@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS Answer (
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(32) NOT NULL Primary Key,
     answer_id TEXT,
-    correctness BOOL,
+    correctness TINYTEXT,
     npoints INT,
     msg TEXT,
     hint TEXT,
@@ -67,14 +67,22 @@ CREATE TABLE IF NOT EXISTS Event (
     problemChoice TEXT,
     questionLocation TEXT,
     attempts TINYINT,
+    longAnswer TEXT,
+    studentFile TEXT,
+    canUploadFile TINYTEXT,
     feedback TEXT,
     feedbackResponseSelected TINYINT,
+    transcriptID TEXT,
+    transcriptCode TINYTEXT,
     rubricSelection INT,
     rubricCategory INT,
     videoID TEXT,
     videoCode TEXT,
     videoCurrentTime FLOAT,
     videoSpeed TINYTEXT,
+    videoOldTime FLOAT,
+    videoNewTime FLOAT,
+    videoSeekType TINYTEXT,
     bookInteractionType TINYTEXT,
     success TINYTEXT,
     answer_id TEXT,
@@ -91,6 +99,7 @@ CREATE TABLE IF NOT EXISTS Event (
     event_name TINYTEXT,
     group_user TINYTEXT,
     group_action TINYTEXT,
+    position INT,
     correctMapFK VARCHAR(32),
     answerFK VARCHAR(32),
     stateFK VARCHAR(32),
@@ -102,5 +111,5 @@ CREATE TABLE IF NOT EXISTS Event (
     );
 START TRANSACTION;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID) VALUES 
-    ('3be3f456_b8d9_4bd0_aa4b_153a32384bf0','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','about','85.104.215.30',null,null,'2013-06-10T05:47:38.452300','',null,null,null,'/courses/Medicine/HRP258/Statistics_in_Medicine');
+    ('3ccc0a2c_efac_4be6_b25b_1014e5468eb7','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML\, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','about','85.104.215.30',null,null,'2013-06-10T05:47:38.452300','',null,null,null,'/courses/Medicine/HRP258/Statistics_in_Medicine');
 COMMIT;

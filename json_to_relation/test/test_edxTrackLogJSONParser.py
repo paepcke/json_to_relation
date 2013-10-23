@@ -20,7 +20,7 @@ from json_to_relation.output_disposition import OutputDisposition, ColDataType, 
     TableSchemas, ColumnSpec, OutputFile, OutputPipe # @UnusedImport
 
 
-TEST_ALL = False
+TEST_ALL = True
 PRINT_OUTS = False  # Set True to get printouts of CREATE TABLE statements
 
 # The following is very Dangerous: If True, no tests are
@@ -28,7 +28,7 @@ PRINT_OUTS = False  # Set True to get printouts of CREATE TABLE statements
 # ending with 'Truth.sql' will be changed to be whatever
 # the test returns. Use only when you made code changes that
 # invalidate all the truth files:
-UPDATE_TRUTH = True 
+UPDATE_TRUTH = False
 
 class TestEdxTrackLogJSONParser(unittest.TestCase):
     
@@ -42,8 +42,9 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         self.heartbeatEvent = '{"username": "", "host": "10.0.10.32", "event_source": "server", "event_type": "/heartbeat", "time": "2013-06-21T06:32:09.881521+00:00", "ip": "127.0.0.1", "event": "{\\"POST\\": {}, \\"GET\\": {}}", "agent": "ELB-HealthChecker/1.0", "page": null}'
 
         self.stringSource = None
+        self.curDir = os.path.dirname(__file__)
 
-        self.stringSource = InURI(os.path.join(os.path.dirname(__file__),"data/twoJSONRecords.json"))
+        self.stringSource = InURI(os.path.join(self.curDir ,"data/twoJSONRecords.json"))
 
     def tearDown(self):
         if self.stringSource is not None:
@@ -131,9 +132,10 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         #print row
         
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
-    def testEdxHeartbeat(self):
+    def testEdxHeartbeat(self):        
         # Test series of heartbeats that did not experience a server outage:
-        inFileSource = InURI(os.path.join(os.path.dirname(__file__),"data/edxHeartbeatEvent.json"))
+        inputSourcePath = os.path.join(os.path.join(self.curDir, "data/edxHeartbeatEvent.json"))
+        inFileSource = InURI(inputSourcePath)
         resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
         # Just use the file name of the tmp file.
         resultFileName = resultFile.name
@@ -150,12 +152,13 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         # except for this heartbeat's IP's first-time-alive
         # record:
         if UPDATE_TRUTH:
-            self.updateTruth(dest.getFileName, 'data/edxHeartbeatEventTruth.sql')
+            self.updateTruth(dest.getFileName(), os.path.join(self.curDir, 'data/edxHeartbeatEventTruth.sql'))
         else:
             self.assertFileContentEquals(file('data/edxHeartbeatEventTruth.sql'), dest.getFileName())
         
         # Detecting server downtime:
-        inFileSource = InURI(os.path.join(os.path.dirname(__file__),"data/edxHeartbeatEventDownTime.json"))
+        inputSourcePath = os.path.join(os.path.dirname(__file__),"data/edxHeartbeatEventDownTime.json")
+        inFileSource = InURI(inputSourcePath)
         resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
         # Just use the file name of the tmp file.
         resultFileName = resultFile.name
@@ -169,7 +172,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         fileConverter.setParser(edxParser)
         fileConverter.convert(prependColHeader=False)
         if UPDATE_TRUTH:
-            self.updateTruth(dest.getFileName, 'data/edxHeartbeatEventDownTimeTruth.sql')
+            self.updateTruth(dest.getFileName(), os.path.join(self.curDir, 'data/edxHeartbeatEventDownTimeTruth.sql'))
         else:
             self.assertFileContentEquals(file('data/edxHeartbeatEventDownTimeTruth.sql'), dest.getFileName())
 
@@ -182,7 +185,10 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         edxParser = EdXTrackLogJSONParser(fileConverter, 'Main')
         createStatement = edxParser.genOneCreateStatement('Answer', edxParser.schemaAnswerTbl, primaryKeyName='answer_id')
         
-        self.assertFileContentEquals(file('data/answerTblCreateTruth.sql'), createStatement)
+        if UPDATE_TRUTH:
+            self.updateTruthFromString(createStatement, os.path.join(self.curDir, 'data/answerTblCreateTruth.sql'))
+        else:
+            self.assertFileContentEquals(file('data/answerTblCreateTruth.sql'), createStatement)
        
         foreignKeysDict = OrderedDict()
         foreignKeysDict['Answer'] = ('student_answer', 'problem_id')
@@ -193,7 +199,10 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                                           edxParser.schemaStateTbl, 
                                                           primaryKeyName='state_id',
                                                           foreignKeyColNames=foreignKeysDict)
-        self.assertFileContentEquals(file('data/stateTblCreateTruth.sql'), createStatement)
+        if UPDATE_TRUTH:
+            self.updateTruthFromString(createStatement, os.path.join(self.curDir, 'data/stateCreateStatementTruth.sql'))
+        else:
+            self.assertFileContentEquals(file('data/stateCreateStatementTruth.sql'), createStatement)
         
     @unittest.skipIf(not PRINT_OUTS, "Temporarily disabled")
     def testAllTableCreation(self):
@@ -239,11 +248,10 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         edxParser.handleProblemCheck(None, [], event)
 
         fileConverter.flush()
-        dest.close()
         truthFile = open(os.path.join(os.path.dirname(__file__),"data/problem_checkEventFldOnlyTruth.sql"), 'r')
 
         if UPDATE_TRUTH:
-            self.updateTruth(dest.name, truthFile)
+            self.updateTruth(dest.name, truthFile.name)
         else:
             self.assertFileContentEquals(truthFile, dest.name)
         
@@ -270,7 +278,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         dest.close()
         truthFile = open(os.path.join(os.path.dirname(__file__),"data/problem_checkSimpleCaseTruth.sql"), 'r')
         if UPDATE_TRUTH:
-            self.updateTruth(dest.name, truthFile)
+            self.updateTruth(dest.name, truthFile.name)
         else:
             self.assertFileContentEquals(truthFile, dest.name)
         
@@ -311,7 +319,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         dest.close()
         truthFile = open(os.path.join(os.path.dirname(__file__),"data/problemSaveTestTruth.sql"), 'r')
         if UPDATE_TRUTH:
-            self.updateTruth(dest.name, truthFile)
+            self.updateTruth(dest.name, truthFile.name)
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
@@ -335,7 +343,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         dest.close()
         truthFile = open(os.path.join(os.path.dirname(__file__),"data/problemCheckFailTestTruth.sql"), 'r')
         if UPDATE_TRUTH:
-            self.updateTruth(dest.name, truthFile)
+            self.updateTruth(dest.name, truthFile.name)
         else:
             self.assertFileContentEquals(truthFile, dest.name)
        
@@ -360,7 +368,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         dest.close()
         truthFile = open(os.path.join(os.path.dirname(__file__),"data/resetProblemTestTruth.sql"), 'r')
         if UPDATE_TRUTH:
-            self.updateTruth(dest.name, truthFile)
+            self.updateTruth(dest.name, truthFile.name)
         else:
             self.assertFileContentEquals(truthFile, dest.name)
        
@@ -384,7 +392,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         dest.close()
         truthFile = open(os.path.join(os.path.dirname(__file__),"data/addRemoveUserGroupTruth.sql"), 'r')
         if UPDATE_TRUTH:
-            self.updateTruth(dest.name, truthFile)
+            self.updateTruth(dest.name, truthFile.name)
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
@@ -408,7 +416,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         dest.close()
         truthFile = open(os.path.join(os.path.dirname(__file__),"data/createAccountTestTruth.sql"), 'r')
         if UPDATE_TRUTH:
-            self.updateTruth(dest.name, truthFile)
+            self.updateTruth(dest.name, truthFile.name)
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
@@ -432,7 +440,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         dest.close()
         truthFile = open(os.path.join(os.path.dirname(__file__),"data/aboutTestTruth.sql"), 'r')
         if UPDATE_TRUTH:
-            self.updateTruth(dest.name, truthFile)
+            self.updateTruth(dest.name, truthFile.name)
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
@@ -456,7 +464,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         dest.close()
         truthFile = open(os.path.join(os.path.dirname(__file__),"data/seekVideoTruth.sql"), 'r')
         if UPDATE_TRUTH:
-            self.updateTruth(dest.name, truthFile)
+            self.updateTruth(dest.name, truthFile.name)
         else:
             self.assertFileContentEquals(truthFile, dest.name)
         
@@ -481,7 +489,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         dest.close()
         truthFile = open(os.path.join(os.path.dirname(__file__),"data/seekVideoOtherTruth.sql"), 'r')
         if UPDATE_TRUTH:
-            self.updateTruth(dest.name, truthFile)
+            self.updateTruth(dest.name, truthFile.name)
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
@@ -505,7 +513,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         dest.close()
         truthFile = open(os.path.join(os.path.dirname(__file__),"data/showTranscriptTruth.sql"), 'r')
         if UPDATE_TRUTH:
-            self.updateTruth(dest.name, truthFile)
+            self.updateTruth(dest.name, truthFile.name)
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
@@ -529,7 +537,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         dest.close()
         truthFile = open(os.path.join(os.path.dirname(__file__),"data/isStudentCalibratedTruth.sql"), 'r')
         if UPDATE_TRUTH:
-            self.updateTruth(dest.name, truthFile)
+            self.updateTruth(dest.name, truthFile.name)
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
@@ -553,7 +561,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         dest.close()
         truthFile = open(os.path.join(os.path.dirname(__file__),"data/gotoPositionTruth.sql"), 'r')
         if UPDATE_TRUTH:
-            self.updateTruth(dest.name, truthFile)
+            self.updateTruth(dest.name, truthFile.name)
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
@@ -577,7 +585,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         dest.close()
         truthFile = open(os.path.join(os.path.dirname(__file__),"data/problemTruth.sql"), 'r')
         if UPDATE_TRUTH:
-            self.updateTruth(dest.name, truthFile)
+            self.updateTruth(dest.name, truthFile.name)
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
@@ -601,7 +609,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         dest.close()
         truthFile = open(os.path.join(os.path.dirname(__file__),"data/saveAnswerTruth.sql"), 'r')
         if UPDATE_TRUTH:
-            self.updateTruth(dest.name, truthFile)
+            self.updateTruth(dest.name, truthFile.name)
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
@@ -627,7 +635,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         dest.close()
         truthFile = open(os.path.join(os.path.dirname(__file__),"data/problemCheckInPathTruth.sql"), 'r')
         if UPDATE_TRUTH:
-            self.updateTruth(dest.name, truthFile)
+            self.updateTruth(dest.name, truthFile.name)
         else:
             self.assertFileContentEquals(truthFile, dest.name)
        
@@ -653,24 +661,24 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         dest.close()
         truthFile = open(os.path.join(os.path.dirname(__file__),"data/loginAjaxTruth.sql"), 'r')
         if UPDATE_TRUTH:
-            self.updateTruth(dest.name, truthFile)
+            self.updateTruth(dest.name, truthFile.name)
         else:
             self.assertFileContentEquals(truthFile, dest.name)
         
-    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
-    def testBigPull(self):
-        filePath = '/tmp/tracking.log-20130726_20530_lines.json'
-        jsonConverter = JSONToRelation(
-                                       InURI(filePath),
-                                       OutputFile('/tmp/trackOut.sql', OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS),
-		                               mainTableName='EdxTrackEvent',
-				                       logFile='/tmp/j2sTrackOut.log'
-                                   )
-        jsonConverter.setParser(EdXTrackLogJSONParser(jsonConverter, 
-                                                      'EdxTrackEvent', 
-                                                      replaceTables=True, dbName='test'
-                                                      ))
-        jsonConverter.convert()
+#     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
+#     def testBigPull(self):
+#         filePath = '/tmp/tracking.log-20130726_20530_lines.json'
+#         jsonConverter = JSONToRelation(
+#                                        InURI(filePath),
+#                                        OutputFile('/tmp/trackOut.sql', OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS),
+# 		                               mainTableName='EdxTrackEvent',
+# 				                       logFile='/tmp/j2sTrackOut.log'
+#                                    )
+#         jsonConverter.setParser(EdXTrackLogJSONParser(jsonConverter, 
+#                                                       'EdxTrackEvent', 
+#                                                       replaceTables=True, dbName='test'
+#                                                       ))
+#         jsonConverter.convert()
         
     #--------------------------------------------------------------------------------------------------    
     def assertFileContentEquals(self, expected, filePathOrStrToCompareTo):
@@ -715,7 +723,12 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
              
     def updateTruth(self, newTruthFilePath, destinationTruthFilePath):
         shutil.copy(newTruthFilePath, destinationTruthFilePath)
+        
+    def updateTruthFromString(self, newTruthStr, destinationTruthFilePath):
+        with open(destinationTruthFilePath, 'w') as fd:
+            fd.write(newTruthStr)
              
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testGetCourseID']
     unittest.main()
+    

@@ -56,6 +56,9 @@ class OutputDisposition(object):
         # is ignored.
         return False
 
+    def flush(self):
+        self.outputDest.flush()
+
     def getOutputFormat(self):
         return self.outputFormat
 
@@ -165,6 +168,9 @@ class OutputPipe(OutputDisposition):
     def close(self):
         pass # don't close stdout
     
+    def flush(self):
+        sys.stdout.flush()
+    
     def __str__(self):
         return "<OutputPipe:<stdout>"
 
@@ -221,6 +227,9 @@ class OutputFile(OutputDisposition):
         
     def close(self):
         self.fileHandle.close()
+
+    def flush(self):
+        self.fileHandle.flush()
 
     def __str__(self):
         return "<OutputFile:%s>" % self.getFileName()

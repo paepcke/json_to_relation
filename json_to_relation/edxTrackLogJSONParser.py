@@ -786,11 +786,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             elif fldName == 'courseID':
                 (fullCourseName, course_id) = self.get_course_id(record.get('event', None))  # @UnusedVariable
                 val = course_id
-            elif fldName == 'page':
-                # Try to extract a nice course name:
-                course_id = self.extractShortCourseID(val)
-                if course_id is not None:
-                    val = course_id
+#             elif fldName == 'page':
+#                 # Try to extract a nice course name:
+#                 course_id = self.extractShortCourseID(val)
+#                 if course_id is not None:
+#                     val = course_id
                 
             self.setValInRow(row, fldName, val)
         return row

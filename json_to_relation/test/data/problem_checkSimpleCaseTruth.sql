@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS Answer (
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(32) NOT NULL Primary Key,
     answer_id TEXT,
-    correctness BOOL,
+    correctness TINYTEXT,
     npoints INT,
     msg TEXT,
     hint TEXT,
@@ -31,6 +31,21 @@ CREATE TABLE IF NOT EXISTS State (
     FOREIGN KEY(correct_map) REFERENCES CorrectMap(correct_map_id),
     FOREIGN KEY(input_state) REFERENCES InputState(input_state_id)
     );
+CREATE TABLE IF NOT EXISTS Account (
+    account_id VARCHAR(32) NOT NULL Primary Key,
+    username TEXT,
+    name TEXT,
+    mailing_address TEXT,
+    gender TINYTEXT,
+    year_of_birth TINYINT,
+    level_of_education TINYTEXT,
+    goals TEXT,
+    honor_code BOOL,
+    terms_of_service BOOL,
+    course_id TEXT,
+    enrollment_action TINYTEXT,
+    email TEXT
+    );
 CREATE TABLE IF NOT EXISTS Event (
     eventID VARCHAR(32),
     agent TEXT,
@@ -52,14 +67,22 @@ CREATE TABLE IF NOT EXISTS Event (
     problemChoice TEXT,
     questionLocation TEXT,
     attempts TINYINT,
+    longAnswer TEXT,
+    studentFile TEXT,
+    canUploadFile TINYTEXT,
     feedback TEXT,
     feedbackResponseSelected TINYINT,
+    transcriptID TEXT,
+    transcriptCode TINYTEXT,
     rubricSelection INT,
     rubricCategory INT,
     videoID TEXT,
     videoCode TEXT,
     videoCurrentTime FLOAT,
     videoSpeed TINYTEXT,
+    videoOldTime FLOAT,
+    videoNewTime FLOAT,
+    videoSeekType TINYTEXT,
     bookInteractionType TINYTEXT,
     success TINYTEXT,
     answer_id TEXT,
@@ -69,22 +92,28 @@ CREATE TABLE IF NOT EXISTS Event (
     msg TEXT,
     npoints TINYINT,
     queuestate TEXT,
-    correctMapFK VARCHAR(32),
-    answerFK VARCHAR(32),
-    stateFK VARCHAR(32),
     orig_score INT,
     new_score INT,
     orig_total INT,
     new_total INT,
+    event_name TINYTEXT,
+    group_user TINYTEXT,
+    group_action TINYTEXT,
+    position INT,
+    correctMapFK VARCHAR(32),
+    answerFK VARCHAR(32),
+    stateFK VARCHAR(32),
+    accountFK VARCHAR(32),
     FOREIGN KEY(correctMapFK) REFERENCES CorrectMap(correct_map_id),
     FOREIGN KEY(answerFK) REFERENCES Answer(answer_id),
-    FOREIGN KEY(stateFK) REFERENCES State(state_id)
+    FOREIGN KEY(stateFK) REFERENCES State(state_id),
+    FOREIGN KEY(accountFK) REFERENCES Account(account_id)
     );
 START TRANSACTION;
 INSERT INTO Answer (answer_id,problem_id,answer) VALUES 
-    ('692235bf_b9a1_4d59_82d0_77eda63f22d5','input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_2_1','choice_2'),
-    ('0f2282d0_fd66_40cf_809c_92446bb9669f','input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_3_1','choice_2');
-INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,attempts,feedback,feedbackResponseSelected,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime,videoSpeed,bookInteractionType,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,correctMapFK,answerFK) VALUES 
-    ('1019d032_2a75_4c50_a140_59c2981e6644','Mozilla/5.0 (Windows NT 6.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36','browser','problem_check','66.172.116.216','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/de472d1448a74e639a41fa584c49b91e/ed52812e4f96445383bfc556d15cb902/','75a8c9042ba10156301728f61e487414','2013-08-04T06:27:13.660689+00:00','trobinspire','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'692235bf_b9a1_4d59_82d0_77eda63f22d5'),
-    ('1019d032_2a75_4c50_a140_59c2981e6644','Mozilla/5.0 (Windows NT 6.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36','browser','problem_check','66.172.116.216','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/de472d1448a74e639a41fa584c49b91e/ed52812e4f96445383bfc556d15cb902/','75a8c9042ba10156301728f61e487414','2013-08-04T06:27:13.660689+00:00','trobinspire','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'0f2282d0_fd66_40cf_809c_92446bb9669f');
+    ('62bbb917_c8ab_4d21_b02d_a3b8f01af17a','input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_2_1','choice_2'),
+    ('7f340885_ccbf_469c_81a9_b0606f5e0884','input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_3_1','choice_2');
+INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime,videoSpeed,videoOldTime,videoNewTime,videoSeekType,bookInteractionType,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,correctMapFK,answerFK) VALUES 
+    ('381a2891_3eac_44ca_b78f_5c7656f4054a','Mozilla/5.0 (Windows NT 6.0; WOW64) AppleWebKit/537.36 (KHTML\, like Gecko) Chrome/28.0.1500.95 Safari/537.36','browser','problem_check','66.172.116.216','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/de472d1448a74e639a41fa584c49b91e/ed52812e4f96445383bfc556d15cb902/','75a8c9042ba10156301728f61e487414','2013-08-04T06:27:13.660689+00:00','trobinspire','0:00:00',null,null,null,null,null,null,'input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_2_1',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'62bbb917_c8ab_4d21_b02d_a3b8f01af17a'),
+    ('381a2891_3eac_44ca_b78f_5c7656f4054a','Mozilla/5.0 (Windows NT 6.0; WOW64) AppleWebKit/537.36 (KHTML\, like Gecko) Chrome/28.0.1500.95 Safari/537.36','browser','problem_check','66.172.116.216','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/de472d1448a74e639a41fa584c49b91e/ed52812e4f96445383bfc556d15cb902/','75a8c9042ba10156301728f61e487414','2013-08-04T06:27:13.660689+00:00','trobinspire','0:00:00',null,null,null,null,null,null,'input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_3_1',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'7f340885_ccbf_469c_81a9_b0606f5e0884');
 COMMIT;

@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS Answer (
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(32) NOT NULL Primary Key,
     answer_id TEXT,
-    correctness BOOL,
+    correctness TINYTEXT,
     npoints INT,
     msg TEXT,
     hint TEXT,
@@ -111,5 +111,5 @@ CREATE TABLE IF NOT EXISTS Event (
     );
 START TRANSACTION;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,attempts,longAnswer,studentFile,canUploadFile) VALUES 
-    ('95ef2338_be35_4745_bce9_33165aaac257','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML\, like Gecko) Chrome/29.0.1547.57 Safari/537.36','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/combinedopenended/364df8ee116447b29149887f181643f8/save_answer','204.111.14.242',null,null,'2013-08-28T19:36:39.526902+00:00','Smith','0:00:00',null,null,null,null,null,null,null,null,null,null,'Students will have to use higher level thinking to describe the movement of each competitor and relate it to the others. They cannot simply say \'runner A\' ran a steady race picking up is pace in the beginning and then dropping off slightly in the end. They will have to be able to say runner B wins after he accelerates past runner A. He must have saved his energy since he did not push as hard earlier in the race. ','','false');
+    ('06f4e38c_f610_4551_a5a9_d03e0625c817','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML\, like Gecko) Chrome/29.0.1547.57 Safari/537.36','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/combinedopenended/364df8ee116447b29149887f181643f8/save_answer','204.111.14.242',null,null,'2013-08-28T19:36:39.526902+00:00','Smith','0:00:00',null,null,null,null,null,null,null,null,null,null,'Students will have to use higher level thinking to describe the movement of each competitor and relate it to the others. They cannot simply say \'runner A\' ran a steady race picking up is pace in the beginning and then dropping off slightly in the end. They will have to be able to say runner B wins after he accelerates past runner A. He must have saved his energy since he did not push as hard earlier in the race. ','','false');
 COMMIT;
