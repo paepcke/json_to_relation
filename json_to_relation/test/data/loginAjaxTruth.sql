@@ -1,4 +1,7 @@
 USE test;
+SET foreign_key_checks = 0;
+DROP TABLE IF EXISTS Event, Answer, InputState, CorrectMap, State, Account;
+SET foreign_key_checks = 1;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(32) NOT NULL Primary Key,
     problem_id TEXT,
@@ -111,5 +114,5 @@ CREATE TABLE IF NOT EXISTS Event (
     );
 START TRANSACTION;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for) VALUES 
-    ('d8959b5e_a1e5_46d1_9622_eb7d9cf7593e','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML\, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/login_ajax','85.246.55.134',null,null,'2013-06-10T20:47:37.580071','emil.smith@gmail.com','0:00:00');
+    ('127bb1b6_dd24_457e_9c2c_ed1be368b315','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML\, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/login_ajax','85.246.55.134',null,null,'2013-06-10T20:47:37.580071','emil.smith@gmail.com','0:00:00');
 COMMIT;

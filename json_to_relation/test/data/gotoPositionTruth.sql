@@ -1,4 +1,7 @@
 USE test;
+SET foreign_key_checks = 0;
+DROP TABLE IF EXISTS Event, Answer, InputState, CorrectMap, State, Account;
+SET foreign_key_checks = 1;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(32) NOT NULL Primary Key,
     problem_id TEXT,
@@ -111,5 +114,5 @@ CREATE TABLE IF NOT EXISTS Event (
     );
 START TRANSACTION;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime,videoSpeed,videoOldTime,videoNewTime,videoSeekType,bookInteractionType,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position) VALUES 
-    ('6bd6e097_caa9_415a_b97a_f25aaa078f57','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/534.59.8 (KHTML\, like Gecko) Version/5.1.9 Safari/534.59.8','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/sequential/1b3ac347ca064b3eaaddbc27d4200964/goto_position','115.64.154.154',null,null,'2013-08-28T12:28:50.009704+00:00','Smith','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'9');
+    ('9ff1e705_0cfc_48ac_a407_b5768103eb43','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/534.59.8 (KHTML\, like Gecko) Version/5.1.9 Safari/534.59.8','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/sequential/1b3ac347ca064b3eaaddbc27d4200964/goto_position','115.64.154.154',null,null,'2013-08-28T12:28:50.009704+00:00','Smith','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'9');
 COMMIT;

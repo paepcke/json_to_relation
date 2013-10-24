@@ -1,4 +1,7 @@
 USE test;
+SET foreign_key_checks = 0;
+DROP TABLE IF EXISTS Event, Answer, InputState, CorrectMap, State, Account;
+SET foreign_key_checks = 1;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(32) NOT NULL Primary Key,
     problem_id TEXT,
@@ -111,19 +114,19 @@ CREATE TABLE IF NOT EXISTS Event (
     );
 START TRANSACTION;
 INSERT INTO Answer (answer_id,problem_id,answer) VALUES 
-    ('07e16d6f_7c8d_4190_9dfe_eea0e082ba7a','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','choice_2');
+    ('425754ab_0738_41da_8f0d_3c302de2af69','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','choice_2');
 INSERT INTO CorrectMap (correct_map_id,answer_id,correctness,npoints,msg,hint,hintmode,queuestate) VALUES 
-    ('baee321e_4451_4782_bbff_6c40467a2886','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','incorrect',null,'','',null,null);
+    ('4b19e407_b876_41b5_a7bc_e84966300aea','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','incorrect',null,'','',null,null);
 INSERT INTO InputState (input_state_id,problem_id,state) VALUES 
-    ('642d0619_84dc_4c79_ac92_9dc48e3bcb97','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1',null);
+    ('747fe689_a571_47ba_a2f5_a47eb67fd464','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1',null);
 INSERT INTO State (state_id,seed,done,problem_id,student_answer,correct_map,input_state) VALUES 
-    ('ae08364f_ab73_4065_80c5_0ab9205ee57b',811,True,null,'07e16d6f_7c8d_4190_9dfe_eea0e082ba7a','baee321e_4451_4782_bbff_6c40467a2886','642d0619_84dc_4c79_ac92_9dc48e3bcb97');
+    ('54a6b97f_521e_408c_8b7c_19d6d83c0e3d',811,True,null,'425754ab_0738_41da_8f0d_3c302de2af69','4b19e407_b876_41b5_a7bc_e84966300aea','747fe689_a571_47ba_a2f5_a47eb67fd464');
 INSERT INTO InputState (input_state_id,problem_id,state) VALUES 
-    ('22a5da99_d86a_4959_bc8a_db750e9c443b','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1',null);
+    ('c6eb3527_7f12_40a6_93e9_74efb2b77689','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1',null);
 INSERT INTO State (state_id,seed,done,problem_id,student_answer,correct_map,input_state) VALUES 
-    ('a615af6c_eea0_4fd9_94fd_a19e11607949',93,False,null,null,null,'22a5da99_d86a_4959_bc8a_db750e9c443b');
+    ('a305c3d2_d130_4e12_b106_662790ec0ece',93,False,null,null,null,'c6eb3527_7f12_40a6_93e9_74efb2b77689');
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime,videoSpeed,videoOldTime,videoNewTime,videoSeekType,bookInteractionType,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,correctMapFK,answerFK,stateFK) VALUES 
-    ('bc77bff0_5dae_4e13_9bd2_7417efe2e41d','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML\, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','reset_problem','24.43.226.3','x_module',null,'2013-06-12T21:54:33.936342','gloria','0:00:00',null,null,null,null,null,null,'i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'ae08364f_ab73_4065_80c5_0ab9205ee57b'),
-    ('bc77bff0_5dae_4e13_9bd2_7417efe2e41d','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML\, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','reset_problem','24.43.226.3','x_module',null,'2013-06-12T21:54:33.936342','gloria','0:00:00',null,null,null,null,null,null,'i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'a615af6c_eea0_4fd9_94fd_a19e11607949'),
-    ('bc77bff0_5dae_4e13_9bd2_7417efe2e41d','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML\, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','reset_problem','24.43.226.3','x_module',null,'2013-06-12T21:54:33.936342','gloria','0:00:00',null,null,null,null,null,null,'i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'a615af6c_eea0_4fd9_94fd_a19e11607949');
+    ('5f640be9_0266_4c3c_a162_5ec1c0a9f792','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML\, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','reset_problem','24.43.226.3','x_module',null,'2013-06-12T21:54:33.936342','gloria','0:00:00',null,null,null,null,null,null,'i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'54a6b97f_521e_408c_8b7c_19d6d83c0e3d'),
+    ('5f640be9_0266_4c3c_a162_5ec1c0a9f792','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML\, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','reset_problem','24.43.226.3','x_module',null,'2013-06-12T21:54:33.936342','gloria','0:00:00',null,null,null,null,null,null,'i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'a305c3d2_d130_4e12_b106_662790ec0ece'),
+    ('5f640be9_0266_4c3c_a162_5ec1c0a9f792','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML\, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','reset_problem','24.43.226.3','x_module',null,'2013-06-12T21:54:33.936342','gloria','0:00:00',null,null,null,null,null,null,'i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'a305c3d2_d130_4e12_b106_662790ec0ece');
 COMMIT;

@@ -1,4 +1,7 @@
 USE test;
+SET foreign_key_checks = 0;
+DROP TABLE IF EXISTS Event, Answer, InputState, CorrectMap, State, Account;
+SET foreign_key_checks = 1;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(32) NOT NULL Primary Key,
     problem_id TEXT,
@@ -111,5 +114,5 @@ CREATE TABLE IF NOT EXISTS Event (
     );
 START TRANSACTION;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID) VALUES 
-    ('3ccc0a2c_efac_4be6_b25b_1014e5468eb7','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML\, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','about','85.104.215.30',null,null,'2013-06-10T05:47:38.452300','',null,null,null,'/courses/Medicine/HRP258/Statistics_in_Medicine');
+    ('c8a15e5e_6d42_4517_b2bb_b4de9689be2c','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML\, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','about','85.104.215.30',null,null,'2013-06-10T05:47:38.452300','',null,null,null,'/courses/Medicine/HRP258/Statistics_in_Medicine');
 COMMIT;

@@ -1,4 +1,7 @@
 USE test;
+SET foreign_key_checks = 0;
+DROP TABLE IF EXISTS Event, Answer, InputState, CorrectMap, State, Account;
+SET foreign_key_checks = 1;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(32) NOT NULL Primary Key,
     problem_id TEXT,

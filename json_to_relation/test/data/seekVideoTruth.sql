@@ -1,4 +1,7 @@
 USE test;
+SET foreign_key_checks = 0;
+DROP TABLE IF EXISTS Event, Answer, InputState, CorrectMap, State, Account;
+SET foreign_key_checks = 1;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(32) NOT NULL Primary Key,
     problem_id TEXT,
@@ -111,5 +114,5 @@ CREATE TABLE IF NOT EXISTS Event (
     );
 START TRANSACTION;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime,videoSpeed,videoOldTime,videoNewTime,videoSeekType) VALUES 
-    ('d1ca1d5d_274e_46ee_898e_66c137b0e058','Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML\, like Gecko) Chrome/27.0.1453.94 Safari/537.36','browser','seek_video','184.90.151.219','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/8016c68f703d4b888e444e97481b6830/d7bf74e84cdc438ea9f04a201410a00e/','0ba915e0d89c28a05c11f5cd9674fa1d','2013-06-11T16:23:16.899531','Bgisi','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'i4x-Medicine-HRP258-videoalpha-413d6a45b82848339ab5fd3836dfb928','html5',null,null,308.506103516,290.0,'slide_seek');
+    ('7d2659ae_3832_4f9d_8763_543a1abafda2','Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML\, like Gecko) Chrome/27.0.1453.94 Safari/537.36','browser','seek_video','184.90.151.219','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/8016c68f703d4b888e444e97481b6830/d7bf74e84cdc438ea9f04a201410a00e/','0ba915e0d89c28a05c11f5cd9674fa1d','2013-06-11T16:23:16.899531','Bgisi','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'i4x-Medicine-HRP258-videoalpha-413d6a45b82848339ab5fd3836dfb928','html5',null,null,308.506103516,290.0,'slide_seek');
 COMMIT;

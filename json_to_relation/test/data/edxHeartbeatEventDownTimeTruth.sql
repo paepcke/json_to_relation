@@ -1,4 +1,7 @@
 USE test;
+SET foreign_key_checks = 0;
+DROP TABLE IF EXISTS Main, Answer, InputState, CorrectMap, State, Account;
+SET foreign_key_checks = 1;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(32) NOT NULL Primary Key,
     problem_id TEXT,
@@ -111,6 +114,6 @@ CREATE TABLE IF NOT EXISTS Main (
     );
 START TRANSACTION;
 INSERT INTO Main (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for) VALUES 
-    ('59af6c33_5221_4409_8e70_978d0f63f1ff','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T08:43:32.573390+00:00','','0:00:00'),
-    ('9c247a60_abc2_4908_8ca2_f6ed8eaa0cae','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T09:45:37.573390+00:00','','1:02:05');
+    ('de0e4258_ab38_45f4_9ad8_b7880d8d4cef','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T08:43:32.573390+00:00','','0:00:00'),
+    ('d520a116_fd08_4a70_a515_f19e043a39d8','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T09:45:37.573390+00:00','','1:02:05');
 COMMIT;

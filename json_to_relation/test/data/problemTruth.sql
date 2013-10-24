@@ -1,4 +1,7 @@
 USE test;
+SET foreign_key_checks = 0;
+DROP TABLE IF EXISTS Event, Answer, InputState, CorrectMap, State, Account;
+SET foreign_key_checks = 1;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(32) NOT NULL Primary Key,
     problem_id TEXT,
@@ -111,5 +114,5 @@ CREATE TABLE IF NOT EXISTS Event (
     );
 START TRANSACTION;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation) VALUES 
-    ('0568da2a_fc4c_4ea0_9e2e_5e109716ecfe','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML\, like Gecko) Chrome/28.0.1500.95 Safari/537.36','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/peergrading/ef6ba7f803bb46ebaaf008cde737e3e9/problem','82.45.36.217',null,null,'2013-08-28T13:45:53.121784+00:00','JoC','0:00:00',null,null,null,null,null,null,null,null,'i4x://Education/EDUC115N/combinedopenended/430b3a0f25924f0db96ee4d2987dcb98');
+    ('dc95c0de_e537_47e1_b815_9e32fbb5f43c','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML\, like Gecko) Chrome/28.0.1500.95 Safari/537.36','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/peergrading/ef6ba7f803bb46ebaaf008cde737e3e9/problem','82.45.36.217',null,null,'2013-08-28T13:45:53.121784+00:00','JoC','0:00:00',null,null,null,null,null,null,null,null,'i4x://Education/EDUC115N/combinedopenended/430b3a0f25924f0db96ee4d2987dcb98');
 COMMIT;
