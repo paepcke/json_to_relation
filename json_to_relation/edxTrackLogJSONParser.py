@@ -312,10 +312,6 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @rtype: [<any>]
         '''
         self.jsonToRelationConverter.bumpLineCounter()
-        # Collect the columns whose values need to be set in 
-        # the INSERT statement that results from this event:
-        #********colsToSet = ['eventID'] + self.commonFldNames
-        #********self.colNamesByTable[self.mainTableName] = colsToSet
         try:
             # Turn top level JSON object to dict:
             try:
@@ -323,9 +319,6 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             except ValueError as e:
                 raise ValueError('Ill formed JSON in track log, line %s: %s' % (self.jsonToRelationConverter.makeFileCitation(), `e`))
     
-            #******eventID = self.getUniqueID()
-            #******self.setValInRow(row, 'eventID', eventID)
-                    
             # Dispense with the fields common to all events, except event,
             # which is a nested JSON string. Results will be 
             # in self.resultDict:
@@ -823,9 +816,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             self.logWarn("Track log line %s: missing event text in sequence navigation event." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
-        if not isinstance(event, dict):
+
+        event = self.ensureDict(event) 
+        if event is None:
             self.logWarn("Track log line %s: event is not a dict in sequence navigation event: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
 
         oldIndex = event.get('old', 0)
         newIndex = event.get('new', 0)
@@ -935,10 +931,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             return self.handleProblemCheckSimpleCase(row, event)
 
         # Complex case: event field should be a dict:
-        if not isinstance(event, dict):
+        event = self.ensureDict(event) 
+        if event is None:
             self.logWarn("Track log line %s: event is not a dict in problem_check event: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
-        
+            return row
 
         # Go through all the top-level problem_check event fields first;
         # we ignore non-existing fields.
@@ -1574,16 +1571,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
 
-        if isinstance(event, dict):
-            valsDict = event
-        else:
-            try:
-                # Maybe it's a string: make a dict from the string:
-                valsDict = eval(event)
-            except Exception as e:
-                self.logWarn("Track log line %s: event is not a dict in video play/pause: '%s' (%s)" %\
-                             (self.jsonToRelationConverter.makeFileCitation(), str(event), `e`))
-                return row
+        valsDict = self.ensureDict(event) 
+        if event is None:
+            self.logWarn("Track log line %s: event is not a dict in video play/pause: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
         
         videoID = valsDict.get('id', None)
         videoCode = valsDict.get('code', None)
@@ -1610,17 +1602,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
 
-        if not isinstance(event, dict):
-            try:
-                # Maybe it's a string: make a dict from the string:
-                valsDict = eval(event)
-            except Exception as e:
-                self.logWarn("Track log line %s: event is not a dict in video play/pause: '%s' (%s)" %\
-                             (self.jsonToRelationConverter.makeFileCitation(), str(event), `e`))
-                return row
-        else:
-            valsDict = event
-        
+        valsDict = self.ensureDict(event) 
+        if event is None:
+            self.logWarn("Track log line %s: event is not a dict in video play/pause: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
+
         videoID = valsDict.get('id', None)
         videoCode = valsDict.get('code', None)
         videoOldTime = valsDict.get('old_time', None)
@@ -1685,7 +1672,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
         
-        if not isinstance(event, dict):
+        event = self.ensureDict(event) 
+        if event is None:
             self.logWarn("Track log line %s: event is not a dict in handle showanswer event: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
@@ -1720,7 +1708,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
 
-        if not isinstance(event, dict):
+        event = self.ensureDict(event) 
+        if event is None:
             self.logWarn("Track log line %s: event is not a dict in show_transcript or hide_transcript: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
@@ -1776,7 +1765,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
         
-        if not isinstance(event, dict):
+        event = self.ensureDict(event) 
+        if event is None:
             self.logWarn("Track log line %s: event is not a dict in handle problem_check event: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
@@ -1888,7 +1878,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
         
-        if not isinstance(event, dict):
+        event = self.ensureDict(event) 
+        if event is None:
             self.logWarn("Track log line %s: event is not a dict in handle problem_rescore event: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
@@ -1941,7 +1932,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
         
-        if not isinstance(event, dict):
+        event = self.ensureDict(event) 
+        if event is None:
             self.logWarn("Track log line %s: event is not a dict in handle save_problem_fail, save_problem_success, or reset_problem_fail event: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
@@ -2028,7 +2020,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
         
-        if not isinstance(event, dict):
+        event = self.ensureDict(event) 
+        if event is None:
             self.logWarn("Track log line %s: event is not a dict in handle reset_problem event: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
@@ -2058,7 +2051,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
 
-        if not isinstance(event, dict):
+        event = self.ensureDict(event) 
+        if event is None:
             self.logWarn("Track log line %s: event is not a dict in handle resource event: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
@@ -2080,7 +2074,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
 
-        if not isinstance(event, dict):
+        event = self.ensureDict(event) 
+        if event is None:
             self.logWarn("Track log line %s: event is not a dict in handle resource event: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
@@ -2104,7 +2099,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
         
-        if not isinstance(event, dict):
+        event = self.ensureDict(event) 
+        if event is None:
+
             self.logWarn("Track log line %s: event is not a dict in delete-student-module-state event: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
@@ -2132,7 +2129,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
 
-        if not isinstance(event, dict):
+        event = self.ensureDict(event) 
+        if event is None:
             self.logWarn("Track log line %s: event is not a dict in reset-student-attempt event: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
@@ -2171,7 +2169,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
         
-        if not isinstance(event, dict):
+        event = self.ensureDict(event) 
+        if event is None:
             self.logWarn("Track log line %s: event is not a dict in get-student-progress-page event: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
@@ -2201,7 +2200,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
 
-        if not isinstance(event, dict):
+        event = self.ensureDict(event) 
+        if event is None:
             self.logWarn("Track log line %s: event is not a dict in add-instructor or remove-instructor event: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
@@ -2220,7 +2220,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
         
-        if not isinstance(event, dict):
+        event = self.ensureDict(event) 
+        if event is None:
             self.logWarn("Track log line %s: event is not a dict in list-forum-admins, list-forum-mods, or list-forum-community-TAs event: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
@@ -2240,7 +2241,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
 
-        if not isinstance(event, dict):
+        event = self.ensureDict(event) 
+        if event is None:
             self.logWarn("Track log line %s: event is not a dict in one of handle forum manipulations event: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
@@ -2267,7 +2269,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
         
-        if not isinstance(event, dict):
+        event = self.ensureDict(event) 
+        if event is None:
             self.logWarn("Track log line %s: event is not a dict in psychometrics-histogram-generation event: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
@@ -2302,7 +2305,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
 
-        if not isinstance(event, dict):
+        event = self.ensureDict(event) 
+        if event is None:
             self.logWarn("Track log line %s: event is not a dict in add-or-remove-user-group event: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
@@ -2447,16 +2451,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
 
-        if not isinstance(event, dict):
-            try:
-                # Maybe it's a string: make a dict from the string:
-                eventDict = eval(event)
-            except Exception as e:
-                self.logWarn("Track log line %s: event is not a dict in path-styled event: '%s' (%s)" %\
-                             (self.jsonToRelationConverter.makeFileCitation(), str(event), `e`))
-                return row
-        else:
-            eventDict = event
+        eventDict = self.ensureDict(event) 
+        if eventDict is None:
+            self.logWarn("Track log line %s: event is not a dict in path-styled event: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
+        
         try:
             postDict = eventDict['POST']
         except KeyError:
@@ -2672,16 +2672,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
 
-        if not isinstance(event, dict):
-            try:
-                # Maybe it's a string: make a dict from the string:
-                eventDict = eval(event)
-            except Exception as e:
-                self.logWarn("Track log line %s: event is not a dict in event: '%s' (%s)" %\
-                             (self.jsonToRelationConverter.makeFileCitation(), str(event), `e`))
-                return row
-        else:
-            eventDict = event
+        eventDict = self.ensureDict(event) 
+        if eventDict is None:
+            self.logWarn("Track log line %s: event is not a dict in event: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
+
         try:
             postDict = eventDict['POST']
         except KeyError:
@@ -2763,8 +2759,35 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             i = courseNameFrags.index('courses')
             course_id = "/".join(map(str, courseNameFrags[i+1:i+4]))
         return course_id        
+
+    def ensureDict(self, event):
+        if isinstance(event, dict):
+            return event
+        else:
+            try:
+                # Maybe it's a string: make a dict from the string:
+                res = eval(event)
+                if isinstance(res, dict):
+                    return res
+                else:
+                    return None
+            except Exception:
+                return None
         
-        
+    def makeInsertSafe(self, unsafeStr):
+        '''
+        Makes the given string safe for use as a value in a MySQL INSERT
+        statement. Looks for embedded CR or LFs, and turns them into 
+        semicolons. Escapes commas and single quotes. Backslash is
+        replaced by double backslash. This is needed for unicode, like
+        \0245 (invented example)
+        @param unsafeStr: string that possibly contains unsafe chars
+        @type unsafeStr: String
+        @return: same string, with unsafe chars properly replaced or escaped
+        @rtype: String
+        '''
+        return unsafeStr.replace("'", "\\'").replace('\n', "; ").replace('\r', "; ").replace(',', "\\,").replace('\\', '\\\\')       
+    
     def getUniqueID(self):
         '''
         Generate a universally unique key with

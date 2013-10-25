@@ -336,7 +336,7 @@ class JSONToRelation(object):
 
         with self.destination as outFd, self.jsonSource as inFd:
             for jsonStr in inFd:
-                jsonStr = self.jsonSource.decompress(jsonStr)
+                #****jsonStr = self.jsonSource.decompress(jsonStr)
                 newRow = []
                 try:
                     # processOneJSONObject will call pushtToTable() for all 
