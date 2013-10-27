@@ -4,6 +4,10 @@
 #TODO: add courseID in common flds
 #TODO: video_seek: seek counter floats are output to 8 sig digs, but they are 12 sig digs in json
 #TODO: correctness in correctMap
+#TODO: speed_change_video
+#TODO: /app21/tracking.log-20130831.gz:174310: event is not a dict in select_rubric event: '{u'category': 0, u'selection': u'1', u'location': u'i4x://Education/EDUC115N/combinedopenended/04d9f185e689415f9217a5423166891c'}' (TypeError('eval() arg 1 must be a string or code object',))
+#TODO: wrong output path: outFullPath: /home/paepcke/Project/VPOL/Data/EdXTrackingOct22_2013/app21/tracking.log-201308312013_10_26T22_48_30.228168_18389.sql
+
 '''
 Created on Sep 14, 2013
 
@@ -104,9 +108,9 @@ class JSONToRelation(object):
         they wish.
         
         @param jsonSource: subclass of InputSource that wraps containing JSON structures, or a URL to such a source
-        @type jsonSource: {InPipe | InString | InURI | InMongoDB}
+        @type jsonSource: {InPipe | InString | InURI | InMongoDB} (InMongoDB not implemented)
         @param destination: instruction to were resulting rows are to be directed
-        @type destination: {OutputPipe | OutputFile | OutputMySQLTable}
+        @type destination: {OutputPipe | OutputFile }
         @param schemaHints: Dict mapping col names to data types (optional). Affects the default (main) table.
         @type schemaHints: OrderedDict<String,ColDataTYpe>
         @param jsonParserInstance: a parser that takes one JSON string, and returns a CSV row, or other
