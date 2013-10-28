@@ -3,12 +3,12 @@ SET foreign_key_checks = 0;
 DROP TABLE IF EXISTS Main, Answer, InputState, CorrectMap, State, Account;
 SET foreign_key_checks = 1;
 CREATE TABLE IF NOT EXISTS Answer (
-    answer_id VARCHAR(32) NOT NULL Primary Key,
+    answer_id VARCHAR(40) NOT NULL Primary Key,
     problem_id TEXT,
     answer TEXT
     );
 CREATE TABLE IF NOT EXISTS CorrectMap (
-    correct_map_id VARCHAR(32) NOT NULL Primary Key,
+    correct_map_id VARCHAR(40) NOT NULL Primary Key,
     answer_id TEXT,
     correctness TINYTEXT,
     npoints INT,
@@ -18,24 +18,24 @@ CREATE TABLE IF NOT EXISTS CorrectMap (
     queuestate TEXT
     );
 CREATE TABLE IF NOT EXISTS InputState (
-    input_state_id VARCHAR(32) NOT NULL Primary Key,
+    input_state_id VARCHAR(40) NOT NULL Primary Key,
     problem_id TEXT,
     state TEXT
     );
 CREATE TABLE IF NOT EXISTS State (
-    state_id VARCHAR(32) NOT NULL Primary Key,
+    state_id VARCHAR(40) NOT NULL Primary Key,
     seed TINYINT,
     done BOOL,
     problem_id TEXT,
-    student_answer VARCHAR(32),
-    correct_map VARCHAR(32),
-    input_state VARCHAR(32),
+    student_answer VARCHAR(40),
+    correct_map VARCHAR(40),
+    input_state VARCHAR(40),
     FOREIGN KEY(student_answer) REFERENCES Answer(answer_id),
     FOREIGN KEY(correct_map) REFERENCES CorrectMap(correct_map_id),
     FOREIGN KEY(input_state) REFERENCES InputState(input_state_id)
     );
 CREATE TABLE IF NOT EXISTS Account (
-    account_id VARCHAR(32) NOT NULL Primary Key,
+    account_id VARCHAR(40) NOT NULL Primary Key,
     username TEXT,
     name TEXT,
     mailing_address TEXT,
@@ -47,10 +47,11 @@ CREATE TABLE IF NOT EXISTS Account (
     terms_of_service BOOL,
     course_id TEXT,
     enrollment_action TINYTEXT,
-    email TEXT
+    email TEXT,
+    receive_emails TINYTEXT
     );
 CREATE TABLE IF NOT EXISTS Main (
-    eventID VARCHAR(32),
+    eventID VARCHAR(40),
     agent TEXT,
     event_source TINYTEXT,
     event_type TEXT,
@@ -69,6 +70,7 @@ CREATE TABLE IF NOT EXISTS Main (
     problemID TEXT,
     problemChoice TEXT,
     questionLocation TEXT,
+    submissionID TEXT,
     attempts TINYINT,
     longAnswer TEXT,
     studentFile TEXT,
@@ -106,10 +108,10 @@ CREATE TABLE IF NOT EXISTS Main (
     group_action TINYTEXT,
     position INT,
     badlyFormatted TEXT,
-    correctMapFK VARCHAR(32),
-    answerFK VARCHAR(32),
-    stateFK VARCHAR(32),
-    accountFK VARCHAR(32),
+    correctMapFK VARCHAR(40),
+    answerFK VARCHAR(40),
+    stateFK VARCHAR(40),
+    accountFK VARCHAR(40),
     FOREIGN KEY(correctMapFK) REFERENCES CorrectMap(correct_map_id),
     FOREIGN KEY(answerFK) REFERENCES Answer(answer_id),
     FOREIGN KEY(stateFK) REFERENCES State(state_id),
@@ -117,5 +119,5 @@ CREATE TABLE IF NOT EXISTS Main (
     );
 START TRANSACTION;
 INSERT INTO Main (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for) VALUES 
-    ('1a8cec2d_f1b2_4b50_aed0_0068fc295764','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T08:43:32.573390+00:00','','0:00:00');
+    ('3215e34b_bc1a_4b03_960a_703d0bb2118f','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T08:43:32.573390+00:00','','0:00:00');
 COMMIT;

@@ -53,7 +53,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
         self.schemaHintsMainTable = OrderedDict()
 
-        self.schemaHintsMainTable['eventID'] = ColDataType.UUID # we generate this one ourselves; xlates to VARCHAR(32)
+        self.schemaHintsMainTable['eventID'] = ColDataType.UUID # we generate this one ourselves; xlates to VARCHAR(40)
         self.schemaHintsMainTable['agent'] = ColDataType.TEXT
         self.schemaHintsMainTable['event_source'] = ColDataType.TINYTEXT
         self.schemaHintsMainTable['event_type'] = ColDataType.TEXT
@@ -82,6 +82,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaHintsMainTable['problemID'] = ColDataType.TEXT
         self.schemaHintsMainTable['problemChoice'] = ColDataType.TEXT
         self.schemaHintsMainTable['questionLocation'] = ColDataType.TEXT
+        
+        # Submissions:
+        self.schemaHintsMainTable['submissionID'] = ColDataType.TEXT
         
         # Attempts:
         self.schemaHintsMainTable['attempts'] = ColDataType.TINYINT
@@ -149,7 +152,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # When bad JSON is encountered, it gets put 
         # into the following field:
         self.schemaHintsMainTable['badlyFormatted'] = ColDataType.TEXT
-
+        
         # Foreign keys to auxiliary tables:
         self.schemaHintsMainTable['correctMapFK'] = ColDataType.UUID
         self.schemaHintsMainTable['answerFK'] = ColDataType.UUID
@@ -237,6 +240,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaAccountTbl['course_id'] = ColDataType.TEXT
         self.schemaAccountTbl['enrollment_action'] = ColDataType.TINYTEXT
         self.schemaAccountTbl['email'] = ColDataType.TEXT
+        self.schemaAccountTbl['receive_emails'] = ColDataType.TINYTEXT
+
 
         # Turn the SQL data types in the dict to column spec objects:
         for colName in self.schemaAccountTbl.keys():
@@ -413,10 +418,22 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 # Was already a dict
                 event = eventJSONStrOrDict
             except Exception as e:
-                row = self.handleBadJSON(row, eventJSONStrOrDict)
-                raise ValueError('Bad JSON; saved in col longAnswer: track line %s; event_type %s (%s)' %\
-                                           (self.jsonToRelationConverter.makeFileCitation(), eventType, `e`))
-                return
+                # Last ditch attempt: make the (supposed) JSON string INSERT safe
+                # and try again. This takes care of incorrect \u encodings and more:
+                if isinstance(eventJSONStrOrDict, basestring):
+                    eventJSONStrOrDict = self.makeInsertSafe(eventJSONStrOrDict)
+                    try:
+                        event = json.loads(eventJSONStrOrDict)
+                    except Exception as e:
+                        row = self.handleBadJSON(row, eventJSONStrOrDict)
+                        raise ValueError('Bad JSON; saved in col badlyFormatted: track line %s; event_type %s (%s)' %\
+                                         (self.jsonToRelationConverter.makeFileCitation(), eventType, `e`))
+                        return
+                else:
+                    row = self.handleBadJSON(row, eventJSONStrOrDict)
+                    raise ValueError('Bad JSON; saved in col badlyFormatted: track line %s; event_type %s (%s)' %\
+                                               (self.jsonToRelationConverter.makeFileCitation(), eventType, `e`))
+                    return
             
             if eventType == 'seq_goto' or\
                eventType == 'seq_next' or\
@@ -591,6 +608,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             elif eventType == 'problem_graded':
                 self.handleProblemGraded(record, row, event)
                 return
+
+            elif eventType == 'change-email-settings':
+                self.handleReceiveEmail(record, row, event)
+                return
+                
             
             elif eventType[0] == '/':
                 self.handlePathStyledEventTypes(record, row, event)
@@ -683,7 +705,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         optionally be provided. An example of the most complex create statement generated
         by this method is::
         CREATE TABLE myTable
-            col1 VARCHAR(32) NOT NULL Primary Key,
+            col1 VARCHAR(40) NOT NULL Primary Key,
 			col2 TEXT,
 			col3 INT,
 			col4 VARCHAR(32),
@@ -771,7 +793,6 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         foreignKeysDict['Account'] = ('accountFK', 'account_id')
         createStatement = self.genOneCreateStatement(self.mainTableName, 
                                                      self.schemaHintsMainTable, 
-                                                     primaryKeyName='event_id', 
                                                      foreignKeyColNames=foreignKeysDict)        
         self.jsonToRelationConverter.pushString(createStatement)
         
@@ -1137,6 +1158,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             hintmode = oneCorrectMapDict.get('hintmode', None)
             correctness = oneCorrectMapDict.get('correctness', None)
             msg = oneCorrectMapDict.get('msg', None)
+            msg = self.makeInsertSafe(msg)
             npoints = oneCorrectMapDict.get('npoints', None)
             queuestate = oneCorrectMapDict.get('queuestate', None)
 
@@ -2521,6 +2543,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         accountDict['course_id'] = postDict.get('course_id', None)
         accountDict['enrollment_action'] = postDict.get('enrollment', None)
         accountDict['email'] = postDict.get('email', None) 
+        accountDict['receive_emails'] = postDict.get('receive_emails', None) 
 
         # Some values in create_account are arrays. Replace those
         # values' entries in accountDict with the arrays' first element:
@@ -2590,7 +2613,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         if eventArray is None:
             # Don't know how to parse; preserve mess in longAnswer fld of main table
             # and be done with it:
-            self.setValInRow(row, 'longAnswer', event)
+            self.setValInRow(row, 'longAnswer', self.makeInsertSafe(event))
             return row
         answersDict = {}
         randomStrings = ''
@@ -2634,7 +2657,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                     rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
                     self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
         if len(randomStrings) > 0:
-            self.setValInRow(row, 'longAnswer', randomStrings)
+            self.setValInRow(row, 'longAnswer', self.makeInsertSafe(randomStrings))
             self.setValInRow(row, 'answerFK', None)
             rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
@@ -2642,7 +2665,58 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # Return empty row, b/c we already pushed all necessary rows:
         return []
 
-            
+    def handleReceiveEmail(self, record, row, event):
+        '''
+        Event is something like this::
+            {"course": "Medicine/SciWrite/Fall2013", "receive_emails": "yes"}
+        @param record:
+        @type record:
+        @param row:
+        @type row:
+        @param event:
+        @type event:
+        '''
+        if event is None:
+            self.logWarn("Track log line %s: missing event text in event type change-email-settings." %\
+                         (self.jsonToRelationConverter.makeFileCitation()))
+            return row
+        
+        accountDict = self.ensureDict(event)
+        if accountDict is None:
+            self.logWarn("Track log line %s: event is not a dict in change-email-settings event: '%s' (%s)" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event), `e`))
+            return row
+        
+        course_id = accountDict.get('course', None)
+        receive_emails = accountDict.get('receive_emails', None)
+        username = record.get('username', None)
+
+        # Get the event fields and put them in their place:
+        # dict as expected by pushAccountInfo():
+        accountDict = OrderedDict()
+        accountDict['account_id'] = None # filled in by pushAccountInfo()
+        accountDict['username'] = username
+        accountDict['name'] = None
+        accountDict['mailing_address'] = None
+        accountDict['gender'] = None
+        accountDict['year_of_birth'] = None
+        accountDict['level_of_education'] = None
+        accountDict['goals'] = None
+        accountDict['honor_code'] = None
+        accountDict['terms_of_service'] = None
+        accountDict['course_id'] = course_id
+        accountDict['enrollment_action'] = None
+        accountDict['email'] = None
+        accountDict['receive_emails'] = receive_emails
+
+        # Get the (only) Account table foreign key.
+        # Returned in an array for conformance with the
+        # other push<TableName>Info()
+        accountKeyArray = self.pushAccountInfo(accountDict)
+        self.setValInRow(row, 'accountFK', accountKeyArray[0])
+                
+        return row
+        
 
     def handlePathStyledEventTypes(self, record, row, event):
         '''
@@ -2709,6 +2783,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             return row
         elif verb == 'problem_check':
             return self.subHandleProblemCheckInPath(row, postDict)
+        elif verb == 'save_grade':
+            return self.subHandleSaveGrade(row, postDict)
         
     def subHandleIsStudentCalibrated(self, row, eventDict):
         '''
@@ -2844,6 +2920,26 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             
         return row
 
+    def subHandleSaveGrade(self, row, postDict):
+        '''
+        Get something like:
+           "{\"POST\": {\"submission_id\": [\"60611\"], 
+                        \"feedback\": [\"<p>This is a summary of a paper stating the positive effects of a certain hormone on face recognition for people with disrupted face processing [1].\\n<br>\\n<br>Face recognition is essential for social interaction and most people perform it effortlessly. But a surprisingly high number of people \\u2013 one in forty \\u2013 are impaired since birth in their ability to recognize faces [2]. This condition is called 'developmental prosopagnosia'. Its cause isn\\u2"        
+        @param row:
+        @type row:
+        @param postDict:
+        @type postDict:
+        '''
+        if postDict is None:
+            return row
+        submissionID = postDict.get('submission', None) 
+        feedback = postDict.get('feedback', None)
+        if feedback is not None:
+            feedback = self.makeInsertSafe(str(feedback))
+        self.setValInRow(row, submissionID, submissionID)
+        self.setValInRow(row, 'longAnswer', feedback)
+        return row
+
     def subHandleProblemCheckInPath(self, row, answersDict):
         '''
         Get dict like this:
@@ -2922,7 +3018,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @param offendingText:
         @type offendingText:
         '''
-        self.setValInRow(row, 'longAnswer', self.makeInsertSafe(offendingText))
+        self.setValInRow(row, 'badlyFormatted', self.makeInsertSafe(offendingText))
         return row
     
     def get_course_id(self, event):
@@ -3040,7 +3136,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @return: same string, with unsafe chars properly replaced or escaped
         @rtype: String
         '''
-        return unsafeStr.replace("'", "\\'").replace('\n', "; ").replace('\r', "; ").replace(',', "\\,").replace('\\', '\\\\')       
+        #return unsafeStr.replace("'", "\\'").replace('\n', "; ").replace('\r', "; ").replace(',', "\\,").replace('\\', '\\\\')       
+        return unsafeStr.replace('\n', "; ").replace('\r', "; ").replace('\\', '').replace("'", r"\'")
     
     def getUniqueID(self):
         '''

@@ -7,6 +7,7 @@
 #TODO: speed_change_video
 #TODO: /app21/tracking.log-20130831.gz:174310: event is not a dict in select_rubric event: '{u'category': 0, u'selection': u'1', u'location': u'i4x://Education/EDUC115N/combinedopenended/04d9f185e689415f9217a5423166891c'}' (TypeError('eval() arg 1 must be a string or code object',))
 #TODO: wrong output path: outFullPath: /home/paepcke/Project/VPOL/Data/EdXTrackingOct22_2013/app21/tracking.log-201308312013_10_26T22_48_30.228168_18389.sql
+#TODO: documentation: eventID is not a key: used to hold together pointers to states or answers
 
 '''
 Created on Sep 14, 2013
@@ -340,7 +341,6 @@ class JSONToRelation(object):
 
         with self.destination as outFd, self.jsonSource as inFd:
             for jsonStr in inFd:
-                #****jsonStr = self.jsonSource.decompress(jsonStr)
                 newRow = []
                 try:
                     # processOneJSONObject will call pushtToTable() for all 
@@ -392,6 +392,10 @@ class JSONToRelation(object):
         @param outFd: subclass of OutputDisposition
         @type outFd: subclass of OutputDisposition
         '''
+        #****************************
+        #if row.count('eventID') > 1:
+        #    raise ValueError("Found it!: %s" % self.tmpJSONStr)
+        #****************************        
         if outFd is None:
             outFd = self.destination
         self.processFinishedRow(row, outFd)

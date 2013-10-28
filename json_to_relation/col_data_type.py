@@ -65,7 +65,7 @@ class ColDataType:
                TIME     : "TIME",
                DATETIME : "DATETIME",
                BOOL     : "BOOL",
-               UUID     : "VARCHAR(32)"
+               UUID     : "VARCHAR(40)"
     }
 
     @classmethod

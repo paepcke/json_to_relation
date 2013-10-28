@@ -3,12 +3,12 @@ SET foreign_key_checks = 0;
 DROP TABLE IF EXISTS Event, Answer, InputState, CorrectMap, State, Account;
 SET foreign_key_checks = 1;
 CREATE TABLE IF NOT EXISTS Answer (
-    answer_id VARCHAR(32) NOT NULL Primary Key,
+    answer_id VARCHAR(40) NOT NULL Primary Key,
     problem_id TEXT,
     answer TEXT
     );
 CREATE TABLE IF NOT EXISTS CorrectMap (
-    correct_map_id VARCHAR(32) NOT NULL Primary Key,
+    correct_map_id VARCHAR(40) NOT NULL Primary Key,
     answer_id TEXT,
     correctness TINYTEXT,
     npoints INT,
@@ -18,24 +18,24 @@ CREATE TABLE IF NOT EXISTS CorrectMap (
     queuestate TEXT
     );
 CREATE TABLE IF NOT EXISTS InputState (
-    input_state_id VARCHAR(32) NOT NULL Primary Key,
+    input_state_id VARCHAR(40) NOT NULL Primary Key,
     problem_id TEXT,
     state TEXT
     );
 CREATE TABLE IF NOT EXISTS State (
-    state_id VARCHAR(32) NOT NULL Primary Key,
+    state_id VARCHAR(40) NOT NULL Primary Key,
     seed TINYINT,
     done BOOL,
     problem_id TEXT,
-    student_answer VARCHAR(32),
-    correct_map VARCHAR(32),
-    input_state VARCHAR(32),
+    student_answer VARCHAR(40),
+    correct_map VARCHAR(40),
+    input_state VARCHAR(40),
     FOREIGN KEY(student_answer) REFERENCES Answer(answer_id),
     FOREIGN KEY(correct_map) REFERENCES CorrectMap(correct_map_id),
     FOREIGN KEY(input_state) REFERENCES InputState(input_state_id)
     );
 CREATE TABLE IF NOT EXISTS Account (
-    account_id VARCHAR(32) NOT NULL Primary Key,
+    account_id VARCHAR(40) NOT NULL Primary Key,
     username TEXT,
     name TEXT,
     mailing_address TEXT,
@@ -47,10 +47,11 @@ CREATE TABLE IF NOT EXISTS Account (
     terms_of_service BOOL,
     course_id TEXT,
     enrollment_action TINYTEXT,
-    email TEXT
+    email TEXT,
+    receive_emails TINYTEXT
     );
 CREATE TABLE IF NOT EXISTS Event (
-    eventID VARCHAR(32),
+    eventID VARCHAR(40),
     agent TEXT,
     event_source TINYTEXT,
     event_type TEXT,
@@ -69,6 +70,7 @@ CREATE TABLE IF NOT EXISTS Event (
     problemID TEXT,
     problemChoice TEXT,
     questionLocation TEXT,
+    submissionID TEXT,
     attempts TINYINT,
     longAnswer TEXT,
     studentFile TEXT,
@@ -106,16 +108,16 @@ CREATE TABLE IF NOT EXISTS Event (
     group_action TINYTEXT,
     position INT,
     badlyFormatted TEXT,
-    correctMapFK VARCHAR(32),
-    answerFK VARCHAR(32),
-    stateFK VARCHAR(32),
-    accountFK VARCHAR(32),
+    correctMapFK VARCHAR(40),
+    answerFK VARCHAR(40),
+    stateFK VARCHAR(40),
+    accountFK VARCHAR(40),
     FOREIGN KEY(correctMapFK) REFERENCES CorrectMap(correct_map_id),
     FOREIGN KEY(answerFK) REFERENCES Answer(answer_id),
     FOREIGN KEY(stateFK) REFERENCES State(state_id),
     FOREIGN KEY(accountFK) REFERENCES Account(account_id)
     );
 START TRANSACTION;
-INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime,videoSpeed,videoOldTime,videoNewTime,videoSeekType,videoNewSpeed,videoOldSpeed,bookInteractionType,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position) VALUES 
-    ('5b4cf170_a854_4a78_a854_35398975c1c9','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/534.59.8 (KHTML\\, like Gecko) Version/5.1.9 Safari/534.59.8','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/sequential/1b3ac347ca064b3eaaddbc27d4200964/goto_position','115.64.154.154',null,null,'2013-08-28T12:28:50.009704+00:00','Smith','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'9');
+INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,submissionID,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime,videoSpeed,videoOldTime,videoNewTime,videoSeekType,videoNewSpeed,videoOldSpeed,bookInteractionType,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position) VALUES 
+    ('143b865d_06ab_4bf1_bbe8_7cff4666ee46','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/534.59.8 (KHTML, like Gecko) Version/5.1.9 Safari/534.59.8','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/sequential/1b3ac347ca064b3eaaddbc27d4200964/goto_position','115.64.154.154',null,null,'2013-08-28T12:28:50.009704+00:00','Smith','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'9');
 COMMIT;

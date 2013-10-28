@@ -800,22 +800,30 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
-
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
+    def testChangeEmailSettings(self):
+        testFilePath = os.path.join(os.path.dirname(__file__),"data/changeEmailSettings.json")
+        stringSource = InURI(testFilePath)
         
-#     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
-#     def testBigPull(self):
-#         filePath = '/tmp/tracking.log-20130726_20530_lines.json'
-#         jsonConverter = JSONToRelation(
-#                                        InURI(filePath),
-#                                        OutputFile('/tmp/trackOut.sql', OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS),
-# 		                               mainTableName='EdxTrackEvent',
-# 				                       logFile='/tmp/j2sTrackOut.log'
-#                                    )
-#         jsonConverter.setParser(EdXTrackLogJSONParser(jsonConverter, 
-#                                                       'EdxTrackEvent', 
-#                                                       replaceTables=True, dbName='test'
-#                                                       ))
-#         jsonConverter.convert()
+        resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+        # Just use the file name of the tmp file.
+        resultFileName = resultFile.name
+        resultFile.close()
+        dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+        fileConverter = JSONToRelation(stringSource,
+                                       dest,
+                                       mainTableName='Event'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Event', replaceTables=True)
+        fileConverter.setParser(edxParser)
+        fileConverter.convert()
+        dest.close()
+        truthFile = open(os.path.join(os.path.dirname(__file__),"data/changeEmailSettingsTruth.sql"), 'r')
+        if UPDATE_TRUTH:
+            self.updateTruth(dest.name, truthFile.name)
+        else:
+            self.assertFileContentEquals(truthFile, dest.name)
+
         
     #--------------------------------------------------------------------------------------------------    
     def assertFileContentEquals(self, expected, filePathOrStrToCompareTo):

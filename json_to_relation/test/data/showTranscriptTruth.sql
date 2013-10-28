@@ -3,12 +3,12 @@ SET foreign_key_checks = 0;
 DROP TABLE IF EXISTS Event, Answer, InputState, CorrectMap, State, Account;
 SET foreign_key_checks = 1;
 CREATE TABLE IF NOT EXISTS Answer (
-    answer_id VARCHAR(32) NOT NULL Primary Key,
+    answer_id VARCHAR(40) NOT NULL Primary Key,
     problem_id TEXT,
     answer TEXT
     );
 CREATE TABLE IF NOT EXISTS CorrectMap (
-    correct_map_id VARCHAR(32) NOT NULL Primary Key,
+    correct_map_id VARCHAR(40) NOT NULL Primary Key,
     answer_id TEXT,
     correctness TINYTEXT,
     npoints INT,
@@ -18,24 +18,24 @@ CREATE TABLE IF NOT EXISTS CorrectMap (
     queuestate TEXT
     );
 CREATE TABLE IF NOT EXISTS InputState (
-    input_state_id VARCHAR(32) NOT NULL Primary Key,
+    input_state_id VARCHAR(40) NOT NULL Primary Key,
     problem_id TEXT,
     state TEXT
     );
 CREATE TABLE IF NOT EXISTS State (
-    state_id VARCHAR(32) NOT NULL Primary Key,
+    state_id VARCHAR(40) NOT NULL Primary Key,
     seed TINYINT,
     done BOOL,
     problem_id TEXT,
-    student_answer VARCHAR(32),
-    correct_map VARCHAR(32),
-    input_state VARCHAR(32),
+    student_answer VARCHAR(40),
+    correct_map VARCHAR(40),
+    input_state VARCHAR(40),
     FOREIGN KEY(student_answer) REFERENCES Answer(answer_id),
     FOREIGN KEY(correct_map) REFERENCES CorrectMap(correct_map_id),
     FOREIGN KEY(input_state) REFERENCES InputState(input_state_id)
     );
 CREATE TABLE IF NOT EXISTS Account (
-    account_id VARCHAR(32) NOT NULL Primary Key,
+    account_id VARCHAR(40) NOT NULL Primary Key,
     username TEXT,
     name TEXT,
     mailing_address TEXT,
@@ -47,10 +47,11 @@ CREATE TABLE IF NOT EXISTS Account (
     terms_of_service BOOL,
     course_id TEXT,
     enrollment_action TINYTEXT,
-    email TEXT
+    email TEXT,
+    receive_emails TINYTEXT
     );
 CREATE TABLE IF NOT EXISTS Event (
-    eventID VARCHAR(32),
+    eventID VARCHAR(40),
     agent TEXT,
     event_source TINYTEXT,
     event_type TEXT,
@@ -69,6 +70,7 @@ CREATE TABLE IF NOT EXISTS Event (
     problemID TEXT,
     problemChoice TEXT,
     questionLocation TEXT,
+    submissionID TEXT,
     attempts TINYINT,
     longAnswer TEXT,
     studentFile TEXT,
@@ -106,16 +108,16 @@ CREATE TABLE IF NOT EXISTS Event (
     group_action TINYTEXT,
     position INT,
     badlyFormatted TEXT,
-    correctMapFK VARCHAR(32),
-    answerFK VARCHAR(32),
-    stateFK VARCHAR(32),
-    accountFK VARCHAR(32),
+    correctMapFK VARCHAR(40),
+    answerFK VARCHAR(40),
+    stateFK VARCHAR(40),
+    accountFK VARCHAR(40),
     FOREIGN KEY(correctMapFK) REFERENCES CorrectMap(correct_map_id),
     FOREIGN KEY(answerFK) REFERENCES Answer(answer_id),
     FOREIGN KEY(stateFK) REFERENCES State(state_id),
     FOREIGN KEY(accountFK) REFERENCES Account(account_id)
     );
 START TRANSACTION;
-INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode) VALUES 
-    ('64203456_5cfc_42a6_aec8_edfbc9a83203','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML\\, like Gecko) Chrome/27.0.1453.116 Safari/537.36','browser','show_transcript','72.201.124.240','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ea998389c16042f399ccff01e5bab161/f554cf423d33489e8a55e4510387c2f1/','f069174b4882642364a2fc90bb244376','2013-06-25T06:37:40.512300+00:00','Smith','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'i4x-Medicine-HRP258-videoalpha-c26e4247f7724cc3bc407a7a3541ed90','q3cxPJGX4gc');
+INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,submissionID,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode) VALUES 
+    ('00f688bc_79b9_4d2f_9143_d5803a8e86c2','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','browser','show_transcript','72.201.124.240','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ea998389c16042f399ccff01e5bab161/f554cf423d33489e8a55e4510387c2f1/','f069174b4882642364a2fc90bb244376','2013-06-25T06:37:40.512300+00:00','Smith','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'i4x-Medicine-HRP258-videoalpha-c26e4247f7724cc3bc407a7a3541ed90','q3cxPJGX4gc');
 COMMIT;

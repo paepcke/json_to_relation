@@ -70,8 +70,7 @@ if __name__ == "__main__":
 				                   mainTableName='EdxTrackEvent',
 				                   logFile=logFile
                                    )
-    jsonConverter.setParser(EdXTrackLogJSONParser(jsonConverter, 'EdxTrackEvent', replaceTables=False, dbName='Edx'
+    jsonConverter.setParser(EdXTrackLogJSONParser(jsonConverter, 'EdxTrackEvent', replaceTables=args.dropTables, dbName='Edx'
 ))
-    #***jsonConverter.convert()
-    cProfile.run('jsonConverter.convert()', filename='/tmp/j2sStats.txt')
+    jsonConverter.convert()
 
