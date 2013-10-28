@@ -1684,19 +1684,19 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             videoCurrentTime = float(videoCurrentTime)
         except TypeError:
                 self.logWarn("Track log line %s: currentTime in event speed_change_video: '%s' is expected to be a float" %\
-                             (self.jsonToRelationConverter.makeFileCitation(), str(videoOldTime)))
+                             (self.jsonToRelationConverter.makeFileCitation(), str(videoOldSpeed)))
                 videoCurrentTime = -1.0
         try:
             videoOldSpeed = float(videoOldSpeed)
         except TypeError:
                 self.logWarn("Track log line %s: old_speed in event speed_change_video: '%s' is expected to be a float" %\
-                             (self.jsonToRelationConverter.makeFileCitation(), str(videoOldTime)))
+                             (self.jsonToRelationConverter.makeFileCitation(), str(videoOldSpeed)))
                 videoOldSpeed = -1.0
         try:
             videoNewSpeed = float(videoNewSpeed)
         except TypeError:
                 self.logWarn("Track log line %s: new_speed in event seed_change_video: '%s' is expected to be a float" %\
-                             (self.jsonToRelationConverter.makeFileCitation(), str(videoNewTime)))
+                             (self.jsonToRelationConverter.makeFileCitation(), str(videoNewSpeed)))
                 videoOldSpeed = -1.0
 
         self.setValInRow(row, 'videoCurrentTime', videoCurrentTime)
