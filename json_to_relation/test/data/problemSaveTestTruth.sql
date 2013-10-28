@@ -86,6 +86,8 @@ CREATE TABLE IF NOT EXISTS Event (
     videoOldTime FLOAT,
     videoNewTime FLOAT,
     videoSeekType TINYTEXT,
+    videoNewSpeed FLOAT,
+    videoOldSpeed FLOAT,
     bookInteractionType TINYTEXT,
     success TINYTEXT,
     answer_id TEXT,
@@ -103,6 +105,7 @@ CREATE TABLE IF NOT EXISTS Event (
     group_user TINYTEXT,
     group_action TINYTEXT,
     position INT,
+    badlyFormatted TEXT,
     correctMapFK VARCHAR(32),
     answerFK VARCHAR(32),
     stateFK VARCHAR(32),
@@ -114,10 +117,10 @@ CREATE TABLE IF NOT EXISTS Event (
     );
 START TRANSACTION;
 INSERT INTO Answer (answer_id,problem_id,answer) VALUES 
-    ('758d4846_eeea_4731_bc61_446bdabb1db5','input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_4_1','13.5'),
-    ('b08e292e_78e6_4879_86ce_b1cd46d14a42','input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_3_1','1.59+breaths+per+minute'),
-    ('8a3b4eef_bfda_434a_afa2_cbc02465a578','input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_2_1','13.4+breaths+per+minute'),
-    ('438cc96d_c8c8_4e14_9338_b34d4e9d1800','input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_18_1','');
-INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime,videoSpeed,videoOldTime,videoNewTime,videoSeekType,bookInteractionType,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,correctMapFK,answerFK) VALUES 
-    ('652bd5da_8620_46ee_8e14_90c80254333c','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML\, like Gecko) Chrome/27.0.1453.110 Safari/537.36','browser','problem_save','149.171.125.90','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/','a7e396b28a361e7b5637c59864013f5b','2013-06-12T08:30:53.458627','Dawson','0:00:00',null,null,null,null,null,null,'input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_18_1',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'438cc96d_c8c8_4e14_9338_b34d4e9d1800');
+    ('9f8760c9_327c_43ad_b460_ecec200481be','input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_4_1','13.5'),
+    ('a1f1c550_2b8c_4082_bb41_822e75fabb1b','input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_3_1','1.59+breaths+per+minute'),
+    ('7bcf800b_94e6_44a5_9620_759cd275aa69','input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_2_1','13.4+breaths+per+minute'),
+    ('d2124bfa_ea83_4cf8_a4cf_1372d76ae9e6','input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_18_1','');
+INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime,videoSpeed,videoOldTime,videoNewTime,videoSeekType,videoNewSpeed,videoOldSpeed,bookInteractionType,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badlyFormatted,correctMapFK,answerFK) VALUES 
+    ('cd8c4d4e_9b4b_4db2_941e_1bdce960394d','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML\\, like Gecko) Chrome/27.0.1453.110 Safari/537.36','browser','problem_save','149.171.125.90','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/','a7e396b28a361e7b5637c59864013f5b','2013-06-12T08:30:53.458627','Dawson','0:00:00',null,null,null,null,null,null,'input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_18_1',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'d2124bfa_ea83_4cf8_a4cf_1372d76ae9e6');
 COMMIT;

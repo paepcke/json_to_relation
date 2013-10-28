@@ -86,6 +86,8 @@ CREATE TABLE IF NOT EXISTS Event (
     videoOldTime FLOAT,
     videoNewTime FLOAT,
     videoSeekType TINYTEXT,
+    videoNewSpeed FLOAT,
+    videoOldSpeed FLOAT,
     bookInteractionType TINYTEXT,
     success TINYTEXT,
     answer_id TEXT,
@@ -103,6 +105,7 @@ CREATE TABLE IF NOT EXISTS Event (
     group_user TINYTEXT,
     group_action TINYTEXT,
     position INT,
+    badlyFormatted TEXT,
     correctMapFK VARCHAR(32),
     answerFK VARCHAR(32),
     stateFK VARCHAR(32),
@@ -114,5 +117,5 @@ CREATE TABLE IF NOT EXISTS Event (
     );
 START TRANSACTION;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID) VALUES 
-    ('c8a15e5e_6d42_4517_b2bb_b4de9689be2c','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML\, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','about','85.104.215.30',null,null,'2013-06-10T05:47:38.452300','',null,null,null,'/courses/Medicine/HRP258/Statistics_in_Medicine');
+    ('c8bae3e3_125b_46d7_8da9_6bbb7dde3050','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML\\, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','about','85.104.215.30',null,null,'2013-06-10T05:47:38.452300','',null,null,null,'/courses/Medicine/HRP258/Statistics_in_Medicine');
 COMMIT;

@@ -86,6 +86,8 @@ CREATE TABLE IF NOT EXISTS Event (
     videoOldTime FLOAT,
     videoNewTime FLOAT,
     videoSeekType TINYTEXT,
+    videoNewSpeed FLOAT,
+    videoOldSpeed FLOAT,
     bookInteractionType TINYTEXT,
     success TINYTEXT,
     answer_id TEXT,
@@ -103,6 +105,7 @@ CREATE TABLE IF NOT EXISTS Event (
     group_user TINYTEXT,
     group_action TINYTEXT,
     position INT,
+    badlyFormatted TEXT,
     correctMapFK VARCHAR(32),
     answerFK VARCHAR(32),
     stateFK VARCHAR(32),
@@ -113,6 +116,6 @@ CREATE TABLE IF NOT EXISTS Event (
     FOREIGN KEY(accountFK) REFERENCES Account(account_id)
     );
 START TRANSACTION;
-INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime,videoSpeed,videoOldTime,videoNewTime,videoSeekType,bookInteractionType,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action) VALUES 
-    ('fc1c5a30_fc69_44c1_9e2d_600911f1a726','Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0','server','add-or-remove-user-group','181.64.60.42','idashboard',null,'2013-08-14T01:09:48.026904+00:00','smith','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'beta-tester','jones','add');
+INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime,videoSpeed,videoOldTime,videoNewTime,videoSeekType,videoNewSpeed,videoOldSpeed,bookInteractionType,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action) VALUES 
+    ('e7cf53e1_72e4_4db1_a92c_99ccd7c5877a','Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0','server','add-or-remove-user-group','181.64.60.42','idashboard',null,'2013-08-14T01:09:48.026904+00:00','smith','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'beta-tester','jones','add');
 COMMIT;

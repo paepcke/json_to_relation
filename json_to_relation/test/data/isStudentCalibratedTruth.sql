@@ -86,6 +86,8 @@ CREATE TABLE IF NOT EXISTS Event (
     videoOldTime FLOAT,
     videoNewTime FLOAT,
     videoSeekType TINYTEXT,
+    videoNewSpeed FLOAT,
+    videoOldSpeed FLOAT,
     bookInteractionType TINYTEXT,
     success TINYTEXT,
     answer_id TEXT,
@@ -103,6 +105,7 @@ CREATE TABLE IF NOT EXISTS Event (
     group_user TINYTEXT,
     group_action TINYTEXT,
     position INT,
+    badlyFormatted TEXT,
     correctMapFK VARCHAR(32),
     answerFK VARCHAR(32),
     stateFK VARCHAR(32),
@@ -114,5 +117,5 @@ CREATE TABLE IF NOT EXISTS Event (
     );
 START TRANSACTION;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation) VALUES 
-    ('e8247385_bbe1_4491_8081_47d0a4d149d4','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML\, like Gecko) Chrome/28.0.1500.95 Safari/537.36','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/peergrading/ef6ba7f803bb46ebaaf008cde737e3e9/is_student_calibrated','82.9.126.47',null,null,'2013-08-28T20:16:48.720470+00:00','SteveC','0:00:00',null,null,null,null,null,null,null,null,'i4x://Education/EDUC115N/combinedopenended/d5b45f4cad82417d961a045e9c28f057');
+    ('298fe242_4ea0_466f_a1b2_ae1411ef0e49','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML\\, like Gecko) Chrome/28.0.1500.95 Safari/537.36','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/peergrading/ef6ba7f803bb46ebaaf008cde737e3e9/is_student_calibrated','82.9.126.47',null,null,'2013-08-28T20:16:48.720470+00:00','SteveC','0:00:00',null,null,null,null,null,null,null,null,'i4x://Education/EDUC115N/combinedopenended/d5b45f4cad82417d961a045e9c28f057');
 COMMIT;

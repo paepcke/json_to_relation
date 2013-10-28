@@ -116,6 +116,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaHintsMainTable['videoOldTime'] = ColDataType.FLOAT
         self.schemaHintsMainTable['videoNewTime'] = ColDataType.FLOAT
         self.schemaHintsMainTable['videoSeekType'] = ColDataType.TINYTEXT
+        self.schemaHintsMainTable['videoNewSpeed'] = ColDataType.FLOAT        
+        self.schemaHintsMainTable['videoOldSpeed'] = ColDataType.FLOAT        
 
         # Book (PDF) reading:
         self.schemaHintsMainTable['bookInteractionType'] = ColDataType.TINYTEXT
@@ -143,6 +145,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
         # ajax
         self.schemaHintsMainTable['position'] = ColDataType.INT # used in event ajax goto_position
+        
+        # When bad JSON is encountered, it gets put 
+        # into the following field:
+        self.schemaHintsMainTable['badlyFormatted'] = ColDataType.TEXT
 
         # Foreign keys to auxiliary tables:
         self.schemaHintsMainTable['correctMapFK'] = ColDataType.UUID
@@ -407,8 +413,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 # Was already a dict
                 event = eventJSONStrOrDict
             except Exception as e:
-                raise ValueError("Track log line %s of event type %s has non-parsable JSON event field: %s" %\
-                                 (self.jsonToRelationConverter.makeFileCitation(), eventType, `e`))
+                row = self.handleBadJSON(row, eventJSONStrOrDict)
+                raise ValueError('Bad JSON; saved in col longAnswer: track line %s; event_type %s (%s)' %\
+                                           (self.jsonToRelationConverter.makeFileCitation(), eventType, `e`))
                 return
             
             if eventType == 'seq_goto' or\
@@ -484,6 +491,18 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
             elif eventType == 'seek_video':
                 row = self.handleVideoSeek(record, row, event)
+                return
+                
+            elif eventType == 'speed_change_video':
+                row = self.handleVideoSpeedChange(record, row, event)
+                return
+                
+            elif eventType == 'fullscreen':
+                row = self.handleFullscreen(record, row, event)
+                return
+                
+            elif eventType == 'not_fullscreen':
+                row = self.handleNotFullscreen(record, row, event)
                 return
                 
             elif eventType == '/dashboard':
@@ -567,6 +586,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             
             elif eventType == '/create_account':
                 self.handleCreateAccount(record, row, event)
+                return
+            
+            elif eventType == 'problem_graded':
+                self.handleProblemGraded(record, row, event)
                 return
             
             elif eventType[0] == '/':
@@ -762,7 +785,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             # Ensure there are no embedded single quotes or CR/LFs;
             # takes care of name = O'Brian 
             if isinstance(val, basestring):
-                val = val.replace("'", "\\'").replace('\n', "; ").replace('\r', "; ").replace(',', "\\,")
+                val = self.makeInsertSafe(val)
             # if the event_type starts with a '/', followed by a 
             # class ID and '/about', treat separately:
             if fldName == 'event_type' and val is not None:
@@ -1046,7 +1069,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 answersDict[problemID] = answerChoice
             except ValueError:
                 # Badly formatted GET parameter element:
-                self.logWarn("Track log line %s: badly formatted problemID/answerChoice GET parameter pair: %s." %\
+                self.logWarn("Track log line %s: badly formatted problemID/answerChoice GET parameter pair: '%s'." %\
                              (self.jsonToRelationConverter.makeFileCitation(), str(event)))
                 return row
         if len(answersDict) > 0:
@@ -1338,13 +1361,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
         
-        try:
-            # From "{\"POST\": {\"id\": [\"i4x://Engineering/EE368/problem/ab656f3cb49e4c48a6122dc724267cb6@draft\"]}, \"GET\": {}}"
-            # make a dict:
-            postGetDict = eval(event)
-        except Exception as e:
-            self.logWarn("Track log line %s: event is not a dict in problem_reset event: '%s' (%s)" %\
-                         (self.jsonToRelationConverter.makeFileCitation(), str(event), `e`))
+        # From "{\"POST\": {\"id\": [\"i4x://Engineering/EE368/problem/ab656f3cb49e4c48a6122dc724267cb6@draft\"]}, \"GET\": {}}"
+        # make a dict:
+        postGetDict = self.ensureDict(event)
+        if postGetDict is None:
+            self.logWarn("Track log line %s: event is not a dict in problem_reset event: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
     
         # Get the POST field's problem id array:
@@ -1376,18 +1398,17 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
 
-        try:
-            # From "{\"POST\": {\"id\": [\"i4x://Engineering/EE368/problem/ab656f3cb49e4c48a6122dc724267cb6@draft\"]}, \"GET\": {}}"
-            # make a dict:
-            postGetDict = eval(event)
-        except Exception as e:
-            self.logWarn("Track log line %s: event is not a dict in problem_show event: '%s' (%s)" %\
-                         (self.jsonToRelationConverter.makeFileCitation(), str(event), `e`))
+        # From "{\"POST\": {\"id\": [\"i4x://Engineering/EE368/problem/ab656f3cb49e4c48a6122dc724267cb6@draft\"]}, \"GET\": {}}"
+        # make a dict:
+        postGetDict = self.ensureDict(event)
+        if postGetDict is None:
+            self.logWarn("Track log line %s: event is not a dict in problem_show event: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
 
         # Get the problem id:
         try:
-            problemID = postGetDict['POST']['problem']
+            problemID = postGetDict['problem']
         except KeyError:
             self.logWarn("Track log line %s with event type problem_show contains event without problem ID: '%s'" %
                          (self.jsonToRelationConverter.makeFileCitation(), event))
@@ -1444,7 +1465,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # foreign key entries that were created:
         for answerFKey in answersFKeys: 
             # Fill in one main table row.
-            self.setValInRow(row, 'answerFK', answerFKey, self.mainTableName)
+            self.setValInRow(row, 'answerFK', answerFKey)
             if answerFKey is not None:
                 # For convenience: enter the Answer's problem ID 
                 # in the main table's problemID field:
@@ -1467,13 +1488,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
 
-        try:
-            "{\"location\":\"i4x://Education/EDUC115N/combinedopenended/4abb8b47b03d4e3b8c8189b3487f4e8d\"}"
-            # make a dict:
-            locationDict = eval(event)
-        except Exception as e:
-            self.logWarn("Track log line %s: event is not a dict in problem_show/hide event: '%s' (%s)" %\
-                         (self.jsonToRelationConverter.makeFileCitation(), str(event), `e`))
+        "{\"location\":\"i4x://Education/EDUC115N/combinedopenended/4abb8b47b03d4e3b8c8189b3487f4e8d\"}"
+        # make a dict:
+        locationDict = self.ensureDict(event)
+        if locationDict is None:
+            self.logWarn("Track log line %s: event is not a dict in problem_show/hide event: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
 
         # Get location:
@@ -1499,13 +1519,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
 
-        try:
-            # From "{\"location\":\"i4x://Education/EDUC115N/combinedopenended/4abb8b47b03d4e3b8c8189b3487f4e8d\",\"selection\":\"1\",\"category\":0}"
-            # make a dict:
-            locationDict = eval(event)
-        except Exception as e:
-            self.logWarn("Track log line %s: event is not a dict in select_rubric event: '%s' (%s)" %\
-                         (self.jsonToRelationConverter.makeFileCitation(), str(event), `e`))
+        # From "{\"location\":\"i4x://Education/EDUC115N/combinedopenended/4abb8b47b03d4e3b8c8189b3487f4e8d\",\"selection\":\"1\",\"category\":0}"
+        # make a dict:
+        locationDict = self.ensureDict(event)
+        if locationDict is None:
+            self.logWarn("Track log line %s: event is not a dict in select_rubric event: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
         
         try:
@@ -1540,13 +1559,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
         
-        try:
-            # From "{\"value\":\"5\"}"
-            # make a dict:
-            valDict = eval(event)
-        except Exception as e:
-            self.logWarn("Track log line %s: event is not a dict in oe_feedback_response_selected event: '%s' (%s)" %\
-                         (self.jsonToRelationConverter.makeFileCitation(), str(event), `e`))
+        # From "{\"value\":\"5\"}"
+        # make a dict:
+        valDict = self.ensureDict(event)
+        if valDict is None:
+            self.logWarn("Track log line %s: event is not a dict in oe_feedback_response_selected event: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
         
         try:
@@ -1633,7 +1651,123 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.setValInRow(row, 'videoNewTime', videoNewTime)
         self.setValInRow(row, 'videoSeekType', videoSeekType)
         return row
+
+    def handleVideoSpeedChange(self, record, row, event):
+        '''
+        Events look like this::
+           "{\"id\":\"i4x-Medicine-HRP258-videoalpha-7cd4bf0813904612bcd583a73ade1d54\",
+             \"code\":\"html5\",
+             \"currentTime\":1.6694719791412354,
+             \"old_speed\":\"1.50\",
+             \"new_speed\":\"2.0\"}"        
+        '''
+        if event is None:
+            self.logWarn("Track log line %s: missing event text in video speed change." %\
+                         (self.jsonToRelationConverter.makeFileCitation()))
+            return row
+
+        valsDict = self.ensureDict(event) 
+        if event is None:
+            self.logWarn("Track log line %s: event is not a dict in video speed change: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
+
+        videoID = valsDict.get('id', None)
+        videoCode = valsDict.get('code', None)
+        videoCurrentTime = valsDict.get('currentTime', None)
+        videoOldSpeed = valsDict.get('old_speed', None)
+        videoNewSpeed = valsDict.get('new_speed', None)
+            
+        self.setValInRow(row, 'videoID', videoID)
+        self.setValInRow(row, 'videoCode', videoCode)
+        try:
+            videoCurrentTime = float(videoCurrentTime)
+        except TypeError:
+                self.logWarn("Track log line %s: currentTime in event speed_change_video: '%s' is expected to be a float" %\
+                             (self.jsonToRelationConverter.makeFileCitation(), str(videoOldTime)))
+                videoCurrentTime = -1.0
+        try:
+            videoOldSpeed = float(videoOldSpeed)
+        except TypeError:
+                self.logWarn("Track log line %s: old_speed in event speed_change_video: '%s' is expected to be a float" %\
+                             (self.jsonToRelationConverter.makeFileCitation(), str(videoOldTime)))
+                videoOldSpeed = -1.0
+        try:
+            videoNewSpeed = float(videoNewSpeed)
+        except TypeError:
+                self.logWarn("Track log line %s: new_speed in event seed_change_video: '%s' is expected to be a float" %\
+                             (self.jsonToRelationConverter.makeFileCitation(), str(videoNewTime)))
+                videoOldSpeed = -1.0
+
+        self.setValInRow(row, 'videoCurrentTime', videoCurrentTime)
+        self.setValInRow(row, 'videoOldSpeed', videoOldSpeed)
+        self.setValInRow(row, 'videoNewSpeed', videoNewSpeed)
+                
+        return row
+
+
+    def handleFullscreen(self, record, row, event):
+        '''
+        Events look like this::
+           "{\"id\":\"i4x-Medicine-HRP258-videoalpha-4b200d3944cc47e5ae3ad142c1006075\",\"code\":\"html5\",\"currentTime\":348.4132080078125}"    
+        @param record:
+        @type record:
+        @param row:
+        @type row:
+        @param event:
+        @type event:
+        '''
+        if event is None:
+            self.logWarn("Track log line %s: missing event text event type fullscreen." %\
+                         (self.jsonToRelationConverter.makeFileCitation()))
+            return row
+
+        valsDict = self.ensureDict(event) 
+        if event is None:
+            self.logWarn("Track log line %s: event is not a dict in fullscreen: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
         
+        videoID = valsDict.get('id', None)
+        videoCode = valsDict.get('code', None)
+        videoCurrentTime = valsDict.get('currentTime', None)
+
+        self.setValInRow(row, 'videoID', videoID)
+        self.setValInRow(row, 'videoCode', videoCode)
+        self.setValInRow(row, 'videoCurrentTime', videoCurrentTime)
+        return row
+        
+    def handleNotFullscreen(self, record, row, event):
+        '''
+        Events look like this::
+           "{\"id\":\"i4x-Medicine-HRP258-videoalpha-c5cbefddbd55429b8a796a6521b9b752\",\"code\":\"html5\",\"currentTime\":661.1010131835938}"        
+        @param record:
+        @type record:
+        @param row:
+        @type row:
+        @param event:
+        @type event:
+        '''
+        if event is None:
+            self.logWarn("Track log line %s: missing event text event type fullscreen." %\
+                         (self.jsonToRelationConverter.makeFileCitation()))
+            return row
+
+        valsDict = self.ensureDict(event) 
+        if event is None:
+            self.logWarn("Track log line %s: event is not a dict in not_fullscreen: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
+        
+        videoID = valsDict.get('id', None)
+        videoCode = valsDict.get('code', None)
+        videoCurrentTime = valsDict.get('currentTime', None)
+
+        self.setValInRow(row, 'videoID', videoID)
+        self.setValInRow(row, 'videoCode', videoCode)
+        self.setValInRow(row, 'videoCurrentTime', videoCurrentTime)
+        return row
+    
     def handleBook(self, record, row, event):
         '''
         No example of book available
@@ -1643,12 +1777,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
         
-        try:
-            # Make a dict from the string:
-            valsDict = eval(event)
-        except Exception as e:
-            self.logWarn("Track log line %s: event is not a dict in book event: '%s' (%s)" %\
-                         (self.jsonToRelationConverter.makeFileCitation(), str(event), `e`))
+        # Make a dict from the string:
+        valsDict = self.ensureDict(event)
+        if valsDict is None:
+            self.logWarn("Track log line %s: event is not a dict in book event: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
 
         bookInteractionType = valsDict.get('type', None)
@@ -2416,11 +2549,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # Escape single quotes and CR/LFs in the various fields, so that MySQL won't throw up.
         # Also replace newlines with ", ":
         if isinstance(accountDict.get('goals', None), basestring):
-            accountDict['goals'] = accountDict['goals'].replace("'", "\\'").replace('\n', "; ").replace('\r', "; ").replace(',', "\\,")
+            accountDict['goals'] = self.makeInsertSafe(accountDict['goals'])
         if isinstance(accountDict.get('username', None), basestring):
-            accountDict['username'] = accountDict['username'].replace("'", "\\'").replace('\n', "; ").replace('\r', "; ").replace(',', "\\,")
+            accountDict['username'] = self.makeInsertSafe(accountDict['username'])
         if isinstance(accountDict.get('mailing_address', None), basestring):
-            accountDict['mailing_address'] = accountDict['mailing_address'].replace('\n', "; ").replace('\r', "; ").replace(',', "\\,")
+            accountDict['mailing_address'] = self.makeInsertSafe(accountDict['mailing_address'])
         
         # Get the (only) Account table foreign key.
         # Returned in an array for conformance with the
@@ -2429,6 +2562,87 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.setValInRow(row, 'accountFK', accountKeyArray[0])
                 
         return row
+
+    def handleProblemGraded(self, record, row, event):
+        '''
+        Events look like this::
+     		'[input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1=choice_0&
+    		input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1=choice_4&
+    		input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1=choice_2&
+    		input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_12_1=&
+    		input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_13_1=&
+    		input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_16_1%5B%5D=choice_6\",\"\\n<h2 class=\\\"problem-header\\\">\\n  Unit 5 Homework\\n</h2>\\n\\n<section class=\\\"problem\\\">\\n  <div><p>Question 1:</p><p>I am calculating the mean, median, standard deviation, and standard error of the mean for several variables (age, height, weight, income, blood pressure, etc.) from a sample of 246 patients.  If I receive data for an additional 100 patients, which of the above statistics (mean, median, standard deviation, or standard error of the mean) would be expected to change substantially?  </p><span><form class=\\\"choicegroup capa_inputtype\\\" id=\\\"inputtype_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1\\\"><div class=\\\"indicator_container\\\">\\n    </div><fieldset><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1_choice_0\\\" class=\\\"choicegroup_incorrect\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1_choice_0\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1\\\" value=\\\"choice_0\\\" checked=\\\"true\\\"/> The mean\\n\\n            \\n            <span class=\\\"sr\\\" aria-describedby=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1_choice_0\\\">Status: incorrect</span>\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1_choice_1\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1_choice_1\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1\\\" value=\\\"choice_1\\\"/> The median\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1_choice_2\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1_choice_2\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1\\\" value=\\\"choice_2\\\"/> The standard deviation\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1_choice_3\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1_choice_3\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1\\\" value=\\\"choice_3\\\"/> The standard error of the mean\\n\\n        </label><span id=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1\\\"/></fieldset></form></span><section class=\\\"solution-span\\\"><span id=\\\"solution_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_solution_1\\\"/></section><p>Question 2:</p><p>In a study of 13 children with cystic fibrosis who completed an exercise program, exercise endurance (duration on an exercise test) improved by a mean of 0.77 minutes. The standard deviation for the change in endurance was 0.83 minutes. What is the theoretical distribution of the mean?</p><span><form class=\\\"choicegroup capa_inputtype\\\" id=\\\"inputtype_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1\\\"><div class=\\\"indicator_container\\\">\\n    </div><fieldset><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1_choice_0\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1_choice_0\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1\\\" value=\\\"choice_0\\\"/> T-distribution (with 12 degrees of freedom); mean=true mean; standard error= 0.23\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1_choice_1\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1_choice_1\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1\\\" value=\\\"choice_1\\\"/> Standard normal distribution; mean=true mean; standard error= 0.23\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1_choice_2\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1_choice_2\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1\\\" value=\\\"choice_2\\\"/> T-distribution with 12 degrees of freedom; mean=true mean; standard error= 0.07\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1_choice_3\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1_choice_3\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1\\\" value=\\\"choice_3\\\"/> Standard normal distribution; mean=true mean; standard error= 0.07\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1_choice_4\\\" class=\\\"choicegroup_incorrect\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1_choice_4\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1\\\" value=\\\"choice_4\\\" checked=\\\"true\\\"/> T-distribution (with 12 degrees of freedom); mean=true mean; standard error= 0.83\\n\\n            \\n            <span class=\\\"sr\\\" aria-describedby=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1_choice_4\\\">Status: incorrect</span>\\n        </label><span id=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1\\\"/></fieldset></form></span><section class=\\\"solution-span\\\"><span id=\\\"solution_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_solution_2\\\"/></section><p>Question 3:</p><p>Thirty heart disease patients are put on an exercise regimen.  Twenty patients improve on the exercise stress test and ten don
+    		#8217;t improve or get worse. Calculate the 95% confidence interval for the true proportion of heart disease patients who improve their fitness using this particular exercise regimen. Recall that proportions are normally distributed with a standard error of </p><p>\\\\[ \\\\sqrt{\\\\frac{p(1-p)}{n}} \\\\]</p><p>(You may use the observed proportion to calculate the standard error.)</p><span><form class=\\\"choicegroup capa_inputtype\\\" id=\\\"inputtype_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\"><div class=\\\"indicator_container\\\">\\n    </div><fieldset><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_0\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_0\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" value=\\\"choice_0\\\"/> 66%\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_1\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_1\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" value=\\\"choice_1\\\"/> 66%-70%\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_2\\\" class=\\\"choicegroup_correct\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_2\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" value=\\\"choice_2\\\" checked=\\\"true\\\"/> 50%-84%\\n\\n            \\n            <span class=\\\"sr\\\" aria-describedby=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_2\\\">Status: correct</span>\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_3\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_...        
+    		]'
+    	@param record:
+        @type record:
+        @param row:
+        @type row:
+        @param event:
+        @type event:
+        '''
+        if event is None:
+            self.logWarn("Track log line %s: missing event text in save_problem_fail, save_problem_success, or reset_problem_fail." %\
+                         (self.jsonToRelationConverter.makeFileCitation()))
+            return row
+        
+        eventArray = self.ensureArray(event)
+        if eventArray is None:
+            # Don't know how to parse; preserve mess in longAnswer fld of main table
+            # and be done with it:
+            self.setValInRow(row, 'longAnswer', event)
+            return row
+        answersDict = {}
+        randomStrings = ''
+        for maybeProblemAndChoiceTuples in eventArray:
+            if maybeProblemAndChoiceTuples is not None:
+                problemAndChoiceArray = maybeProblemAndChoiceTuples.split('&')
+                continue
+            if len(problemAndChoiceArray) == 1:
+                # Don't have nice probID/Answer pairs (last entry in
+                # example of comment header). Just collect in catch-all:
+                randomStrings += problemAndChoiceArray[0]
+                continue
+            for problemAndChoiceFused in problemAndChoiceArray:
+                problemAndChoice = problemAndChoiceFused.split('=')
+                try:
+                    answersDict[problemAndChoice[0]] = problemAndChoice[1]
+                except IndexError:
+                    randomStrings += problemAndChoiceFused
+                    continue
+        
+        if len(answersDict) > 0:
+            # Receive all the Answer table keys generated for
+            # the answers, and a dict mapping each key
+            # to the problem ID to which that key's row
+            # in the Answer refers:
+            (answersFKeys, answerToProblemMap) = self.pushAnswers(answersDict)
+        else:
+            answersFKeys = []
+        
+        if len(answersFKeys) > 0:
+            # Now need to generate enough near-replicas of event
+            # entries to cover all answer 
+            # foreign key entries that were created:
+            for answerFKey in answersFKeys: 
+                # Fill in one main table row.
+                self.setValInRow(row, 'answerFK', answerFKey)
+                if answerFKey is not None:
+                    # For convenience: enter the Answer's problem ID 
+                    # in the main table's problemID field:
+                    self.setValInRow(row, 'problemID', answerToProblemMap[answerFKey])
+                    rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
+                    self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
+        if len(randomStrings) > 0:
+            self.setValInRow(row, 'longAnswer', randomStrings)
+            self.setValInRow(row, 'answerFK', None)
+            rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
+            self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
+            
+        # Return empty row, b/c we already pushed all necessary rows:
+        return []
+
+            
 
     def handlePathStyledEventTypes(self, record, row, event):
         '''
@@ -2613,7 +2827,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         try:
             student_answer = '; '.join(student_answer)
             # Ensure escape of comma, quotes, and CR/LF:
-            student_answer = student_answer.replace("'", "\\'").replace('\n', "; ").replace('\r', "; ").replace(',', "\\,")
+            student_answer = self.makeInsertSafe(student_answer)
         except TypeError:
             self.logWarn("Track log line %s: student_answer field provided in save_answer event contains a non-string: '%s'" %\
              (self.jsonToRelationConverter.makeFileCitation(), str(eventDict)))
@@ -2698,6 +2912,18 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             self.setValInRow(row, 'username', email)
         return row
         
+    def handleBadJSON(self, row, offendingText):
+        '''
+        When JSON parsing fails, place the offending text into 
+        longAnswer. Happens, for instance, when student answers have embedded
+        quotes that confused some upstream load process.
+        @param row:
+        @type row:
+        @param offendingText:
+        @type offendingText:
+        '''
+        self.setValInRow(row, 'longAnswer', self.makeInsertSafe(offendingText))
+        return row
     
     def get_course_id(self, event):
         '''
@@ -2761,6 +2987,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         return course_id        
 
     def ensureDict(self, event):
+        '''
+        If event is either a dict, or a string with a dict
+        definition inside, returns a dict. Else returns None
+        
+        @param event:
+        @type event:
+        '''
         if isinstance(event, dict):
             return event
         else:
@@ -2774,6 +3007,27 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             except Exception:
                 return None
         
+    def ensureArray(self, event):
+        '''
+        If event is either a Python array, or a string with an array
+        definition inside, returns the array. Else returns None
+        
+        @param event:
+        @type event:
+        '''
+        if isinstance(event, list):
+            return event
+        else:
+            try:
+                # Maybe it's a string: make an array from the string:
+                res = eval(event)
+                if isinstance(res, list):
+                    return res
+                else:
+                    return None
+            except Exception:
+                return None
+            
     def makeInsertSafe(self, unsafeStr):
         '''
         Makes the given string safe for use as a value in a MySQL INSERT

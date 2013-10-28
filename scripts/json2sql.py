@@ -6,14 +6,15 @@ import argparse
 from cgi import logfile
 import datetime
 import time
+import cProfile
 
 source_dir = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "../json_to_relation/")]
 source_dir.extend(sys.path)
 sys.path = source_dir
 
 from json_to_relation import JSONToRelation
-from output_disposition import OutputPipe, OutputDisposition, OutputFile
-from input_source import InPipe, InURI
+from output_disposition import OutputDisposition, OutputFile
+from input_source import InURI
 from edxTrackLogJSONParser import EdXTrackLogJSONParser
 
 if __name__ == "__main__":
@@ -45,9 +46,9 @@ if __name__ == "__main__":
     # timestamp/pid added to avoid name collisions during
     # parallel processing:
     dt = datetime.datetime.fromtimestamp(time.time())
-    fileStamp = dt.isoformat().replace('-','_').replace(':','_') + '_' + str(os.getpid())
+    fileStamp = dt.isoformat().replace(':','_') + '_' + str(os.getpid())
 
-    outFullPath = os.path.join(args.destDir, os.path.splitext(args.inFilePath)[0]) + fileStamp + '.sql'
+    outFullPath = os.path.join(args.destDir, os.path.basename(args.inFilePath)) + '.' + fileStamp + '.sql'
 
     # Log file is in /tmp, named j2s_<inputFileName>.log:
     logFile = '/tmp/j2s_%s_%s.log' % (os.path.basename(args.inFilePath), fileStamp)
@@ -55,10 +56,10 @@ if __name__ == "__main__":
 
 #    print('xpunge: %s' % args.dropTables)
 #    print('verbose: %s' % args.verbose)
-#    print('destDir: %s' % args.destDir)
-#    print('in=FilePath: %s' % args.inFilePath)
-#    print('outFullPath: %s' % outFullPath)
-#    print('logFile: %s' % logFile)
+#     print('destDir: %s' % args.destDir)
+#     print('in=FilePath: %s' % args.inFilePath)
+#     print('outFullPath: %s' % outFullPath)
+#     print('logFile: %s' % logFile)
 
     # Create an instance of JSONToRelation, taking input from stdin,
     # and pumping output to stdout. Format output as SQL dump statements.
@@ -71,5 +72,6 @@ if __name__ == "__main__":
                                    )
     jsonConverter.setParser(EdXTrackLogJSONParser(jsonConverter, 'EdxTrackEvent', replaceTables=False, dbName='Edx'
 ))
-    jsonConverter.convert()
+    #***jsonConverter.convert()
+    cProfile.run('jsonConverter.convert()', filename='/tmp/j2sStats.txt')
 

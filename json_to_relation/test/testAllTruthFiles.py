@@ -12,7 +12,7 @@ import os
 import pymysql
 import sys
 
-from mysqldb import MySQLDB
+from json_to_relation.mysqldb import MySQLDB
 
 
 class TruthFileTester(object):
@@ -29,7 +29,7 @@ class TruthFileTester(object):
                     try:
                         for res in self.mysqlDb.query(sqlStatement):
                             print res
-                    except (pymysql.err.InternalError, pymysql.err.IntegrityError) as e:
+                    except (pymysql.err.InternalError, pymysql.err.IntegrityError, pymysql.err.Error) as e:
                         print >>sys.stderr, 'Failed in filename %s: %s' % (filename, `e`)
         print 'Done.'
 

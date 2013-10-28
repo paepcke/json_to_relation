@@ -86,6 +86,8 @@ CREATE TABLE IF NOT EXISTS Event (
     videoOldTime FLOAT,
     videoNewTime FLOAT,
     videoSeekType TINYTEXT,
+    videoNewSpeed FLOAT,
+    videoOldSpeed FLOAT,
     bookInteractionType TINYTEXT,
     success TINYTEXT,
     answer_id TEXT,
@@ -103,6 +105,7 @@ CREATE TABLE IF NOT EXISTS Event (
     group_user TINYTEXT,
     group_action TINYTEXT,
     position INT,
+    badlyFormatted TEXT,
     correctMapFK VARCHAR(32),
     answerFK VARCHAR(32),
     stateFK VARCHAR(32),
@@ -114,5 +117,5 @@ CREATE TABLE IF NOT EXISTS Event (
     );
 START TRANSACTION;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime,videoSpeed,videoOldTime,videoNewTime,videoSeekType) VALUES 
-    ('7c9a7b1f_e779_4714_82ba_a460887b353f','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML\, like Gecko) Chrome/28.0.1500.72 Safari/537.36','browser','seek_video','61.202.56.98','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/6c618930f54340c29400b1c442357b9c/8220e922ccbd4e82bbda867c9abae5db/','f4e3f627d8cc389b89e674b0fcfa0251','2013-07-25T09:37:07.901686+00:00','HM','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'i4x-Medicine-HRP258-videoalpha-5ce998d44e594af3ab0344505e022f86','html5',null,null,167.734143,168.0,'slide_seek');
+    ('dcb5b39b_dc00_4861_b61c_d6eab2c7ca40','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML\\, like Gecko) Chrome/28.0.1500.72 Safari/537.36','browser','seek_video','61.202.56.98','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/6c618930f54340c29400b1c442357b9c/8220e922ccbd4e82bbda867c9abae5db/','f4e3f627d8cc389b89e674b0fcfa0251','2013-07-25T09:37:07.901686+00:00','HM','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'i4x-Medicine-HRP258-videoalpha-5ce998d44e594af3ab0344505e022f86','html5',null,null,167.734143,168.0,'slide_seek');
 COMMIT;

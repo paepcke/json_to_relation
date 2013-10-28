@@ -86,6 +86,8 @@ CREATE TABLE IF NOT EXISTS Event (
     videoOldTime FLOAT,
     videoNewTime FLOAT,
     videoSeekType TINYTEXT,
+    videoNewSpeed FLOAT,
+    videoOldSpeed FLOAT,
     bookInteractionType TINYTEXT,
     success TINYTEXT,
     answer_id TEXT,
@@ -103,6 +105,7 @@ CREATE TABLE IF NOT EXISTS Event (
     group_user TINYTEXT,
     group_action TINYTEXT,
     position INT,
+    badlyFormatted TEXT,
     correctMapFK VARCHAR(32),
     answerFK VARCHAR(32),
     stateFK VARCHAR(32),
@@ -114,5 +117,5 @@ CREATE TABLE IF NOT EXISTS Event (
     );
 START TRANSACTION;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for) VALUES 
-    ('127bb1b6_dd24_457e_9c2c_ed1be368b315','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML\, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/login_ajax','85.246.55.134',null,null,'2013-06-10T20:47:37.580071','emil.smith@gmail.com','0:00:00');
+    ('be679498_f07a_4a35_95b7_bf9823251a95','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML\\, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/login_ajax','85.246.55.134',null,null,'2013-06-10T20:47:37.580071','emil.smith@gmail.com','0:00:00');
 COMMIT;

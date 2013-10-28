@@ -86,6 +86,8 @@ CREATE TABLE IF NOT EXISTS Main (
     videoOldTime FLOAT,
     videoNewTime FLOAT,
     videoSeekType TINYTEXT,
+    videoNewSpeed FLOAT,
+    videoOldSpeed FLOAT,
     bookInteractionType TINYTEXT,
     success TINYTEXT,
     answer_id TEXT,
@@ -103,6 +105,7 @@ CREATE TABLE IF NOT EXISTS Main (
     group_user TINYTEXT,
     group_action TINYTEXT,
     position INT,
+    badlyFormatted TEXT,
     correctMapFK VARCHAR(32),
     answerFK VARCHAR(32),
     stateFK VARCHAR(32),
@@ -114,6 +117,6 @@ CREATE TABLE IF NOT EXISTS Main (
     );
 START TRANSACTION;
 INSERT INTO Main (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for) VALUES 
-    ('de0e4258_ab38_45f4_9ad8_b7880d8d4cef','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T08:43:32.573390+00:00','','0:00:00'),
-    ('d520a116_fd08_4a70_a515_f19e043a39d8','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T09:45:37.573390+00:00','','1:02:05');
+    ('d4e7fd0d_312b_4fac_a986_7c09dc4b3bb5','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T08:43:32.573390+00:00','','0:00:00'),
+    ('c40ff0b3_599b_4e79_8da4_7c4b51dfe041','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T09:45:37.573390+00:00','','1:02:05');
 COMMIT;

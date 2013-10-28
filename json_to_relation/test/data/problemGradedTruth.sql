@@ -116,6 +116,6 @@ CREATE TABLE IF NOT EXISTS Event (
     FOREIGN KEY(accountFK) REFERENCES Account(account_id)
     );
 START TRANSACTION;
-INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation) VALUES 
-    ('cf9d2eaf_5c30_482d_a523_b7618191ab5e','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML\\, like Gecko) Chrome/28.0.1500.95 Safari/537.36','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/peergrading/ef6ba7f803bb46ebaaf008cde737e3e9/problem','82.45.36.217',null,null,'2013-08-28T13:45:53.121784+00:00','JoC','0:00:00',null,null,null,null,null,null,null,null,'i4x://Education/EDUC115N/combinedopenended/430b3a0f25924f0db96ee4d2987dcb98');
+INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for) VALUES 
+    ('a1415e19_b2d2_4a4d_b1d1_4f0b02bba4ee','Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML\\, like Gecko) Chrome/27.0.1453.116 Safari/537.36','browser','problem_graded','98.234.177.60','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/69356ef7b30545de8dd3152e30b71735/832671462501482eaa5544fa5845b770/','8ebc3bf74774729665eec6b69cdd289f','2013-07-13T07:51:07.156213+00:00','Smith','0:00:00');
 COMMIT;
