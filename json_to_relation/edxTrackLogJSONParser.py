@@ -114,13 +114,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # Video:
         self.schemaHintsMainTable['videoID'] = ColDataType.TEXT
         self.schemaHintsMainTable['videoCode'] = ColDataType.TEXT
-        self.schemaHintsMainTable['videoCurrentTime'] = ColDataType.FLOAT
+        self.schemaHintsMainTable['videoCurrentTime'] = ColDataType.TINYTEXT
         self.schemaHintsMainTable['videoSpeed'] = ColDataType.TINYTEXT
-        self.schemaHintsMainTable['videoOldTime'] = ColDataType.FLOAT
-        self.schemaHintsMainTable['videoNewTime'] = ColDataType.FLOAT
+        self.schemaHintsMainTable['videoOldTime'] = ColDataType.TINYTEXT
+        self.schemaHintsMainTable['videoNewTime'] = ColDataType.TINYTEXT
         self.schemaHintsMainTable['videoSeekType'] = ColDataType.TINYTEXT
-        self.schemaHintsMainTable['videoNewSpeed'] = ColDataType.FLOAT        
-        self.schemaHintsMainTable['videoOldSpeed'] = ColDataType.FLOAT        
+        self.schemaHintsMainTable['videoNewSpeed'] = ColDataType.TINYTEXT      
+        self.schemaHintsMainTable['videoOldSpeed'] = ColDataType.TINYTEXT     
 
         # Book (PDF) reading:
         self.schemaHintsMainTable['bookInteractionType'] = ColDataType.TINYTEXT
@@ -1630,13 +1630,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
         videoID = valsDict.get('id', None)
         videoCode = valsDict.get('code', None)
-        videoCurrentTime = valsDict.get('currentTime', None)
-        videoSpeed = valsDict.get('speed', None)
+        videoCurrentTime = str(valsDict.get('currentTime', None))
+        videoSpeed = str(valsDict.get('speed', None))
 
-        self.setValInRow(row, 'videoID', videoID)
-        self.setValInRow(row, 'videoCode', videoCode)
-        self.setValInRow(row, 'videoCurrentTime', videoCurrentTime)
-        self.setValInRow(row, 'videoSpeed', videoSpeed)
+        self.setValInRow(row, 'videoID', str(videoID))
+        self.setValInRow(row, 'videoCode', str(videoCode))
+        self.setValInRow(row, 'videoCurrentTime', str(videoCurrentTime))
+        self.setValInRow(row, 'videoSpeed', str(videoSpeed))
         return row
 
     def handleVideoSeek(self, record, row, event):
@@ -1661,25 +1661,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
         videoID = valsDict.get('id', None)
         videoCode = valsDict.get('code', None)
-        videoOldTime = valsDict.get('old_time', None)
-        videoNewTime = valsDict.get('new_time', None)
+        videoOldTime = str(valsDict.get('old_time', None))
+        videoNewTime = str(valsDict.get('new_time', None))
         videoSeekType = valsDict.get('type', None)
             
         self.setValInRow(row, 'videoID', videoID)
         self.setValInRow(row, 'videoCode', videoCode)
-        try:
-            videoOldTime = float(videoOldTime)
-        except TypeError:
-                self.logWarn("Track log line %s: oldTime in event seek_video: '%s' is expected to be a float" %\
-                             (self.jsonToRelationConverter.makeFileCitation(), str(videoOldTime)))
-                videoOldTime = -1.0
-        try:
-            videoNewTime = float(videoNewTime)
-        except TypeError:
-                self.logWarn("Track log line %s: newTime in event seek_video: '%s' is expected to be a float" %\
-                             (self.jsonToRelationConverter.makeFileCitation(), str(videoNewTime)))
-                videoOldTime = -1.0
-                
         self.setValInRow(row, 'videoOldTime', videoOldTime)
         self.setValInRow(row, 'videoNewTime', videoNewTime)
         self.setValInRow(row, 'videoSeekType', videoSeekType)
@@ -1707,25 +1694,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
         videoID = valsDict.get('id', None)
         videoCode = valsDict.get('code', None)
-        videoCurrentTime = valsDict.get('currentTime', None)
-        videoOldSpeed = valsDict.get('old_speed', None)
-        videoNewSpeed = valsDict.get('new_speed', None)
+        videoCurrentTime = str(valsDict.get('currentTime', None))
+        videoOldSpeed = str(valsDict.get('old_speed', None))
+        videoNewSpeed = str(valsDict.get('new_speed', None))
             
         self.setValInRow(row, 'videoID', videoID)
         self.setValInRow(row, 'videoCode', videoCode)
-        try:
-            videoCurrentTime = float(videoCurrentTime)
-        except TypeError:
-                videoCurrentTime = None
-        try:
-            videoOldSpeed = float(videoOldSpeed)
-        except TypeError:
-                videoOldSpeed = None
-        try:
-            videoNewSpeed = float(videoNewSpeed)
-        except TypeError:
-                 videoOldSpeed = None
-
         self.setValInRow(row, 'videoCurrentTime', videoCurrentTime)
         self.setValInRow(row, 'videoOldSpeed', videoOldSpeed)
         self.setValInRow(row, 'videoNewSpeed', videoNewSpeed)
@@ -1757,7 +1731,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
         videoID = valsDict.get('id', None)
         videoCode = valsDict.get('code', None)
-        videoCurrentTime = valsDict.get('currentTime', None)
+        videoCurrentTime = str(valsDict.get('currentTime', None))
 
         self.setValInRow(row, 'videoID', videoID)
         self.setValInRow(row, 'videoCode', videoCode)
@@ -1788,7 +1762,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
         videoID = valsDict.get('id', None)
         videoCode = valsDict.get('code', None)
-        videoCurrentTime = valsDict.get('currentTime', None)
+        videoCurrentTime = str(valsDict.get('currentTime', None))
 
         self.setValInRow(row, 'videoID', videoID)
         self.setValInRow(row, 'videoCode', videoCode)
