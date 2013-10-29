@@ -1368,9 +1368,16 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleProblemReset(self, record, row, event):
         '''
         Gets a event string like this::
-        "{\"POST\": {\"id\": [\"i4x://Engineering/EE222/problem/e68cfc1abc494dfba585115792a7a750@draft\"]}, \"GET\": {}}"
+           "{\"POST\": {\"id\": [\"i4x://Engineering/EE222/problem/e68cfc1abc494dfba585115792a7a750@draft\"]}, \"GET\": {}}"
         After turning this JSON into Python::
-        {u'POST': {u'id': [u'i4x://Engineering/EE222/problem/e68cfc1abc494dfba585115792a7a750@draft']}, u'GET': {}}
+           {u'POST': {u'id': [u'i4x://Engineering/EE222/problem/e68cfc1abc494dfba585115792a7a750@draft']}, u'GET': {}}
+        
+        Or the event could be simpler, like this::
+           u'input_i4x-Engineering-QMSE01-problem-dce5fe9e04be4bc1932efb05a2d6db68_2_1=2'
+           
+        In the latter case we just put that string into the problemID field
+        of the main table
+        
         @param record:
         @type record:
         @param row:
@@ -1387,9 +1394,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # make a dict:
         postGetDict = self.ensureDict(event)
         if postGetDict is None:
-            self.logWarn("Track log line %s: event is not a dict in problem_reset event: '%s'" %\
-                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
-            return row
+            if isinstance(event, basestring):
+                self.setValInRow(row, 'problemID', event)
+                return row
+            else:
+                self.logWarn("Track log line %s: event is not a dict in problem_reset event: '%s'" %\
+                             (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+                return row
     
         # Get the POST field's problem id array:
         try:
@@ -1705,21 +1716,15 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         try:
             videoCurrentTime = float(videoCurrentTime)
         except TypeError:
-                self.logWarn("Track log line %s: currentTime in event speed_change_video: '%s' is expected to be a float" %\
-                             (self.jsonToRelationConverter.makeFileCitation(), str(videoOldSpeed)))
-                videoCurrentTime = -1.0
+                videoCurrentTime = None
         try:
             videoOldSpeed = float(videoOldSpeed)
         except TypeError:
-                self.logWarn("Track log line %s: old_speed in event speed_change_video: '%s' is expected to be a float" %\
-                             (self.jsonToRelationConverter.makeFileCitation(), str(videoOldSpeed)))
-                videoOldSpeed = -1.0
+                videoOldSpeed = None
         try:
             videoNewSpeed = float(videoNewSpeed)
         except TypeError:
-                self.logWarn("Track log line %s: new_speed in event seed_change_video: '%s' is expected to be a float" %\
-                             (self.jsonToRelationConverter.makeFileCitation(), str(videoNewSpeed)))
-                videoOldSpeed = -1.0
+                 videoOldSpeed = None
 
         self.setValInRow(row, 'videoCurrentTime', videoCurrentTime)
         self.setValInRow(row, 'videoOldSpeed', videoOldSpeed)
@@ -2913,9 +2918,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         try:
             can_upload_file = '; '.join(can_upload_file)
         except TypeError:
-            self.logWarn("Track log line %s: can_upload_file field provided in save_answer event contains a non-string: '%s'" %\
-             (self.jsonToRelationConverter.makeFileCitation(), str(eventDict)))
-            can_upload_file = None
+            #self.logWarn("Track log line %s: can_upload_file field provided in save_answer event contains a non-string: '%s'" %\
+            # (self.jsonToRelationConverter.makeFileCitation(), str(eventDict)))
+            can_upload_file = str(can_upload_file)
         self.setValInRow(row, 'canUploadFile', can_upload_file)
             
         return row
