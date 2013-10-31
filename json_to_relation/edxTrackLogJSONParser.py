@@ -696,7 +696,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.createAccountTable()        
         self.createMainTable()
         
-        self.jsonToRelationConverter.pushString('START TRANSACTION;\n')
+        # Several switches to speed up the bulk load:
+        self.jsonToRelationConverter.pushString('SET foreign_key_checks=0;\n')
+        self.jsonToRelationConverter.pushString('SET unique_checks=0;\n')
+        #self.jsonToRelationConverter.pushString('START TRANSACTION;\n')
+        self.jsonToRelationConverter.pushString('SET autocommit=0;\n')
+        
     
     def genOneCreateStatement(self, tableName, schemaDict, primaryKeyName=None, foreignKeyColNames=None):
         '''
