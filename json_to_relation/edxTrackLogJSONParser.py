@@ -200,7 +200,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # Schema for CorrectMap table:
         self.schemaCorrectMapTbl = OrderedDict()
         self.schemaCorrectMapTbl['correct_map_id'] = ColDataType.UUID
-        self.schemaCorrectMapTbl['answer_id'] = ColDataType.TEXT
+        self.schemaCorrectMapTbl['answer_identifier'] = ColDataType.TEXT
         self.schemaCorrectMapTbl['correctness'] = ColDataType.TINYTEXT
         self.schemaCorrectMapTbl['npoints'] = ColDataType.INT
         self.schemaCorrectMapTbl['msg'] = ColDataType.TEXT
