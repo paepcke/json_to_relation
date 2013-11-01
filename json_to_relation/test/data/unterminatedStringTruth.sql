@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS Answer (
     );
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL Primary Key,
-    answer_id TEXT,
+    answer_identifier TEXT,
     correctness TINYTEXT,
     npoints INT,
     msg TEXT,
@@ -83,13 +83,13 @@ CREATE TABLE IF NOT EXISTS Event (
     rubricCategory INT,
     videoID TEXT,
     videoCode TEXT,
-    videoCurrentTime FLOAT,
+    videoCurrentTime TINYTEXT,
     videoSpeed TINYTEXT,
-    videoOldTime FLOAT,
-    videoNewTime FLOAT,
+    videoOldTime TINYTEXT,
+    videoNewTime TINYTEXT,
     videoSeekType TINYTEXT,
-    videoNewSpeed FLOAT,
-    videoOldSpeed FLOAT,
+    videoNewSpeed TINYTEXT,
+    videoOldSpeed TINYTEXT,
     bookInteractionType TINYTEXT,
     success TINYTEXT,
     answer_id TEXT,
@@ -117,7 +117,11 @@ CREATE TABLE IF NOT EXISTS Event (
     FOREIGN KEY(stateFK) REFERENCES State(state_id),
     FOREIGN KEY(accountFK) REFERENCES Account(account_id)
     );
-START TRANSACTION;
+SET foreign_key_checks=0;
+SET unique_checks=0;
+SET autocommit=0;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,submissionID,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime,videoSpeed,videoOldTime,videoNewTime,videoSeekType,videoNewSpeed,videoOldSpeed,bookInteractionType,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badlyFormatted) VALUES 
-    ('90c1f7dd_e3a6_4a15_ab17_f061e588bed9','Mozilla/5.0 (Macintosh; Intel Mac OS X 10.6; rv:20.0) Gecko/20100101 Firefox/20.0','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/combinedopenended/0d67667941cd4e14ba29abd1542a9c5f/save_answer','174.62.226.199',null,null,'2013-08-06T03:04:03.982769+00:00','Smith','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'{"POST": {"student_file": [""], "student_answer": ["Things that I saw Cathy do that are important here are: 1. encourage students who are quick to respond with a thumbs up in the think time to try to see it a different way, too. Rather than just making them wait till everyone else was done, this gives them something to do and reinforces the many paths to one right answer idea. 2. Puts students at ease by using the words "who is WILLING to share their way?" instead of asking "who knows the answer". Addit');
+    ('42ec7fc5_1269_47bf_9118_e9db13295571','Mozilla/5.0 (Macintosh; Intel Mac OS X 10.6; rv:20.0) Gecko/20100101 Firefox/20.0','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/combinedopenended/0d67667941cd4e14ba29abd1542a9c5f/save_answer','174.62.226.199',null,null,'2013-08-06T03:04:03.982769+00:00','Smith','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'{"POST": {"student_file": [""], "student_answer": ["Things that I saw Cathy do that are important here are: 1. encourage students who are quick to respond with a thumbs up in the think time to try to see it a different way, too. Rather than just making them wait till everyone else was done, this gives them something to do and reinforces the many paths to one right answer idea. 2. Puts students at ease by using the words "who is WILLING to share their way?" instead of asking "who knows the answer". Addit');
 COMMIT;
+SET foreign_key_checks=1;
+SET unique_checks=1;

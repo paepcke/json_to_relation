@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS Answer (
     );
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL Primary Key,
-    answer_id TEXT,
+    answer_identifier TEXT,
     correctness TINYTEXT,
     npoints INT,
     msg TEXT,
@@ -83,13 +83,13 @@ CREATE TABLE IF NOT EXISTS Event (
     rubricCategory INT,
     videoID TEXT,
     videoCode TEXT,
-    videoCurrentTime FLOAT,
+    videoCurrentTime TINYTEXT,
     videoSpeed TINYTEXT,
-    videoOldTime FLOAT,
-    videoNewTime FLOAT,
+    videoOldTime TINYTEXT,
+    videoNewTime TINYTEXT,
     videoSeekType TINYTEXT,
-    videoNewSpeed FLOAT,
-    videoOldSpeed FLOAT,
+    videoNewSpeed TINYTEXT,
+    videoOldSpeed TINYTEXT,
     bookInteractionType TINYTEXT,
     success TINYTEXT,
     answer_id TEXT,
@@ -117,7 +117,11 @@ CREATE TABLE IF NOT EXISTS Event (
     FOREIGN KEY(stateFK) REFERENCES State(state_id),
     FOREIGN KEY(accountFK) REFERENCES Account(account_id)
     );
-START TRANSACTION;
+SET foreign_key_checks=0;
+SET unique_checks=0;
+SET autocommit=0;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,submissionID,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime,videoSpeed,videoOldTime,videoNewTime,videoSeekType,videoNewSpeed,videoOldSpeed) VALUES 
-    ('b84bfe39_a19a_4917_bc1c_bf5cfbcaff6e','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','browser','speed_change_video','98.119.130.2','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ea998389c16042f399ccff01e5bab161/770d7bd939604112865d415fa9505f79/','0b9d6fdd33d177cdc7988d4b14ba7308','2013-06-19T22:55:55.996688+00:00','aguynamedryan','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'i4x-Medicine-HRP258-videoalpha-7cd4bf0813904612bcd583a73ade1d54','html5',1.66947197914,null,null,null,null,2.0,1.5);
+    ('0bad55c3_351b_4bd9_ae61_d00cbf012867','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','browser','speed_change_video','98.119.130.2','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ea998389c16042f399ccff01e5bab161/770d7bd939604112865d415fa9505f79/','0b9d6fdd33d177cdc7988d4b14ba7308','2013-06-19T22:55:55.996688+00:00','aguynamedryan','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'i4x-Medicine-HRP258-videoalpha-7cd4bf0813904612bcd583a73ade1d54','html5','1.66947197914',null,null,null,null,'2.0','1.50');
 COMMIT;
+SET foreign_key_checks=1;
+SET unique_checks=1;

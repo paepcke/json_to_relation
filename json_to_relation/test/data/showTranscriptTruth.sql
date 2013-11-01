@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS Answer (
     );
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL Primary Key,
-    answer_id TEXT,
+    answer_identifier TEXT,
     correctness TINYTEXT,
     npoints INT,
     msg TEXT,
@@ -83,13 +83,13 @@ CREATE TABLE IF NOT EXISTS Event (
     rubricCategory INT,
     videoID TEXT,
     videoCode TEXT,
-    videoCurrentTime FLOAT,
+    videoCurrentTime TINYTEXT,
     videoSpeed TINYTEXT,
-    videoOldTime FLOAT,
-    videoNewTime FLOAT,
+    videoOldTime TINYTEXT,
+    videoNewTime TINYTEXT,
     videoSeekType TINYTEXT,
-    videoNewSpeed FLOAT,
-    videoOldSpeed FLOAT,
+    videoNewSpeed TINYTEXT,
+    videoOldSpeed TINYTEXT,
     bookInteractionType TINYTEXT,
     success TINYTEXT,
     answer_id TEXT,
@@ -117,7 +117,11 @@ CREATE TABLE IF NOT EXISTS Event (
     FOREIGN KEY(stateFK) REFERENCES State(state_id),
     FOREIGN KEY(accountFK) REFERENCES Account(account_id)
     );
-START TRANSACTION;
+SET foreign_key_checks=0;
+SET unique_checks=0;
+SET autocommit=0;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,submissionID,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode) VALUES 
-    ('00f688bc_79b9_4d2f_9143_d5803a8e86c2','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','browser','show_transcript','72.201.124.240','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ea998389c16042f399ccff01e5bab161/f554cf423d33489e8a55e4510387c2f1/','f069174b4882642364a2fc90bb244376','2013-06-25T06:37:40.512300+00:00','Smith','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'i4x-Medicine-HRP258-videoalpha-c26e4247f7724cc3bc407a7a3541ed90','q3cxPJGX4gc');
+    ('cebd4ef2_b30c_47c3_bd98_da1325a4887e','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','browser','show_transcript','72.201.124.240','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ea998389c16042f399ccff01e5bab161/f554cf423d33489e8a55e4510387c2f1/','f069174b4882642364a2fc90bb244376','2013-06-25T06:37:40.512300+00:00','Smith','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'i4x-Medicine-HRP258-videoalpha-c26e4247f7724cc3bc407a7a3541ed90','q3cxPJGX4gc');
 COMMIT;
+SET foreign_key_checks=1;
+SET unique_checks=1;

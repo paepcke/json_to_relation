@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS Answer (
     );
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL Primary Key,
-    answer_id TEXT,
+    answer_identifier TEXT,
     correctness TINYTEXT,
     npoints INT,
     msg TEXT,
@@ -83,13 +83,13 @@ CREATE TABLE IF NOT EXISTS Event (
     rubricCategory INT,
     videoID TEXT,
     videoCode TEXT,
-    videoCurrentTime FLOAT,
+    videoCurrentTime TINYTEXT,
     videoSpeed TINYTEXT,
-    videoOldTime FLOAT,
-    videoNewTime FLOAT,
+    videoOldTime TINYTEXT,
+    videoNewTime TINYTEXT,
     videoSeekType TINYTEXT,
-    videoNewSpeed FLOAT,
-    videoOldSpeed FLOAT,
+    videoNewSpeed TINYTEXT,
+    videoOldSpeed TINYTEXT,
     bookInteractionType TINYTEXT,
     success TINYTEXT,
     answer_id TEXT,
@@ -117,7 +117,11 @@ CREATE TABLE IF NOT EXISTS Event (
     FOREIGN KEY(stateFK) REFERENCES State(state_id),
     FOREIGN KEY(accountFK) REFERENCES Account(account_id)
     );
-START TRANSACTION;
+SET foreign_key_checks=0;
+SET unique_checks=0;
+SET autocommit=0;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation) VALUES 
-    ('b4f9bc6f_60a0_4ca0_bcf0_b9b0f79288a2','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/peergrading/ef6ba7f803bb46ebaaf008cde737e3e9/problem','82.45.36.217',null,null,'2013-08-28T13:45:53.121784+00:00','JoC','0:00:00',null,null,null,null,null,null,null,null,'i4x://Education/EDUC115N/combinedopenended/430b3a0f25924f0db96ee4d2987dcb98');
+    ('11f06c0e_b3af_463f_8549_989cf1575308','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/peergrading/ef6ba7f803bb46ebaaf008cde737e3e9/problem','82.45.36.217',null,null,'2013-08-28T13:45:53.121784+00:00','JoC','0:00:00',null,null,null,null,null,null,null,null,'i4x://Education/EDUC115N/combinedopenended/430b3a0f25924f0db96ee4d2987dcb98');
 COMMIT;
+SET foreign_key_checks=1;
+SET unique_checks=1;

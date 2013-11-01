@@ -13,10 +13,10 @@ import sys
 import tempfile
 import unittest
 
-from json_to_relation.edxTrackLogJSONParser import EdXTrackLogJSONParser
-from json_to_relation.input_source import InURI, InString
-from json_to_relation.json_to_relation import JSONToRelation
-from json_to_relation.output_disposition import OutputDisposition, ColDataType, \
+from json_to_relation import JSONToRelation
+from edxTrackLogJSONParser import EdXTrackLogJSONParser
+from input_source import InURI, InString
+from output_disposition import OutputDisposition, ColDataType, \
     TableSchemas, ColumnSpec, OutputFile, OutputPipe # @UnusedImport
 
 
@@ -49,6 +49,50 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
     def tearDown(self):
         if self.stringSource is not None:
             self.stringSource.close()
+
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
+    def testMakeJSONSafe(self):
+        fileConverter = JSONToRelation(self.stringSource,
+                                       OutputFile(os.devnull, OutputDisposition.OutputFormat.CSV),
+                                       mainTableName='Main'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main', replaceTables=True)
+        s = "d\\'Orsay"
+        res = edxParser.makeJSONSafe(s)
+        # res should be d\\'Orsay:         
+        self.assertEquals("d\\\\'Orsay", res)
+        # Test len to ensure the proper number
+        # of backslashes are escaped:
+        self.assertEquals(len(res), 9)
+         
+        s += " and g\lobber"
+        res = edxParser.makeJSONSafe(s)
+        self.assertEqual("d\\\\'Orsay and g\\\\lobber", res)
+        # Test len to ensure the proper number
+        # of backslashes are escaped:
+        self.assertEquals(len(res), 23)        
+        
+        # Now a *legal* char following a backslash:
+        s = "Legal \\b back \\u0x390 slashes"
+        res = edxParser.makeJSONSafe(s)
+        self.assertEqual("Legal \\\\b back \\\\u0x390 slashes", res)
+        jsonStr = "{\"key\" : \"" + res + "\"}"
+        j = json.loads(jsonStr)
+        self.assertEqual(len(j['key']), 29)
+
+        #sys.stdout.write(res)
+
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
+    def testRescueJSON(self):
+        fileConverter = JSONToRelation(self.stringSource,
+                                       OutputFile(os.devnull, OutputDisposition.OutputFormat.CSV),
+                                       mainTableName='Main'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main', replaceTables=True)
+        badJsonStr = '{"username": "Gvnmaele", "host": "class.stanford.edu", "session": "ec36da02f42320bd1686a4f5a43daf0b", "event_source": "browser", "event_type": "problem_graded", "time": "2013-08-04T07:41:16.220676+00:00", "ip": "81.165.215.195", "event": "the event..."'        
+        row = []
+        edxParser.rescueBadJSON(badJsonStr, row=row)
+        print row
 
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testTableSchemaRepo(self):
@@ -848,7 +892,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         else:
             self.assertFileContentEquals(truthFile, dest.name)
         
-    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testUnicodeOutOfRange(self):
         testFilePath = os.path.join(os.path.dirname(__file__),"data/unicodeOutOfRange.json")
         stringSource = InURI(testFilePath)

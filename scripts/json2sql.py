@@ -3,10 +3,9 @@
 import sys
 import os
 import argparse
-from cgi import logfile
+# from cgi import logfile
 import datetime
 import time
-import cProfile
 
 source_dir = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "../json_to_relation/")]
 source_dir.extend(sys.path)

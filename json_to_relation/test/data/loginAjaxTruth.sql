@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS Answer (
     );
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL Primary Key,
-    answer_id TEXT,
+    answer_identifier TEXT,
     correctness TINYTEXT,
     npoints INT,
     msg TEXT,
@@ -83,13 +83,13 @@ CREATE TABLE IF NOT EXISTS Event (
     rubricCategory INT,
     videoID TEXT,
     videoCode TEXT,
-    videoCurrentTime FLOAT,
+    videoCurrentTime TINYTEXT,
     videoSpeed TINYTEXT,
-    videoOldTime FLOAT,
-    videoNewTime FLOAT,
+    videoOldTime TINYTEXT,
+    videoNewTime TINYTEXT,
     videoSeekType TINYTEXT,
-    videoNewSpeed FLOAT,
-    videoOldSpeed FLOAT,
+    videoNewSpeed TINYTEXT,
+    videoOldSpeed TINYTEXT,
     bookInteractionType TINYTEXT,
     success TINYTEXT,
     answer_id TEXT,
@@ -117,7 +117,11 @@ CREATE TABLE IF NOT EXISTS Event (
     FOREIGN KEY(stateFK) REFERENCES State(state_id),
     FOREIGN KEY(accountFK) REFERENCES Account(account_id)
     );
-START TRANSACTION;
+SET foreign_key_checks=0;
+SET unique_checks=0;
+SET autocommit=0;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for) VALUES 
-    ('425bfd6b_d4a8_4c4f_971f_a4d5a4b26b32','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/login_ajax','85.246.55.134',null,null,'2013-06-10T20:47:37.580071','emil.smith@gmail.com','0:00:00');
+    ('49786480_7767_433e_9287_2328ad986cd5','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/login_ajax','85.246.55.134',null,null,'2013-06-10T20:47:37.580071','emil.smith@gmail.com','0:00:00');
 COMMIT;
+SET foreign_key_checks=1;
+SET unique_checks=1;

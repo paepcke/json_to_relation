@@ -11,6 +11,7 @@ import uuid
 from col_data_type import ColDataType
 from generic_json_parser import GenericJSONParser
 from output_disposition import ColumnSpec
+import re
 
 
 EDX_HEARTBEAT_PERIOD = 360 # seconds
@@ -19,6 +20,27 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     '''
     Parser specialized for EdX track logs.
     '''
+    # Class var to detect JSON strings that contain backslashes 
+    # in front of chars other than \bfnrtu/. JSON allows backslashes
+    # only before those. But: /b, /f, /n, /r, /t, /u, and \\ also need to
+    # be escaped.
+    # Pattern used in makeSafeJSON()
+    #JSON_BAD_BACKSLASH_PATTERN = re.compile(r'\\([^\\bfnrtu/])')
+    JSON_BAD_BACKSLASH_PATTERN = re.compile(r'\\([^/"])')
+
+    # Regex patterns for extracting fields from bad JSON:
+    searchPatternDict = {}
+    searchPatternDict['username'] = re.compile(r'username[^:]*[^"]*"([^"]*)')
+    searchPatternDict['host'] = re.compile(r'host[^:]*[^"]*"([^"]*)')
+    searchPatternDict['session'] = re.compile(r'session[^:]*[^"]*"([^"]*)')
+    searchPatternDict['event_source'] = re.compile(r'event_source[^:]*[^"]*"([^"]*)')
+    searchPatternDict['event_type'] = re.compile(r'event_type[^:]*[^"]*"([^"]*)')
+    searchPatternDict['time'] = re.compile(r'time[^:]*[^"]*"([^"]*)')
+    searchPatternDict['ip'] = re.compile(r'ip[^:]*[^"]*"([^"]*)')
+    
+    searchPatternDict['event'] = re.compile(r'[\\"]event[\\"][^:]*:(.*)')
+    
+
 
     def __init__(self, jsonToRelationConverter, mainTableName, logfileID='', progressEvery=1000, replaceTables=False, dbName='test'):
         '''
@@ -328,7 +350,16 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             try:
                 record = json.loads(str(jsonStr))
             except ValueError as e:
-                raise ValueError('Ill formed JSON in track log, line %s: %s' % (self.jsonToRelationConverter.makeFileCitation(), `e`))
+                # Try it again after cleaning up the JSON
+                # We don't do the cleanup routinely to save
+                # time.
+                try:
+                    cleanJsonStr = self.makeJSONSafe(jsonStr)
+                    record = json.loads(cleanJsonStr)
+                except ValueError as e:
+                    # Pull out what we can, and place in 'badlyFormatted' column
+                    self.rescueBadJSON(jsonStr, row=row)                
+                    raise ValueError('Ill formed JSON in track log, line %s: %s' % (self.jsonToRelationConverter.makeFileCitation(), `e`))
     
             # Dispense with the fields common to all events, except event,
             # which is a nested JSON string. Results will be 
@@ -418,21 +449,16 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 # Was already a dict
                 event = eventJSONStrOrDict
             except Exception as e:
-                # Last ditch attempt: make the (supposed) JSON string INSERT safe
-                # and try again. This takes care of incorrect \u encodings and more:
-                if isinstance(eventJSONStrOrDict, basestring):
-                    eventJSONStrOrDict = self.makeInsertSafe(eventJSONStrOrDict)
-                    try:
-                        event = json.loads(eventJSONStrOrDict)
-                    except Exception as e:
-                        row = self.handleBadJSON(row, eventJSONStrOrDict)
-                        raise ValueError('Bad JSON; saved in col badlyFormatted: track line %s; event_type %s (%s)' %\
-                                         (self.jsonToRelationConverter.makeFileCitation(), eventType, `e`))
-                        return
-                else:
+                # Try it again after cleaning up the JSON
+                # We don't do the cleanup routinely to save
+                # time.
+                try:
+                    cleanJSONStr = self.makeJSONSafe(eventJSONStrOrDict)
+                    record = json.loads(cleanJSONStr)
+                except Exception as e1:                
                     row = self.handleBadJSON(row, eventJSONStrOrDict)
                     raise ValueError('Bad JSON; saved in col badlyFormatted: track line %s; event_type %s (%s)' %\
-                                               (self.jsonToRelationConverter.makeFileCitation(), eventType, `e`))
+                                     (self.jsonToRelationConverter.makeFileCitation(), eventType, `e1`))
                     return
             
             if eventType == 'seq_goto' or\
@@ -2668,7 +2694,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         accountDict = self.ensureDict(event)
         if accountDict is None:
             self.logWarn("Track log line %s: event is not a dict in change-email-settings event: '%s' (%s)" %\
-                         (self.jsonToRelationConverter.makeFileCitation(), str(event), `e`))
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
         
         course_id = accountDict.get('course', None)
@@ -3122,6 +3148,58 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         #return unsafeStr.replace("'", "\\'").replace('\n', "; ").replace('\r', "; ").replace(',', "\\,").replace('\\', '\\\\')       
         return unsafeStr.replace('\n', "; ").replace('\r', "; ").replace('\\', '').replace("'", r"\'")
+    
+    def makeJSONSafe(self, jsonStr):
+        '''
+        Given a JSON string, make it safe for loading via
+        json.loads(). Backslashes before chars other than 
+        any of \bfnrtu/ are escaped with a second backslash 
+        @param jsonStr:
+        @type jsonStr:
+        '''
+        res = EdXTrackLogJSONParser.JSON_BAD_BACKSLASH_PATTERN.sub(self.fixOneJSONBackslashProblem, jsonStr)
+        return res
+
+    
+    def fixOneJSONBackslashProblem(self, matchObj):
+        '''
+        Called from the pattern.sub() method in makeJSONSafe for
+        each match of a bad backslash in jsonStr there. Returns
+        the replacement string to use by the caller for the substitution. 
+        Ex. a match received from the original string "\d'Orsay" returns
+        "\\d".    
+        @param matchObj: a Match object resulting from a regex search/replace
+                         call.
+        @type matchObj: Match
+        '''
+        return "\\\\" + matchObj.group(1)
+
+    def rescueBadJSON(self, badJSONStr, row=[]):
+        '''
+        When JSON strings are not legal, we at least try to extract 
+        the username, host, session, event_type, event_source, and event fields
+        verbatim, i.e. without real parsing. We place those in the proper 
+        fields, and leave it at that.
+        @param badJSONStr:
+        @type badJSONStr:
+        '''
+        username = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['username'], badJSONStr)
+        host = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['host'], badJSONStr)
+        session = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['session'], badJSONStr)
+        event_source = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['event_source'], badJSONStr)        
+        event_type = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['event_type'], badJSONStr)        
+        time = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['time'], badJSONStr)        
+        ip = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['ip'], badJSONStr)                
+        event = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['event'], badJSONStr)                
+        
+        self.setValInRow(row, 'username', username)
+        self.setValInRow(row, 'host', host)
+        self.setValInRow(row, 'session', session)
+        self.setValInRow(row, 'event_source', event_source)
+        self.setValInRow(row, 'event_type', event_type)
+        self.setValInRow(row, 'time', time)
+        self.setValInRow(row, 'ip', ip)
+        self.setValInRow(row, 'badlyFormatted', event)
     
     def getUniqueID(self):
         '''
