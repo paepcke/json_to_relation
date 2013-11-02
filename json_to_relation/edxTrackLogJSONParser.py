@@ -2601,17 +2601,17 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # (that conform to the SQL types we declared in
         # self.schemaAccountTbl:
         try:
-            accountDict['year_of_birth'] = int(postDict['year_of_birth'])
+            accountDict['year_of_birth'] = int(accountDict['year_of_birth'])
         except:
             accountDict['year_of_birth'] = 0
 
         try:
-            accountDict['terms_of_service'] = 1 if postDict['terms_of_service'] == 'true' else 0
+            accountDict['terms_of_service'] = 1 if accountDict['terms_of_service'] == 'true' else 0
         except:
             pass
 
         try:
-            accountDict['honor_code'] = 1 if postDict['honor_code'] == 'true' else 0
+            accountDict['honor_code'] = 1 if accountDict['honor_code'] == 'true' else 0
         except:
             pass
         
@@ -2621,6 +2621,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             accountDict['goals'] = self.makeInsertSafe(accountDict['goals'])
         if isinstance(accountDict.get('username', None), basestring):
             accountDict['username'] = self.makeInsertSafe(accountDict['username'])
+        if isinstance(accountDict.get('name', None), basestring):
+            accountDict['name'] = self.makeInsertSafe(accountDict['name'])
         if isinstance(accountDict.get('mailing_address', None), basestring):
             accountDict['mailing_address'] = self.makeInsertSafe(accountDict['mailing_address'])
         
