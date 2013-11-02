@@ -30,18 +30,56 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
     # Regex patterns for extracting fields from bad JSON:
     searchPatternDict = {}
-    searchPatternDict['username'] = re.compile(r'username[^:]*[^"]*"([^"]*)')
-    searchPatternDict['host'] = re.compile(r'host[^:]*[^"]*"([^"]*)')
-    searchPatternDict['session'] = re.compile(r'session[^:]*[^"]*"([^"]*)')
-    searchPatternDict['event_source'] = re.compile(r'event_source[^:]*[^"]*"([^"]*)')
-    searchPatternDict['event_type'] = re.compile(r'event_type[^:]*[^"]*"([^"]*)')
-    searchPatternDict['time'] = re.compile(r'time[^:]*[^"]*"([^"]*)')
-    searchPatternDict['ip'] = re.compile(r'ip[^:]*[^"]*"([^"]*)')
+    searchPatternDict['username'] = re.compile(r"""
+                                    username[^:]*       # The username key
+                                    [^"']*              # up to opening quote of the value 
+                                    ["']                # opening quote of the value 
+                                    ([^"']*)            # the value
+                                    """, re.VERBOSE)
+    searchPatternDict['host'] = re.compile(r"""
+                                    host[^:]*
+                                    [^"']*
+                                    ["']
+                                    ([^"']*)
+                                    """, re.VERBOSE)
+    searchPatternDict['session'] = re.compile(r"""
+                                    session[^:]*
+                                    [^"']*
+                                    ["']
+                                    ([^"']*)
+                                    """, re.VERBOSE)
+    searchPatternDict['event_source'] = re.compile(r"""
+                                    event_source[^:]*
+                                    [^"']*
+                                    ["']
+                                    ([^"']*)
+                                    """, re.VERBOSE)
+    searchPatternDict['event_type'] = re.compile(r"""
+                                    event_type[^:]*
+                                    [^"']*
+                                    ["']
+                                    ([^"']*)
+                                    """, re.VERBOSE)
+    searchPatternDict['time'] = re.compile(r"""
+                                    time[^:]*
+                                    [^"']*
+                                    ["']
+                                    ([^"']*)
+                                    """, re.VERBOSE)
+    searchPatternDict['ip'] = re.compile(r"""
+                                    ip[^:]*
+                                    [^"']*
+                                    ["']
+                                    ([^"']*)
+                                    """, re.VERBOSE)
     
-    searchPatternDict['event'] = re.compile(r'[\\"]event[\\"][^:]*:(.*)')
+    searchPatternDict['event'] = re.compile(r"""
+                                    [\\"']event[\\"']   # Event with possibly backslashed quotes
+                                    [^:]*               # up to the colon
+                                    :                   # colon that separates key and value
+                                    (.*)                # all of the rest of the string.
+                                    """, re.VERBOSE)
     
-
-
     def __init__(self, jsonToRelationConverter, mainTableName, logfileID='', progressEvery=1000, replaceTables=False, dbName='test'):
         '''
         Constructor
@@ -2944,7 +2982,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         feedback = postDict.get('feedback', None)
         if feedback is not None:
             feedback = self.makeInsertSafe(str(feedback))
-        self.setValInRow(row, submissionID, submissionID)
+        self.setValInRow(row, 'submissionID', submissionID)
         self.setValInRow(row, 'longAnswer', feedback)
         return row
 
@@ -3144,7 +3182,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @return: same string, with unsafe chars properly replaced or escaped
         @rtype: String
         '''
-        #return unsafeStr.replace("'", "\\'").replace('\n', "; ").replace('\r', "; ").replace(',', "\\,").replace('\\', '\\\\')       
+        #return unsafeStr.replace("'", "\\'").replace('\n', "; ").replace('\r', "; ").replace(',', "\\,").replace('\\', '\\\\')
+        if unsafeStr is None or not isinstance(unsafeStr, basestring):
+            return None
+                 
         return unsafeStr.replace('\n', "; ").replace('\r', "; ").replace('\\', '').replace("'", r"\'")
     
     def makeJSONSafe(self, jsonStr):

@@ -3,12 +3,9 @@
 #TODO: Edx unittest for coursID across all event types
 #TODO: add courseID in common flds
 #TODO: video_seek: seek counter floats are output to 8 sig digs, but they are 12 sig digs in json
-#TODO: correctness in correctMap
-#TODO: speed_change_video
 #TODO: /app21/tracking.log-20130831.gz:174310: event is not a dict in select_rubric event: '{u'category': 0, u'selection': u'1', u'location': u'i4x://Education/EDUC115N/combinedopenended/04d9f185e689415f9217a5423166891c'}' (TypeError('eval() arg 1 must be a string or code object',))
 #TODO: wrong output path: outFullPath: /home/paepcke/Project/VPOL/Data/EdXTrackingOct22_2013/app21/tracking.log-201308312013_10_26T22_48_30.228168_18389.sql
 #TODO: documentation: eventID is not a key: used to hold together pointers to states or answers
-#TODO: From log: currentTime in event speed_change_video: '1.0' is expected to be a float
 #TODO: event is not a dict in problem_reset event: 'input_i4x-Engineering-QMSE01-problem-b6a3d17b9eca45f48eab332017e858ee_2_1=2.14'
 #TODO: want courseid filled in for video events and some other event_types:
 #   		   seq_goto     
@@ -22,6 +19,7 @@
 #   		   /courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/combinedopenended/b3c41df5b9ef40ea9c00e8252031207d/get_last_response
 #   		   load_video    
 #TODO: ERROR 1064 (42000) at line 5291428 in file: './tracking.log-20131001.gz.2013-10-29T18_16_21.887671_25959.sql': You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.76 Safari/' at line 1
+#TODO: testSaveAnswerInPath test case of test_edxJSON... not passing
 
 '''
 Created on Sep 14, 2013
