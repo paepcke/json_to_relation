@@ -359,7 +359,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 except ValueError as e:
                     # Pull out what we can, and place in 'badlyFormatted' column
                     self.rescueBadJSON(jsonStr, row=row)                
-                    raise ValueError('Ill formed JSON in track log, line %s: %s' % (self.jsonToRelationConverter.makeFileCitation(), `e`))
+                    raise ValueError('Ill formed JSON: %s' % `e`)
     
             # Dispense with the fields common to all events, except event,
             # which is a nested JSON string. Results will be 
@@ -376,7 +376,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             try:
                 eventType = record['event_type']
             except KeyError:
-                raise KeyError("No event type in line %s" % self.jsonToRelationConverter.makeFileCitation())
+                raise KeyError("No event type")
             
             # Check whether we had a server downtime:
             try:
@@ -391,10 +391,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                     eventTimeStr = eventTimeStr[0:-6]
                 eventDateTime = datetime.datetime.strptime(eventTimeStr, '%Y-%m-%dT%H:%M:%S.%f')
             except KeyError:
-                raise ValueError("No event time or server IP in line %s" % self.jsonToRelationConverter.makeFileCitation())
+                raise ValueError("No event time or server IP.")
             except ValueError:
-                raise ValueError("Bad event time format at %s: '%s'" % (self.jsonToRelationConverter.makeFileCitation(),
-                                                                        eventTimeStr))
+                raise ValueError("Bad event time format: '%s'" % eventTimeStr)
             
             try:
                 doRecordHeartbeat = False
@@ -441,7 +440,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             try:
                 eventJSONStrOrDict = record['event']
             except KeyError:
-                raise ValueError("Track log line %s of event type %s has no event field" % (self.jsonToRelationConverter.makeFileCitation(), eventType))
+                raise ValueError("Event of type %s has no event field" % eventType)
             
             try:
                 event = json.loads(eventJSONStrOrDict)
@@ -454,11 +453,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 # time.
                 try:
                     cleanJSONStr = self.makeJSONSafe(eventJSONStrOrDict)
-                    record = json.loads(cleanJSONStr)
+                    event = json.loads(cleanJSONStr)
                 except Exception as e1:                
-                    row = self.handleBadJSON(row, eventJSONStrOrDict)
-                    raise ValueError('Bad JSON; saved in col badlyFormatted: track line %s; event_type %s (%s)' %\
-                                     (self.jsonToRelationConverter.makeFileCitation(), eventType, `e1`))
+                    row = self.rescueBadJSON(str(record), row=row)
+                    raise ValueError('Bad JSON; saved in col badlyFormatted: event_type %s (%s)' % (eventType, `e1`))
                     return
             
             if eventType == 'seq_goto' or\
@@ -3184,7 +3182,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @type badJSONStr:
         '''
         username = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['username'], badJSONStr)
-        host = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['host'], badJSONStr)
+        #host = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['host'], badJSONStr)
         session = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['session'], badJSONStr)
         event_source = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['event_source'], badJSONStr)        
         event_type = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['event_type'], badJSONStr)        
@@ -3193,14 +3191,21 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         event = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['event'], badJSONStr)                
         
         self.setValInRow(row, 'username', username)
-        self.setValInRow(row, 'host', host)
+        #self.setValInRow(row, 'host', host)
         self.setValInRow(row, 'session', session)
         self.setValInRow(row, 'event_source', event_source)
         self.setValInRow(row, 'event_type', event_type)
         self.setValInRow(row, 'time', time)
         self.setValInRow(row, 'ip', ip)
-        self.setValInRow(row, 'badlyFormatted', event)
+        self.setValInRow(row, 'badlyFormatted', self.makeInsertSafe(event))
     
+    def tryJSONExtraction(self, pattern, theStr):
+        m = pattern.search(theStr)
+        try:
+            return None if m is None else m.group(1)
+        except:
+            return None
+        
     def getUniqueID(self):
         '''
         Generate a universally unique key with
