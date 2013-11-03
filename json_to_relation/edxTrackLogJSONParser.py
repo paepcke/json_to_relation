@@ -83,6 +83,15 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     # Picking (likely) zip codes out of a string:
     zipCodePattern = re.compile(r'[^0-9]([0-9]{5})')
     
+    # Finding the word 'status' in problem_graded events:
+    # Extract problem ID and 'correct' or 'incorrect' from 
+    # a messy problem_graded event string. Two cases:
+    #     ' aria-describedby=\\"input_i4x-Medicine-SciWrite-problem-c3266c76a7854d02b881250a49054ddb_2_1\\">\\n        incorrect\\n      </p>\\n\\n'
+    # and
+    #     'aria-describedby=\\"input_i4x-Medicine-HRP258-problem-068a71cb1a1a4da39da093da2778f000_3_1_choice_2\\">Status: incorrect</span>'
+    # with lots of HTML and other junk around it.
+    problemGradedComplexPattern = re.compile(r'aria-describedby=[\\"]*(input[^\\">]*)[\\"]*[>nStatus\\:\s"]*([iIn]{0,2}correct)')
+    
     def __init__(self, jsonToRelationConverter, mainTableName, logfileID='', progressEvery=1000, replaceTables=False, dbName='test'):
         '''
         Constructor
@@ -674,7 +683,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 return
             
             elif eventType == 'problem_graded':
-                self.handleProblemGraded(record, row, event)
+                # Need to look at return, b/c this
+                # method handles all its own pushing:
+                row = self.handleProblemGraded(record, row, event)
                 return
 
             elif eventType == 'change-email-settings':
@@ -1160,7 +1171,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             try:
                 # Pull elements out from GET parameter strings like 'problemID=choice_2' 
                 (problemID, answerChoice) = problemID_choice.split('=')
-                answersDict[problemID] = answerChoice
+                answersDict[problemID] = self.makeInsertSafe(answerChoice)
             except ValueError:
                 # Badly formatted GET parameter element:
                 self.logWarn("Track log line %s: badly formatted problemID/answerChoice GET parameter pair: '%s'." %\
@@ -2660,13 +2671,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleProblemGraded(self, record, row, event):
         '''
         Events look like this::
-     		'[input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1=choice_0&
-    		input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1=choice_4&
-    		input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1=choice_2&
-    		input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_12_1=&
-    		input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_13_1=&
-    		input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_16_1%5B%5D=choice_6\",\"\\n<h2 class=\\\"problem-header\\\">\\n  Unit 5 Homework\\n</h2>\\n\\n<section class=\\\"problem\\\">\\n  <div><p>Question 1:</p><p>I am calculating the mean, median, standard deviation, and standard error of the mean for several variables (age, height, weight, income, blood pressure, etc.) from a sample of 246 patients.  If I receive data for an additional 100 patients, which of the above statistics (mean, median, standard deviation, or standard error of the mean) would be expected to change substantially?  </p><span><form class=\\\"choicegroup capa_inputtype\\\" id=\\\"inputtype_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1\\\"><div class=\\\"indicator_container\\\">\\n    </div><fieldset><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1_choice_0\\\" class=\\\"choicegroup_incorrect\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1_choice_0\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1\\\" value=\\\"choice_0\\\" checked=\\\"true\\\"/> The mean\\n\\n            \\n            <span class=\\\"sr\\\" aria-describedby=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1_choice_0\\\">Status: incorrect</span>\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1_choice_1\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1_choice_1\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1\\\" value=\\\"choice_1\\\"/> The median\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1_choice_2\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1_choice_2\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1\\\" value=\\\"choice_2\\\"/> The standard deviation\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1_choice_3\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1_choice_3\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1\\\" value=\\\"choice_3\\\"/> The standard error of the mean\\n\\n        </label><span id=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_2_1\\\"/></fieldset></form></span><section class=\\\"solution-span\\\"><span id=\\\"solution_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_solution_1\\\"/></section><p>Question 2:</p><p>In a study of 13 children with cystic fibrosis who completed an exercise program, exercise endurance (duration on an exercise test) improved by a mean of 0.77 minutes. The standard deviation for the change in endurance was 0.83 minutes. What is the theoretical distribution of the mean?</p><span><form class=\\\"choicegroup capa_inputtype\\\" id=\\\"inputtype_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1\\\"><div class=\\\"indicator_container\\\">\\n    </div><fieldset><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1_choice_0\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1_choice_0\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1\\\" value=\\\"choice_0\\\"/> T-distribution (with 12 degrees of freedom); mean=true mean; standard error= 0.23\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1_choice_1\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1_choice_1\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1\\\" value=\\\"choice_1\\\"/> Standard normal distribution; mean=true mean; standard error= 0.23\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1_choice_2\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1_choice_2\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1\\\" value=\\\"choice_2\\\"/> T-distribution with 12 degrees of freedom; mean=true mean; standard error= 0.07\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1_choice_3\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1_choice_3\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1\\\" value=\\\"choice_3\\\"/> Standard normal distribution; mean=true mean; standard error= 0.07\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1_choice_4\\\" class=\\\"choicegroup_incorrect\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1_choice_4\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1\\\" value=\\\"choice_4\\\" checked=\\\"true\\\"/> T-distribution (with 12 degrees of freedom); mean=true mean; standard error= 0.83\\n\\n            \\n            <span class=\\\"sr\\\" aria-describedby=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1_choice_4\\\">Status: incorrect</span>\\n        </label><span id=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_3_1\\\"/></fieldset></form></span><section class=\\\"solution-span\\\"><span id=\\\"solution_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_solution_2\\\"/></section><p>Question 3:</p><p>Thirty heart disease patients are put on an exercise regimen.  Twenty patients improve on the exercise stress test and ten don
-    		#8217;t improve or get worse. Calculate the 95% confidence interval for the true proportion of heart disease patients who improve their fitness using this particular exercise regimen. Recall that proportions are normally distributed with a standard error of </p><p>\\\\[ \\\\sqrt{\\\\frac{p(1-p)}{n}} \\\\]</p><p>(You may use the observed proportion to calculate the standard error.)</p><span><form class=\\\"choicegroup capa_inputtype\\\" id=\\\"inputtype_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\"><div class=\\\"indicator_container\\\">\\n    </div><fieldset><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_0\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_0\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" value=\\\"choice_0\\\"/> 66%\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_1\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_1\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" value=\\\"choice_1\\\"/> 66%-70%\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_2\\\" class=\\\"choicegroup_correct\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_2\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" value=\\\"choice_2\\\" checked=\\\"true\\\"/> 50%-84%\\n\\n            \\n            <span class=\\\"sr\\\" aria-describedby=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_2\\\">Status: correct</span>\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_3\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_...        
+     		'[...#8217;t improve or get worse. Calculate the 95% confidence interval for the true proportion of heart disease patients who improve their fitness using this particular exercise regimen. Recall that proportions are normally distributed with a standard error of </p><p>\\\\[ \\\\sqrt{\\\\frac{p(1-p)}{n}} \\\\]</p><p>(You may use the observed proportion to calculate the standard error.)</p><span><form class=\\\"choicegroup capa_inputtype\\\" id=\\\"inputtype_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\"><div class=\\\"indicator_container\\\">\\n    </div><fieldset><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_0\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_0\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" value=\\\"choice_0\\\"/> 66%\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_1\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_1\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" value=\\\"choice_1\\\"/> 66%-70%\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_2\\\" class=\\\"choicegroup_correct\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_2\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" value=\\\"choice_2\\\" checked=\\\"true\\\"/> 50%-84%\\n\\n            \\n            <span class=\\\"sr\\\" aria-describedby=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_2\\\">Status: correct</span>\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_3\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_...        
     		]'
     	@param record:
         @type record:
@@ -2680,30 +2685,21 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
         
-        eventArray = self.ensureArray(event)
-        if eventArray is None:
-            # Don't know how to parse; preserve mess in longAnswer fld of main table
-            # and be done with it:
-            self.setValInRow(row, 'longAnswer', self.makeInsertSafe(event))
-            return row
         answersDict = {}
-        randomStrings = ''
-        for maybeProblemAndChoiceTuples in eventArray:
-            if maybeProblemAndChoiceTuples is not None:
-                problemAndChoiceArray = maybeProblemAndChoiceTuples.split('&')
-                continue
-            if len(problemAndChoiceArray) == 1:
-                # Don't have nice probID/Answer pairs (last entry in
-                # example of comment header). Just collect in catch-all:
-                randomStrings += problemAndChoiceArray[0]
-                continue
-            for problemAndChoiceFused in problemAndChoiceArray:
-                problemAndChoice = problemAndChoiceFused.split('=')
-                try:
-                    answersDict[problemAndChoice[0]] = problemAndChoice[1]
-                except IndexError:
-                    randomStrings += problemAndChoiceFused
-                    continue
+        # The following will go through the mess, and
+        # pull out all pairs problemID/(in)correct. Those
+        # will live in each Match obj's group(1) and group(2)
+        # respectively:
+        probIdCorrectIterator = EdXTrackLogJSONParser.problemGradedComplexPattern.finditer(str(event))
+        if probIdCorrectIterator is None:
+            # Should have found at least one probID/correctness pair:
+            self.logWarn("Track log line %s: could not parse out problemID/correctness pairs from '%s'. (stuffed into badlyFormatted)" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            self.setValInRow(row, 'badlyFormatted', str(event))
+            return row
+        # Go through each match:
+        for searchMatch in probIdCorrectIterator:
+            answersDict[searchMatch.group(1)] = searchMatch.group(2)
         
         if len(answersDict) > 0:
             # Receive all the Answer table keys generated for
@@ -2727,11 +2723,6 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                     self.setValInRow(row, 'problemID', answerToProblemMap[answerFKey])
                     rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
                     self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
-        if len(randomStrings) > 0:
-            self.setValInRow(row, 'longAnswer', self.makeInsertSafe(randomStrings))
-            self.setValInRow(row, 'answerFK', None)
-            rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
-            self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
             
         # Return empty row, b/c we already pushed all necessary rows:
         return []
