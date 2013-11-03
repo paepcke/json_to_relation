@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS Account (
     username TEXT,
     name TEXT,
     mailing_address TEXT,
+    zipCode TINYTEXT,
     gender TINYTEXT,
     year_of_birth TINYINT,
     level_of_education TINYTEXT,
@@ -121,7 +122,7 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID) VALUES 
-    ('03263939_0d79_46e2_9ade_7199a970d555','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36','browser','problem_reset','117.58.245.202','https://class.stanford.edu/courses/Engineering/QMSE01/Quantum_Mechanics_for_Scientists_and_Engineers/courseware/b2994ac964ae438aa4556d3df52a2506/1f2294fa31e340deac3904a95f8109df/','cd29f0ec437a61b624c06177fd2d5dd5','2013-10-21T06:20:17.903607+00:00','Smith','0:00:00',null,null,null,null,null,null,'input_i4x-Engineering-QMSE01-problem-dce5fe9e04be4bc1932efb05a2d6db68_2_1=2');
+    ('3e4976b3_c698_413e_9350_6204b0aadd15','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36','browser','problem_reset','117.58.245.202','https://class.stanford.edu/courses/Engineering/QMSE01/Quantum_Mechanics_for_Scientists_and_Engineers/courseware/b2994ac964ae438aa4556d3df52a2506/1f2294fa31e340deac3904a95f8109df/','cd29f0ec437a61b624c06177fd2d5dd5','2013-10-21T06:20:17.903607+00:00','Smith','0:00:00',null,null,null,null,null,null,'input_i4x-Engineering-QMSE01-problem-dce5fe9e04be4bc1932efb05a2d6db68_2_1=2');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

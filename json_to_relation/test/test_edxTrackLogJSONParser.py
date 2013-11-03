@@ -20,7 +20,7 @@ from output_disposition import OutputDisposition, ColDataType, \
     TableSchemas, ColumnSpec, OutputFile, OutputPipe # @UnusedImport
 
 
-TEST_ALL = False
+TEST_ALL = True
 PRINT_OUTS = False  # Set True to get printouts of CREATE TABLE statements
 
 # The following is very Dangerous: If True, no tests are
@@ -950,7 +950,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
-    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testSaveProblemCheck(self):
         testFilePath = os.path.join(os.path.dirname(__file__),"data/saveProblemCheck.json")
         stringSource = InURI(testFilePath)

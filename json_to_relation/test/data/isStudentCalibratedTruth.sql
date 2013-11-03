@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS Account (
     username TEXT,
     name TEXT,
     mailing_address TEXT,
+    zipCode TINYTEXT,
     gender TINYTEXT,
     year_of_birth TINYINT,
     level_of_education TINYTEXT,
@@ -121,7 +122,7 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation) VALUES 
-    ('b7978409_ac2e_453a_a949_14bf38b16975','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/peergrading/ef6ba7f803bb46ebaaf008cde737e3e9/is_student_calibrated','82.9.126.47',null,null,'2013-08-28T20:16:48.720470+00:00','SteveC','0:00:00',null,null,null,null,null,null,null,null,'i4x://Education/EDUC115N/combinedopenended/d5b45f4cad82417d961a045e9c28f057');
+    ('9386f80f_a576_40f7_93a9_4c1e115d0584','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/peergrading/ef6ba7f803bb46ebaaf008cde737e3e9/is_student_calibrated','82.9.126.47',null,null,'2013-08-28T20:16:48.720470+00:00','SteveC','0:00:00',null,null,null,null,null,null,null,null,'i4x://Education/EDUC115N/combinedopenended/d5b45f4cad82417d961a045e9c28f057');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS Account (
     username TEXT,
     name TEXT,
     mailing_address TEXT,
+    zipCode TINYTEXT,
     gender TINYTEXT,
     year_of_birth TINYINT,
     level_of_education TINYTEXT,
@@ -121,7 +122,7 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID) VALUES 
-    ('faefb2f0_9895_40e9_9f6a_1f62e7e86b82','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','about','85.104.215.30',null,null,'2013-06-10T05:47:38.452300','',null,null,null,'/courses/Medicine/HRP258/Statistics_in_Medicine');
+    ('da29c1aa_e358_45a9_b96b_da9c19da67cc','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','about','85.104.215.30',null,null,'2013-06-10T05:47:38.452300','',null,null,null,'/courses/Medicine/HRP258/Statistics_in_Medicine');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS Account (
     username TEXT,
     name TEXT,
     mailing_address TEXT,
+    zipCode TINYTEXT,
     gender TINYTEXT,
     year_of_birth TINYINT,
     level_of_education TINYTEXT,
@@ -121,7 +122,7 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for) VALUES 
-    ('850919d0_f2ff_419c_9081_847080721255','Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','browser','problem_graded','98.234.177.60','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/69356ef7b30545de8dd3152e30b71735/832671462501482eaa5544fa5845b770/','8ebc3bf74774729665eec6b69cdd289f','2013-07-13T07:51:07.156213+00:00','Smith','0:00:00');
+    ('93d90716_5614_4a0a_adcf_8f52950d7777','Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','browser','problem_graded','98.234.177.60','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/69356ef7b30545de8dd3152e30b71735/832671462501482eaa5544fa5845b770/','8ebc3bf74774729665eec6b69cdd289f','2013-07-13T07:51:07.156213+00:00','Smith','0:00:00');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

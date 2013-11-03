@@ -80,6 +80,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                     (.*)                # all of the rest of the string.
                                     """, re.VERBOSE)
     
+    # Picking (likely) zip codes out of a string:
+    zipCodePattern = re.compile(r'[^0-9]([0-9]{5})')
+    
     def __init__(self, jsonToRelationConverter, mainTableName, logfileID='', progressEvery=1000, replaceTables=False, dbName='test'):
         '''
         Constructor
@@ -291,6 +294,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaAccountTbl['username'] = ColDataType.TEXT
         self.schemaAccountTbl['name'] = ColDataType.TEXT
         self.schemaAccountTbl['mailing_address'] = ColDataType.TEXT
+        self.schemaAccountTbl['mailing_address'] = ColDataType.TEXT
+        self.schemaAccountTbl['zipCode'] = ColDataType.TINYTEXT
         self.schemaAccountTbl['gender'] = ColDataType.TINYTEXT
         self.schemaAccountTbl['year_of_birth'] = ColDataType.TINYINT
         self.schemaAccountTbl['level_of_education'] = ColDataType.TINYTEXT
@@ -2583,6 +2588,21 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         accountDict['username'] = postDict.get('username', None)
         accountDict['name'] = postDict.get('name', None)
         accountDict['mailing_address'] = postDict.get('mailing_address', None)
+        
+        mailAddr = accountDict['mailing_address']
+        if mailAddr is not None:
+            # Mailing addresses are enclosed in brackets, making them 
+            # an array. Pull the addr string out:
+            if isinstance(mailAddr, list):
+                mailAddr = mailAddr[0] 
+            zipCodeMatch = EdXTrackLogJSONParser.zipCodePattern.search(mailAddr)
+            if zipCodeMatch is not None:
+                accountDict['zipCode'] = zipCodeMatch.group(1)
+            else:
+                accountDict['zipCode'] = None
+        else:
+            accountDict['zipCode'] = None
+            
         accountDict['gender'] = postDict.get('gender', None)
         accountDict['year_of_birth'] = postDict.get('year_of_birth', None)
         accountDict['level_of_education'] = postDict.get('level_of_education', None)
@@ -2593,7 +2613,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         accountDict['enrollment_action'] = postDict.get('enrollment', None)
         accountDict['email'] = postDict.get('email', None) 
         accountDict['receive_emails'] = postDict.get('receive_emails', None) 
-***p = re.compile(r'[^0-9]([0-9]{5})')
+
         # Some values in create_account are arrays. Replace those
         # values' entries in accountDict with the arrays' first element:
         for fldName in accountDict.keys():
@@ -2749,6 +2769,21 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         accountDict['username'] = username
         accountDict['name'] = None
         accountDict['mailing_address'] = None
+        
+        mailAddr = accountDict['mailing_address']
+        if mailAddr is not None:
+            # Mailing addresses are enclosed in brackets, making them 
+            # an array. Pull the addr string out:
+            if isinstance(mailAddr, list):
+                mailAddr = mailAddr[0] 
+            zipCodeMatch = EdXTrackLogJSONParser.zipCodePattern.search(mailAddr)
+            if zipCodeMatch is not None:
+                accountDict['zipCode'] = zipCodeMatch.group(1)
+            else:
+                accountDict['zipCode'] = None
+        else:
+            accountDict['zipCode'] = None
+        
         accountDict['gender'] = None
         accountDict['year_of_birth'] = None
         accountDict['level_of_education'] = None

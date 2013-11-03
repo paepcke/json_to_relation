@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS Account (
     username TEXT,
     name TEXT,
     mailing_address TEXT,
+    zipCode TINYTEXT,
     gender TINYTEXT,
     year_of_birth TINYINT,
     level_of_education TINYTEXT,
@@ -121,7 +122,7 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,submissionID,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime,videoSpeed,videoOldTime,videoNewTime,videoSeekType) VALUES 
-    ('92b67e9c_b2c4_47f1_8571_1c7088edb350','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.72 Safari/537.36','browser','seek_video','61.202.56.98','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/6c618930f54340c29400b1c442357b9c/8220e922ccbd4e82bbda867c9abae5db/','f4e3f627d8cc389b89e674b0fcfa0251','2013-07-25T09:37:07.901686+00:00','HM','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'i4x-Medicine-HRP258-videoalpha-5ce998d44e594af3ab0344505e022f86','html5',null,null,'167.734143','168','slide_seek');
+    ('89b2ca05_4ed9_4e98_b529_038c80ec460e','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.72 Safari/537.36','browser','seek_video','61.202.56.98','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/6c618930f54340c29400b1c442357b9c/8220e922ccbd4e82bbda867c9abae5db/','f4e3f627d8cc389b89e674b0fcfa0251','2013-07-25T09:37:07.901686+00:00','HM','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'i4x-Medicine-HRP258-videoalpha-5ce998d44e594af3ab0344505e022f86','html5',null,null,'167.734143','168','slide_seek');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;
