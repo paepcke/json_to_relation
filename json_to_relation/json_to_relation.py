@@ -360,7 +360,7 @@ class JSONToRelation(object):
                     # direct the top level event information to the table
                     # called self.mainTableName.
                     self.jsonParserInstance.processOneJSONObject(jsonStr, newRow)
-                except ValueError as e:
+                except (ValueError, KeyError) as e:
                     JSONToRelation.logger.warn('Line %s: bad JSON object: %s' % (self.makeFileCitation(), `e`))
                 self.bumpLineCounter()
 

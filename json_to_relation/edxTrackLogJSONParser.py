@@ -610,8 +610,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             
             elif eventType == 'save_problem_fail' or\
                  eventType == 'save_problem_success' or\
+                 eventType == 'save_problem_check' or\
                  eventType == 'reset_problem_fail':
-                row = self.handleSaveProblemFailSuccessOrReset(record, row, event)
+                row = self.handleSaveProblemFailSuccessCheckOrReset(record, row, event)
                 return
             
             elif eventType == 'reset_problem':
@@ -2117,10 +2118,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
         return row
          
-    def handleSaveProblemFailSuccessOrReset(self, record, row, event):
+    def handleSaveProblemFailSuccessCheckOrReset(self, record, row, event):
         '''
         Do have examples. event has fields state, problem_id, failure, and answers.
-        For save_problem_success there is no failure field 
+        For save_problem_success or save_problem_check there is no failure field 
         @param record:
         @type record:
         @param row:
@@ -2141,6 +2142,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
         problem_id = event.get('problem_id', None)
         success    = event.get('failure', None)  # 'closed' or 'unreset'
+        if success is None:
+            success = event.get('success', None) # 'incorrect' or 'correct'
         self.setValInRow(row, 'problemID', problem_id)
         self.setValInRow(row, 'success', success)
         
@@ -2590,7 +2593,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         accountDict['enrollment_action'] = postDict.get('enrollment', None)
         accountDict['email'] = postDict.get('email', None) 
         accountDict['receive_emails'] = postDict.get('receive_emails', None) 
-
+***p = re.compile(r'[^0-9]([0-9]{5})')
         # Some values in create_account are arrays. Replace those
         # values' entries in accountDict with the arrays' first element:
         for fldName in accountDict.keys():
