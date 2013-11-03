@@ -1,7 +1,12 @@
 #!/bin/bash
 
-# Transforms all JSON track log files in ~dataman/Data/Edx/tracking/app*,
-# and loads the resulting .sql files into MySQL.
+# Transforms all JSON track .gz log files in ~dataman/Data/Edx/tracking/app*,
+# and loads the resulting .sql files into MySQL. MySQL loads execute
+# under the user uid that is running this script. The respective
+# password is requested right at the start. It is only used after
+# the transform is done, so get it right.
+#
+# Make sure ~dataman/Code/json_to_relation has the latest code from git.
 #
 # Places resulting .sql files into ~dataman/Data/Edx/tracking/SQL.
 # Places the transform log files into /tmp/j2s_tracking.log-xxx
