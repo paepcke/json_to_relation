@@ -13,14 +13,15 @@ import sys
 import tempfile
 import unittest
 
-from json_to_relation import JSONToRelation
 from edxTrackLogJSONParser import EdXTrackLogJSONParser
 from input_source import InURI, InString
-from output_disposition import OutputDisposition, ColDataType, \
-    TableSchemas, ColumnSpec, OutputFile, OutputPipe # @UnusedImport
+from json_to_relation import JSONToRelation
+from locationManager import LocationManager
+from output_disposition import OutputDisposition, ColDataType, TableSchemas, \
+    ColumnSpec, OutputFile, OutputPipe # @UnusedImport
 
 
-TEST_ALL = True
+TEST_ALL = False
 PRINT_OUTS = False  # Set True to get printouts of CREATE TABLE statements
 
 # The following is very Dangerous: If True, no tests are
@@ -49,6 +50,14 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
     def tearDown(self):
         if self.stringSource is not None:
             self.stringSource.close()
+
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
+    def testLocationManager(self):
+        lm = LocationManager()
+        self.assertTrue(lm.isCountry('senegal'))
+        self.assertTrue(lm.isCountry('Senegal'))
+        self.assertIsNone(lm.isCountry('brrooohaha'))
+
 
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testMakeJSONSafe(self):
@@ -438,7 +447,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
             self.assertFileContentEquals(truthFile, dest.name)
 
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
-    def testCreateAccount(self):
+    def testCreateAccountZipNoCountry(self):
         testFilePath = os.path.join(os.path.dirname(__file__),"data/createAccountTest.json")
         stringSource = InURI(testFilePath)
         
@@ -456,6 +465,103 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         fileConverter.convert()
         dest.close()
         truthFile = open(os.path.join(os.path.dirname(__file__),"data/createAccountTestTruth.sql"), 'r')
+        if UPDATE_TRUTH:
+            self.updateTruth(dest.name, truthFile.name)
+        else:
+            self.assertFileContentEquals(truthFile, dest.name)
+
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def testCreateAccountZipWithOtherCountry(self):
+        testFilePath = os.path.join(os.path.dirname(__file__),"data/createAccountZipOtherCountry.json")
+        stringSource = InURI(testFilePath)
+        
+        resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+        # Just use the file name of the tmp file.
+        resultFileName = resultFile.name
+        resultFile.close()
+        dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+        fileConverter = JSONToRelation(stringSource,
+                                       dest,
+                                       mainTableName='Event'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Event', replaceTables=True)
+        fileConverter.setParser(edxParser)
+        fileConverter.convert()
+        dest.close()
+        truthFile = open(os.path.join(os.path.dirname(__file__),"data/createAccountZipOtherCountryTruth.sql"), 'r')
+        if UPDATE_TRUTH:
+            self.updateTruth(dest.name, truthFile.name)
+        else:
+            self.assertFileContentEquals(truthFile, dest.name)
+
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def testCreateAccountTrueZipWithOtherCountry(self):
+        testFilePath = os.path.join(os.path.dirname(__file__),"data/createAccountNearCountryMiss.json")
+        stringSource = InURI(testFilePath)
+        
+        resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+        # Just use the file name of the tmp file.
+        resultFileName = resultFile.name
+        resultFile.close()
+        dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+        fileConverter = JSONToRelation(stringSource,
+                                       dest,
+                                       mainTableName='Event'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Event', replaceTables=True)
+        fileConverter.setParser(edxParser)
+        fileConverter.convert()
+        dest.close()
+        truthFile = open(os.path.join(os.path.dirname(__file__),"data/createAccountNearCountryMissTruth.sql"), 'r')
+        if UPDATE_TRUTH:
+            self.updateTruth(dest.name, truthFile.name)
+        else:
+            self.assertFileContentEquals(truthFile, dest.name)
+
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def testCreateAccountUnitedArabEmirates(self):
+        testFilePath = os.path.join(os.path.dirname(__file__),"data/createAccountUnitedArabEmirates.json")
+        stringSource = InURI(testFilePath)
+        
+        resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+        # Just use the file name of the tmp file.
+        resultFileName = resultFile.name
+        resultFile.close()
+        dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+        fileConverter = JSONToRelation(stringSource,
+                                       dest,
+                                       mainTableName='Event'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Event', replaceTables=True)
+        fileConverter.setParser(edxParser)
+        fileConverter.convert()
+        dest.close()
+        truthFile = open(os.path.join(os.path.dirname(__file__),"data/createAccountUnitedArabEmiratesTruth.sql"), 'r')
+        if UPDATE_TRUTH:
+            self.updateTruth(dest.name, truthFile.name)
+        else:
+            self.assertFileContentEquals(truthFile, dest.name)
+
+
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def testCreateAccountUS(self):
+        testFilePath = os.path.join(os.path.dirname(__file__),"data/createAccountUS.json")
+        stringSource = InURI(testFilePath)
+        
+        resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+        # Just use the file name of the tmp file.
+        resultFileName = resultFile.name
+        resultFile.close()
+        dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+        fileConverter = JSONToRelation(stringSource,
+                                       dest,
+                                       mainTableName='Event'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Event', replaceTables=True)
+        fileConverter.setParser(edxParser)
+        fileConverter.convert()
+        dest.close()
+        truthFile = open(os.path.join(os.path.dirname(__file__),"data/createAccountUSTruth.sql"), 'r')
         if UPDATE_TRUTH:
             self.updateTruth(dest.name, truthFile.name)
         else:
@@ -1071,6 +1177,54 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
+    def testUnicodeOutOfBounds(self):
+        testFilePath = os.path.join(os.path.dirname(__file__),"data/unicodeOutOfBound.json")
+        stringSource = InURI(testFilePath)
+        
+        resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+        # Just use the file name of the tmp file.
+        resultFileName = resultFile.name
+        resultFile.close()
+        dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+        fileConverter = JSONToRelation(stringSource,
+                                       dest,
+                                       mainTableName='Event'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Event', replaceTables=True)
+        fileConverter.setParser(edxParser)
+        fileConverter.convert()
+        dest.close()
+        truthFile = open(os.path.join(os.path.dirname(__file__),"data/unicodeOutOfBoundTruth.sql"), 'r')
+        if UPDATE_TRUTH:
+            self.updateTruth(dest.name, truthFile.name)
+        else:
+            self.assertFileContentEquals(truthFile, dest.name)
+
+
+#     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
+#     def testFindDoubleLabelProblem(self):
+#         testFilePath = os.path.join(os.path.dirname(__file__),"data/findDoubleLabelProblem.json")
+#         stringSource = InURI(testFilePath)
+#         
+#         resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+#         # Just use the file name of the tmp file.
+#         resultFileName = resultFile.name
+#         resultFile.close()
+#         dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+#         fileConverter = JSONToRelation(stringSource,
+#                                        dest,
+#                                        mainTableName='Event'
+#                                        )
+#         edxParser = EdXTrackLogJSONParser(fileConverter, 'Event', replaceTables=True)
+#         fileConverter.setParser(edxParser)
+#         fileConverter.convert()
+#         dest.close()
+#         truthFile = open(os.path.join(os.path.dirname(__file__),"data/problemGradedSeveralProblemsTruth.sql"), 'r')
+#         if UPDATE_TRUTH:
+#             self.updateTruth(dest.name, truthFile.name)
+#         else:
+#             self.assertFileContentEquals(truthFile, dest.name)
 
         
     #--------------------------------------------------------------------------------------------------    

@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS Account (
     name TEXT,
     mailing_address TEXT,
     zipCode TINYTEXT,
+    country TINYTEXT,
     gender TINYTEXT,
     year_of_birth TINYINT,
     level_of_education TINYTEXT,
@@ -122,7 +123,7 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for) VALUES 
-    ('d96f9cb2_ae21_4c1d_bd0e_02b006c8aa62','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/login_ajax','85.246.55.134',null,null,'2013-06-10T20:47:37.580071','emil.smith@gmail.com','0:00:00');
+    ('b4b3e826_3e3f_45bd_9625_8ebcdbb214e9','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/login_ajax','85.246.55.134',null,null,'2013-06-10T20:47:37.580071','emil.smith@gmail.com','0:00:00');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

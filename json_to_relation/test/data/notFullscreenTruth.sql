@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS Account (
     name TEXT,
     mailing_address TEXT,
     zipCode TINYTEXT,
+    country TINYTEXT,
     gender TINYTEXT,
     year_of_birth TINYINT,
     level_of_education TINYTEXT,
@@ -122,7 +123,7 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,submissionID,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime) VALUES 
-    ('48b940e7_adc9_45ec_bbfa_c73e7fa669bd','Mozilla/5.0 (Windows NT 6.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','browser','not_fullscreen','121.6.140.40','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/2b2015b2980d4acd8a94d97fde9a493b/','b1153dbe6380815b757b9f780cc9b7c9','2013-06-29T08:04:54.323284+00:00','Valarie','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'i4x-Medicine-HRP258-videoalpha-c5cbefddbd55429b8a796a6521b9b752','html5','661.101013184');
+    ('ddba9f09_f336_4cbe_80ca_e68f3acbf173','Mozilla/5.0 (Windows NT 6.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','browser','not_fullscreen','121.6.140.40','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/2b2015b2980d4acd8a94d97fde9a493b/','b1153dbe6380815b757b9f780cc9b7c9','2013-06-29T08:04:54.323284+00:00','Valarie','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'i4x-Medicine-HRP258-videoalpha-c5cbefddbd55429b8a796a6521b9b752','html5','661.101013184');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

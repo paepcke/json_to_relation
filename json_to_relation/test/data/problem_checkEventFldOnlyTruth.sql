@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS Account (
     name TEXT,
     mailing_address TEXT,
     zipCode TINYTEXT,
+    country TINYTEXT,
     gender TINYTEXT,
     year_of_birth TINYINT,
     level_of_education TINYTEXT,

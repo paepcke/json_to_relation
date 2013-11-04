@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS Account (
     name TEXT,
     mailing_address TEXT,
     zipCode TINYTEXT,
+    country TINYTEXT,
     gender TINYTEXT,
     year_of_birth TINYINT,
     level_of_education TINYTEXT,
@@ -121,10 +122,10 @@ CREATE TABLE IF NOT EXISTS Event (
 SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
-INSERT INTO Account (account_id,username,name,mailing_address,zipCode,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) VALUES 
-    ('be766a72_c855_4c33_965e_f1185e732059','luisX!V','Roy Luigi Cannon','3208 Dead St; ; Paris, GA 30243','30243','f',1986,'p','flexibility, cost, \'glory\', and course of study',1,1,'Medicine/HRP258/Statistics_in_Medicine',null,'marykatherine.brown@gmail.com',null);
+INSERT INTO Account (account_id,username,name,mailing_address,zipCode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) VALUES 
+    ('75527c06_4922_4747_a16d_58f705a0d06c','luisX!V','Roy Luigi Cannon','3208 Dead St; ; Paris, GA 30243','30243','USA','f',1986,'p','flexibility, cost, \'glory\', and course of study',1,1,'Medicine/HRP258/Statistics_in_Medicine',null,'marykatherine.brown@gmail.com',null);
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,submissionID,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime,videoSpeed,videoOldTime,videoNewTime,videoSeekType,videoNewSpeed,videoOldSpeed,bookInteractionType,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badlyFormatted,correctMapFK,answerFK,stateFK,accountFK) VALUES 
-    ('f8df4bfd_553d_415f_ab57_e9d88b1708ab','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/create_account','192.35.46.1',null,null,'2013-06-10T14:38:48.529921','','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'be766a72_c855_4c33_965e_f1185e732059');
+    ('34cf9566_a49d_4a3b_86c2_8a10bd2ce748','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/create_account','192.35.46.1',null,null,'2013-06-10T14:38:48.529921','','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'75527c06_4922_4747_a16d_58f705a0d06c');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

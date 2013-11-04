@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS Account (
     name TEXT,
     mailing_address TEXT,
     zipCode TINYTEXT,
+    country TINYTEXT,
     gender TINYTEXT,
     year_of_birth TINYINT,
     level_of_education TINYTEXT,
@@ -122,7 +123,7 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,submissionID,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime,videoSpeed,videoOldTime,videoNewTime,videoSeekType) VALUES 
-    ('a96c47ef_df35_4c5e_b047_9fcbbfd0247d','Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.94 Safari/537.36','browser','seek_video','184.90.151.219','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/8016c68f703d4b888e444e97481b6830/d7bf74e84cdc438ea9f04a201410a00e/','0ba915e0d89c28a05c11f5cd9674fa1d','2013-06-11T16:23:16.899531','Bgisi','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'i4x-Medicine-HRP258-videoalpha-413d6a45b82848339ab5fd3836dfb928','html5',null,null,'308.506103516','290','slide_seek');
+    ('689b60c5_a4fb_4f8d_af80_25f818e1ef0f','Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.94 Safari/537.36','browser','seek_video','184.90.151.219','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/8016c68f703d4b888e444e97481b6830/d7bf74e84cdc438ea9f04a201410a00e/','0ba915e0d89c28a05c11f5cd9674fa1d','2013-06-11T16:23:16.899531','Bgisi','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'i4x-Medicine-HRP258-videoalpha-413d6a45b82848339ab5fd3836dfb928','html5',null,null,'308.506103516','290','slide_seek');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

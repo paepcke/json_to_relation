@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS Account (
     name TEXT,
     mailing_address TEXT,
     zipCode TINYTEXT,
+    country TINYTEXT,
     gender TINYTEXT,
     year_of_birth TINYINT,
     level_of_education TINYTEXT,
@@ -122,8 +123,8 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO Main (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for) VALUES 
-    ('5a1e5db4_6ad7_47a0_993d_f9923d055ccb','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T08:43:32.573390+00:00','','0:00:00'),
-    ('27e13942_90b5_4ba1_a3b3_f2e75ec9b365','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T09:45:37.573390+00:00','','1:02:05');
+    ('6c3141c0_cb88_4836_8fb0_93491267e9e1','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T08:43:32.573390+00:00','','0:00:00'),
+    ('4e73faf8_65a4_43fa_8db7_3b6cb61f0363','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T09:45:37.573390+00:00','','1:02:05');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

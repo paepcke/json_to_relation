@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS Account (
     name TEXT,
     mailing_address TEXT,
     zipCode TINYTEXT,
+    country TINYTEXT,
     gender TINYTEXT,
     year_of_birth TINYINT,
     level_of_education TINYTEXT,
@@ -122,9 +123,9 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO Answer (answer_id,problem_id,answer) VALUES 
-    ('ac07b9ad_7859_46af_9541_8364f4709cf6','input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1','choice_3');
+    ('0b43ee33_c0aa_4903_bc63_2c5a3235b617','input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1','choice_3');
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,submissionID,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime,videoSpeed,videoOldTime,videoNewTime,videoSeekType,videoNewSpeed,videoOldSpeed,bookInteractionType,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badlyFormatted,correctMapFK,answerFK) VALUES 
-    ('6dcc089e_7d31_4051_8dc6_a1d486952aa4','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/courses/Medicine/HRP258/Statistics_in_Medicine/modx/i4x://Medicine/HRP258/problem/f0b292c175f54714b41a1b05d905dbd3/problem_check','46.12.124.66',null,null,'2013-06-13T09:20:11.156214','ibiza02','0:00:00',null,null,null,null,null,null,'input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'ac07b9ad_7859_46af_9541_8364f4709cf6');
+    ('69246ca8_313f_46b2_b0fc_855875a7274f','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/courses/Medicine/HRP258/Statistics_in_Medicine/modx/i4x://Medicine/HRP258/problem/f0b292c175f54714b41a1b05d905dbd3/problem_check','46.12.124.66',null,null,'2013-06-13T09:20:11.156214','ibiza02','0:00:00',null,null,null,null,null,null,'input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'0b43ee33_c0aa_4903_bc63_2c5a3235b617');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

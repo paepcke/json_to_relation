@@ -6,12 +6,14 @@ Created on Oct 2, 2013
 from collections import OrderedDict
 import datetime
 import json
+import re
+import string
 import uuid
 
 from col_data_type import ColDataType
 from generic_json_parser import GenericJSONParser
+from locationManager import LocationManager
 from output_disposition import ColumnSpec
-import re
 
 
 EDX_HEARTBEAT_PERIOD = 360 # seconds
@@ -122,7 +124,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
         # Fields common to every request:
         self.commonFldNames = ['agent','event_source','event_type','ip','page','session','time','username']
-        
+
+        # A Country lookup facility:
+        self.countryChecker = LocationManager()
+                
         self.schemaHintsMainTable = OrderedDict()
 
         self.schemaHintsMainTable['eventID'] = ColDataType.UUID # we generate this one ourselves; xlates to VARCHAR(40)
@@ -303,8 +308,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaAccountTbl['username'] = ColDataType.TEXT
         self.schemaAccountTbl['name'] = ColDataType.TEXT
         self.schemaAccountTbl['mailing_address'] = ColDataType.TEXT
-        self.schemaAccountTbl['mailing_address'] = ColDataType.TEXT
-        self.schemaAccountTbl['zipCode'] = ColDataType.TINYTEXT
+        self.schemaAccountTbl['zipCode'] = ColDataType.TINYTEXT      # Picked out from mailing_address
+        self.schemaAccountTbl['country'] = ColDataType.TINYTEXT      # Picked out from mailing_address
         self.schemaAccountTbl['gender'] = ColDataType.TINYTEXT
         self.schemaAccountTbl['year_of_birth'] = ColDataType.TINYINT
         self.schemaAccountTbl['level_of_education'] = ColDataType.TINYTEXT
@@ -2599,19 +2604,18 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         accountDict['username'] = postDict.get('username', None)
         accountDict['name'] = postDict.get('name', None)
         accountDict['mailing_address'] = postDict.get('mailing_address', None)
-        
+        # Mailing addresses are enclosed in brackets, making them 
+        # an array. Pull the addr string out:
         mailAddr = accountDict['mailing_address']
-        if mailAddr is not None:
-            # Mailing addresses are enclosed in brackets, making them 
-            # an array. Pull the addr string out:
-            if isinstance(mailAddr, list):
-                mailAddr = mailAddr[0] 
-            zipCodeMatch = EdXTrackLogJSONParser.zipCodePattern.search(mailAddr)
-            if zipCodeMatch is not None:
-                accountDict['zipCode'] = zipCodeMatch.group(1)
-            else:
-                accountDict['zipCode'] = None
+        if isinstance(mailAddr, list):
+            mailAddr = mailAddr[0]
+            accountDict = self.getZipAndCountryFromMailAddr(mailAddr, accountDict)
         else:
+            accountDict['zipCode'] = None
+            accountDict['country'] = None
+            
+        # Make sure that zip code is null unless address is USA:
+        if accountDict['country'] != 'USA':
             accountDict['zipCode'] = None
             
         accountDict['gender'] = postDict.get('gender', None)
@@ -2767,14 +2771,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             # an array. Pull the addr string out:
             if isinstance(mailAddr, list):
                 mailAddr = mailAddr[0] 
-            zipCodeMatch = EdXTrackLogJSONParser.zipCodePattern.search(mailAddr)
-            if zipCodeMatch is not None:
-                accountDict['zipCode'] = zipCodeMatch.group(1)
-            else:
-                accountDict['zipCode'] = None
+            accountDict = self.getZipAndCountryFromMailAddr(mailAddr, accountDict)
         else:
             accountDict['zipCode'] = None
-        
+            accountDict['country'] = None
         accountDict['gender'] = None
         accountDict['year_of_birth'] = None
         accountDict['level_of_education'] = None
@@ -3284,4 +3284,66 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         all characters being legal in MySQL identifiers. 
         '''
         return str(uuid.uuid4()).replace('-','_')
+
+    def getZipAndCountryFromMailAddr(self, mailAddr, accountDict):
         
+            zipCodeMatch = EdXTrackLogJSONParser.zipCodePattern.findall(mailAddr)
+            if len(zipCodeMatch) > 0:
+                accountDict['zipCode'] = zipCodeMatch[-1]
+            else:
+                accountDict['zipCode'] = None
+                
+            # See whether the address includes a country:
+            # Last ditch: if we think we found a zip code, 
+            # start out thinking US for the country:
+            if accountDict['zipCode'] is not None:
+                accountDict['country'] = 'USA'
+            else:
+                accountDict['country'] = None
+            # Our zip code might be a different number,
+            # so do look for an explicit country:
+            splitMailAddr = re.split(r'\W+', mailAddr)
+            # Surely not the fastest, but I'm tired: pass
+            # a sliding window of four,three,bi, and unigrams
+            # over the mailing address to find a country
+            # specification:
+            for mailWordIndx in range(len(splitMailAddr)):
+                try: 
+                    fourgram = string.join([splitMailAddr[mailWordIndx], 
+                                            splitMailAddr[mailWordIndx + 1], 
+                                            splitMailAddr[mailWordIndx + 2],
+                                            splitMailAddr[mailWordIndx + 3]])
+                    country = self.countryChecker.isCountry(fourgram)
+                    if country is not None:
+                        accountDict['country'] = country
+                        break 
+                except IndexError:
+                    pass
+                try: 
+                    trigram = string.join([splitMailAddr[mailWordIndx], splitMailAddr[mailWordIndx + 1], splitMailAddr[mailWordIndx + 2]])
+                    country = self.countryChecker.isCountry(trigram)
+                    if country is not None:
+                        accountDict['country'] = country
+                        break 
+                except IndexError:
+                    pass
+                
+                try:
+                    bigram = string.join([splitMailAddr[mailWordIndx], splitMailAddr[mailWordIndx + 1]])
+                    country = self.countryChecker.isCountry(bigram)
+                    if country is not None:
+                        accountDict['country'] = country
+                        break 
+                except IndexError:
+                    pass
+                
+                unigram = splitMailAddr[mailWordIndx]
+                country = self.countryChecker.isCountry(unigram)
+                if country is not None:
+                    accountDict['country'] = country
+                    break 
+            # Make sure that zip code is null unless address is USA:
+            if accountDict['country'] != 'USA':
+                accountDict['zipCode'] = None
+                
+            return accountDict

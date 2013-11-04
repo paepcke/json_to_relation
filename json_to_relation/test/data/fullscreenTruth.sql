@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS Account (
     name TEXT,
     mailing_address TEXT,
     zipCode TINYTEXT,
+    country TINYTEXT,
     gender TINYTEXT,
     year_of_birth TINYINT,
     level_of_education TINYTEXT,
@@ -122,7 +123,7 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,submissionID,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime) VALUES 
-    ('ffbde5fd_14ff_4640_9d4c_267160ee5f6d','Mozilla/5.0 (Linux; Android 4.0.3; ADR6425LVW Build/IML74K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.90 Mobile Safari/537.36','browser','fullscreen','70.197.74.222','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/495757ee7b25401599b1ef0495b068e4/4fe1ef4953674903b88a0c9bf3445791/','667e6f9a605483c38ddd6f4aca66d0c1','2013-06-26T07:07:44.303514+00:00','smith','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'i4x-Medicine-HRP258-videoalpha-cb6076d965824dbcb6a3a4aa8c7a03af','Y9EC8Ql3-3k','0');
+    ('0a7c87b0_018a_4f67_9dba_92701883300d','Mozilla/5.0 (Linux; Android 4.0.3; ADR6425LVW Build/IML74K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.90 Mobile Safari/537.36','browser','fullscreen','70.197.74.222','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/495757ee7b25401599b1ef0495b068e4/4fe1ef4953674903b88a0c9bf3445791/','667e6f9a605483c38ddd6f4aca66d0c1','2013-06-26T07:07:44.303514+00:00','smith','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'i4x-Medicine-HRP258-videoalpha-cb6076d965824dbcb6a3a4aa8c7a03af','Y9EC8Ql3-3k','0');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

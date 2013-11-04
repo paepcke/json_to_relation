@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS Account (
     name TEXT,
     mailing_address TEXT,
     zipCode TINYTEXT,
+    country TINYTEXT,
     gender TINYTEXT,
     year_of_birth TINYINT,
     level_of_education TINYTEXT,
@@ -121,10 +122,10 @@ CREATE TABLE IF NOT EXISTS Event (
 SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
-INSERT INTO Account (account_id,username,name,mailing_address,zipCode,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) VALUES 
-    ('5e9cfcb3_7d11_4946_8561_54871561935d','Baz','Barry O\'Callaghan','',null,'m',1981,'a','Expand my Knowledge. ',1,1,'Education/EDUC115N/How_to_Learn_Math',null,'bazocallaghan@gmail.com',null);
+INSERT INTO Account (account_id,username,name,mailing_address,zipCode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) VALUES 
+    ('ecd139fd_6dda_4143_a806_a27a822e271b','Baz','Barry O\'Callaghan','',null,null,'m',1981,'a','Expand my Knowledge. ',1,1,'Education/EDUC115N/How_to_Learn_Math',null,'bazocallaghan@gmail.com',null);
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,submissionID,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime,videoSpeed,videoOldTime,videoNewTime,videoSeekType,videoNewSpeed,videoOldSpeed,bookInteractionType,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badlyFormatted,correctMapFK,answerFK,stateFK,accountFK) VALUES 
-    ('bab6d830_2dc2_40d7_b951_ac98a449fb69','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','server','/create_account','153.107.97.164',null,null,'2013-07-11T04:15:39.373794+00:00','','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'5e9cfcb3_7d11_4946_8561_54871561935d');
+    ('0eb477ec_ba2d_4e94_81c2_672fcf3ca570','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','server','/create_account','153.107.97.164',null,null,'2013-07-11T04:15:39.373794+00:00','','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'ecd139fd_6dda_4143_a806_a27a822e271b');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

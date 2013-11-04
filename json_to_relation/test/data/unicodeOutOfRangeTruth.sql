@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS Account (
     name TEXT,
     mailing_address TEXT,
     zipCode TINYTEXT,
+    country TINYTEXT,
     gender TINYTEXT,
     year_of_birth TINYINT,
     level_of_education TINYTEXT,
@@ -121,10 +122,10 @@ CREATE TABLE IF NOT EXISTS Event (
 SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
-INSERT INTO Account (account_id,username,name,mailing_address,zipCode,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) VALUES 
-    ('3c551df3_434a_4e9c_8543_3e3dccffb743','GerardChevrier','Gérard Chevrier','gerard.chevrier@noos.fr',null,'m',1954,'m','I will tried ti understand a little bit Quantum Mecanic',1,1,null,null,'gerard.chevrier@noos.fr',null);
+INSERT INTO Account (account_id,username,name,mailing_address,zipCode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) VALUES 
+    ('87425ae3_c43d_49e4_b69a_fb26d376b86a','GerardChevrier','Gérard Chevrier','gerard.chevrier@noos.fr',null,null,'m',1954,'m','I will tried ti understand a little bit Quantum Mecanic',1,1,null,null,'gerard.chevrier@noos.fr',null);
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,submissionID,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime,videoSpeed,videoOldTime,videoNewTime,videoSeekType,videoNewSpeed,videoOldSpeed,bookInteractionType,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badlyFormatted,correctMapFK,answerFK,stateFK,accountFK) VALUES 
-    ('2877fa71_ed9a_4a1f_967a_6e482c056069','Mozilla/5.0 (Windows NT 5.1; rv:24.0) Gecko/20100101 Firefox/24.0','server','/create_account','212.198.164.16',null,null,'2013-10-20T09:05:47.559906+00:00','','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'3c551df3_434a_4e9c_8543_3e3dccffb743');
+    ('78228d0d_a649_4636_9c97_8d95779f47b4','Mozilla/5.0 (Windows NT 5.1; rv:24.0) Gecko/20100101 Firefox/24.0','server','/create_account','212.198.164.16',null,null,'2013-10-20T09:05:47.559906+00:00','','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'87425ae3_c43d_49e4_b69a_fb26d376b86a');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

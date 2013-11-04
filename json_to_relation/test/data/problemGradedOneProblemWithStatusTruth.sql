@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS Account (
     name TEXT,
     mailing_address TEXT,
     zipCode TINYTEXT,
+    country TINYTEXT,
     gender TINYTEXT,
     year_of_birth TINYINT,
     level_of_education TINYTEXT,
@@ -122,9 +123,9 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO Answer (answer_id,problem_id,answer) VALUES 
-    ('e8e218bb_f410_484c_95de_5cad6336e784','input_i4x-Medicine-HRP258-problem-84bc6d2be34545eeaf4aa5f67efc965d_2_1_choice_0','correct');
+    ('3b6a4877_25dd_4659_b9ac_fff3a0b3ef02','input_i4x-Medicine-HRP258-problem-84bc6d2be34545eeaf4aa5f67efc965d_2_1_choice_0','correct');
 INSERT INTO Event (eventID,agent,event_source,event_type,ip,page,session,time,username,downtime_for,studentID,instructorID,courseID,seqID,gotoFrom,gotoDest,problemID,problemChoice,questionLocation,submissionID,attempts,longAnswer,studentFile,canUploadFile,feedback,feedbackResponseSelected,transcriptID,transcriptCode,rubricSelection,rubricCategory,videoID,videoCode,videoCurrentTime,videoSpeed,videoOldTime,videoNewTime,videoSeekType,videoNewSpeed,videoOldSpeed,bookInteractionType,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badlyFormatted,correctMapFK,answerFK) VALUES 
-    ('48410e10_9a58_46b7_94ef_b1db8cc95a76','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.71 Safari/537.36','browser','problem_graded','68.80.222.171','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/69356ef7b30545de8dd3152e30b71735/9bfe748f573941bf990b7ca0a62c1741/','d55e2dad3eb1a4a208cb5447c1e65392','2013-07-16T18:51:35.099124+00:00','Testor','0:00:00',null,null,null,null,null,null,'input_i4x-Medicine-HRP258-problem-84bc6d2be34545eeaf4aa5f67efc965d_2_1_choice_0',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'e8e218bb_f410_484c_95de_5cad6336e784');
+    ('9a2463e2_1025_4948_abaf_d733f425ffb8','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.71 Safari/537.36','browser','problem_graded','68.80.222.171','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/69356ef7b30545de8dd3152e30b71735/9bfe748f573941bf990b7ca0a62c1741/','d55e2dad3eb1a4a208cb5447c1e65392','2013-07-16T18:51:35.099124+00:00','Testor','0:00:00',null,null,null,null,null,null,'input_i4x-Medicine-HRP258-problem-84bc6d2be34545eeaf4aa5f67efc965d_2_1_choice_0',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'3b6a4877_25dd_4659_b9ac_fff3a0b3ef02');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;
