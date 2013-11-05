@@ -130,7 +130,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 
         self.schemaHintsMainTable = OrderedDict()
 
-        self.schemaHintsMainTable['eventID'] = ColDataType.UUID # we generate this one ourselves; xlates to VARCHAR(40)
+        self.schemaHintsMainTable['event_id'] = ColDataType.UUID # we generate this one ourselves; xlates to VARCHAR(40)
         self.schemaHintsMainTable['agent'] = ColDataType.TEXT
         self.schemaHintsMainTable['event_source'] = ColDataType.TINYTEXT
         self.schemaHintsMainTable['event_type'] = ColDataType.TEXT
@@ -142,26 +142,26 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaHintsMainTable['downtime_for'] = ColDataType.DATETIME
 
         # Students
-        self.schemaHintsMainTable['studentID'] = ColDataType.TEXT
+        self.schemaHintsMainTable['student_id'] = ColDataType.TEXT
         
         # Instructors:
-        self.schemaHintsMainTable['instructorID'] = ColDataType.TEXT
+        self.schemaHintsMainTable['instructor_id'] = ColDataType.TEXT
         
         # Courses
-        self.schemaHintsMainTable['courseID'] = ColDataType.TEXT
+        self.schemaHintsMainTable['course_id'] = ColDataType.TEXT
         
         # Sequence navigation:
-        self.schemaHintsMainTable['seqID'] = ColDataType.TEXT
-        self.schemaHintsMainTable['gotoFrom'] = ColDataType.INT
-        self.schemaHintsMainTable['gotoDest'] = ColDataType.INT
+        self.schemaHintsMainTable['sequence_id'] = ColDataType.TEXT
+        self.schemaHintsMainTable['goto_from'] = ColDataType.INT
+        self.schemaHintsMainTable['goto_dest'] = ColDataType.INT
         
         # Problems:
-        self.schemaHintsMainTable['problemID'] = ColDataType.TEXT
-        self.schemaHintsMainTable['problemChoice'] = ColDataType.TEXT
-        self.schemaHintsMainTable['questionLocation'] = ColDataType.TEXT
+        self.schemaHintsMainTable['problem_id'] = ColDataType.TEXT
+        self.schemaHintsMainTable['problem_choice'] = ColDataType.TEXT
+        self.schemaHintsMainTable['question_location'] = ColDataType.TEXT
         
         # Submissions:
-        self.schemaHintsMainTable['submissionID'] = ColDataType.TEXT
+        self.schemaHintsMainTable['submission_id'] = ColDataType.TEXT
         
         # Attempts:
         self.schemaHintsMainTable['attempts'] = ColDataType.TINYINT
@@ -172,35 +172,35 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # called Answer. In this main table answerFK points
         # to one entry in that table.
         
-        self.schemaHintsMainTable['longAnswer'] = ColDataType.TEXT # essay answers
-        self.schemaHintsMainTable['studentFile'] = ColDataType.TEXT
-        self.schemaHintsMainTable['canUploadFile'] = ColDataType.TINYTEXT
+        self.schemaHintsMainTable['long_answer'] = ColDataType.TEXT # essay answers
+        self.schemaHintsMainTable['student_file'] = ColDataType.TEXT
+        self.schemaHintsMainTable['can_upload_file'] = ColDataType.TINYTEXT
         
         # Feedback
         self.schemaHintsMainTable['feedback'] = ColDataType.TEXT
-        self.schemaHintsMainTable['feedbackResponseSelected'] = ColDataType.TINYINT
+        self.schemaHintsMainTable['feedback_response_selected'] = ColDataType.TINYINT
         
         # Transcript
-        self.schemaHintsMainTable['transcriptID'] = ColDataType.TEXT
-        self.schemaHintsMainTable['transcriptCode'] = ColDataType.TINYTEXT
+        self.schemaHintsMainTable['transcript_id'] = ColDataType.TEXT
+        self.schemaHintsMainTable['transcript_code'] = ColDataType.TINYTEXT
         
         # Rubrics:
-        self.schemaHintsMainTable['rubricSelection'] = ColDataType.INT
-        self.schemaHintsMainTable['rubricCategory'] = ColDataType.INT
+        self.schemaHintsMainTable['rubric_selection'] = ColDataType.INT
+        self.schemaHintsMainTable['rubric_category'] = ColDataType.INT
 
         # Video:
-        self.schemaHintsMainTable['videoID'] = ColDataType.TEXT
-        self.schemaHintsMainTable['videoCode'] = ColDataType.TEXT
-        self.schemaHintsMainTable['videoCurrentTime'] = ColDataType.TINYTEXT
-        self.schemaHintsMainTable['videoSpeed'] = ColDataType.TINYTEXT
-        self.schemaHintsMainTable['videoOldTime'] = ColDataType.TINYTEXT
-        self.schemaHintsMainTable['videoNewTime'] = ColDataType.TINYTEXT
-        self.schemaHintsMainTable['videoSeekType'] = ColDataType.TINYTEXT
-        self.schemaHintsMainTable['videoNewSpeed'] = ColDataType.TINYTEXT      
-        self.schemaHintsMainTable['videoOldSpeed'] = ColDataType.TINYTEXT     
+        self.schemaHintsMainTable['video_id'] = ColDataType.TEXT
+        self.schemaHintsMainTable['video_code'] = ColDataType.TEXT
+        self.schemaHintsMainTable['video_current_time'] = ColDataType.TINYTEXT
+        self.schemaHintsMainTable['video_speed'] = ColDataType.TINYTEXT
+        self.schemaHintsMainTable['video_old_time'] = ColDataType.TINYTEXT
+        self.schemaHintsMainTable['video_new_time'] = ColDataType.TINYTEXT
+        self.schemaHintsMainTable['video_seek_type'] = ColDataType.TINYTEXT
+        self.schemaHintsMainTable['video_new_speed'] = ColDataType.TINYTEXT      
+        self.schemaHintsMainTable['video_old_speed'] = ColDataType.TINYTEXT     
 
         # Book (PDF) reading:
-        self.schemaHintsMainTable['bookInteractionType'] = ColDataType.TINYTEXT
+        self.schemaHintsMainTable['book_interaction_type'] = ColDataType.TINYTEXT
         
         # problem_check:
         self.schemaHintsMainTable['success'] = ColDataType.TINYTEXT
@@ -228,13 +228,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
         # When bad JSON is encountered, it gets put 
         # into the following field:
-        self.schemaHintsMainTable['badlyFormatted'] = ColDataType.TEXT
+        self.schemaHintsMainTable['badly_formatted'] = ColDataType.TEXT
         
         # Foreign keys to auxiliary tables:
-        self.schemaHintsMainTable['correctMapFK'] = ColDataType.UUID
-        self.schemaHintsMainTable['answerFK'] = ColDataType.UUID
-        self.schemaHintsMainTable['stateFK'] = ColDataType.UUID
-        self.schemaHintsMainTable['accountFK'] = ColDataType.UUID
+        self.schemaHintsMainTable['correctMap_fk'] = ColDataType.UUID
+        self.schemaHintsMainTable['answer_fk'] = ColDataType.UUID
+        self.schemaHintsMainTable['state_fk'] = ColDataType.UUID
+        self.schemaHintsMainTable['account_fk'] = ColDataType.UUID
 
         # Schema hints need to be a dict that maps column names to ColumnSpec 
         # instances. The dict we built so far only the the column types. Go through
@@ -414,7 +414,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                     cleanJsonStr = self.makeJSONSafe(jsonStr)
                     record = json.loads(cleanJsonStr)
                 except ValueError as e:
-                    # Pull out what we can, and place in 'badlyFormatted' column
+                    # Pull out what we can, and place in 'badly_formatted' column
                     self.rescueBadJSON(jsonStr, row=row)                
                     raise ValueError('Ill formed JSON: %s' % `e`)
     
@@ -876,10 +876,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # order of foreign key declarations will be constant on
         # each run:
         foreignKeysDict = OrderedDict()
-        foreignKeysDict['CorrectMap'] = ('correctMapFK', 'correct_map_id')
-        foreignKeysDict['Answer'] = ('answerFK', 'answer_id')
-        foreignKeysDict['State'] = ('stateFK', 'state_id')
-        foreignKeysDict['Account'] = ('accountFK', 'account_id')
+        foreignKeysDict['CorrectMap'] = ('correctMap_fk', 'correct_map_id')
+        foreignKeysDict['Answer'] = ('answer_fk', 'answer_id')
+        foreignKeysDict['State'] = ('state_fk', 'state_id')
+        foreignKeysDict['Account'] = ('account_fk', 'account_id')
         createStatement = self.genOneCreateStatement(self.mainTableName, 
                                                      self.schemaHintsMainTable, 
                                                      foreignKeyColNames=foreignKeysDict)        
@@ -887,7 +887,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
     def handleCommonFields(self, record, row):
         # Create a unique event key  for this event:
-        self.setValInRow(row, 'eventID', self.getUniqueID())
+        self.setValInRow(row, 'event_id', self.getUniqueID())
         self.finishedRow = False
         for fldName in self.commonFldNames:
             # Default non-existing flds to null:
@@ -900,7 +900,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             # class ID and '/about', treat separately:
             if fldName == 'event_type' and val is not None:
                 if val[0] == '/' and val[-6:] == '/about':
-                    self.setValInRow(row, 'courseID', val[0:-6])
+                    self.setValInRow(row, 'course_id', val[0:-6])
                     val = 'about'
                     self.finishedRow = True
                 elif val.find('/password_reset_confirm') == 0:
@@ -909,7 +909,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 elif val == '/networking/':
                     val = 'networking'
                     self.finishedRow = True
-            elif fldName == 'courseID':
+            elif fldName == 'course_id':
                 (fullCourseName, course_id) = self.get_course_id(record.get('event', None))  # @UnusedVariable
                 val = course_id
 #             elif fldName == 'page':
@@ -964,9 +964,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             self.logWarn("Track log line %s with event type %s is missing sequence id" %
                          (self.jsonToRelationConverter.makeFileCitation(), eventType)) 
             return row
-        self.setValInRow(row, 'seqID', seqID)
-        self.setValInRow(row, 'gotoFrom', oldIndex)
-        self.setValInRow(row, 'gotoDest', newIndex)
+        self.setValInRow(row, 'sequence_id', seqID)
+        self.setValInRow(row, 'goto_from', oldIndex)
+        self.setValInRow(row, 'goto_dest', newIndex)
         return row
         
     def handleProblemCheck(self, record, row, event):
@@ -1083,7 +1083,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             self.setValInRow(row, 'seed', seed)
         problem_id = event.get('problem_id', None)
         if seed is not None:
-            self.setValInRow(row, 'problemID', problem_id, self.mainTableName)
+            self.setValInRow(row, 'problem_id', problem_id, self.mainTableName)
 
         # correctMap field may consist of many correct maps.
         # Create an entry for each in the CorrectMap table,
@@ -1142,13 +1142,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 continue
 
             # Fill in one main table row.
-            self.setValInRow(row, 'correctMapFK', correctMapFKey, self.mainTableName)
-            self.setValInRow(row, 'answerFK', answerFKey, self.mainTableName)
+            self.setValInRow(row, 'correctMap_fk', correctMapFKey, self.mainTableName)
+            self.setValInRow(row, 'answer_fk', answerFKey, self.mainTableName)
             if answerFKey is not None:
                 # For convenience: enter the Answer's problem ID 
                 # in the main table's problemID field:
-                self.setValInRow(row, 'problemID', answerToProblemMap[answerFKey])
-            self.setValInRow(row, 'stateFK', stateFKey, self.mainTableName)
+                self.setValInRow(row, 'problem_id', answerToProblemMap[answerFKey])
+            self.setValInRow(row, 'state_fk', stateFKey, self.mainTableName)
             rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
             indexToFKeys += 1
@@ -1197,11 +1197,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # time:
         for answerFKey in answersFKeys:
             # Fill in one main table row.
-            self.setValInRow(row, 'answerFK', answerFKey, self.mainTableName)
+            self.setValInRow(row, 'answer_fk', answerFKey, self.mainTableName)
             if answerFKey is not None:
                 # For convenience: enter the Answer's problem ID 
                 # in the main table's problemID field:
-                self.setValInRow(row, 'problemID', answerToProblemMap[answerFKey])
+                self.setValInRow(row, 'problem_id', answerToProblemMap[answerFKey])
             rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
         # Return empty row, b/c we already pushed all necessary rows:
@@ -1484,7 +1484,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         postGetDict = self.ensureDict(event)
         if postGetDict is None:
             if isinstance(event, basestring):
-                self.setValInRow(row, 'problemID', event)
+                self.setValInRow(row, 'problem_id', event)
                 return row
             else:
                 self.logWarn("Track log line %s: event is not a dict in problem_reset event: '%s'" %\
@@ -1497,7 +1497,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         except KeyError:
             self.logWarn("Track log line %s with event type problem_reset contains event without problem ID array: '%s'" %
                          (self.jsonToRelationConverter.makeFileCitation(), event))
-        self.setValInRow(row, 'problemID', problemIDs)
+        self.setValInRow(row, 'problem_id', problemIDs)
         return row
 
     def handleProblemShow(self, record, row, event):
@@ -1535,7 +1535,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             self.logWarn("Track log line %s with event type problem_show contains event without problem ID: '%s'" %
                          (self.jsonToRelationConverter.makeFileCitation(), event))
             return row
-        self.setValInRow(row, 'problemID', problemID)
+        self.setValInRow(row, 'problem_id', problemID)
         return row
 
     def handleProblemSave(self, record, row, event):
@@ -1587,11 +1587,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # foreign key entries that were created:
         for answerFKey in answersFKeys: 
             # Fill in one main table row.
-            self.setValInRow(row, 'answerFK', answerFKey)
+            self.setValInRow(row, 'answer_fk', answerFKey)
             if answerFKey is not None:
                 # For convenience: enter the Answer's problem ID 
                 # in the main table's problemID field:
-                self.setValInRow(row, 'problemID', answerToProblemMap[answerFKey])
+                self.setValInRow(row, 'problem_id', answerToProblemMap[answerFKey])
             
 
         # Return empty row, b/c we already pushed all necessary rows:
@@ -1626,7 +1626,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
              (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
 
-        self.setValInRow(row, 'questionLocation', location)
+        self.setValInRow(row, 'question_location', location)
         return row
         
         
@@ -1657,9 +1657,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             self.logWarn("Track log line %s: missing location, selection, or category in event type select_rubric." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
-        self.setValInRow(row, 'questionLocation', location)
-        self.setValInRow(row, 'rubricSelection', selection)
-        self.setValInRow(row, 'rubricCategory', category)
+        self.setValInRow(row, 'question_location', location)
+        self.setValInRow(row, 'rubric_selection', selection)
+        self.setValInRow(row, 'rubric_category', category)
         return row
 
     def handleOEShowFeedback(self, record, row, event):
@@ -1695,7 +1695,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             self.logWarn("Track log line %s: missing 'value' field in event type oe_feedback_response_selected." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
             return row
-        self.setValInRow(row, 'feedbackResponseSelected', value)
+        self.setValInRow(row, 'feedback_response_selected', value)
 
     def handleVideoPlayPause(self, record, row, event):
         '''
@@ -1722,10 +1722,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         videoCurrentTime = str(valsDict.get('currentTime', None))
         videoSpeed = str(valsDict.get('speed', None))
 
-        self.setValInRow(row, 'videoID', str(videoID))
-        self.setValInRow(row, 'videoCode', str(videoCode))
-        self.setValInRow(row, 'videoCurrentTime', str(videoCurrentTime))
-        self.setValInRow(row, 'videoSpeed', str(videoSpeed))
+        self.setValInRow(row, 'video_id', str(videoID))
+        self.setValInRow(row, 'video_code', str(videoCode))
+        self.setValInRow(row, 'video_current_time', str(videoCurrentTime))
+        self.setValInRow(row, 'video_speed', str(videoSpeed))
         return row
 
     def handleVideoSeek(self, record, row, event):
@@ -1754,11 +1754,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         videoNewTime = str(valsDict.get('new_time', None))
         videoSeekType = valsDict.get('type', None)
             
-        self.setValInRow(row, 'videoID', videoID)
-        self.setValInRow(row, 'videoCode', videoCode)
-        self.setValInRow(row, 'videoOldTime', videoOldTime)
-        self.setValInRow(row, 'videoNewTime', videoNewTime)
-        self.setValInRow(row, 'videoSeekType', videoSeekType)
+        self.setValInRow(row, 'video_id', videoID)
+        self.setValInRow(row, 'video_code', videoCode)
+        self.setValInRow(row, 'video_old_time', videoOldTime)
+        self.setValInRow(row, 'video_new_time', videoNewTime)
+        self.setValInRow(row, 'video_seek_type', videoSeekType)
         return row
 
     def handleVideoSpeedChange(self, record, row, event):
@@ -1787,11 +1787,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         videoOldSpeed = str(valsDict.get('old_speed', None))
         videoNewSpeed = str(valsDict.get('new_speed', None))
             
-        self.setValInRow(row, 'videoID', videoID)
-        self.setValInRow(row, 'videoCode', videoCode)
-        self.setValInRow(row, 'videoCurrentTime', videoCurrentTime)
-        self.setValInRow(row, 'videoOldSpeed', videoOldSpeed)
-        self.setValInRow(row, 'videoNewSpeed', videoNewSpeed)
+        self.setValInRow(row, 'video_id', videoID)
+        self.setValInRow(row, 'video_code', videoCode)
+        self.setValInRow(row, 'video_current_time', videoCurrentTime)
+        self.setValInRow(row, 'video_old_speed', videoOldSpeed)
+        self.setValInRow(row, 'video_new_speed', videoNewSpeed)
                 
         return row
 
@@ -1822,9 +1822,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         videoCode = valsDict.get('code', None)
         videoCurrentTime = str(valsDict.get('currentTime', None))
 
-        self.setValInRow(row, 'videoID', videoID)
-        self.setValInRow(row, 'videoCode', videoCode)
-        self.setValInRow(row, 'videoCurrentTime', videoCurrentTime)
+        self.setValInRow(row, 'video_id', videoID)
+        self.setValInRow(row, 'video_code', videoCode)
+        self.setValInRow(row, 'video_current_time', videoCurrentTime)
         return row
         
     def handleNotFullscreen(self, record, row, event):
@@ -1853,9 +1853,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         videoCode = valsDict.get('code', None)
         videoCurrentTime = str(valsDict.get('currentTime', None))
 
-        self.setValInRow(row, 'videoID', videoID)
-        self.setValInRow(row, 'videoCode', videoCode)
-        self.setValInRow(row, 'videoCurrentTime', videoCurrentTime)
+        self.setValInRow(row, 'video_id', videoID)
+        self.setValInRow(row, 'video_code', videoCode)
+        self.setValInRow(row, 'video_current_time', videoCurrentTime)
         return row
     
     def handleBook(self, record, row, event):
@@ -1878,11 +1878,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         bookOld = valsDict.get('old', None)
         bookNew = valsDict.get('new', None)
         if bookInteractionType is not None:
-            self.setValInRow(row, 'bookInteractionType', bookInteractionType)
+            self.setValInRow(row, 'book_interaction_type', bookInteractionType)
         if bookOld is not None:            
-            self.setValInRow(row, 'gotoFrom', bookOld)
+            self.setValInRow(row, 'goto_from', bookOld)
         if bookNew is not None:            
-            self.setValInRow(row, 'gotoDest', bookNew)
+            self.setValInRow(row, 'goto_dest', bookNew)
         return row
         
     def handleShowAnswer(self, record, row, event):
@@ -1908,7 +1908,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
 
-        self.setValInRow(row, 'problemID', problem_id)
+        self.setValInRow(row, 'problem_id', problem_id)
         return row
 
     def handleShowHideTranscript(self, record, row, event):
@@ -1939,8 +1939,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
         xcriptID = event.get('id', None)
         code  = event.get('code', None)
-        self.setValInRow(row, 'transcriptID', xcriptID)
-        self.setValInRow(row, 'transcriptCode', code)
+        self.setValInRow(row, 'transcript_id', xcriptID)
+        self.setValInRow(row, 'transcript_code', code)
         return row
         
 
@@ -1996,7 +1996,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
         problem_id = event.get('problem_id', None)
         success    = event.get('failure', None)  # 'closed' or 'unreset'
-        self.setValInRow(row, 'problemID', problem_id)
+        self.setValInRow(row, 'problem_id', problem_id)
         self.setValInRow(row, 'success', success)
         
         answersDict = event.get('answers', None)
@@ -2039,12 +2039,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 continue
 
             # Fill in one main table row.
-            self.setValInRow(row, 'answerFK', answerFKey)
+            self.setValInRow(row, 'answer_fk', answerFKey)
             if answerFKey is not None:
                 # For convenience: enter the Answer's problem ID 
                 # in the main table's problemID field:
-                self.setValInRow(row, 'problemID', answerToProblemMap[answerFKey])
-            self.setValInRow(row, 'stateFK', stateFKey)
+                self.setValInRow(row, 'problem_id', answerToProblemMap[answerFKey])
+            self.setValInRow(row, 'state_fk', stateFKey)
             rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
             indexToFKeys += 1
@@ -2067,7 +2067,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             return row
         problem_id = event.get('problem_id', None)
         failure    = event.get('failure', None)  # 'closed' or 'unreset'
-        self.setValInRow(row, 'problemID', problem_id)
+        self.setValInRow(row, 'problem_id', problem_id)
         self.setValInRow(row, 'failure', failure)
         
         stateDict = event.get('state', None)
@@ -2078,7 +2078,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             stateFKeys = []
         for stateFKey in stateFKeys:
             # Fill in one main table row.
-            self.setValInRow(row, 'stateFK', stateFKey, self.mainTableName)
+            self.setValInRow(row, 'state_fk', stateFKey, self.mainTableName)
             rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
         return row
@@ -2117,7 +2117,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         correctMapsDict = event.get('correct_map', None)
         
         # Store the top-level vals in the main table:
-        self.setValInRow(row, 'problemID', problem_id)
+        self.setValInRow(row, 'problem_id', problem_id)
         self.setValInRow(row, 'success', success)
         self.setValInRow(row, 'attempts', attempts)
         self.setValInRow(row, 'orig_score', orig_score)
@@ -2134,7 +2134,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # Replicate main table row if needed:            
         for correctMapFKey in correctMapsFKeys:
             # Fill in one main table row.
-            self.setValInRow(row, 'correctMapFK', correctMapFKey, self.mainTableName)
+            self.setValInRow(row, 'correctMap_fk', correctMapFKey, self.mainTableName)
             rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
         return row
@@ -2165,7 +2165,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         success    = event.get('failure', None)  # 'closed' or 'unreset'
         if success is None:
             success = event.get('success', None) # 'incorrect' or 'correct'
-        self.setValInRow(row, 'problemID', problem_id)
+        self.setValInRow(row, 'problem_id', problem_id)
         self.setValInRow(row, 'success', success)
         
         answersDict = event.get('answers', None)
@@ -2208,12 +2208,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 continue
 
             # Fill in one main table row.
-            self.setValInRow(row, 'answerFK', answerFKey, self.mainTableName)
+            self.setValInRow(row, 'answer_fk', answerFKey, self.mainTableName)
             if answerFKey is not None:
                 # For convenience: enter the Answer's problem ID 
                 # in the main table's problemID field:
-                self.setValInRow(row, 'problemID', answerToProblemMap[answerFKey])
-            self.setValInRow(row, 'stateFK', stateFKey, self.mainTableName)
+                self.setValInRow(row, 'problem_id', answerToProblemMap[answerFKey])
+            self.setValInRow(row, 'state_fk', stateFKey, self.mainTableName)
             rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
             indexToFKeys += 1
@@ -2252,7 +2252,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             return row
 
         problem_id = event.get('problem_id', None)
-        self.setValInRow(row, 'problemID', problem_id)
+        self.setValInRow(row, 'problem_id', problem_id)
         
         oldStateDict = event.get('old_state', None)
         newStateDict = event.get('new_state', None)
@@ -2265,7 +2265,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             
         for stateFKey in stateFKeys:
             # Fill in one main table row.
-            self.setValInRow(row, 'stateFK', stateFKey, self.mainTableName)
+            self.setValInRow(row, 'state_fk', stateFKey, self.mainTableName)
             rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
         return row
@@ -2290,8 +2290,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         if problemID is None:
             self.logWarn("Track log line %s: missing course ID in rescore-all-submissions or reset-all-attempts." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
-        self.setValInRow(row, 'problemID', problemID)
-        self.setValInRow(row, 'courseID', courseID)
+        self.setValInRow(row, 'problem_id', problemID)
+        self.setValInRow(row, 'course_id', courseID)
         return row
                 
         if event is None:
@@ -2313,8 +2313,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         if problemID is None:
             self.logWarn("Track log line %s: missing course ID in rescore-all-submissions or reset-all-attempts." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
-        self.setValInRow(row, 'problemID', problemID)
-        self.setValInRow(row, 'courseID', courseID)
+        self.setValInRow(row, 'problem_id', problemID)
+        self.setValInRow(row, 'course_id', courseID)
         return row
                 
                 
@@ -2343,9 +2343,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         if studentID is None:
             self.logWarn("Track log line %s: missing student ID in delete-student-module-state or rescore-student-submission." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
-        self.setValInRow(row, 'problemID', problemID)
-        self.setValInRow(row, 'courseID', courseID)
-        self.setValInRow(row, 'studentID', studentID)
+        self.setValInRow(row, 'problem_id', problemID)
+        self.setValInRow(row, 'course_id', courseID)
+        self.setValInRow(row, 'student_id', studentID)
         return row        
         
     def handleResetStudentAttempts(self, record, row, event):
@@ -2363,7 +2363,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         problemID = event.get('problem', None)
         courseID  = event.get('course', None)
         studentID = event.get('student', None)
-        instructorID = event.get('instructorID', None)
+        instructorID = event.get('instructor_id', None)
         attempts = event.get('old_attempts', None)
         if problemID is None:
             self.logWarn("Track log line %s: missing problem ID in reset-student-attempts." %\
@@ -2381,10 +2381,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             self.logWarn("Track log line %s: missing attempts field in reset-student-attempts." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
             
-        self.setValInRow(row, 'problemID', problemID)
-        self.setValInRow(row, 'courseID', courseID)
-        self.setValInRow(row, 'studentID', studentID)        
-        self.setValInRow(row, 'instructorID', instructorID)
+        self.setValInRow(row, 'problem_id', problemID)
+        self.setValInRow(row, 'course_id', courseID)
+        self.setValInRow(row, 'student_id', studentID)        
+        self.setValInRow(row, 'instructor_id', instructorID)
         self.setValInRow(row, 'attempts', attempts)
         return row
         
@@ -2402,7 +2402,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
         courseID  = event.get('course', None)
         studentID = event.get('student', None)
-        instructorID = event.get('instructorID', None)
+        instructorID = event.get('instructor_id', None)
         
         if courseID is None:
             self.logWarn("Track log line %s: missing course ID in get-student-progress-page." %\
@@ -2414,9 +2414,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             self.logWarn("Track log line %s: missing instrucotrID in get-student-progress-page." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
             
-        self.setValInRow(row, 'courseID', courseID)
-        self.setValInRow(row, 'studentID', studentID)        
-        self.setValInRow(row, 'instructorID', instructorID)
+        self.setValInRow(row, 'course_id', courseID)
+        self.setValInRow(row, 'student_id', studentID)        
+        self.setValInRow(row, 'instructor_id', instructorID)
         return row        
 
     def handleAddRemoveInstructor(self, record, row, event):
@@ -2431,12 +2431,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
         
-        instructorID = event.get('instructorID', None)
+        instructorID = event.get('instructor_id', None)
 
         if instructorID is None:
             self.logWarn("Track log line %s: missing instrucotrID add-instructor or remove-instructor." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
-        self.setValInRow(row, 'instructorID', instructorID)
+        self.setValInRow(row, 'instructor_id', instructorID)
         return row
         
     def handleListForumMatters(self, record, row, event):
@@ -2456,7 +2456,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         if courseID is None:
             self.logWarn("Track log line %s: missing course ID in list-forum-admins, list-forum-mods, or list-forum-community-TAs." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
-        self.setValInRow(row, 'courseID', courseID)
+        self.setValInRow(row, 'course_id', courseID)
         return row
         
     def handleForumManipulations(self, record, row, event):
@@ -2484,7 +2484,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          "remove-forum-mod, add-forum-mod, remove-forum-community-TA, or add-forum-community-TA." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
             
-        self.setValInRow(row, 'courseID', courseID)
+        self.setValInRow(row, 'course_id', courseID)
         self.setValInRow(row, 'username', username)        
         return row        
 
@@ -2505,7 +2505,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         if problemID is None:
             self.logWarn("Track log line %s: missing problemID in pyschometrics-histogram-generation event." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
-        self.setValInRow(row, 'problemID', problemID)
+        self.setValInRow(row, 'problem_id', problemID)
         return row
     
     def handleAddRemoveUserGroup(self, record, row, event):
@@ -2668,7 +2668,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # Returned in an array for conformance with the
         # other push<TableName>Info()
         accountKeyArray = self.pushAccountInfo(accountDict)
-        self.setValInRow(row, 'accountFK', accountKeyArray[0])
+        self.setValInRow(row, 'account_fk', accountKeyArray[0])
                 
         return row
 
@@ -2699,7 +2699,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             # Should have found at least one probID/correctness pair:
             self.logWarn("Track log line %s: could not parse out problemID/correctness pairs from '%s'. (stuffed into badlyFormatted)" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
-            self.setValInRow(row, 'badlyFormatted', str(event))
+            self.setValInRow(row, 'badly_formatted', str(event))
             return row
         # Go through each match:
         for searchMatch in probIdCorrectIterator:
@@ -2720,11 +2720,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             # foreign key entries that were created:
             for answerFKey in answersFKeys: 
                 # Fill in one main table row.
-                self.setValInRow(row, 'answerFK', answerFKey)
+                self.setValInRow(row, 'answer_fk', answerFKey)
                 if answerFKey is not None:
                     # For convenience: enter the Answer's problem ID 
                     # in the main table's problemID field:
-                    self.setValInRow(row, 'problemID', answerToProblemMap[answerFKey])
+                    self.setValInRow(row, 'problem_id', answerToProblemMap[answerFKey])
                     rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
                     self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
             
@@ -2790,7 +2790,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # Returned in an array for conformance with the
         # other push<TableName>Info()
         accountKeyArray = self.pushAccountInfo(accountDict)
-        self.setValInRow(row, 'accountFK', accountKeyArray[0])
+        self.setValInRow(row, 'account_fk', accountKeyArray[0])
                 
         return row
         
@@ -2884,7 +2884,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         try:
             # The 'location' is an array of strings. Turn them into one string:
             location = '; '.join(location)
-            self.setValInRow(row, 'questionLocation', location)
+            self.setValInRow(row, 'question_location', location)
         except TypeError:
             self.logWarn("Track log line %s: location field provided in is_student_calibrated event contains a non-string: '%s'" %\
              (self.jsonToRelationConverter.makeFileCitation(), str(eventDict)))
@@ -2942,7 +2942,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         try:
             # The 'location' is an array of strings. Turn them into one string:
             location = '; '.join(location)
-            self.setValInRow(row, 'questionLocation', location)
+            self.setValInRow(row, 'question_location', location)
         except TypeError:
             self.logWarn("Track log line %s: location field provided in is_student_calibrated event contains a non-string: '%s'" %\
              (self.jsonToRelationConverter.makeFileCitation(), str(eventDict)))
@@ -2975,7 +2975,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             self.logWarn("Track log line %s: student_file field provided in save_answer event contains a non-string: '%s'" %\
              (self.jsonToRelationConverter.makeFileCitation(), str(eventDict)))
             student_file = None
-        self.setValInRow(row, 'studentFile', student_file)
+        self.setValInRow(row, 'student_file', student_file)
 
         try:
             student_answer = '; '.join(student_answer)
@@ -2985,7 +2985,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             self.logWarn("Track log line %s: student_answer field provided in save_answer event contains a non-string: '%s'" %\
              (self.jsonToRelationConverter.makeFileCitation(), str(eventDict)))
             student_answer = None
-        self.setValInRow(row, 'longAnswer', student_answer)
+        self.setValInRow(row, 'long_answer', student_answer)
             
         try:
             can_upload_file = '; '.join(can_upload_file)
@@ -2993,7 +2993,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             #self.logWarn("Track log line %s: can_upload_file field provided in save_answer event contains a non-string: '%s'" %\
             # (self.jsonToRelationConverter.makeFileCitation(), str(eventDict)))
             can_upload_file = str(can_upload_file)
-        self.setValInRow(row, 'canUploadFile', can_upload_file)
+        self.setValInRow(row, 'can_upload_file', can_upload_file)
             
         return row
 
@@ -3013,8 +3013,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         feedback = postDict.get('feedback', None)
         if feedback is not None:
             feedback = self.makeInsertSafe(str(feedback))
-        self.setValInRow(row, 'submissionID', submissionID)
-        self.setValInRow(row, 'longAnswer', feedback)
+        self.setValInRow(row, 'submission_id', submissionID)
+        self.setValInRow(row, 'long_answer', feedback)
         return row
 
     def subHandleProblemCheckInPath(self, row, answersDict):
@@ -3034,11 +3034,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             # in the Answer refers:
             (answersFKeys, answerToProblemMap) = self.pushAnswers(answersDict)
         for answerFKey in answersFKeys:
-            self.setValInRow(row, 'answerFK', answerFKey, self.mainTableName)
+            self.setValInRow(row, 'answer_fk', answerFKey, self.mainTableName)
             if answerFKey is not None:
                 # For convenience: enter the Answer's problem ID 
                 # in the main table's problemID field:
-                self.setValInRow(row, 'problemID', answerToProblemMap[answerFKey])
+                self.setValInRow(row, 'problem_id', answerToProblemMap[answerFKey])
         return row
 
     def handleAjaxLogin(self, record, row, event, eventType):
@@ -3095,7 +3095,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @param offendingText:
         @type offendingText:
         '''
-        self.setValInRow(row, 'badlyFormatted', self.makeInsertSafe(offendingText))
+        self.setValInRow(row, 'badly_formatted', self.makeInsertSafe(offendingText))
         return row
     
     def get_course_id(self, event):
@@ -3269,7 +3269,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.setValInRow(row, 'event_type', event_type)
         self.setValInRow(row, 'time', time)
         self.setValInRow(row, 'ip', ip)
-        self.setValInRow(row, 'badlyFormatted', self.makeInsertSafe(event))
+        self.setValInRow(row, 'badly_formatted', self.makeInsertSafe(event))
     
     def tryJSONExtraction(self, pattern, theStr):
         m = pattern.search(theStr)

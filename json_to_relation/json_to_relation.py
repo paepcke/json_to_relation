@@ -20,6 +20,11 @@
 #   		   load_video    
 #TODO: ERROR 1064 (42000) at line 5291428 in file: './tracking.log-20131001.gz.2013-10-29T18_16_21.887671_25959.sql': You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.76 Safari/' at line 1
 #TODO: testSaveAnswerInPath test case of test_edxJSON... not passing
+#TODO: add key to EdxTrackEvent
+#TODO: add course_id to Answer
+#TODO: ensure course_id everywhere
+#TODO: underscore of EdxTrackEvent attributes
+#TODO: In writeRow: check for duplicate col names in INSERT
 
 '''
 Created on Sep 14, 2013
