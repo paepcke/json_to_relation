@@ -345,7 +345,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         
         row = []
         edxParser.processOneJSONObject(jsonStr, row)
-        expected = str(['7634a6e1-a5e5-4758-9b6e-1f64b3696c1a', u'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:21.0) Gecko/20100101 Firefox/21.0', u'browser', u'seq_goto', u'24.5.14.103', u'https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/53b0357680d24191a60156e74e184be3/', u'009e5b5e1bd4ab5a800cafc48bad9e44', u'2013-06-08T23:29:58.346222', u'BetaTester1', '0:00:00', 'null', 'null', 'null', u'i4x://Medicine/HRP258/sequential/53b0357680d24191a60156e74e184be3', 2, 1])
+        expected = str(['11813026_f972_4991_9aee_7a315b28eb6d', u'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:21.0) Gecko/20100101 Firefox/21.0', u'browser', u'seq_goto', u'24.5.14.103', u'https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/53b0357680d24191a60156e74e184be3/', u'009e5b5e1bd4ab5a800cafc48bad9e44', u'2013-06-08T23:29:58.346222', u'BetaTester1', '0:00:00', 'null', 'null', 'Medicine/HRP258/Statistics_in_Medicine', u'i4x://Medicine/HRP258/sequential/53b0357680d24191a60156e74e184be3', 2, 1])
         self.assertFileContentEquals(expected, str(row))
    
    

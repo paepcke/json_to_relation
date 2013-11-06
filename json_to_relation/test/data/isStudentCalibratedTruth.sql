@@ -123,7 +123,7 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO Event (event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location) VALUES 
-    ('441570f4_df62_4f93_9e2b_87266422913c','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/peergrading/ef6ba7f803bb46ebaaf008cde737e3e9/is_student_calibrated','82.9.126.47',null,null,'2013-08-28T20:16:48.720470+00:00','SteveC','0:00:00',null,null,null,null,null,null,null,null,'i4x://Education/EDUC115N/combinedopenended/d5b45f4cad82417d961a045e9c28f057');
+    ('16a7a94e_6ad6_4cb8_8f5c_4b50415d3d9a','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/peergrading/ef6ba7f803bb46ebaaf008cde737e3e9/is_student_calibrated','82.9.126.47',null,null,'2013-08-28T20:16:48.720470+00:00','SteveC','0:00:00',null,null,'Education/EDUC115N/How_to_Learn_Math',null,null,null,null,null,'i4x://Education/EDUC115N/combinedopenended/d5b45f4cad82417d961a045e9c28f057');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

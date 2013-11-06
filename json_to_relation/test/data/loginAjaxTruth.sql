@@ -122,8 +122,8 @@ CREATE TABLE IF NOT EXISTS Event (
 SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
-INSERT INTO Event (event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for) VALUES 
-    ('b4b3e826_3e3f_45bd_9625_8ebcdbb214e9','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/login_ajax','85.246.55.134',null,null,'2013-06-10T20:47:37.580071','emil.smith@gmail.com','0:00:00');
+INSERT INTO Event (event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id) VALUES 
+    ('a1665787_da31_4358_b1c0_37bee1ef4c29','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/login_ajax','85.246.55.134',null,null,'2013-06-10T20:47:37.580071','emil.smith@gmail.com','0:00:00',null,null,null);
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

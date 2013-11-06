@@ -123,7 +123,7 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO Event (event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id) VALUES 
-    ('1459de03_f7dd_4731_bf70_06f7d0f7fcc6','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36','browser','problem_reset','117.58.245.202','https://class.stanford.edu/courses/Engineering/QMSE01/Quantum_Mechanics_for_Scientists_and_Engineers/courseware/b2994ac964ae438aa4556d3df52a2506/1f2294fa31e340deac3904a95f8109df/','cd29f0ec437a61b624c06177fd2d5dd5','2013-10-21T06:20:17.903607+00:00','Smith','0:00:00',null,null,null,null,null,null,'input_i4x-Engineering-QMSE01-problem-dce5fe9e04be4bc1932efb05a2d6db68_2_1=2');
+    ('cc87f57c_ce3f_4ed1_8ed9_86f22af7c35a','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36','browser','problem_reset','117.58.245.202','https://class.stanford.edu/courses/Engineering/QMSE01/Quantum_Mechanics_for_Scientists_and_Engineers/courseware/b2994ac964ae438aa4556d3df52a2506/1f2294fa31e340deac3904a95f8109df/','cd29f0ec437a61b624c06177fd2d5dd5','2013-10-21T06:20:17.903607+00:00','Smith','0:00:00',null,null,'Engineering/QMSE01/Quantum_Mechanics_for_Scientists_and_Engineers',null,null,null,'input_i4x-Engineering-QMSE01-problem-dce5fe9e04be4bc1932efb05a2d6db68_2_1=2');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

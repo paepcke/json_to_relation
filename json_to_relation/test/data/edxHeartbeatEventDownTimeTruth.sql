@@ -122,9 +122,9 @@ CREATE TABLE IF NOT EXISTS Main (
 SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
-INSERT INTO Main (event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for) VALUES 
-    ('6c3141c0_cb88_4836_8fb0_93491267e9e1','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T08:43:32.573390+00:00','','0:00:00'),
-    ('4e73faf8_65a4_43fa_8db7_3b6cb61f0363','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T09:45:37.573390+00:00','','1:02:05');
+INSERT INTO Main (event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id) VALUES 
+    ('6c15ce9e_d3e0_46a7_8e37_8629f6d47981','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T08:43:32.573390+00:00','','0:00:00',null,null,null),
+    ('925caca3_a143_4ee8_b397_4f003945f89f','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T09:45:37.573390+00:00','','1:02:05',null,null,null);
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

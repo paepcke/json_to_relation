@@ -123,7 +123,7 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO Event (event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id) VALUES 
-    ('a81ccc01_bf3d_4eed_aa72_5ae6a6c82037','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','about','85.104.215.30',null,null,'2013-06-10T05:47:38.452300','',null,null,null,'/courses/Medicine/HRP258/Statistics_in_Medicine');
+    ('d8de5faa_e681_4b78_abc3_46b92a699ee3','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','about','85.104.215.30',null,null,'2013-06-10T05:47:38.452300','',null,null,null,'Medicine/HRP258/Statistics_in_Medicine');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

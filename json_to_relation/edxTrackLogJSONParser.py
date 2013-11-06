@@ -913,6 +913,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 #(fullCourseName, course_id) = self.get_course_id(record.get('event', None))  # @UnusedVariable
                 (fullCourseName, course_id) = self.get_course_id(record)  # @UnusedVariable
                 val = course_id
+                # Make course_id available for places where rows are added to the Answer table.
+                # We stick the course_id there for convenience.
+                self.currCourseID = course_id
 #             elif fldName == 'page':
 #                 # Try to extract a nice course name:
 #                 course_id = self.extractShortCourseID(val)
@@ -2284,7 +2287,6 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             return row
 
         problemID = event.get('problem', None)
-        courseID  = event.get('course', None)
         if problemID is None:
             self.logWarn("Track log line %s: missing problem ID in rescore-all-submissions or reset-all-attempts." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
@@ -2292,7 +2294,6 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             self.logWarn("Track log line %s: missing course ID in rescore-all-submissions or reset-all-attempts." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
         self.setValInRow(row, 'problem_id', problemID)
-        self.setValInRow(row, 'course_id', courseID)
         return row
                 
         if event is None:
@@ -2307,7 +2308,6 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             return row
 
         problemID = event.get('problem', None)
-        courseID  = event.get('course', None)
         if problemID is None:
             self.logWarn("Track log line %s: missing problem ID in rescore-all-submissions or reset-all-attempts." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
@@ -2315,7 +2315,6 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             self.logWarn("Track log line %s: missing course ID in rescore-all-submissions or reset-all-attempts." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
         self.setValInRow(row, 'problem_id', problemID)
-        self.setValInRow(row, 'course_id', courseID)
         return row
                 
                 
@@ -2333,19 +2332,14 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             return row
 
         problemID = event.get('problem', None)
-        courseID  = event.get('course', None)
         studentID = event.get('student', None)
         if problemID is None:
             self.logWarn("Track log line %s: missing problem ID in delete-student-module-state or rescore-student-submission." %\
-                         (self.jsonToRelationConverter.makeFileCitation()))
-        if courseID is None:
-            self.logWarn("Track log line %s: missing course ID in delete-student-module-state or rescore-student-submission." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
         if studentID is None:
             self.logWarn("Track log line %s: missing student ID in delete-student-module-state or rescore-student-submission." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
         self.setValInRow(row, 'problem_id', problemID)
-        self.setValInRow(row, 'course_id', courseID)
         self.setValInRow(row, 'student_id', studentID)
         return row        
         
@@ -2362,15 +2356,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             return row
 
         problemID = event.get('problem', None)
-        courseID  = event.get('course', None)
         studentID = event.get('student', None)
         instructorID = event.get('instructor_id', None)
         attempts = event.get('old_attempts', None)
         if problemID is None:
             self.logWarn("Track log line %s: missing problem ID in reset-student-attempts." %\
-                         (self.jsonToRelationConverter.makeFileCitation()))
-        if courseID is None:
-            self.logWarn("Track log line %s: missing course ID in reset-student-attempts." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
         if studentID is None:
             self.logWarn("Track log line %s: missing student ID in reset-student-attempts." %\
@@ -2383,7 +2373,6 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             
         self.setValInRow(row, 'problem_id', problemID)
-        self.setValInRow(row, 'course_id', courseID)
         self.setValInRow(row, 'student_id', studentID)        
         self.setValInRow(row, 'instructor_id', instructorID)
         self.setValInRow(row, 'attempts', attempts)
@@ -2401,13 +2390,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
         
-        courseID  = event.get('course', None)
         studentID = event.get('student', None)
         instructorID = event.get('instructor_id', None)
         
-        if courseID is None:
-            self.logWarn("Track log line %s: missing course ID in get-student-progress-page." %\
-                         (self.jsonToRelationConverter.makeFileCitation()))
         if studentID is None:
             self.logWarn("Track log line %s: missing student ID in get-student-progress-page." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
@@ -2415,7 +2400,6 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             self.logWarn("Track log line %s: missing instrucotrID in get-student-progress-page." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
             
-        self.setValInRow(row, 'course_id', courseID)
         self.setValInRow(row, 'student_id', studentID)        
         self.setValInRow(row, 'instructor_id', instructorID)
         return row        
@@ -2452,12 +2436,6 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
         
-        courseID = event.get('course', None)
-        
-        if courseID is None:
-            self.logWarn("Track log line %s: missing course ID in list-forum-admins, list-forum-mods, or list-forum-community-TAs." %\
-                         (self.jsonToRelationConverter.makeFileCitation()))
-        self.setValInRow(row, 'course_id', courseID)
         return row
         
     def handleForumManipulations(self, record, row, event):
@@ -2473,19 +2451,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
 
-        courseID  = event.get('course', None)
         username  = event.get('username', None)
 
-        if courseID is None:
-            self.logWarn("Track log line %s: missing course ID in one of remove-forum-admin, add-forum-admin, " +\
-                         "remove-forum-mod, add-forum-mod, remove-forum-community-TA, or add-forum-community-TA." %\
-                         (self.jsonToRelationConverter.makeFileCitation()))
         if username is None:
             self.logWarn("Track log line %s: missing username in one of remove-forum-admin, add-forum-admin, " +\
                          "remove-forum-mod, add-forum-mod, remove-forum-community-TA, or add-forum-community-TA." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
             
-        self.setValInRow(row, 'course_id', courseID)
         self.setValInRow(row, 'username', username)        
         return row        
 
@@ -3143,8 +3115,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             else:
                 fullCourseName = event['event_type']
         else:
-            fullCourseName = event['page']
-        if fullCourseName:
+            fullCourseName = event.get('page', None)
+        if fullCourseName is not None:
             course_id = self.extractShortCourseID(fullCourseName)
         if course_id is None:
             fullCourseName = None
