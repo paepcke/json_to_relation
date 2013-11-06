@@ -123,7 +123,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # each line; Build the schema:
         
         # Fields common to every request:
-        self.commonFldNames = ['agent','event_source','event_type','ip','page','session','time','username']
+        self.commonFldNames = ['agent','event_source','event_type','ip','page','session','time','username', 'course_id']
 
         # A Country lookup facility:
         self.countryChecker = LocationManager()
@@ -910,7 +910,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                     val = 'networking'
                     self.finishedRow = True
             elif fldName == 'course_id':
-                (fullCourseName, course_id) = self.get_course_id(record.get('event', None))  # @UnusedVariable
+                #(fullCourseName, course_id) = self.get_course_id(record.get('event', None))  # @UnusedVariable
+                (fullCourseName, course_id) = self.get_course_id(record)  # @UnusedVariable
                 val = course_id
 #             elif fldName == 'page':
 #                 # Try to extract a nice course name:

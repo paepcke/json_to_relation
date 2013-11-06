@@ -23,7 +23,6 @@
 #TODO: add key to EdxTrackEvent
 #TODO: add course_id to Answer
 #TODO: ensure course_id everywhere
-#TODO: underscore of EdxTrackEvent attributes
 #TODO: In writeRow: check for duplicate col names in INSERT
 
 '''
