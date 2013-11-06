@@ -5,7 +5,8 @@ SET foreign_key_checks = 1;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(40) NOT NULL Primary Key,
     problem_id TEXT,
-    answer TEXT
+    answer TEXT,
+    course_id TEXT
     );
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL Primary Key,
@@ -123,7 +124,7 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO Event (event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position) VALUES 
-    ('cec18558_991d_4586_acec_25d06646a2bc','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/534.59.8 (KHTML, like Gecko) Version/5.1.9 Safari/534.59.8','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/sequential/1b3ac347ca064b3eaaddbc27d4200964/goto_position','115.64.154.154',null,null,'2013-08-28T12:28:50.009704+00:00','Smith','0:00:00',null,null,'Education/EDUC115N/How_to_Learn_Math',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'9');
+    ('955ffcd6_f8af_4938_9473_27704370b0f9','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/534.59.8 (KHTML, like Gecko) Version/5.1.9 Safari/534.59.8','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/sequential/1b3ac347ca064b3eaaddbc27d4200964/goto_position','115.64.154.154',null,null,'2013-08-28T12:28:50.009704+00:00','Smith','0:00:00',null,null,'Education/EDUC115N/How_to_Learn_Math',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'9');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

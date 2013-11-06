@@ -5,7 +5,8 @@ SET foreign_key_checks = 1;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(40) NOT NULL Primary Key,
     problem_id TEXT,
-    answer TEXT
+    answer TEXT,
+    course_id TEXT
     );
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL Primary Key,
@@ -123,9 +124,9 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO Account (account_id,username,name,mailing_address,zipCode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) VALUES 
-    ('d478bcb7_2fe1_43d4_aebc_5e2e68da54e9','23382qaz','Javier Fernandez Viña','',null,null,'m',1982,'m','',1,1,null,null,'javier@jfv.es',null);
+    ('cb9894c6_d82b_4e9d_a160_c0e9949612ed','23382qaz','Javier Fernandez Viña','',null,null,'m',1982,'m','',1,1,null,null,'javier@jfv.es',null);
 INSERT INTO Event (event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,account_fk) VALUES 
-    ('655b3089_d1b1_4860_94ec_34efdc6b0c3a','Mozilla/5.0 (Windows NT 6.1; WOW64; rv:22.0) Gecko/20100101 Firefox/22.0 AlexaToolbar/alxf-2.18','server','/create_account','83.165.100.83',null,null,'2013-07-18T06:52:46.766728+00:00','','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'d478bcb7_2fe1_43d4_aebc_5e2e68da54e9');
+    ('13d85d9d_f6c2_439d_b16a_6acc0c5f7cfb','Mozilla/5.0 (Windows NT 6.1; WOW64; rv:22.0) Gecko/20100101 Firefox/22.0 AlexaToolbar/alxf-2.18','server','/create_account','83.165.100.83',null,null,'2013-07-18T06:52:46.766728+00:00','','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'cb9894c6_d82b_4e9d_a160_c0e9949612ed');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

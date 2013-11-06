@@ -295,6 +295,9 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         # Pretend a problem_check event had just been found.
         # Here: record is None, row to fill still empty (would
         # normally be the main table, partially filled row).
+        # Normally a course_id would have been set by 
+        # handleCommonFields(), so put in a fake one:
+        edxParser.currCourseID = 'my_course'
         edxParser.handleProblemCheck(None, [], event)
 
         fileConverter.flush()

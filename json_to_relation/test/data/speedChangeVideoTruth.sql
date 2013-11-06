@@ -5,7 +5,8 @@ SET foreign_key_checks = 1;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(40) NOT NULL Primary Key,
     problem_id TEXT,
-    answer TEXT
+    answer TEXT,
+    course_id TEXT
     );
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL Primary Key,
@@ -123,7 +124,7 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO Event (event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed) VALUES 
-    ('be3b2c17_4843_4ea0_8dfb_3a67f156b524','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','browser','speed_change_video','98.119.130.2','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ea998389c16042f399ccff01e5bab161/770d7bd939604112865d415fa9505f79/','0b9d6fdd33d177cdc7988d4b14ba7308','2013-06-19T22:55:55.996688+00:00','aguynamedryan','0:00:00',null,null,'Medicine/HRP258/Statistics_in_Medicine',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'i4x-Medicine-HRP258-videoalpha-7cd4bf0813904612bcd583a73ade1d54','html5','1.66947197914',null,null,null,null,'2.0','1.50');
+    ('5010ac85_70ce_4451_9e13_3ddfa1636c54','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','browser','speed_change_video','98.119.130.2','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ea998389c16042f399ccff01e5bab161/770d7bd939604112865d415fa9505f79/','0b9d6fdd33d177cdc7988d4b14ba7308','2013-06-19T22:55:55.996688+00:00','aguynamedryan','0:00:00',null,null,'Medicine/HRP258/Statistics_in_Medicine',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'i4x-Medicine-HRP258-videoalpha-7cd4bf0813904612bcd583a73ade1d54','html5','1.66947197914',null,null,null,null,'2.0','1.50');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

@@ -5,7 +5,8 @@ SET foreign_key_checks = 1;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(40) NOT NULL Primary Key,
     problem_id TEXT,
-    answer TEXT
+    answer TEXT,
+    course_id TEXT
     );
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL Primary Key,
@@ -123,8 +124,8 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO Main (event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id) VALUES 
-    ('6c15ce9e_d3e0_46a7_8e37_8629f6d47981','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T08:43:32.573390+00:00','','0:00:00',null,null,null),
-    ('925caca3_a143_4ee8_b397_4f003945f89f','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T09:45:37.573390+00:00','','1:02:05',null,null,null);
+    ('cb830013_fd25_4c60_a71b_f6b68ec57ba8','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T08:43:32.573390+00:00','','0:00:00',null,null,null),
+    ('2e03742c_acf6_4a8e_b61f_c8e961841f90','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1',null,null,'2013-07-18T09:45:37.573390+00:00','','1:02:05',null,null,null);
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

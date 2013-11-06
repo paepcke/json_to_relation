@@ -5,7 +5,8 @@ SET foreign_key_checks = 1;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(40) NOT NULL Primary Key,
     problem_id TEXT,
-    answer TEXT
+    answer TEXT,
+    course_id TEXT
     );
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL Primary Key,
@@ -123,7 +124,7 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO Event (event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file) VALUES 
-    ('df488332_a064_439f_bb23_5cf15e7c2ca8','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/combinedopenended/364df8ee116447b29149887f181643f8/save_answer','204.111.14.242',null,null,'2013-08-28T19:36:39.526902+00:00','Smith','0:00:00',null,null,'Education/EDUC115N/How_to_Learn_Math',null,null,null,null,null,null,null,null,'Students will have to use higher level thinking to describe the movement of each competitor and relate it to the others. They cannot simply say \'runner A\' ran a steady race picking up is pace in the beginning and then dropping off slightly in the end. They will have to be able to say runner B wins after he accelerates past runner A. He must have saved his energy since he did not push as hard earlier in the race. ','','false');
+    ('383c3ccb_d8ab_4ad5_92b8_c19d3f2200e5','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/combinedopenended/364df8ee116447b29149887f181643f8/save_answer','204.111.14.242',null,null,'2013-08-28T19:36:39.526902+00:00','Smith','0:00:00',null,null,'Education/EDUC115N/How_to_Learn_Math',null,null,null,null,null,null,null,null,'Students will have to use higher level thinking to describe the movement of each competitor and relate it to the others. They cannot simply say \'runner A\' ran a steady race picking up is pace in the beginning and then dropping off slightly in the end. They will have to be able to say runner B wins after he accelerates past runner A. He must have saved his energy since he did not push as hard earlier in the race. ','','false');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

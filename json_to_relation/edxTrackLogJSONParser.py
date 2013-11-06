@@ -267,6 +267,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaAnswerTbl['answer_id'] = ColDataType.UUID
         self.schemaAnswerTbl['problem_id'] = ColDataType.TEXT
         self.schemaAnswerTbl['answer'] = ColDataType.TEXT
+        self.schemaAnswerTbl['course_id'] = ColDataType.TEXT
 
         # Turn the SQL data types in the dict to column spec objects:
         for colName in self.schemaAnswerTbl.keys():
@@ -1304,7 +1305,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 answersKeys.append(answersKey)
                 answerValues = [answersKey,          # answer_id fld 
                                 problemID,           # problem_id fld
-                                answer
+                                answer,
+                                self.currCourseID
                                 ]
                 self.jsonToRelationConverter.pushToTable(self.resultTriplet(answerValues, 'Answer', self.schemaAnswerTbl.keys()))
         return (answersKeys, answerToProblemMap)

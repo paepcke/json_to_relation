@@ -24,6 +24,8 @@
 #TODO: add course_id to Answer
 #TODO: ensure course_id everywhere
 #TODO: In writeRow: check for duplicate col names in INSERT
+#TODO: Add row addition time to EdxTrackLog
+#TODO: Scramble UID, adding table UIDMap
 
 '''
 Created on Sep 14, 2013

@@ -5,7 +5,8 @@ SET foreign_key_checks = 1;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(40) NOT NULL Primary Key,
     problem_id TEXT,
-    answer TEXT
+    answer TEXT,
+    course_id TEXT
     );
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL Primary Key,
@@ -122,12 +123,12 @@ CREATE TABLE IF NOT EXISTS Event (
 SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
-INSERT INTO Answer (answer_id,problem_id,answer) VALUES 
-    ('dc183180_7c18_43f4_b96b_d3e8521508aa','input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_2_1_choice_1','correct'),
-    ('c1097e08_7f57_4fc1_8592_4f3e0d096c7c','input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_3_1_choice_0','correct');
+INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
+    ('29385e13_6273_47e6_ad35_571dcefb90b6','input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_2_1_choice_1','correct',null),
+    ('7de0dbe6_8595_4193_81bf_53721651862e','input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_3_1_choice_0','correct',null);
 INSERT INTO Event (event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk) VALUES 
-    ('0fea98de_3939_4a94_ad2d_ee8ac70922d7','browser','browser','problem_graded','203.81.72.81',null,'adf0f47a40c885298669b7b96ae52f02','2013-08-16T13:38:49.951627+00:00','YiYi','0:00:00',null,null,null,null,null,null,'input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_2_1_choice_1',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'dc183180_7c18_43f4_b96b_d3e8521508aa'),
-    ('0fea98de_3939_4a94_ad2d_ee8ac70922d7','browser','browser','problem_graded','203.81.72.81',null,'adf0f47a40c885298669b7b96ae52f02','2013-08-16T13:38:49.951627+00:00','YiYi','0:00:00',null,null,null,null,null,null,'input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_3_1_choice_0',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'c1097e08_7f57_4fc1_8592_4f3e0d096c7c');
+    ('436c55d3_7401_4341_8d36_622f7d2e6dea','browser','browser','problem_graded','203.81.72.81',null,'adf0f47a40c885298669b7b96ae52f02','2013-08-16T13:38:49.951627+00:00','YiYi','0:00:00',null,null,null,null,null,null,'input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_2_1_choice_1',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'29385e13_6273_47e6_ad35_571dcefb90b6'),
+    ('436c55d3_7401_4341_8d36_622f7d2e6dea','browser','browser','problem_graded','203.81.72.81',null,'adf0f47a40c885298669b7b96ae52f02','2013-08-16T13:38:49.951627+00:00','YiYi','0:00:00',null,null,null,null,null,null,'input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_3_1_choice_0',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'7de0dbe6_8595_4193_81bf_53721651862e');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

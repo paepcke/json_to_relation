@@ -5,7 +5,8 @@ SET foreign_key_checks = 1;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(40) NOT NULL Primary Key,
     problem_id TEXT,
-    answer TEXT
+    answer TEXT,
+    course_id TEXT
     );
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL Primary Key,
@@ -123,7 +124,7 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO Event (event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time) VALUES 
-    ('4e6b8e78_4674_4026_99a7_c42155a66a23','Mozilla/5.0 (Windows NT 6.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','browser','not_fullscreen','121.6.140.40','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/2b2015b2980d4acd8a94d97fde9a493b/','b1153dbe6380815b757b9f780cc9b7c9','2013-06-29T08:04:54.323284+00:00','Valarie','0:00:00',null,null,'Medicine/HRP258/Statistics_in_Medicine',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'i4x-Medicine-HRP258-videoalpha-c5cbefddbd55429b8a796a6521b9b752','html5','661.101013184');
+    ('746175a3_c67d_46fc_9985_58a9ac55833d','Mozilla/5.0 (Windows NT 6.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','browser','not_fullscreen','121.6.140.40','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/2b2015b2980d4acd8a94d97fde9a493b/','b1153dbe6380815b757b9f780cc9b7c9','2013-06-29T08:04:54.323284+00:00','Valarie','0:00:00',null,null,'Medicine/HRP258/Statistics_in_Medicine',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'i4x-Medicine-HRP258-videoalpha-c5cbefddbd55429b8a796a6521b9b752','html5','661.101013184');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

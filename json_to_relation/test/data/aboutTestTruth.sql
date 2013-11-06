@@ -5,7 +5,8 @@ SET foreign_key_checks = 1;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(40) NOT NULL Primary Key,
     problem_id TEXT,
-    answer TEXT
+    answer TEXT,
+    course_id TEXT
     );
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL Primary Key,
@@ -123,7 +124,7 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO Event (event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id) VALUES 
-    ('d8de5faa_e681_4b78_abc3_46b92a699ee3','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','about','85.104.215.30',null,null,'2013-06-10T05:47:38.452300','',null,null,null,'Medicine/HRP258/Statistics_in_Medicine');
+    ('1a689980_e5c1_4a9a_8528_cc6f1469d199','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','about','85.104.215.30',null,null,'2013-06-10T05:47:38.452300','',null,null,null,'Medicine/HRP258/Statistics_in_Medicine');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;
