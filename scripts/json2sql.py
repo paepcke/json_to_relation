@@ -60,8 +60,8 @@ if __name__ == "__main__":
 #     print('outFullPath: %s' % outFullPath)
 #     print('logFile: %s' % logFile)
 
-    # Create an instance of JSONToRelation, taking input from stdin,
-    # and pumping output to stdout. Format output as SQL dump statements.
+    # Create an instance of JSONToRelation, taking input from the given file:
+    # and pumping output to the given output path:
     jsonConverter = JSONToRelation(InURI(args.inFilePath),
                                    OutputFile(outFullPath,
                                               OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS,

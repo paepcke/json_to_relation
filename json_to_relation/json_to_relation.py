@@ -27,7 +27,6 @@
 #TODO: Scramble UID, adding table UIDMap
 #TODO: NOT null for as many as possible
 #TODO: Add a load file and load date
-
 '''
 Created on Sep 14, 2013
 
@@ -37,16 +36,19 @@ Created on Sep 14, 2013
 from cStringIO import StringIO
 from collections import OrderedDict
 import copy
+import datetime
 import logging
 import math
 import os
 import re
 import shutil
 import tempfile
+import time
 
 from col_data_type import ColDataType
 from generic_json_parser import GenericJSONParser
-from input_source import InputSource, InURI, InString, InMongoDB, InPipe #@UnusedImport
+from input_source import InputSource, InURI, InString, InMongoDB, \
+    InPipe #@UnusedImport
 from output_disposition import OutputDisposition, OutputFile, OutputPipe
 
 
@@ -164,6 +166,9 @@ class JSONToRelation(object):
         self.jsonSource = jsonSource
         self.destination = destination
         self.mainTableName = mainTableName
+        # Greenwich Mean Time (UTC) as yyyymmddhhssmm
+        self.loadDateTime = time.strftime('%Y%m%d%H%M%s', time.gmtime())
+        self.loadFile = jsonSource.getSourceName()
 
         # Check schemaHints correctness:
         if schemaHints is not None:
