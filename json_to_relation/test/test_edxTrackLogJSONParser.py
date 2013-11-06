@@ -21,7 +21,7 @@ from output_disposition import OutputDisposition, ColDataType, TableSchemas, \
     ColumnSpec, OutputFile, OutputPipe # @UnusedImport
 
 
-TEST_ALL = True
+TEST_ALL = False
 PRINT_OUTS = False  # Set True to get printouts of CREATE TABLE statements
 
 # The following is very Dangerous: If True, no tests are
@@ -113,6 +113,18 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
 )
 
 
+
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
+    def testExtractCourseIDFromProblemXEvent(self):
+        fileConverter = JSONToRelation(self.stringSource,
+                                       OutputFile(os.devnull, OutputDisposition.OutputFormat.CSV),
+                                       mainTableName='Main'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main', replaceTables=True)
+        fakeEvent = '"event": {"success": "correct", "correct_map": {"i4x-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_2_1": {"hint": "", "hintmode": null,'
+        courseID = edxParser.extractCourseIDFromProblemXEvent(fakeEvent)
+        self.assertEqual(courseID, 'Medicine-HRP258')
+    
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testTableSchemaRepo(self):
         fileConverter = JSONToRelation(self.stringSource,
@@ -146,7 +158,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         self.assertEqual('LONGTEXT', tblRepo['myTbl']['herCol'].getType())                 
         
 
-    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testGetCourseID(self):
         #print self.edxParser.get_course_id(json.loads(self.loginEvent))
         fileConverter = JSONToRelation(self.stringSource,
@@ -161,6 +173,9 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
 
         courseName = edxParser.extractShortCourseID('/courses/OpenEdX/200/Stanford_Sandbox/modx/i4x://OpenEdX/200/combinedopenended/5fb3b40e76a14752846008eeaca05bdf/check_for_score')
         self.assertEqual('OpenEdX/200/Stanford_Sandbox', courseName)
+
+        (longName, courseName) = edxParser.get_course_id({"username": "RayRal", "host": "class.stanford.edu", "event_source": "server", "event_type": "save_problem_check", "time": "2013-06-11T16:49:54.047852", "ip": "79.100.83.89", "event": {"success": "correct", "correct_map": {"i4x-Medicine-HRP258-problem-0c6cf38317be42e0829d10cc68e7451b_2_1": {"hint": "", "hintmode": "null", "correctness": "correct", "msg": "", "npoints": "null", "queuestate": "null"}}, "attempts": 1, "answers": {"i4x-Medicine-HRP258-problem-0c6cf38317be42e0829d10cc68e7451b_2_1": "choice_1"}, "state": {"student_answers": {}, "seed": 1, "done": "null", "correct_map": {}, "input_state": {"i4x-Medicine-HRP258-problem-0c6cf38317be42e0829d10cc68e7451b_2_1": {}}}, "problem_id": "i4x://Medicine/HRP258/problem/0c6cf38317be42e0829d10cc68e7451b"}, "agent": "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36", "page": "x_module"})  # @UnusedVariable
+        self.assertEqual('Medicine-HRP258', courseName)
 
         courseName = edxParser.extractShortCourseID('i4x://Education/EDUC115N/combinedopenended/0d67667941cd4e14ba29abd1542a9c5f')
         self.assertIsNone(courseName)
@@ -179,8 +194,8 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
 
         (fullCourseName, courseName) = edxParser.get_course_id(json.loads(self.heartbeatEvent))
         self.assertIsNone(fullCourseName)        
-        self.assertIsNone(courseName)        
-
+        self.assertIsNone(courseName)
+        
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testProcessOneJSONObject(self):
         fileConverter = JSONToRelation(self.stringSource,
@@ -1180,7 +1195,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
-    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testUnicodeOutOfBounds(self):
         testFilePath = os.path.join(os.path.dirname(__file__),"data/unicodeOutOfBound.json")
         stringSource = InURI(testFilePath)
