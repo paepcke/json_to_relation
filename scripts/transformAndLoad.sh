@@ -24,4 +24,8 @@ echo "TransformAndLoad transform done: `date`" >> /tmp/transformAndLoad.txt
 popd; 
 echo "TransformAndLoad start load: `date`" >> /tmp/transformAndLoad.txt
 time find . -name '*.sql' | awk '{ print "source",$0 }' | mysql -f --batch -p$password > loadLog.log 2>&1
-echo "TransformAndLoad start load: `date`" >> /tmp/transformAndLoad.txt
+echo "TransformAndLoad done load: `date`" >> /tmp/transformAndLoad.txt
+
+echo "TransformAndLoad start indexing: `date`" >> /tmp/transformAndLoad.txt
+mysql < edxCreateIndexes.sql
+echo "TransformAndLoad done indexing: `date`" >> /tmp/transformAndLoad.txt

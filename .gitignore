@@ -36,3 +36,6 @@ nosetests.xml
 .~lock*
 testOutput.csv
 testOutputWithHeader.csv
+os
+pymysql
+sys
