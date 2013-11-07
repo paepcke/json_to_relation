@@ -14,7 +14,7 @@
 # When done with MySQL load, appends date/time to /tmp/doneLoad.txt
 # Log of the MySQL load will be in ~dataman/Data/Edx/tracking/SQL: loadLog.log
 
-read -s -p "MySQL Password: " password
+read -s -p "Dataman's MySQL Password: " password
 echo
 cd /home/dataman/Data/EdX/tracking/SQL
 pushd /home/dataman/Code/json_to_relation/; 
