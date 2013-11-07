@@ -12,6 +12,7 @@
 # Places the transform log files into /tmp/j2s_tracking.log-xxx
 # When done with transform, appends date/time to /tmp/doneTransform.txt
 # When done with MySQL load, appends date/time to /tmp/doneLoad.txt
+# Then indexes selected fields.
 # Log of the MySQL load will be in ~dataman/Data/Edx/tracking/SQL: loadLog.log
 
 read -s -p "Dataman's MySQL Password: " password
