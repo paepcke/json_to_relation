@@ -3234,7 +3234,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # the match obj's groups is now: '-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_2_1"'
         # Split into ['', 'Medicine', 'HRP258', 'problem', '8dd11b4339884ab78bc844ce45847141_2_1"'] 
         parts = match.groups()[0].split('-')
-        return "-".join([parts[1], parts[2]])
+        try:
+            return "-".join([parts[1], parts[2]])
+        except IndexError:
+            return None
 
     def ensureDict(self, event):
         '''
