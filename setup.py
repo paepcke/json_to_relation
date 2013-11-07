@@ -12,7 +12,7 @@ setup(
 
     # Unit tests; they are initiated via 'python setup.py test'
     #test_suite       = 'json_to_relation/test',
-    test_suite       = 'nose.collector',
+    test_suite       = 'nose.collector', 
 
     package_data = {
         # If any package contains *.txt or *.rst files, include them:
