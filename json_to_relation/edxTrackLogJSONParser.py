@@ -257,7 +257,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaStateTbl = OrderedDict()
         self.schemaStateTbl['state_id'] = ColDataType.UUID
         self.schemaStateTbl['seed'] = ColDataType.TINYINT
-        self.schemaStateTbl['done'] = ColDataType.BOOL
+        self.schemaStateTbl['done'] = ColDataType.TINYINT
         self.schemaStateTbl['problem_id'] = ColDataType.TEXT
         self.schemaStateTbl['student_answer'] = ColDataType.UUID
         self.schemaStateTbl['correct_map'] = ColDataType.UUID
@@ -316,7 +316,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaAccountTbl['username'] = ColDataType.TEXT
         self.schemaAccountTbl['name'] = ColDataType.TEXT
         self.schemaAccountTbl['mailing_address'] = ColDataType.TEXT
-        self.schemaAccountTbl['zipCode'] = ColDataType.TINYTEXT      # Picked out from mailing_address
+        self.schemaAccountTbl['zipcode'] = ColDataType.TINYTEXT      # Picked out from mailing_address
         self.schemaAccountTbl['country'] = ColDataType.TINYTEXT      # Picked out from mailing_address
         self.schemaAccountTbl['gender'] = ColDataType.TINYTEXT
         self.schemaAccountTbl['year_of_birth'] = ColDataType.TINYINT
@@ -2632,12 +2632,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             mailAddr = mailAddr[0]
             accountDict = self.getZipAndCountryFromMailAddr(mailAddr, accountDict)
         else:
-            accountDict['zipCode'] = None
+            accountDict['zipcode'] = None
             accountDict['country'] = None
             
         # Make sure that zip code is null unless address is USA:
         if accountDict['country'] != 'USA':
-            accountDict['zipCode'] = None
+            accountDict['zipcode'] = None
             
         accountDict['gender'] = postDict.get('gender', None)
         accountDict['year_of_birth'] = postDict.get('year_of_birth', None)
@@ -2794,7 +2794,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 mailAddr = mailAddr[0] 
             accountDict = self.getZipAndCountryFromMailAddr(mailAddr, accountDict)
         else:
-            accountDict['zipCode'] = None
+            accountDict['zipcode'] = None
             accountDict['country'] = None
         accountDict['gender'] = None
         accountDict['year_of_birth'] = None
@@ -3293,7 +3293,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         #return unsafeStr.replace("'", "\\'").replace('\n', "; ").replace('\r', "; ").replace(',', "\\,").replace('\\', '\\\\')
         if unsafeStr is None or not isinstance(unsafeStr, basestring):
             return None
-        uniSafeStr = unidecode(unsafeStr)
+        uniSafeStr = unidecode(unicode(unsafeStr))
         return uniSafeStr.replace('\n', "; ").replace('\r', "; ").replace('\\', '').replace("'", r"\'")
     
     def makeJSONSafe(self, jsonStr):
@@ -3366,14 +3366,14 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
             zipCodeMatch = EdXTrackLogJSONParser.zipCodePattern.findall(mailAddr)
             if len(zipCodeMatch) > 0:
-                accountDict['zipCode'] = zipCodeMatch[-1]
+                accountDict['zipcode'] = zipCodeMatch[-1]
             else:
-                accountDict['zipCode'] = None
+                accountDict['zipcode'] = None
                 
             # See whether the address includes a country:
             # Last ditch: if we think we found a zip code, 
             # start out thinking US for the country:
-            if accountDict['zipCode'] is not None:
+            if accountDict['zipcode'] is not None:
                 accountDict['country'] = 'USA'
             else:
                 accountDict['country'] = None
@@ -3421,6 +3421,6 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                     break 
             # Make sure that zip code is null unless address is USA:
             if accountDict['country'] != 'USA':
-                accountDict['zipCode'] = None
+                accountDict['zipcode'] = None
                 
             return accountDict

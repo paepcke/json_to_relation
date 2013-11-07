@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS InputState (
 CREATE TABLE IF NOT EXISTS State (
     state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT,
-    done BOOL,
+    done TINYINT,
     problem_id TEXT,
     student_answer VARCHAR(40),
     correct_map VARCHAR(40),
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS Account (
     username TEXT,
     name TEXT,
     mailing_address TEXT,
-    zipCode TINYTEXT,
+    zipcode TINYTEXT,
     country TINYTEXT,
     gender TINYTEXT,
     year_of_birth TINYINT,
@@ -132,9 +132,9 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('272dc7e1_eca2_447f_91a8_b77c127cf616','2013110703261383823616','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/saveAnswer.json');
+    ('82e7f763_87ce_4fb2_a7ec_672d7adf9015','2013110705101383829838','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/saveAnswer.json');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,account_fk,load_info_fk) VALUES 
-    (null,'17a1d564_f697_4002_8372_d57dbc9e8d26','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/combinedopenended/364df8ee116447b29149887f181643f8/save_answer','204.111.14.242',null,null,'2013-08-28T19:36:39.526902+00:00','Smith','0:00:00',null,null,'Education/EDUC115N/How_to_Learn_Math',null,null,null,null,null,null,null,null,'Students will have to use higher level thinking to describe the movement of each competitor and relate it to the others. They cannot simply say \'runner A\' ran a steady race picking up is pace in the beginning and then dropping off slightly in the end. They will have to be able to say runner B wins after he accelerates past runner A. He must have saved his energy since he did not push as hard earlier in the race. ','','false',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'272dc7e1_eca2_447f_91a8_b77c127cf616');
+    (0,'863dda63_ff91_4505_97a9_fcddcba68fd3','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/combinedopenended/364df8ee116447b29149887f181643f8/save_answer','204.111.14.242','','','2013-08-28T19:36:39.526902+00:00','Smith','0:00:00','','','Education/EDUC115N/How_to_Learn_Math','',-1,-1,'','','','',-1,'Students will have to use higher level thinking to describe the movement of each competitor and relate it to the others. They cannot simply say \'runner A\' ran a steady race picking up is pace in the beginning and then dropping off slightly in the end. They will have to be able to say runner B wins after he accelerates past runner A. He must have saved his energy since he did not push as hard earlier in the race. ','','false','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','','82e7f763_87ce_4fb2_a7ec_672d7adf9015');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

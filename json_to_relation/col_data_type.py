@@ -67,6 +67,23 @@ class ColDataType:
                BOOL     : "BOOL",
                UUID     : "VARCHAR(40)"
     }
+    
+    defaultValues = {TINYTEXT : '',
+                	 TEXT     : '',
+                	 MEDIUMTEXT : '',
+                	 LONGTEXT : '',
+                	 TINYINT  : -1,
+                	 SMALLINT : -1,
+                	 INT      : -1,
+                	 BIGINT   : -1,
+                	 FLOAT    : -1.0,
+                	 DOUBLE   : -1.0,
+                	 DATE     : '00000000',
+                	 TIME     : '000000',
+                	 DATETIME : '00000000000000',
+                	 BOOL     : 0,
+                	 UUID     : ''
+                     }
 
     @classmethod
     def isinstance(cls, value):

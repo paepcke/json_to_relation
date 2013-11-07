@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS InputState (
 CREATE TABLE IF NOT EXISTS State (
     state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT,
-    done BOOL,
+    done TINYINT,
     problem_id TEXT,
     student_answer VARCHAR(40),
     correct_map VARCHAR(40),
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS Account (
     username TEXT,
     name TEXT,
     mailing_address TEXT,
-    zipCode TINYTEXT,
+    zipcode TINYTEXT,
     country TINYTEXT,
     gender TINYTEXT,
     year_of_birth TINYINT,
@@ -132,9 +132,9 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('c281ba17_0277_400a_8858_1c1961aadb0f','2013110703261383823615','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/loginAjax.json');
+    ('d5724dfc_54d7_4246_b1ba_bf42c80a9a9c','2013110705101383829837','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/loginAjax.json');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,account_fk,load_info_fk) VALUES 
-    (null,'0ff68e8c_c838_4860_9935_c081a157d5d9','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/login_ajax','85.246.55.134',null,null,'2013-06-10T20:47:37.580071','emil.smith@gmail.com','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'c281ba17_0277_400a_8858_1c1961aadb0f');
+    (0,'ae965e14_bbc9_4bfd_bc1e_5d7a400717d4','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/login_ajax','85.246.55.134','','','2013-06-10T20:47:37.580071','emil.smith@gmail.com','0:00:00','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','','d5724dfc_54d7_4246_b1ba_bf42c80a9a9c');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS InputState (
 CREATE TABLE IF NOT EXISTS State (
     state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT,
-    done BOOL,
+    done TINYINT,
     problem_id TEXT,
     student_answer VARCHAR(40),
     correct_map VARCHAR(40),
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS Account (
     username TEXT,
     name TEXT,
     mailing_address TEXT,
-    zipCode TINYTEXT,
+    zipcode TINYTEXT,
     country TINYTEXT,
     gender TINYTEXT,
     year_of_birth TINYINT,
@@ -132,11 +132,11 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('ba2690aa_a637_4560_9445_d48dc6480bfe','2013110703261383823616','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/unicode.json');
-INSERT INTO Account (account_id,username,name,mailing_address,zipCode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) VALUES 
-    ('7472873a_f606_478e_8ce8_9dc9e0a293bb','Smith','Randy Smith','Luise-Fischer-Strasse 60612  80945 Munchhausen','80945','USA','m',1987,'m','',1,1,null,null,'rsmith@gmail.com',null);
+    ('cf4f3e32_5e5c_41b7_82dd_4770ce4ed2a9','2013110705101383829838','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/unicode.json');
+INSERT INTO Account (account_id,username,name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) VALUES 
+    ('028ff1d0_9472_477f_ab60_049754dd0037','Smith','Randy Smith','Luise-Fischer-Strasse 60612  80945 Munchhausen','80945','USA','m',1987,'m','',1,1,null,null,'rsmith@gmail.com',null);
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,account_fk,load_info_fk) VALUES 
-    (null,'09c62c31_012c_4305_9bac_d1634910e90b','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.72 Safari/537.36','server','/create_account','138.246.171.72',null,null,'2013-08-26T08:24:11.658341+00:00','','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'7472873a_f606_478e_8ce8_9dc9e0a293bb','ba2690aa_a637_4560_9445_d48dc6480bfe');
+    (0,'673d0de1_caab_444d_ac47_770a81d7e0f6','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.72 Safari/537.36','server','/create_account','138.246.171.72','','','2013-08-26T08:24:11.658341+00:00','','0:00:00','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','028ff1d0_9472_477f_ab60_049754dd0037','cf4f3e32_5e5c_41b7_82dd_4770ce4ed2a9');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

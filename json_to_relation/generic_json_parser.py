@@ -197,14 +197,14 @@ class GenericJSONParser(object):
         if tableName is None:
             tableName = self.jsonToRelationConverter.mainTableName
         
-        if value is None:
-            value = 'null'
-        
         # Assumes caller has called ensureColExistence() on the
         # JSONToRelation object; so the following won't have
         # a key failure (but check anyway):
         try:
             colSpec = self.jsonToRelationConverter.getSchemaHint(colName, tableName)
+            defaultVal = colSpec.getDefaultValue()
+            if value is None:
+                value = defaultVal
         except KeyError:
             self.logWarn("Unanticipated field name '%s' intended for table '%s' (%s)" %\
                          (colName, tableName, self.jsonToRelationConverter.makeFileCitation()))
@@ -226,17 +226,25 @@ class GenericJSONParser(object):
         # Adding a column beyond the current end of the row, but
         # not just by one position.
         # Make a list that spans the missing columns, and fill
-        # it with nulls; then concat that list with theRow:
-        fillList = ['null']*(targetPos - len(theRow))
-        fillList.append(value)
-
-        # Now ensure that we add all col names of columns for which we
-        # inserted nulls, plus the name of the column for which we now
-        # inserted a value (that's the '+1'):
-        for schemaPos in range(len(theRow), targetPos+1):            
-            colSpec = self.jsonToRelationConverter.getSchemaHintByPos(schemaPos, tableName)
-            colName = colSpec.getName()
+        # it with each column's default value; then concat that list with theRow:
+        fillList = []
+        # Special case: the first col of EdxTrackEvent is an
+        # auto-incrementing key, so we set it to zero so that
+        # MySQL will fill it in during load:
+        if len(theRow) == 0 and tableName == self.jsonToRelationConverter.mainTableName:
+            theRow.append(0)
+            defaultingColSpec = self.jsonToRelationConverter.getSchemaHintByPos(0, tableName)            
+            self.colNamesByTable[tableName].append(defaultingColSpec.getName())
+        for colPos in range(len(theRow), targetPos):
+            defaultingColSpec = self.jsonToRelationConverter.getSchemaHintByPos(colPos, tableName)
+            fillList.append(defaultingColSpec.getDefaultValue())
+            # Add that column's name to the INSERT col name list:
+            colName = defaultingColSpec.getName()
             self.colNamesByTable[tableName].append(colName)
+        #fillList = ['null']*(targetPos - len(theRow))
+        fillList.append(value)
+        # Add the new value's col name to the INSERT list:
+        self.colNamesByTable[tableName].append(colSpec.getName())        
         
         # Append the series of nulls and value of the new column
         # to the row we will return:

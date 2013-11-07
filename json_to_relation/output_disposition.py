@@ -276,7 +276,7 @@ class ColumnSpec(object):
     '''
     Housekeeping class. Each instance represents the name,
     position, and datatype of one column. These instances are
-    used to generate column name headers, Django models, and
+    used to generate column name headers, and
     SQL insert statements.
     '''
 
@@ -295,6 +295,9 @@ class ColumnSpec(object):
         self.colPos = jsonToRelationProcessor.getNextNewColPos()
         jsonToRelationProcessor.bumpNextNewColPos()
         
+    def getDefaultValue(self):
+        return ColDataType().defaultValues[self.colDataType]
+    
     def getName(self):
         '''
         Return column name

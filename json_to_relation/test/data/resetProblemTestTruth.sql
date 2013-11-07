@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS InputState (
 CREATE TABLE IF NOT EXISTS State (
     state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT,
-    done BOOL,
+    done TINYINT,
     problem_id TEXT,
     student_answer VARCHAR(40),
     correct_map VARCHAR(40),
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS Account (
     username TEXT,
     name TEXT,
     mailing_address TEXT,
-    zipCode TINYTEXT,
+    zipcode TINYTEXT,
     country TINYTEXT,
     gender TINYTEXT,
     year_of_birth TINYINT,
@@ -132,23 +132,23 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('a9f5dd1b_8e48_40b5_9d83_436f59bcb646','2013110703261383823616','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/resetProblemTest.json');
+    ('59e5d4b5_604b_431d_8546_ad1dc8523cca','2013110705101383829838','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/resetProblemTest.json');
 INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
-    ('5b922800_12f0_442d_85f4_9f03cf971d85','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','choice_2',null);
+    ('d3999322_60f5_4cc7_9e53_e8964288f778','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','choice_2',null);
 INSERT INTO CorrectMap (correct_map_id,answer_identifier,correctness,npoints,msg,hint,hintmode,queuestate) VALUES 
-    ('57930ed0_65f7_4f2a_9647_4873c94aa3d8','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','incorrect',null,'','',null,null);
+    ('170ecdc7_035f_4ba0_b93e_3a9ae07a02b3','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','incorrect',null,'','',null,null);
 INSERT INTO InputState (input_state_id,problem_id,state) VALUES 
-    ('9c097d8e_c17f_4208_b2cb_5afc8ccfea17','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1',null);
+    ('b237aa20_72e0_43a9_b169_bc4fcd5e5a4f','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1',null);
 INSERT INTO State (state_id,seed,done,problem_id,student_answer,correct_map,input_state) VALUES 
-    ('4eacca9f_6de2_400c_aa2f_6fdda56506d5',811,True,null,'5b922800_12f0_442d_85f4_9f03cf971d85','57930ed0_65f7_4f2a_9647_4873c94aa3d8','9c097d8e_c17f_4208_b2cb_5afc8ccfea17');
+    ('cc23d329_c841_4f3b_befb_a541f8ea33b5',811,True,null,'d3999322_60f5_4cc7_9e53_e8964288f778','170ecdc7_035f_4ba0_b93e_3a9ae07a02b3','b237aa20_72e0_43a9_b169_bc4fcd5e5a4f');
 INSERT INTO InputState (input_state_id,problem_id,state) VALUES 
-    ('18b41fa6_8928_442a_b674_12bc74cbdfdb','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1',null);
+    ('2229bef5_27ce_4fcd_970c_285c12a69a4f','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1',null);
 INSERT INTO State (state_id,seed,done,problem_id,student_answer,correct_map,input_state) VALUES 
-    ('57b9b710_d503_438d_9138_594ee4d29188',93,False,null,null,null,'18b41fa6_8928_442a_b674_12bc74cbdfdb');
+    ('7e65bbaa_ae2a_4314_b6c7_3389536d6acb',93,False,null,null,null,'2229bef5_27ce_4fcd_970c_285c12a69a4f');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,account_fk,load_info_fk) VALUES 
-    (null,'df074bad_5d3a_4720_b3b5_c6c838a31b22','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','reset_problem','24.43.226.3','x_module',null,'2013-06-12T21:54:33.936342','gloria','0:00:00',null,null,null,null,null,null,'i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'4eacca9f_6de2_400c_aa2f_6fdda56506d5',null,'a9f5dd1b_8e48_40b5_9d83_436f59bcb646'),
-    (null,'df074bad_5d3a_4720_b3b5_c6c838a31b22','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','reset_problem','24.43.226.3','x_module',null,'2013-06-12T21:54:33.936342','gloria','0:00:00',null,null,null,null,null,null,'i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'57b9b710_d503_438d_9138_594ee4d29188',null,'a9f5dd1b_8e48_40b5_9d83_436f59bcb646'),
-    (null,'df074bad_5d3a_4720_b3b5_c6c838a31b22','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','reset_problem','24.43.226.3','x_module',null,'2013-06-12T21:54:33.936342','gloria','0:00:00',null,null,null,null,null,null,'i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'57b9b710_d503_438d_9138_594ee4d29188',null,'a9f5dd1b_8e48_40b5_9d83_436f59bcb646');
+    (0,'5871e294_8c9a_4754_81f6_a55a6e136d83','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','reset_problem','24.43.226.3','x_module','','2013-06-12T21:54:33.936342','gloria','0:00:00','','','','',-1,-1,'i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','cc23d329_c841_4f3b_befb_a541f8ea33b5','','59e5d4b5_604b_431d_8546_ad1dc8523cca'),
+    (0,'5871e294_8c9a_4754_81f6_a55a6e136d83','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','reset_problem','24.43.226.3','x_module','','2013-06-12T21:54:33.936342','gloria','0:00:00','','','','',-1,-1,'i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','7e65bbaa_ae2a_4314_b6c7_3389536d6acb','','59e5d4b5_604b_431d_8546_ad1dc8523cca'),
+    (0,'5871e294_8c9a_4754_81f6_a55a6e136d83','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','reset_problem','24.43.226.3','x_module','','2013-06-12T21:54:33.936342','gloria','0:00:00','','','','',-1,-1,'i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','7e65bbaa_ae2a_4314_b6c7_3389536d6acb','','59e5d4b5_604b_431d_8546_ad1dc8523cca');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;
