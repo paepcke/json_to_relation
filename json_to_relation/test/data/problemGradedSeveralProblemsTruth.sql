@@ -1,15 +1,15 @@
 USE test;
 SET foreign_key_checks = 0;
-DROP TABLE IF EXISTS Event, Answer, InputState, CorrectMap, State, Account;
+DROP TABLE IF EXISTS EdxTrackEvent, Answer, InputState, CorrectMap, State, Account, LoadInfo;
 SET foreign_key_checks = 1;
 CREATE TABLE IF NOT EXISTS Answer (
-    answer_id VARCHAR(40) NOT NULL Primary Key,
+    answer_id VARCHAR(40) NOT NULL PRIMARY KEY,
     problem_id TEXT,
     answer TEXT,
     course_id TEXT
     );
 CREATE TABLE IF NOT EXISTS CorrectMap (
-    correct_map_id VARCHAR(40) NOT NULL Primary Key,
+    correct_map_id VARCHAR(40) NOT NULL PRIMARY KEY,
     answer_identifier TEXT,
     correctness TINYTEXT,
     npoints INT,
@@ -19,12 +19,12 @@ CREATE TABLE IF NOT EXISTS CorrectMap (
     queuestate TEXT
     );
 CREATE TABLE IF NOT EXISTS InputState (
-    input_state_id VARCHAR(40) NOT NULL Primary Key,
+    input_state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     problem_id TEXT,
     state TEXT
     );
 CREATE TABLE IF NOT EXISTS State (
-    state_id VARCHAR(40) NOT NULL Primary Key,
+    state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT,
     done BOOL,
     problem_id TEXT,
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS State (
     FOREIGN KEY(input_state) REFERENCES InputState(input_state_id)
     );
 CREATE TABLE IF NOT EXISTS Account (
-    account_id VARCHAR(40) NOT NULL Primary Key,
+    account_id VARCHAR(40) NOT NULL PRIMARY KEY,
     username TEXT,
     name TEXT,
     mailing_address TEXT,
@@ -53,7 +53,13 @@ CREATE TABLE IF NOT EXISTS Account (
     email TEXT,
     receive_emails TINYTEXT
     );
-CREATE TABLE IF NOT EXISTS Event (
+CREATE TABLE IF NOT EXISTS LoadInfo (
+    load_info_id INT NOT NULL PRIMARY KEY,
+    load_date_time DATETIME,
+    load_file TEXT
+    );
+CREATE TABLE IF NOT EXISTS EdxTrackEvent (
+    _id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
     event_id VARCHAR(40),
     agent TEXT,
     event_source TINYTEXT,
@@ -115,20 +121,24 @@ CREATE TABLE IF NOT EXISTS Event (
     answer_fk VARCHAR(40),
     state_fk VARCHAR(40),
     account_fk VARCHAR(40),
+    load_info_fk INT,
     FOREIGN KEY(correctMap_fk) REFERENCES CorrectMap(correct_map_id),
     FOREIGN KEY(answer_fk) REFERENCES Answer(answer_id),
     FOREIGN KEY(state_fk) REFERENCES State(state_id),
-    FOREIGN KEY(account_fk) REFERENCES Account(account_id)
+    FOREIGN KEY(account_fk) REFERENCES Account(account_id),
+    FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id)
     );
 SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
+INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
+    ('86381190_94bb_4b1c_aa0f_38d3a1aee00d','2013110703261383823616','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemGradedSeveralProblems.json');
 INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
-    ('29385e13_6273_47e6_ad35_571dcefb90b6','input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_2_1_choice_1','correct',null),
-    ('7de0dbe6_8595_4193_81bf_53721651862e','input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_3_1_choice_0','correct',null);
-INSERT INTO Event (event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk) VALUES 
-    ('436c55d3_7401_4341_8d36_622f7d2e6dea','browser','browser','problem_graded','203.81.72.81',null,'adf0f47a40c885298669b7b96ae52f02','2013-08-16T13:38:49.951627+00:00','YiYi','0:00:00',null,null,null,null,null,null,'input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_2_1_choice_1',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'29385e13_6273_47e6_ad35_571dcefb90b6'),
-    ('436c55d3_7401_4341_8d36_622f7d2e6dea','browser','browser','problem_graded','203.81.72.81',null,'adf0f47a40c885298669b7b96ae52f02','2013-08-16T13:38:49.951627+00:00','YiYi','0:00:00',null,null,null,null,null,null,'input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_3_1_choice_0',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'7de0dbe6_8595_4193_81bf_53721651862e');
+    ('7fc57cb1_9bbb_43e1_ba65_6703e6a10f24','input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_2_1_choice_1','correct',null),
+    ('f5c07676_bf12_4eb5_ab29_40c42f3191ff','input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_3_1_choice_0','correct',null);
+INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,account_fk,load_info_fk) VALUES 
+    (null,'4ce27e6e_fdae_4feb_9f7e_c8302d6af668','browser','browser','problem_graded','203.81.72.81',null,'adf0f47a40c885298669b7b96ae52f02','2013-08-16T13:38:49.951627+00:00','YiYi','0:00:00',null,null,null,null,null,null,'input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_2_1_choice_1',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'7fc57cb1_9bbb_43e1_ba65_6703e6a10f24',null,null,'86381190_94bb_4b1c_aa0f_38d3a1aee00d'),
+    (null,'4ce27e6e_fdae_4feb_9f7e_c8302d6af668','browser','browser','problem_graded','203.81.72.81',null,'adf0f47a40c885298669b7b96ae52f02','2013-08-16T13:38:49.951627+00:00','YiYi','0:00:00',null,null,null,null,null,null,'input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_3_1_choice_0',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'f5c07676_bf12_4eb5_ab29_40c42f3191ff',null,null,'86381190_94bb_4b1c_aa0f_38d3a1aee00d');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

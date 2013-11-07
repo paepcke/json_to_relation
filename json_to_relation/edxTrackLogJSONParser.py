@@ -9,6 +9,7 @@ import json
 import re
 import string
 import uuid
+from unidecode import unidecode
 
 from col_data_type import ColDataType
 from generic_json_parser import GenericJSONParser
@@ -240,7 +241,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaHintsMainTable['answer_fk'] = ColDataType.UUID
         self.schemaHintsMainTable['state_fk'] = ColDataType.UUID
         self.schemaHintsMainTable['account_fk'] = ColDataType.UUID
-        self.schemaHintsMainTable['load_info_fk'] = ColDataType.UUID
+        self.schemaHintsMainTable['load_info_fk'] = ColDataType.INT
 
         # Schema hints need to be a dict that maps column names to ColumnSpec 
         # instances. The dict we built so far only the the column types. Go through
@@ -328,16 +329,21 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaAccountTbl['email'] = ColDataType.TEXT
         self.schemaAccountTbl['receive_emails'] = ColDataType.TINYTEXT
 
-        # Schema for LoadInfo table:
-        self.schemaLoadInfoTbl = OrderedDict()
-        self.schemaLoadInfoTbl['load_id'] = ColDataType.INT
-        self.schemaLoadInfoTbl['load_date_time'] = ColDataType.DATETIME
-        self.schemaLoadInfoTbl['load_file'] = ColDataType.TEXT
-
         # Turn the SQL data types in the dict to column spec objects:
         for colName in self.schemaAccountTbl.keys():
             colType = self.schemaAccountTbl[colName]
             self.schemaAccountTbl[colName] = ColumnSpec(colName, colType, self.jsonToRelationConverter)
+
+        # Schema for LoadInfo table:
+        self.schemaLoadInfoTbl = OrderedDict()
+        self.schemaLoadInfoTbl['load_info_id'] = ColDataType.INT
+        self.schemaLoadInfoTbl['load_date_time'] = ColDataType.DATETIME
+        self.schemaLoadInfoTbl['load_file'] = ColDataType.TEXT
+
+        # Turn the SQL data types in the dict to column spec objects:
+        for colName in self.schemaLoadInfoTbl.keys():
+            colType = self.schemaLoadInfoTbl[colName]
+            self.schemaLoadInfoTbl[colName] = ColumnSpec(colName, colType, self.jsonToRelationConverter)
 
         # Dict<IP,Datetime>: record each IP's most recent
         # activity timestamp (heartbeat or any other event).
@@ -531,6 +537,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 try:
                     cleanJSONStr = self.makeJSONSafe(eventJSONStrOrDict)
                     event = json.loads(cleanJSONStr)
+                except ValueError:
+                    # Last ditch: event types like goto_seq, need backslashes removed:
+                    event = json.loads(re.sub(r'\\','',eventJSONStrOrDict))
                 except Exception as e1:                
                     row = self.rescueBadJSON(str(record), row=row)
                     raise ValueError('Bad JSON; saved in col badlyFormatted: event_type %s (%s)' % (eventType, `e1`))
@@ -779,7 +788,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             # Need to suppress foreign key checks, so that we
             # can DROP the tables:
             self.jsonToRelationConverter.pushString('SET foreign_key_checks = 0;\n')
-            self.jsonToRelationConverter.pushString('DROP TABLE IF EXISTS %s, Answer, InputState, CorrectMap, State, Account;\n' % self.mainTableName)
+            self.jsonToRelationConverter.pushString('DROP TABLE IF EXISTS %s, Answer, InputState, CorrectMap, State, Account, LoadInfo;\n' % self.mainTableName)
             self.jsonToRelationConverter.pushString('SET foreign_key_checks = 1;\n')        
 
         # Initialize col row arrays for each table. These
@@ -792,12 +801,14 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.colNamesByTable['InputState'] = []
         self.colNamesByTable['State'] = []
         self.colNamesByTable['Account'] = []
+        self.colNamesByTable['LoadInfo'] = []
 
         self.createAnswerTable()
         self.createCorrectMapTable()
         self.createInputStateTable()
         self.createStateTable()
-        self.createAccountTable()        
+        self.createAccountTable()
+        self.createLoadInfoTable()        
         self.createMainTable()
         
         # Several switches to speed up the bulk load:
@@ -3282,8 +3293,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         #return unsafeStr.replace("'", "\\'").replace('\n', "; ").replace('\r', "; ").replace(',', "\\,").replace('\\', '\\\\')
         if unsafeStr is None or not isinstance(unsafeStr, basestring):
             return None
-                 
-        return unsafeStr.replace('\n', "; ").replace('\r', "; ").replace('\\', '').replace("'", r"\'")
+        uniSafeStr = unidecode(unsafeStr)
+        return uniSafeStr.replace('\n', "; ").replace('\r', "; ").replace('\\', '').replace("'", r"\'")
     
     def makeJSONSafe(self, jsonStr):
         '''

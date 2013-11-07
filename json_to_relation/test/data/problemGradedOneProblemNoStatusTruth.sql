@@ -1,15 +1,15 @@
 USE test;
 SET foreign_key_checks = 0;
-DROP TABLE IF EXISTS Event, Answer, InputState, CorrectMap, State, Account;
+DROP TABLE IF EXISTS EdxTrackEvent, Answer, InputState, CorrectMap, State, Account, LoadInfo;
 SET foreign_key_checks = 1;
 CREATE TABLE IF NOT EXISTS Answer (
-    answer_id VARCHAR(40) NOT NULL Primary Key,
+    answer_id VARCHAR(40) NOT NULL PRIMARY KEY,
     problem_id TEXT,
     answer TEXT,
     course_id TEXT
     );
 CREATE TABLE IF NOT EXISTS CorrectMap (
-    correct_map_id VARCHAR(40) NOT NULL Primary Key,
+    correct_map_id VARCHAR(40) NOT NULL PRIMARY KEY,
     answer_identifier TEXT,
     correctness TINYTEXT,
     npoints INT,
@@ -19,12 +19,12 @@ CREATE TABLE IF NOT EXISTS CorrectMap (
     queuestate TEXT
     );
 CREATE TABLE IF NOT EXISTS InputState (
-    input_state_id VARCHAR(40) NOT NULL Primary Key,
+    input_state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     problem_id TEXT,
     state TEXT
     );
 CREATE TABLE IF NOT EXISTS State (
-    state_id VARCHAR(40) NOT NULL Primary Key,
+    state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT,
     done BOOL,
     problem_id TEXT,
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS State (
     FOREIGN KEY(input_state) REFERENCES InputState(input_state_id)
     );
 CREATE TABLE IF NOT EXISTS Account (
-    account_id VARCHAR(40) NOT NULL Primary Key,
+    account_id VARCHAR(40) NOT NULL PRIMARY KEY,
     username TEXT,
     name TEXT,
     mailing_address TEXT,
@@ -53,7 +53,13 @@ CREATE TABLE IF NOT EXISTS Account (
     email TEXT,
     receive_emails TINYTEXT
     );
-CREATE TABLE IF NOT EXISTS Event (
+CREATE TABLE IF NOT EXISTS LoadInfo (
+    load_info_id INT NOT NULL PRIMARY KEY,
+    load_date_time DATETIME,
+    load_file TEXT
+    );
+CREATE TABLE IF NOT EXISTS EdxTrackEvent (
+    _id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
     event_id VARCHAR(40),
     agent TEXT,
     event_source TINYTEXT,
@@ -115,18 +121,22 @@ CREATE TABLE IF NOT EXISTS Event (
     answer_fk VARCHAR(40),
     state_fk VARCHAR(40),
     account_fk VARCHAR(40),
+    load_info_fk INT,
     FOREIGN KEY(correctMap_fk) REFERENCES CorrectMap(correct_map_id),
     FOREIGN KEY(answer_fk) REFERENCES Answer(answer_id),
     FOREIGN KEY(state_fk) REFERENCES State(state_id),
-    FOREIGN KEY(account_fk) REFERENCES Account(account_id)
+    FOREIGN KEY(account_fk) REFERENCES Account(account_id),
+    FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id)
     );
 SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
+INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
+    ('1f457ecf_5cdb_4f8b_8d7d_5933e98eb337','2013110703261383823616','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemGradedOneProblemNoStatus.json');
 INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
-    ('6ddcc7e1_7148_47b0_bbee_e8d9c28ebbc9','input_i4x-Medicine-SciWrite-problem-c3266c76a7854d02b881250a49054ddb_2_1','incorrect','Medicine/SciWrite/Fall2013');
-INSERT INTO Event (event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk) VALUES 
-    ('432183b3_6aa8_4920_ac04_b39d7dac9adb','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.62 Safari/537.36','browser','problem_graded','218.26.181.230','https://class.stanford.edu/courses/Medicine/SciWrite/Fall2013/courseware/c38dc89a3b544d2e847f9fdd910794fa/61d07270ba924c00b00b9eb9e71efa4e/#','90e960f83297786884208b9fc3c67e7d','2013-10-03T11:07:09.872336+00:00','pala','0:00:00',null,null,'Medicine/SciWrite/Fall2013',null,null,null,'input_i4x-Medicine-SciWrite-problem-c3266c76a7854d02b881250a49054ddb_2_1',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'6ddcc7e1_7148_47b0_bbee_e8d9c28ebbc9');
+    ('769e3c0a_4391_4c2f_aade_993be9e2ce3e','input_i4x-Medicine-SciWrite-problem-c3266c76a7854d02b881250a49054ddb_2_1','incorrect','Medicine/SciWrite/Fall2013');
+INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,account_fk,load_info_fk) VALUES 
+    (null,'d8b10636_336f_4cae_9394_26ff71d85406','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.62 Safari/537.36','browser','problem_graded','218.26.181.230','https://class.stanford.edu/courses/Medicine/SciWrite/Fall2013/courseware/c38dc89a3b544d2e847f9fdd910794fa/61d07270ba924c00b00b9eb9e71efa4e/#','90e960f83297786884208b9fc3c67e7d','2013-10-03T11:07:09.872336+00:00','pala','0:00:00',null,null,'Medicine/SciWrite/Fall2013',null,null,null,'input_i4x-Medicine-SciWrite-problem-c3266c76a7854d02b881250a49054ddb_2_1',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'769e3c0a_4391_4c2f_aade_993be9e2ce3e',null,null,'1f457ecf_5cdb_4f8b_8d7d_5933e98eb337');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

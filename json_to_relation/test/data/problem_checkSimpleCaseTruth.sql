@@ -1,15 +1,15 @@
 USE test;
 SET foreign_key_checks = 0;
-DROP TABLE IF EXISTS Event, Answer, InputState, CorrectMap, State, Account;
+DROP TABLE IF EXISTS EdxTrackEvent, Answer, InputState, CorrectMap, State, Account, LoadInfo;
 SET foreign_key_checks = 1;
 CREATE TABLE IF NOT EXISTS Answer (
-    answer_id VARCHAR(40) NOT NULL Primary Key,
+    answer_id VARCHAR(40) NOT NULL PRIMARY KEY,
     problem_id TEXT,
     answer TEXT,
     course_id TEXT
     );
 CREATE TABLE IF NOT EXISTS CorrectMap (
-    correct_map_id VARCHAR(40) NOT NULL Primary Key,
+    correct_map_id VARCHAR(40) NOT NULL PRIMARY KEY,
     answer_identifier TEXT,
     correctness TINYTEXT,
     npoints INT,
@@ -19,12 +19,12 @@ CREATE TABLE IF NOT EXISTS CorrectMap (
     queuestate TEXT
     );
 CREATE TABLE IF NOT EXISTS InputState (
-    input_state_id VARCHAR(40) NOT NULL Primary Key,
+    input_state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     problem_id TEXT,
     state TEXT
     );
 CREATE TABLE IF NOT EXISTS State (
-    state_id VARCHAR(40) NOT NULL Primary Key,
+    state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT,
     done BOOL,
     problem_id TEXT,
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS State (
     FOREIGN KEY(input_state) REFERENCES InputState(input_state_id)
     );
 CREATE TABLE IF NOT EXISTS Account (
-    account_id VARCHAR(40) NOT NULL Primary Key,
+    account_id VARCHAR(40) NOT NULL PRIMARY KEY,
     username TEXT,
     name TEXT,
     mailing_address TEXT,
@@ -53,7 +53,13 @@ CREATE TABLE IF NOT EXISTS Account (
     email TEXT,
     receive_emails TINYTEXT
     );
-CREATE TABLE IF NOT EXISTS Event (
+CREATE TABLE IF NOT EXISTS LoadInfo (
+    load_info_id INT NOT NULL PRIMARY KEY,
+    load_date_time DATETIME,
+    load_file TEXT
+    );
+CREATE TABLE IF NOT EXISTS EdxTrackEvent (
+    _id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
     event_id VARCHAR(40),
     agent TEXT,
     event_source TINYTEXT,
@@ -115,20 +121,24 @@ CREATE TABLE IF NOT EXISTS Event (
     answer_fk VARCHAR(40),
     state_fk VARCHAR(40),
     account_fk VARCHAR(40),
+    load_info_fk INT,
     FOREIGN KEY(correctMap_fk) REFERENCES CorrectMap(correct_map_id),
     FOREIGN KEY(answer_fk) REFERENCES Answer(answer_id),
     FOREIGN KEY(state_fk) REFERENCES State(state_id),
-    FOREIGN KEY(account_fk) REFERENCES Account(account_id)
+    FOREIGN KEY(account_fk) REFERENCES Account(account_id),
+    FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id)
     );
 SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
+INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
+    ('642649d5_4802_4c48_93e3_8fb32d177397','2013110703261383823616','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problem_checkSimpleCase.json');
 INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
-    ('0e11ba5a_8746_4ab7_9d48_304e5e63ba16','input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_2_1','choice_2','Medicine/HRP258/Statistics_in_Medicine'),
-    ('0899045a_bb1a_46af_8e7e_f4bce4b99de0','input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_3_1','choice_2','Medicine/HRP258/Statistics_in_Medicine');
-INSERT INTO Event (event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk) VALUES 
-    ('83c7d8e3_bb5d_4dd8_a2c7_70de06f81ed5','Mozilla/5.0 (Windows NT 6.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36','browser','problem_check','66.172.116.216','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/de472d1448a74e639a41fa584c49b91e/ed52812e4f96445383bfc556d15cb902/','75a8c9042ba10156301728f61e487414','2013-08-04T06:27:13.660689+00:00','trobinspire','0:00:00',null,null,'Medicine/HRP258/Statistics_in_Medicine',null,null,null,'input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_2_1',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'0e11ba5a_8746_4ab7_9d48_304e5e63ba16'),
-    ('83c7d8e3_bb5d_4dd8_a2c7_70de06f81ed5','Mozilla/5.0 (Windows NT 6.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36','browser','problem_check','66.172.116.216','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/de472d1448a74e639a41fa584c49b91e/ed52812e4f96445383bfc556d15cb902/','75a8c9042ba10156301728f61e487414','2013-08-04T06:27:13.660689+00:00','trobinspire','0:00:00',null,null,'Medicine/HRP258/Statistics_in_Medicine',null,null,null,'input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_3_1',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'0899045a_bb1a_46af_8e7e_f4bce4b99de0');
+    ('58d02e7a_60d3_4276_8544_17f6d2b519f6','input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_2_1','choice_2','Medicine/HRP258/Statistics_in_Medicine'),
+    ('c66803c7_0f81_46ee_8283_7590dce3279d','input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_3_1','choice_2','Medicine/HRP258/Statistics_in_Medicine');
+INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,account_fk,load_info_fk) VALUES 
+    (null,'233d282b_10b0_4119_8a97_bf01b0259440','Mozilla/5.0 (Windows NT 6.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36','browser','problem_check','66.172.116.216','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/de472d1448a74e639a41fa584c49b91e/ed52812e4f96445383bfc556d15cb902/','75a8c9042ba10156301728f61e487414','2013-08-04T06:27:13.660689+00:00','trobinspire','0:00:00',null,null,'Medicine/HRP258/Statistics_in_Medicine',null,null,null,'input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_2_1',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'58d02e7a_60d3_4276_8544_17f6d2b519f6',null,null,'642649d5_4802_4c48_93e3_8fb32d177397'),
+    (null,'233d282b_10b0_4119_8a97_bf01b0259440','Mozilla/5.0 (Windows NT 6.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36','browser','problem_check','66.172.116.216','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/de472d1448a74e639a41fa584c49b91e/ed52812e4f96445383bfc556d15cb902/','75a8c9042ba10156301728f61e487414','2013-08-04T06:27:13.660689+00:00','trobinspire','0:00:00',null,null,'Medicine/HRP258/Statistics_in_Medicine',null,null,null,'input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_3_1',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'c66803c7_0f81_46ee_8283_7590dce3279d',null,null,'642649d5_4802_4c48_93e3_8fb32d177397');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;
