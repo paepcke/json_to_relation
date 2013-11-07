@@ -856,7 +856,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 else:
                     createStatement += "%s NOT NULL PRIMARY KEY,\n" % schemaDict[colname].getSQLDefSnippet()
             else:
-                createStatement += "%s,\n" % schemaDict[colname].getSQLDefSnippet()
+                createStatement += "%s NOT NULL,\n" % schemaDict[colname].getSQLDefSnippet()
         if foreignKeyColNames is not None:
             for foreignTableName in foreignKeyColNames.keys():
                 (localFldName, foreignKeyName) = foreignKeyColNames[foreignTableName]
