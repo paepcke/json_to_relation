@@ -18,6 +18,19 @@
 #TODO: testSaveAnswerInPath test case of test_edxJSON... not passing
 #TODO: In writeRow: check for duplicate col names in INSERT
 #TODO: Scramble UID, adding table UIDMap
+#TODO: 
+# ERROR 1048 (23000) at line 4491110 in file: './tracking.log-20131001.gz.2013-11-07T00_15_56.674230_9181.sql': Column 'state' cannot be null
+# ERROR 1048 (23000) at line 4491110 in file: './tracking.log-20131001.gz.2013-11-07T00_15_56.674230_9181.sql': Column 'state' cannot be null
+# ERROR 1048 (23000) at line 4491112 in file: './tracking.log-20131001.gz.2013-11-07T00_15_56.674230_9181.sql': Column 'done' cannot be null
+# ERROR 1048 (23000) at line 4491134 in file: './tracking.log-20131001.gz.2013-11-07T00_15_56.674230_9181.sql': Column 'hintmode' cannot be null
+# ERROR 1048 (23000) at line 4491138 in file: './tracking.log-20131001.gz.2013-11-07T00_15_56.674230_9181.sql': Column 'state' cannot be null
+# ERROR 1048 (23000) at line 4491140 in file: './tracking.log-20131001.gz.2013-11-07T00_15_56.674230_9181.sql': Column 'done' cannot be null
+# ERROR 1048 (23000) at line 4491304 in file: './tracking.log-20131001.gz.2013-11-07T00_15_56.674230_9181.sql': Column 'npoints' cannot be null
+# ERROR 1048 (23000) at line 4491308 in file: './tracking.log-20131001.gz.2013-11-07T00_15_56.674230_9181.sql': Column 'state' cannot be null
+# ERROR 1048 (23000) at line 4491310 in file: './tracking.log-20131001.gz.2013-11-07T00_15_56.674230_9181.sql': Column 'done' cannot be null
+# ERROR 1048 (23000) at line 4491774 in file: './tracking.log-20131001.gz.2013-11-07T00_15_56.674230_9181.sql': Column 'zipcode' cannot be null
+
+
 '''
 Created on Sep 14, 2013
 
