@@ -5,11 +5,12 @@ Created on Oct 2, 2013
 '''
 from collections import OrderedDict
 import datetime
+import hashlib
 import json
 import re
 import string
-import uuid
 from unidecode import unidecode
+import uuid
 
 from col_data_type import ColDataType
 from generic_json_parser import GenericJSONParser
@@ -34,7 +35,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     # Regex patterns for extracting fields from bad JSON:
     searchPatternDict = {}
     searchPatternDict['username'] = re.compile(r"""
-                                    username[^:]*       # The username key
+                                    username[^:]*       # The screen_name key
                                     [^"']*              # up to opening quote of the value 
                                     ["']                # opening quote of the value 
                                     ([^"']*)            # the value
@@ -128,7 +129,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # each line; Build the schema:
         
         # Fields common to every request:
-        self.commonFldNames = ['agent','event_source','event_type','ip','page','session','time','username', 'course_id']
+        self.commonFldNames = ['agent','event_source','event_type','ip','page','session','time','anon_screen_name', 'course_id']
 
         # A Country lookup facility:
         self.countryChecker = LocationManager()
@@ -144,7 +145,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaHintsMainTable['page'] = ColDataType.TEXT
         self.schemaHintsMainTable['session'] = ColDataType.TEXT
         self.schemaHintsMainTable['time'] = ColDataType.DATETIME
-        self.schemaHintsMainTable['username'] = ColDataType.TEXT
+        self.schemaHintsMainTable['anon_screen_name'] = ColDataType.TEXT
         self.schemaHintsMainTable['downtime_for'] = ColDataType.DATETIME
 
         # Students
@@ -240,7 +241,6 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaHintsMainTable['correctMap_fk'] = ColDataType.UUID
         self.schemaHintsMainTable['answer_fk'] = ColDataType.UUID
         self.schemaHintsMainTable['state_fk'] = ColDataType.UUID
-        self.schemaHintsMainTable['account_fk'] = ColDataType.UUID
         self.schemaHintsMainTable['load_info_fk'] = ColDataType.INT
 
         # Schema hints need to be a dict that maps column names to ColumnSpec 
@@ -313,8 +313,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # Schema for Account table:
         self.schemaAccountTbl = OrderedDict()
         self.schemaAccountTbl['account_id'] = ColDataType.UUID
-        self.schemaAccountTbl['username'] = ColDataType.TEXT
-        self.schemaAccountTbl['name'] = ColDataType.TEXT
+        self.schemaAccountTbl['screen_name'] = ColDataType.TEXT    # chosen screen name
+        self.schemaAccountTbl['name'] = ColDataType.TEXT        # actual name
+        self.schemaAccountTbl['anon_screen_name'] = ColDataType.TEXT
         self.schemaAccountTbl['mailing_address'] = ColDataType.TEXT
         self.schemaAccountTbl['zipcode'] = ColDataType.TINYTEXT      # Picked out from mailing_address
         self.schemaAccountTbl['country'] = ColDataType.TINYTEXT      # Picked out from mailing_address
@@ -322,8 +323,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaAccountTbl['year_of_birth'] = ColDataType.TINYINT
         self.schemaAccountTbl['level_of_education'] = ColDataType.TINYTEXT
         self.schemaAccountTbl['goals'] = ColDataType.TEXT
-        self.schemaAccountTbl['honor_code'] = ColDataType.BOOL
-        self.schemaAccountTbl['terms_of_service'] = ColDataType.BOOL
+        self.schemaAccountTbl['honor_code'] = ColDataType.TINYINT
+        self.schemaAccountTbl['terms_of_service'] = ColDataType.TINYINT
         self.schemaAccountTbl['course_id'] = ColDataType.TEXT
         self.schemaAccountTbl['enrollment_action'] = ColDataType.TINYTEXT
         self.schemaAccountTbl['email'] = ColDataType.TEXT
@@ -354,6 +355,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # to computer some on-the-fly aggregations:
         self.resultDict = {}
 
+        # Create databases if needed:
+        self.pushDBCreations()
+        
         # Create main and auxiliary tables if appropriate:
         self.pushTableCreations(replaceTables)
         
@@ -771,9 +775,16 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             return (targetTableName, ','.join(colNamesToSet), row)
         else:
             return (targetTableName, ','.join(self.colNamesByTable[targetTableName]), row)
+    
+    def pushDBCreations(self):
+        createStatement = "CREATE DATABASE IF NOT EXISTS %s;\n" % 'Edx'
+        self.jsonToRelationConverter.pushString(createStatement)
+        
+        createStatement = "CREATE DATABASE IF NOT EXISTS %s;\n" % 'EdxPrivate'
+        self.jsonToRelationConverter.pushString(createStatement)
         
         
-    def pushTableCreations(self, replaceTables):  # @NoSelf
+    def pushTableCreations(self, replaceTables):
         '''
         Pushes SQL statements to caller that create all tables, main and
         auxiliary. After these CREATE statements, 'START TRANSACTION;\n' is
@@ -788,7 +799,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             # Need to suppress foreign key checks, so that we
             # can DROP the tables:
             self.jsonToRelationConverter.pushString('SET foreign_key_checks = 0;\n')
-            self.jsonToRelationConverter.pushString('DROP TABLE IF EXISTS %s, Answer, InputState, CorrectMap, State, Account, LoadInfo;\n' % self.mainTableName)
+            self.jsonToRelationConverter.pushString('DROP TABLE IF EXISTS %s, Answer, InputState, CorrectMap, State, EdxPrivate.Account, LoadInfo;\n' % self.mainTableName)
             self.jsonToRelationConverter.pushString('SET foreign_key_checks = 1;\n')        
 
         # Initialize col row arrays for each table. These
@@ -860,7 +871,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         if foreignKeyColNames is not None:
             for foreignTableName in foreignKeyColNames.keys():
                 (localFldName, foreignKeyName) = foreignKeyColNames[foreignTableName]
-                createStatement += "    FOREIGN KEY(%s) REFERENCES %s(%s),\n" % (localFldName, foreignTableName, foreignKeyName) 
+                createStatement += "    FOREIGN KEY(%s) REFERENCES %s(%s) ON DELETE CASCADE,\n" % (localFldName, foreignTableName, foreignKeyName) 
                  
         # Cut away the comma and newline after the last column spec,
         # and add newline, closing paren, and semicolon:
@@ -900,7 +911,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.jsonToRelationConverter.pushString(createStatement)
 
     def createAccountTable(self):
-        createStatement = self.genOneCreateStatement('Account', 
+        createStatement = self.genOneCreateStatement('EdxPrivate.Account', 
                                                      self.schemaAccountTbl, 
                                                      primaryKeyName='account_id'
                                                      ) 
@@ -922,7 +933,6 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         foreignKeysDict['CorrectMap'] = ('correctMap_fk', 'correct_map_id')
         foreignKeysDict['Answer'] = ('answer_fk', 'answer_id')
         foreignKeysDict['State'] = ('state_fk', 'state_id')
-        foreignKeysDict['Account'] = ('account_fk', 'account_id')
         foreignKeysDict['LoadInfo'] = ('load_info_fk', 'load_info_id')
         createStatement = self.genOneCreateStatement(self.mainTableName, 
                                                      self.schemaHintsMainTable,
@@ -1117,20 +1127,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
 
-        # Go through all the top-level problem_check event fields first;
-        # we ignore non-existing fields.
-        success = event.get('success', None)
-        if success is not None:
-            self.setValInRow(row, 'success', success, self.mainTableName)
-        attempts = event.get('attempts', None)
-        if attempts is not None:
-            self.setValInRow(row, 'attempts', attempts, self.mainTableName)
-        seed = event.get('seed', None)
-        if seed is not None:
-            self.setValInRow(row, 'seed', seed)
-        problem_id = event.get('problem_id', None)
-        if seed is not None:
-            self.setValInRow(row, 'problem_id', problem_id, self.mainTableName)
+        # Go through all the top-level problem_check event fields first:
+        self.setValInRow(row, 'success', event.get('success', '')) 
+        self.setValInRow(row, 'attempts', event.get('attempts', -1))
+        self.setValInRow(row, 'problem_id', event.get('problem_id', ''))
 
         # correctMap field may consist of many correct maps.
         # Create an entry for each in the CorrectMap table,
@@ -1189,13 +1189,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 continue
 
             # Fill in one main table row.
-            self.setValInRow(row, 'correctMap_fk', correctMapFKey, self.mainTableName)
-            self.setValInRow(row, 'answer_fk', answerFKey, self.mainTableName)
+            self.setValInRow(row, 'correctMap_fk', correctMapFKey if correctMapFKey is not None else '')
+            self.setValInRow(row, 'answer_fk', answerFKey if answerFKey is not None else '')
             if answerFKey is not None:
                 # For convenience: enter the Answer's problem ID 
                 # in the main table's problemID field:
-                self.setValInRow(row, 'problem_id', answerToProblemMap[answerFKey])
-            self.setValInRow(row, 'state_fk', stateFKey, self.mainTableName)
+                self.setValInRow(row, 'problem_id', answerToProblemMap[answerFKey] if answerToProblemMap[answerFKey] is not None else '') 
+            self.setValInRow(row, 'state_fk', stateFKey if stateFKey is not None else '')
             rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
             indexToFKeys += 1
@@ -1290,13 +1290,26 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         for answerKey in correctMapsDict.keys():
             answer_id = answerKey
             oneCorrectMapDict = correctMapsDict[answerKey]
-            hint = oneCorrectMapDict.get('hint', None)
-            hintmode = oneCorrectMapDict.get('hintmode', None)
-            correctness = oneCorrectMapDict.get('correctness', None)
-            msg = oneCorrectMapDict.get('msg', None)
-            msg = self.makeInsertSafe(msg)
-            npoints = oneCorrectMapDict.get('npoints', None)
-            queuestate = oneCorrectMapDict.get('queuestate', None)
+            hint = oneCorrectMapDict.get('hint', '')
+            if hint is None:
+                hint = ''
+            hintmode = oneCorrectMapDict.get('hintmode', '')
+            if hintmode is None:
+                hintmode = ''
+            correctness = oneCorrectMapDict.get('correctness', '')
+            if correctness is None:
+                correctness = ''
+            msg = oneCorrectMapDict.get('msg', '')
+            if msg is None:
+                msg = ''
+            else:
+                msg = self.makeInsertSafe(msg)
+            npoints = oneCorrectMapDict.get('npoints', -1)
+            if npoints is None:
+                npoints = -1
+            queuestate = oneCorrectMapDict.get('queuestate', '')
+            if queuestate is None:
+                queuestate = ''
 
             # Unique key for the CorrectMap entry (and foreign
             # key for the Event table):
@@ -1401,9 +1414,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             (studentAnswersFKeys, answerToProblemMap) = self.pushAnswers(studentAnswersDict)  # @UnusedVariable
         else:
             studentAnswersFKeys = []
-        seed = stateDict.get('seed', None)
-        done = stateDict.get('done', None)
-        problemID = stateDict.get('problem_id', None)
+        seed = stateDict.get('seed', '')
+        done = stateDict.get('done', -1)
+        problemID = stateDict.get('problem_id', '')
         correctMapsDict = stateDict.get('correct_map', None)
         if correctMapsDict is not None:
             correctMapFKeys = self.pushCorrectMaps(correctMapsDict)
@@ -1439,7 +1452,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             if studentAnswerFKey is None and correctMapFKey is None and inputStateFKey is None:
                 generatedAllRows = True
                 continue
-
+            
+            studentAnswerFKey = studentAnswerFKey if studentAnswerFKey is not None else ''
+            correctMapFKey = correctMapFKey if correctMapFKey is not None else ''
+            inputStateFKey = inputStateFKey if inputStateFKey is not None else ''
             # Unique ID that ties all these related rows together:
             state_id = self.getUniqueID()
             stateFKeys.append(state_id)
@@ -1467,12 +1483,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             inputStateProbVal = inputStatesDict.get(problemID, None)
             if inputStateProbVal is not None:
                 # If prob value is an empty dict (as in example above),
-                # then make it null, else the value will show up as
+                # then make it an empty str, else the value will show up as
                 # {} in the VALUES part of the INSERT statements, and
                 # MySQL will get cranky:
                 try:
                     if len(inputStateProbVal) == 0:
-                        inputStateProbVal = 'null'
+                        inputStateProbVal = ''
                 except:
                     pass
                 inputStateKey = self.getUniqueID()
@@ -1494,12 +1510,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         accountFKey field. 
         @param accountDict:
         @type accountDict:
-        @return: array of keys created for account table (only 1)
-        @rtype: [String]
         '''
         accountDict['account_id'] = self.getUniqueID()
-        self.jsonToRelationConverter.pushToTable(self.resultTriplet(accountDict.values(), 'Account', self.schemaAccountTbl.keys()))
-        return [accountDict['account_id']]
+        self.jsonToRelationConverter.pushToTable(self.resultTriplet(accountDict.values(), 'EdxPrivate.Account', self.schemaAccountTbl.keys()))
+        return
         
     def pushLoadInfo(self, loadDict):
         loadDict['load_info_id'] = self.getUniqueID()
@@ -2091,12 +2105,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 continue
 
             # Fill in one main table row.
-            self.setValInRow(row, 'answer_fk', answerFKey)
+            self.setValInRow(row, 'answer_fk', answerFKey if answerFKey is not None else '')
             if answerFKey is not None:
                 # For convenience: enter the Answer's problem ID 
                 # in the main table's problemID field:
-                self.setValInRow(row, 'problem_id', answerToProblemMap[answerFKey])
-            self.setValInRow(row, 'state_fk', stateFKey)
+                self.setValInRow(row, 'problem_id', answerToProblemMap[answerFKey] if answerToProblemMap[answerFKey] is not None else '')
+            self.setValInRow(row, 'state_fk', stateFKey if stateFKey is not None else '')
             rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
             indexToFKeys += 1
@@ -2260,12 +2274,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 continue
 
             # Fill in one main table row.
-            self.setValInRow(row, 'answer_fk', answerFKey, self.mainTableName)
+            self.setValInRow(row, 'answer_fk', answerFKey if answerFKey is not None else '')
             if answerFKey is not None:
                 # For convenience: enter the Answer's problem ID 
                 # in the main table's problemID field:
-                self.setValInRow(row, 'problem_id', answerToProblemMap[answerFKey])
-            self.setValInRow(row, 'state_fk', stateFKey, self.mainTableName)
+                self.setValInRow(row, 'problem_id', answerToProblemMap[answerFKey] if answerToProblemMap[answerFKey] is not None else '')
+            self.setValInRow(row, 'state_fk', stateFKey if stateFKey is not None else '')
             rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
             indexToFKeys += 1
@@ -2303,8 +2317,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
 
-        problem_id = event.get('problem_id', None)
-        self.setValInRow(row, 'problem_id', problem_id)
+        self.setValInRow(row, 'problem_id',event.get('problem_id', '')) 
         
         oldStateDict = event.get('old_state', None)
         newStateDict = event.get('new_state', None)
@@ -2317,7 +2330,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             
         for stateFKey in stateFKeys:
             # Fill in one main table row.
-            self.setValInRow(row, 'state_fk', stateFKey, self.mainTableName)
+            self.setValInRow(row, 'state_fk', stateFKey if stateFKey is not None else '')
             rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
         return row
@@ -2334,34 +2347,16 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
 
-        problemID = event.get('problem', None)
-        if problemID is None:
-            self.logWarn("Track log line %s: missing problem ID in rescore-all-submissions or reset-all-attempts." %\
-                         (self.jsonToRelationConverter.makeFileCitation()))
-        if problemID is None:
+        courseID = event.get('course', '')
+        if len(courseID) == 0:
             self.logWarn("Track log line %s: missing course ID in rescore-all-submissions or reset-all-attempts." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
-        self.setValInRow(row, 'problem_id', problemID)
-        return row
-                
-        if event is None:
-            self.logWarn("Track log line %s: missing event info in show_transcript." %\
-                         (self.jsonToRelationConverter.makeFileCitation()))
-            return row
-
-        event = self.ensureDict(event) 
-        if event is None:
-            self.logWarn("Track log line %s: event is not a dict in handle resource event: '%s'" %\
-                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
-            return row
-
-        problemID = event.get('problem', None)
-        if problemID is None:
+        problemID = event.get('problem', '')
+        if len(problemID) == 0:
             self.logWarn("Track log line %s: missing problem ID in rescore-all-submissions or reset-all-attempts." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
-        if problemID is None:
-            self.logWarn("Track log line %s: missing course ID in rescore-all-submissions or reset-all-attempts." %\
-                         (self.jsonToRelationConverter.makeFileCitation()))
+        
+        self.setValInRow(row, 'course_id', courseID)
         self.setValInRow(row, 'problem_id', problemID)
         return row
                 
@@ -2375,18 +2370,23 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         event = self.ensureDict(event) 
         if event is None:
 
-            self.logWarn("Track log line %s: event is not a dict in delete-student-module-state event: '%s'" %\
+            self.logWarn("Track log line %s: event is not a dict in delete-student-module-state or rescore-student-submission event: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
 
-        problemID = event.get('problem', None)
-        studentID = event.get('student', None)
+        courseID  = event.get('course', '')
+        problemID = event.get('problem', '')
+        studentID = event.get('student', '')
+        if courseID is None:
+            self.logWarn("Track log line %s: missing course ID in delete-student-module-state or rescore-student-submission." %\
+                         (self.jsonToRelationConverter.makeFileCitation()))
         if problemID is None:
             self.logWarn("Track log line %s: missing problem ID in delete-student-module-state or rescore-student-submission." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
         if studentID is None:
             self.logWarn("Track log line %s: missing student ID in delete-student-module-state or rescore-student-submission." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
+        self.setValInRow(row, 'course_id', courseID)
         self.setValInRow(row, 'problem_id', problemID)
         self.setValInRow(row, 'student_id', studentID)
         return row        
@@ -2403,20 +2403,20 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
 
-        problemID = event.get('problem', None)
-        studentID = event.get('student', None)
-        instructorID = event.get('instructor_id', None)
-        attempts = event.get('old_attempts', None)
-        if problemID is None:
+        problemID = event.get('problem', '')
+        studentID = event.get('student', '')
+        instructorID = event.get('instructor_id', '')
+        attempts = event.get('old_attempts', -1)
+        if len(problemID) == 0:
             self.logWarn("Track log line %s: missing problem ID in reset-student-attempts." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
-        if studentID is None:
+        if len(studentID) == 0:
             self.logWarn("Track log line %s: missing student ID in reset-student-attempts." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
-        if instructorID is None:
+        if len(instructorID) == 0:
             self.logWarn("Track log line %s: missing instrucotrIDin reset-student-attempts." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
-        if attempts is None:
+        if attempts < 0:
             self.logWarn("Track log line %s: missing attempts field in reset-student-attempts." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
             
@@ -2499,14 +2499,14 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
 
-        username  = event.get('username', None)
+        screen_name  = event.get('username', None)
 
-        if username is None:
-            self.logWarn("Track log line %s: missing username in one of remove-forum-admin, add-forum-admin, " +\
+        if screen_name is None:
+            self.logWarn("Track log line %s: missing screen_name in one of remove-forum-admin, add-forum-admin, " +\
                          "remove-forum-mod, add-forum-mod, remove-forum-community-TA, or add-forum-community-TA." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
             
-        self.setValInRow(row, 'username', username)        
+        self.setValInRow(row, 'screen_name', self.hashGeneral(screen_name))        
         return row        
 
     def handlePsychometricsHistogramGen(self, record, row, event):
@@ -2535,7 +2535,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
            {"event_name": "beta-tester", 
             "user": "smith", 
             "event": "add"}
-        Note that the 'user' is different from the username. The latter triggered
+        Note that the 'user' is different from the screen_name. The latter triggered
         the event. User is the group member being talked about. For clarity,
         'user' is called 'group_user', and 'event' is called 'group_event' in the
         main table.
@@ -2622,9 +2622,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # dict as expected by pushAccountInfo():
         accountDict = OrderedDict()
         accountDict['account_id'] = None # filled in by pushAccountInfo()
-        accountDict['username'] = postDict.get('username', None)
-        accountDict['name'] = postDict.get('name', None)
-        accountDict['mailing_address'] = postDict.get('mailing_address', None)
+        userScreenName = postDict.get('username', '')
+        accountDict['screen_name'] = userScreenName
+        accountDict['name'] = postDict.get('name', '')
+        accountDict['anon_screen_name'] = self.hashGeneral(userScreenName)
+        accountDict['mailing_address'] = postDict.get('mailing_address', '')
         # Mailing addresses are enclosed in brackets, making them 
         # an array. Pull the addr string out:
         mailAddr = accountDict['mailing_address']
@@ -2632,23 +2634,23 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             mailAddr = mailAddr[0]
             accountDict = self.getZipAndCountryFromMailAddr(mailAddr, accountDict)
         else:
-            accountDict['zipcode'] = None
-            accountDict['country'] = None
+            accountDict['zipcode'] = ''
+            accountDict['country'] = ''
             
         # Make sure that zip code is null unless address is USA:
         if accountDict['country'] != 'USA':
-            accountDict['zipcode'] = None
+            accountDict['zipcode'] = ''
             
-        accountDict['gender'] = postDict.get('gender', None)
-        accountDict['year_of_birth'] = postDict.get('year_of_birth', None)
-        accountDict['level_of_education'] = postDict.get('level_of_education', None)
-        accountDict['goals'] = postDict.get('goals', None)
-        accountDict['honor_code'] = postDict.get('honor_code', None)
-        accountDict['terms_of_service'] = postDict.get('terms_of_service', None)
-        accountDict['course_id'] = postDict.get('course_id', None)
-        accountDict['enrollment_action'] = postDict.get('enrollment', None)
-        accountDict['email'] = postDict.get('email', None) 
-        accountDict['receive_emails'] = postDict.get('receive_emails', None) 
+        accountDict['gender'] = postDict.get('gender', '')
+        accountDict['year_of_birth'] = postDict.get('year_of_birth', -1)
+        accountDict['level_of_education'] = postDict.get('level_of_education', '')
+        accountDict['goals'] = postDict.get('goals', '')
+        accountDict['honor_code'] = postDict.get('honor_code', -1)
+        accountDict['terms_of_service'] = postDict.get('terms_of_service', -1)
+        accountDict['course_id'] = postDict.get('course_id', '')
+        accountDict['enrollment_action'] = postDict.get('enrollment', '')
+        accountDict['email'] = postDict.get('email', '') 
+        accountDict['receive_emails'] = postDict.get('receive_emails', '') 
 
         # Some values in create_account are arrays. Replace those
         # values' entries in accountDict with the arrays' first element:
@@ -2676,20 +2678,19 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
         # Escape single quotes and CR/LFs in the various fields, so that MySQL won't throw up.
         # Also replace newlines with ", ":
-        if isinstance(accountDict.get('goals', None), basestring):
+        if len(accountDict['goals']) > 0:
             accountDict['goals'] = self.makeInsertSafe(accountDict['goals'])
-        if isinstance(accountDict.get('username', None), basestring):
-            accountDict['username'] = self.makeInsertSafe(accountDict['username'])
-        if isinstance(accountDict.get('name', None), basestring):
+        if len(accountDict['screen_name']) > 0:            
+            accountDict['screen_name'] = self.makeInsertSafe(accountDict['screen_name'])
+        if len(accountDict['name']) > 0:                        
             accountDict['name'] = self.makeInsertSafe(accountDict['name'])
-        if isinstance(accountDict.get('mailing_address', None), basestring):
+        if len(accountDict['mailing_address']) > 0:                                    
             accountDict['mailing_address'] = self.makeInsertSafe(accountDict['mailing_address'])
         
         # Get the (only) Account table foreign key.
         # Returned in an array for conformance with the
         # other push<TableName>Info()
-        accountKeyArray = self.pushAccountInfo(accountDict)
-        self.setValInRow(row, 'account_fk', accountKeyArray[0])
+        self.pushAccountInfo(accountDict)
                 
         return row
 
@@ -2776,13 +2777,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
         course_id = accountDict.get('course', None)
         receive_emails = accountDict.get('receive_emails', None)
-        username = record.get('username', None)
+        screen_name = record.get('username', None)
 
         # Get the event fields and put them in their place:
         # dict as expected by pushAccountInfo():
         accountDict = OrderedDict()
         accountDict['account_id'] = None # filled in by pushAccountInfo()
-        accountDict['username'] = username
+        accountDict['anon_screen_name'] = self.hashGeneral(screen_name)
         accountDict['name'] = None
         accountDict['mailing_address'] = None
         
@@ -2807,12 +2808,6 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         accountDict['email'] = None
         accountDict['receive_emails'] = receive_emails
 
-        # Get the (only) Account table foreign key.
-        # Returned in an array for conformance with the
-        # other push<TableName>Info()
-        accountKeyArray = self.pushAccountInfo(accountDict)
-        self.setValInRow(row, 'account_fk', accountKeyArray[0])
-                
         return row
         
 
@@ -2984,9 +2979,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @type event:
         '''
 
-        student_file = eventDict.get('student_file', None)
-        student_answer = eventDict.get('student_answer', None)
-        can_upload_file = eventDict.get('can_upload_files', None)
+        student_file = eventDict.get('student_file', [''])
+        student_answer = eventDict.get('student_answer', [''])
+        can_upload_file = eventDict.get('can_upload_files', [''])
 
         # All three values are arrays. Turn them each into a semicolon-
         # separated string:
@@ -2995,7 +2990,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         except TypeError:
             self.logWarn("Track log line %s: student_file field provided in save_answer event contains a non-string: '%s'" %\
              (self.jsonToRelationConverter.makeFileCitation(), str(eventDict)))
-            student_file = None
+            student_file = ''
         self.setValInRow(row, 'student_file', student_file)
 
         try:
@@ -3005,7 +3000,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         except TypeError:
             self.logWarn("Track log line %s: student_answer field provided in save_answer event contains a non-string: '%s'" %\
              (self.jsonToRelationConverter.makeFileCitation(), str(eventDict)))
-            student_answer = None
+            student_answer = ''
         self.setValInRow(row, 'long_answer', student_answer)
             
         try:
@@ -3096,14 +3091,14 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # We get remember here, but don't carry it to the relational world:
         remember = postDict.get('remember', None)  # @UnusedVariable
         if email is not None:
-            # Stick email into the username field. But flatten
+            # Stick email into the screen_name field. But flatten
             # the array of email addresses to a string (I've only
             # seen single-element arrays anyway):
             try:
                 email = '; '.join(email)
             except TypeError:
                 pass
-            self.setValInRow(row, 'username', email)
+            self.setValInRow(row, 'anon_screen_name', self.hashGeneral(email))
         return row
         
     def handleBadJSON(self, row, offendingText):
@@ -3160,31 +3155,31 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                  None if course ID could not be obtained.
         @rtype: {(String,String) | None} 
         '''
-        course_id = None
+        course_id = ''
         eventSource = event.get('event_source', None)
         if eventSource is None:
-            return (None,None)
+            return ('','')
         if eventSource == 'server':
             # get course_id from event type
             eventType = event.get('event_type', None)
             if eventType is None:
-                return(None,None)
+                return('','')
             if eventType == u'/accounts/login':
                 try:
                     post = json.loads(str(event.get('event', None)))
                 except:
-                    return(None,None)
+                    return('','')
                 if post is not None:
                     getEntry = post.get('GET', None)
                     if getEntry is not None:
                         try:
-                            fullCourseName = getEntry.get('next', None)[0]
+                            fullCourseName = getEntry.get('next', [''])[0]
                         except:
-                            return(None,None)
+                            return('','')
                     else:
-                        return(None,None)
+                        return('','')
                 else:
-                    return(None,None)
+                    return('','')
                 
             elif eventType.startswith('/courses'):
                 courseID = self.extractShortCourseID(eventType)
@@ -3193,24 +3188,24 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             elif eventType.find('problem_') > -1:
                 event = event.get('event', None)
                 if event is None:
-                    return(None,None)
+                    return('','')
                 courseID = self.extractCourseIDFromProblemXEvent(event)
                 return(courseID, courseID)
             else:
-                fullCourseName = event.get('event_type', None)
+                fullCourseName = event.get('event_type', '')
         else:
-            fullCourseName = event.get('page', None)
-        if fullCourseName is not None:
+            fullCourseName = event.get('page', '')
+        if len(fullCourseName) > 0:
             course_id = self.extractShortCourseID(fullCourseName)
-        if course_id is None:
-            fullCourseName = None
+        if len(course_id) == 0:
+            fullCourseName = ''
         return (fullCourseName, course_id)
         
     def extractShortCourseID(self, fullCourseStr):
         if fullCourseStr is None:
-            return None
+            return ''
         courseNameFrags = fullCourseStr.split('/')
-        course_id = None
+        course_id = ''
         if 'courses' in courseNameFrags:
             i = courseNameFrags.index('courses')
             course_id = "/".join(map(str, courseNameFrags[i+1:i+4]))
@@ -3294,10 +3289,17 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @rtype: String
         '''
         #return unsafeStr.replace("'", "\\'").replace('\n', "; ").replace('\r', "; ").replace(',', "\\,").replace('\\', '\\\\')
-        if unsafeStr is None or not isinstance(unsafeStr, basestring):
-            return None
-        uniSafeStr = unidecode(unicode(unsafeStr))
-        return uniSafeStr.replace('\n', "; ").replace('\r', "; ").replace('\\', '').replace("'", r"\'")
+        if unsafeStr is None or not isinstance(unsafeStr, basestring) or len(unsafeStr) == 0:
+            return ''
+        # Check for chars > 128 (illegal for standard ASCII):
+        for oneChar in unsafeStr:
+            if ord(oneChar) > 128:
+                # unidecode() replaces unicode with approximations. 
+                # I tried all sorts of escapes, and nothing worked
+                # for all cases, except this:
+                unsafeStr = unidecode(unicode(unsafeStr))
+                break
+        return unsafeStr.replace('\n', "; ").replace('\r', "; ").replace('\\', '').replace("'", r"\'")
     
     def makeJSONSafe(self, jsonStr):
         '''
@@ -3333,7 +3335,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @param badJSONStr:
         @type badJSONStr:
         '''
-        username = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['username'], badJSONStr)
+        screen_name = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['username'], badJSONStr)
         #host = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['host'], badJSONStr)
         session = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['session'], badJSONStr)
         event_source = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['event_source'], badJSONStr)        
@@ -3342,7 +3344,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         ip = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['ip'], badJSONStr)                
         event = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['event'], badJSONStr)                
         
-        self.setValInRow(row, 'username', username)
+        self.setValInRow(row, 'anon_screen_name', self.hashGeneral(screen_name))
         #self.setValInRow(row, 'host', host)
         self.setValInRow(row, 'session', session)
         self.setValInRow(row, 'event_source', event_source)
@@ -3371,15 +3373,15 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             if len(zipCodeMatch) > 0:
                 accountDict['zipcode'] = zipCodeMatch[-1]
             else:
-                accountDict['zipcode'] = None
+                accountDict['zipcode'] = ''
                 
             # See whether the address includes a country:
             # Last ditch: if we think we found a zip code, 
             # start out thinking US for the country:
-            if accountDict['zipcode'] is not None:
+            if len(accountDict['zipcode']) > 0:
                 accountDict['country'] = 'USA'
             else:
-                accountDict['country'] = None
+                accountDict['country'] = ''
             # Our zip code might be a different number,
             # so do look for an explicit country:
             splitMailAddr = re.split(r'\W+', mailAddr)
@@ -3427,3 +3429,15 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 accountDict['zipcode'] = None
                 
             return accountDict
+
+    def hashGeneral(self, username):
+        '''
+        Returns a ripemd160 40 char hash of the given name. 
+        @param username: name to be hashed
+        @type username: String
+        @return: hashed equivalent. Calling this function multiple times returns the same string
+        @rtype: String
+        '''
+        #return hashlib.sha224(username).hexdigest()''
+        return hashlib.new('ripemd160', 'cathym').hexdigest()
+        

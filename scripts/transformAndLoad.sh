@@ -15,7 +15,7 @@
 # Then indexes selected fields.
 # Log of the MySQL load will be in ~dataman/Data/Edx/tracking/SQL: loadLog.log
 
-read -s -p "Dataman's MySQL Password: " password
+read -s -p "Root's MySQL Password: " password
 echo
 cd /home/dataman/Data/EdX/tracking/SQL
 pushd /home/dataman/Code/json_to_relation/; 
@@ -24,9 +24,9 @@ time parallel --gnu --progress scripts/json2sql.py /home/dataman/Data/EdX/tracki
 echo "TransformAndLoad transform done: `date`" >> /tmp/transformAndLoad.txt
 popd; 
 echo "TransformAndLoad start load: `date`" >> /tmp/transformAndLoad.txt
-time find . -name '*.sql' | awk '{ print "source",$0 }' | mysql -f --batch -p$password > loadLog.log 2>&1
+time find . -name '*.sql' | awk '{ print "source",$0 }' | mysql -f --batch -u root -p$password > loadLog.log 2>&1
 echo "TransformAndLoad done load: `date`" >> /tmp/transformAndLoad.txt
 
 echo "TransformAndLoad start indexing: `date`" >> /tmp/transformAndLoad.txt
-mysql < edxCreateIndexes.sql
+mysql -u root -p$password < edxCreateIndexes.sql
 echo "TransformAndLoad done indexing: `date`" >> /tmp/transformAndLoad.txt

@@ -1,6 +1,8 @@
+CREATE DATABASE IF NOT EXISTS Edx;
+CREATE DATABASE IF NOT EXISTS EdxPrivate;
 USE test;
 SET foreign_key_checks = 0;
-DROP TABLE IF EXISTS EdxTrackEvent, Answer, InputState, CorrectMap, State, Account, LoadInfo;
+DROP TABLE IF EXISTS EdxTrackEvent, Answer, InputState, CorrectMap, State, EdxPrivate.Account, LoadInfo;
 SET foreign_key_checks = 1;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(40) NOT NULL PRIMARY KEY,
@@ -31,14 +33,15 @@ CREATE TABLE IF NOT EXISTS State (
     student_answer VARCHAR(40) NOT NULL,
     correct_map VARCHAR(40) NOT NULL,
     input_state VARCHAR(40) NOT NULL,
-    FOREIGN KEY(student_answer) REFERENCES Answer(answer_id),
-    FOREIGN KEY(correct_map) REFERENCES CorrectMap(correct_map_id),
-    FOREIGN KEY(input_state) REFERENCES InputState(input_state_id)
+    FOREIGN KEY(student_answer) REFERENCES Answer(answer_id) ON DELETE CASCADE,
+    FOREIGN KEY(correct_map) REFERENCES CorrectMap(correct_map_id) ON DELETE CASCADE,
+    FOREIGN KEY(input_state) REFERENCES InputState(input_state_id) ON DELETE CASCADE
     );
-CREATE TABLE IF NOT EXISTS Account (
+CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     account_id VARCHAR(40) NOT NULL PRIMARY KEY,
-    username TEXT NOT NULL,
+    screen_name TEXT NOT NULL,
     name TEXT NOT NULL,
+    anon_screen_name TEXT NOT NULL,
     mailing_address TEXT NOT NULL,
     zipcode TINYTEXT NOT NULL,
     country TINYTEXT NOT NULL,
@@ -46,8 +49,8 @@ CREATE TABLE IF NOT EXISTS Account (
     year_of_birth TINYINT NOT NULL,
     level_of_education TINYTEXT NOT NULL,
     goals TEXT NOT NULL,
-    honor_code BOOL NOT NULL,
-    terms_of_service BOOL NOT NULL,
+    honor_code TINYINT NOT NULL,
+    terms_of_service TINYINT NOT NULL,
     course_id TEXT NOT NULL,
     enrollment_action TINYTEXT NOT NULL,
     email TEXT NOT NULL,
@@ -68,7 +71,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     page TEXT NOT NULL,
     session TEXT NOT NULL,
     time DATETIME NOT NULL,
-    username TEXT NOT NULL,
+    anon_screen_name TEXT NOT NULL,
     downtime_for DATETIME NOT NULL,
     student_id TEXT NOT NULL,
     instructor_id TEXT NOT NULL,
@@ -120,21 +123,19 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     correctMap_fk VARCHAR(40) NOT NULL,
     answer_fk VARCHAR(40) NOT NULL,
     state_fk VARCHAR(40) NOT NULL,
-    account_fk VARCHAR(40) NOT NULL,
     load_info_fk INT NOT NULL,
-    FOREIGN KEY(correctMap_fk) REFERENCES CorrectMap(correct_map_id),
-    FOREIGN KEY(answer_fk) REFERENCES Answer(answer_id),
-    FOREIGN KEY(state_fk) REFERENCES State(state_id),
-    FOREIGN KEY(account_fk) REFERENCES Account(account_id),
-    FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id)
+    FOREIGN KEY(correctMap_fk) REFERENCES CorrectMap(correct_map_id) ON DELETE CASCADE,
+    FOREIGN KEY(answer_fk) REFERENCES Answer(answer_id) ON DELETE CASCADE,
+    FOREIGN KEY(state_fk) REFERENCES State(state_id) ON DELETE CASCADE,
+    FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id) ON DELETE CASCADE
     );
 SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('d51a951d_dd84_422d_ae9e_5db17e061b87','2013110706481383835702','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/fullscreen.json');
-INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,account_fk,load_info_fk) VALUES 
-    (0,'d2b66b51_7147_4ac8_8d73_419110b63844','Mozilla/5.0 (Linux; Android 4.0.3; ADR6425LVW Build/IML74K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.90 Mobile Safari/537.36','browser','fullscreen','70.197.74.222','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/495757ee7b25401599b1ef0495b068e4/4fe1ef4953674903b88a0c9bf3445791/','667e6f9a605483c38ddd6f4aca66d0c1','2013-06-26T07:07:44.303514+00:00','smith','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'i4x-Medicine-HRP258-videoalpha-cb6076d965824dbcb6a3a4aa8c7a03af','Y9EC8Ql3-3k','0','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','','d51a951d_dd84_422d_ae9e_5db17e061b87');
+    ('8d73a91f_d1fd_4925_bc3f_bcfd57b991f5','2013110804531383915230','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/fullscreen.json');
+INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
+    (0,'e0c527e5_6923_4412_ae8f_7b0aaf695fa6','Mozilla/5.0 (Linux; Android 4.0.3; ADR6425LVW Build/IML74K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.90 Mobile Safari/537.36','browser','fullscreen','70.197.74.222','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/495757ee7b25401599b1ef0495b068e4/4fe1ef4953674903b88a0c9bf3445791/','667e6f9a605483c38ddd6f4aca66d0c1','2013-06-26T07:07:44.303514+00:00','','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'i4x-Medicine-HRP258-videoalpha-cb6076d965824dbcb6a3a4aa8c7a03af','Y9EC8Ql3-3k','0','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','8d73a91f_d1fd_4925_bc3f_bcfd57b991f5');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

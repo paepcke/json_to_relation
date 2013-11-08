@@ -1,6 +1,8 @@
+CREATE DATABASE IF NOT EXISTS Edx;
+CREATE DATABASE IF NOT EXISTS EdxPrivate;
 USE test;
 SET foreign_key_checks = 0;
-DROP TABLE IF EXISTS EdxTrackEvent, Answer, InputState, CorrectMap, State, Account, LoadInfo;
+DROP TABLE IF EXISTS EdxTrackEvent, Answer, InputState, CorrectMap, State, EdxPrivate.Account, LoadInfo;
 SET foreign_key_checks = 1;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(40) NOT NULL PRIMARY KEY,
@@ -31,14 +33,15 @@ CREATE TABLE IF NOT EXISTS State (
     student_answer VARCHAR(40) NOT NULL,
     correct_map VARCHAR(40) NOT NULL,
     input_state VARCHAR(40) NOT NULL,
-    FOREIGN KEY(student_answer) REFERENCES Answer(answer_id),
-    FOREIGN KEY(correct_map) REFERENCES CorrectMap(correct_map_id),
-    FOREIGN KEY(input_state) REFERENCES InputState(input_state_id)
+    FOREIGN KEY(student_answer) REFERENCES Answer(answer_id) ON DELETE CASCADE,
+    FOREIGN KEY(correct_map) REFERENCES CorrectMap(correct_map_id) ON DELETE CASCADE,
+    FOREIGN KEY(input_state) REFERENCES InputState(input_state_id) ON DELETE CASCADE
     );
-CREATE TABLE IF NOT EXISTS Account (
+CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     account_id VARCHAR(40) NOT NULL PRIMARY KEY,
-    username TEXT NOT NULL,
+    screen_name TEXT NOT NULL,
     name TEXT NOT NULL,
+    anon_screen_name TEXT NOT NULL,
     mailing_address TEXT NOT NULL,
     zipcode TINYTEXT NOT NULL,
     country TINYTEXT NOT NULL,
@@ -46,8 +49,8 @@ CREATE TABLE IF NOT EXISTS Account (
     year_of_birth TINYINT NOT NULL,
     level_of_education TINYTEXT NOT NULL,
     goals TEXT NOT NULL,
-    honor_code BOOL NOT NULL,
-    terms_of_service BOOL NOT NULL,
+    honor_code TINYINT NOT NULL,
+    terms_of_service TINYINT NOT NULL,
     course_id TEXT NOT NULL,
     enrollment_action TINYTEXT NOT NULL,
     email TEXT NOT NULL,
@@ -68,7 +71,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     page TEXT NOT NULL,
     session TEXT NOT NULL,
     time DATETIME NOT NULL,
-    username TEXT NOT NULL,
+    anon_screen_name TEXT NOT NULL,
     downtime_for DATETIME NOT NULL,
     student_id TEXT NOT NULL,
     instructor_id TEXT NOT NULL,
@@ -120,23 +123,21 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     correctMap_fk VARCHAR(40) NOT NULL,
     answer_fk VARCHAR(40) NOT NULL,
     state_fk VARCHAR(40) NOT NULL,
-    account_fk VARCHAR(40) NOT NULL,
     load_info_fk INT NOT NULL,
-    FOREIGN KEY(correctMap_fk) REFERENCES CorrectMap(correct_map_id),
-    FOREIGN KEY(answer_fk) REFERENCES Answer(answer_id),
-    FOREIGN KEY(state_fk) REFERENCES State(state_id),
-    FOREIGN KEY(account_fk) REFERENCES Account(account_id),
-    FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id)
+    FOREIGN KEY(correctMap_fk) REFERENCES CorrectMap(correct_map_id) ON DELETE CASCADE,
+    FOREIGN KEY(answer_fk) REFERENCES Answer(answer_id) ON DELETE CASCADE,
+    FOREIGN KEY(state_fk) REFERENCES State(state_id) ON DELETE CASCADE,
+    FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id) ON DELETE CASCADE
     );
 SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('bd42d55c_7121_4171_adc2_8e911a1892e7','2013110706481383835702','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/createAccountNearCountryMiss.json');
-INSERT INTO Account (account_id,username,name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) VALUES 
-    ('f3be1b2b_cd0c_4501_bed0_2a5a53ec1ded','luisX!V','Roy Luigi Cannon','Live St 21453, United Emirates Consulate','21453','USA','f',1986,'p','flexibility, cost, \'glory\', and course of study',1,1,'Medicine/HRP258/Statistics_in_Medicine',null,'marykatherine.brown@gmail.com',null);
-INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,account_fk,load_info_fk) VALUES 
-    (0,'9e79868d_d678_434d_ba70_8b87a29d3d76','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/create_account','192.35.46.1','','','2013-06-10T14:38:48.529921','','0:00:00','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','f3be1b2b_cd0c_4501_bed0_2a5a53ec1ded','bd42d55c_7121_4171_adc2_8e911a1892e7');
+    ('0c072833_6933_430b_89ad_979c879466e2','2013110804531383915230','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/createAccountNearCountryMiss.json');
+INSERT INTO EdxPrivate.Account (account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) VALUES 
+    ('2bc2a7ca_8701_4825_a84c_c8cacdddf6bb','luisX!V','Roy Luigi Cannon','b328bfbc9a5846f98a8edbd6107d52f4b94c5653','Live St 21453, United Emirates Consulate','','','f',1986,'p','flexibility, cost, \'glory\', and course of study',1,1,'Medicine/HRP258/Statistics_in_Medicine','','marykatherine.brown@gmail.com','');
+INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
+    (0,'2e5224a3_b5f2_40d5_b89b_873744eac707','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/create_account','192.35.46.1','','','2013-06-10T14:38:48.529921','','0:00:00','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','0c072833_6933_430b_89ad_979c879466e2');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

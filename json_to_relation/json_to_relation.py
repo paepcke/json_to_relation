@@ -16,20 +16,8 @@
 #   		   load_video    
 #TODO: ERROR 1064 (42000) at line 5291428 in file: './tracking.log-20131001.gz.2013-10-29T18_16_21.887671_25959.sql': You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.76 Safari/' at line 1
 #TODO: testSaveAnswerInPath test case of test_edxJSON... not passing
-#TODO: In writeRow: check for duplicate col names in INSERT
 #TODO: Scramble UID, adding table UIDMap
-#TODO: 
-# ERROR 1048 (23000) at line 4491110 in file: './tracking.log-20131001.gz.2013-11-07T00_15_56.674230_9181.sql': Column 'state' cannot be null
-# ERROR 1048 (23000) at line 4491110 in file: './tracking.log-20131001.gz.2013-11-07T00_15_56.674230_9181.sql': Column 'state' cannot be null
-# ERROR 1048 (23000) at line 4491112 in file: './tracking.log-20131001.gz.2013-11-07T00_15_56.674230_9181.sql': Column 'done' cannot be null
-# ERROR 1048 (23000) at line 4491134 in file: './tracking.log-20131001.gz.2013-11-07T00_15_56.674230_9181.sql': Column 'hintmode' cannot be null
-# ERROR 1048 (23000) at line 4491138 in file: './tracking.log-20131001.gz.2013-11-07T00_15_56.674230_9181.sql': Column 'state' cannot be null
-# ERROR 1048 (23000) at line 4491140 in file: './tracking.log-20131001.gz.2013-11-07T00_15_56.674230_9181.sql': Column 'done' cannot be null
-# ERROR 1048 (23000) at line 4491304 in file: './tracking.log-20131001.gz.2013-11-07T00_15_56.674230_9181.sql': Column 'npoints' cannot be null
-# ERROR 1048 (23000) at line 4491308 in file: './tracking.log-20131001.gz.2013-11-07T00_15_56.674230_9181.sql': Column 'state' cannot be null
-# ERROR 1048 (23000) at line 4491310 in file: './tracking.log-20131001.gz.2013-11-07T00_15_56.674230_9181.sql': Column 'done' cannot be null
-# ERROR 1048 (23000) at line 4491774 in file: './tracking.log-20131001.gz.2013-11-07T00_15_56.674230_9181.sql': Column 'zipcode' cannot be null
-
+#TODO: change transformAndLoad to log in as root
 
 '''
 Created on Sep 14, 2013

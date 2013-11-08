@@ -34,7 +34,7 @@ class LocationManager(object):
     def isCountry(self, candidateStr):
         countryList = self.countryLookup.get(candidateStr[:2].upper(), None)
         if countryList is None:
-            return None
+            return ''
         candidateStr = candidateStr[0].upper() + candidateStr[1:]
         for country in countryList:
             if candidateStr == country:
@@ -43,4 +43,4 @@ class LocationManager(object):
                    country == 'United States of America':
                     country = 'USA'
                 return country
-        return None
+        return ''
