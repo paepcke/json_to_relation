@@ -129,7 +129,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # each line; Build the schema:
         
         # Fields common to every request:
-        self.commonFldNames = ['agent','event_source','event_type','ip','page','session','time','anon_screen_name', 'course_id']
+        self.commonFldNames = ['agent','event_source','event_type','ip','page','session','time','username', 'course_id']
 
         # A Country lookup facility:
         self.countryChecker = LocationManager()
@@ -972,6 +972,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 # Make course_id available for places where rows are added to the Answer table.
                 # We stick the course_id there for convenience.
                 self.currCourseID = course_id
+            elif fldName == 'username':
+                # Hash the name, and store in MySQL col 'anon_screen_name':
+                val = self.hashGeneral(val)
+                fldName = 'anon_screen_name'
                 
             self.setValInRow(row, fldName, val)
         # Add the foreign key to the current load info table:
