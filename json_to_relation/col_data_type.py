@@ -57,6 +57,7 @@ class ColDataType:
                LONGTEXT : "LONGTEXT",
                TINYINT  : "TINYINT",
                SMALLINT : "SMALLINT",
+               MEDIUMINT: "MEDIUMINT",
                INT      : "INT",
                BIGINT   : "BIGINT",
                FLOAT    : "FLOAT",

@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS InputState (
 CREATE TABLE IF NOT EXISTS State (
     state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT NOT NULL,
-    done TINYINT NOT NULL,
+    done TINYTEXT NOT NULL,
     problem_id TEXT NOT NULL,
     student_answer VARCHAR(40) NOT NULL,
     correct_map VARCHAR(40) NOT NULL,
@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     problem_choice TEXT NOT NULL,
     question_location TEXT NOT NULL,
     submission_id TEXT NOT NULL,
-    attempts TINYINT NOT NULL,
+    attempts INT NOT NULL,
     long_answer TEXT NOT NULL,
     student_file TEXT NOT NULL,
     can_upload_file TINYTEXT NOT NULL,
@@ -133,14 +133,14 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('1b448022_f264_4d68_b761_4de0baefedb8','2013110804531383915231','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemSaveTest.json');
+    ('b3fe74e3_fd1d_4746_991c_a2a0669121fc','2013110806081383919693','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemSaveTest.json');
 INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
-    ('88e4a243_afa8_4b99_8489_258132927c24','input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_4_1','13.5','Medicine/HRP258/Statistics_in_Medicine'),
-    ('8cfa52a4_bb02_432b_8b8d_8254fec67925','input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_3_1','1.59+breaths+per+minute','Medicine/HRP258/Statistics_in_Medicine'),
-    ('86fccdfb_558d_4fe8_80f3_d75c4cbce572','input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_2_1','13.4+breaths+per+minute','Medicine/HRP258/Statistics_in_Medicine'),
-    ('4e21c51c_cde1_40f3_a511_a67b67fdde62','input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_18_1','','Medicine/HRP258/Statistics_in_Medicine');
+    ('b8a4e573_1f36_41b0_a21f_5142b31c85a0','input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_4_1','13.5','Medicine/HRP258/Statistics_in_Medicine'),
+    ('bb4711da_aa2c_44c4_86fd_55c5905bda3c','input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_3_1','1.59+breaths+per+minute','Medicine/HRP258/Statistics_in_Medicine'),
+    ('426a6d13_e61a_45d8_8f0e_46c747281d59','input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_2_1','13.4+breaths+per+minute','Medicine/HRP258/Statistics_in_Medicine'),
+    ('5c365296_5caf_4c6c_868b_1912dc5c11ec','input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_18_1','','Medicine/HRP258/Statistics_in_Medicine');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    (0,'fc1b9f02_af6c_42e9_9b1e_0ac6213fffd5','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','browser','problem_save','149.171.125.90','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/','a7e396b28a361e7b5637c59864013f5b','2013-06-12T08:30:53.458627','','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','',-1,-1,'input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_18_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','4e21c51c_cde1_40f3_a511_a67b67fdde62','','1b448022_f264_4d68_b761_4de0baefedb8');
+    (0,'7ea7b238_f0ac_465f_af47_50997842bc42','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','browser','problem_save','149.171.125.90','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/','a7e396b28a361e7b5637c59864013f5b','2013-06-12T08:30:53.458627','','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','',-1,-1,'input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_18_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','5c365296_5caf_4c6c_868b_1912dc5c11ec','','b3fe74e3_fd1d_4746_991c_a2a0669121fc');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

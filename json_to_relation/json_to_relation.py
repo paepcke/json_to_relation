@@ -18,7 +18,8 @@
 #TODO: testSaveAnswerInPath test case of test_edxJSON... not passing
 #TODO: Scramble UID, adding table UIDMap
 #TODO: change transformAndLoad to log in as root
-
+#TODO: done still get None
+#TODO: zipcode
 '''
 Created on Sep 14, 2013
 

@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS InputState (
 CREATE TABLE IF NOT EXISTS State (
     state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT NOT NULL,
-    done TINYINT NOT NULL,
+    done TINYTEXT NOT NULL,
     problem_id TEXT NOT NULL,
     student_answer VARCHAR(40) NOT NULL,
     correct_map VARCHAR(40) NOT NULL,
@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     problem_choice TEXT NOT NULL,
     question_location TEXT NOT NULL,
     submission_id TEXT NOT NULL,
-    attempts TINYINT NOT NULL,
+    attempts INT NOT NULL,
     long_answer TEXT NOT NULL,
     student_file TEXT NOT NULL,
     can_upload_file TINYTEXT NOT NULL,
@@ -133,11 +133,11 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('068323d2_ec21_450a_a053_dd444241d0e9','2013110804531383915231','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/urlEscapedAnswerChoice.json');
+    ('74218ffb_e21b_4904_8724_78d7a44ae169','2013110806081383919694','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/urlEscapedAnswerChoice.json');
 INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
-    ('bdfe4ae8_01eb_48af_9a27_f6037e4ee568','input_i4x-Medicine-SciWrite-problem-c3266c76a7854d02b881250a49054ddb_2_1','\'new\'+and+\'revolutionized\'+are+repeat+with+%22innovations%22','Medicine/SciWrite/Fall2013');
+    ('fa6a64a9_b78f_4ac9_bd56_3ed0da41774f','input_i4x-Medicine-SciWrite-problem-c3266c76a7854d02b881250a49054ddb_2_1','\'new\'+and+\'revolutionized\'+are+repeat+with+%22innovations%22','Medicine/SciWrite/Fall2013');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    (0,'cd180a5a_cbd1_40c6_8631_0709e2246d1c','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.62 Safari/537.36','browser','problem_check','218.26.181.230','https://class.stanford.edu/courses/Medicine/SciWrite/Fall2013/courseware/c38dc89a3b544d2e847f9fdd910794fa/61d07270ba924c00b00b9eb9e71efa4e/#','90e960f83297786884208b9fc3c67e7d','2013-10-03T11:07:09.700627+00:00','','0:00:00','','','Medicine/SciWrite/Fall2013','',-1,-1,'input_i4x-Medicine-SciWrite-problem-c3266c76a7854d02b881250a49054ddb_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','bdfe4ae8_01eb_48af_9a27_f6037e4ee568','','068323d2_ec21_450a_a053_dd444241d0e9');
+    (0,'7bb9b22b_9c09_43a9_9096_3aeed0f14e94','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.62 Safari/537.36','browser','problem_check','218.26.181.230','https://class.stanford.edu/courses/Medicine/SciWrite/Fall2013/courseware/c38dc89a3b544d2e847f9fdd910794fa/61d07270ba924c00b00b9eb9e71efa4e/#','90e960f83297786884208b9fc3c67e7d','2013-10-03T11:07:09.700627+00:00','','0:00:00','','','Medicine/SciWrite/Fall2013','',-1,-1,'input_i4x-Medicine-SciWrite-problem-c3266c76a7854d02b881250a49054ddb_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','fa6a64a9_b78f_4ac9_bd56_3ed0da41774f','','74218ffb_e21b_4904_8724_78d7a44ae169');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

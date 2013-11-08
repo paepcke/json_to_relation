@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS InputState (
 CREATE TABLE IF NOT EXISTS State (
     state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT NOT NULL,
-    done TINYINT NOT NULL,
+    done TINYTEXT NOT NULL,
     problem_id TEXT NOT NULL,
     student_answer VARCHAR(40) NOT NULL,
     correct_map VARCHAR(40) NOT NULL,
@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     problem_choice TEXT NOT NULL,
     question_location TEXT NOT NULL,
     submission_id TEXT NOT NULL,
-    attempts TINYINT NOT NULL,
+    attempts INT NOT NULL,
     long_answer TEXT NOT NULL,
     student_file TEXT NOT NULL,
     can_upload_file TINYTEXT NOT NULL,
@@ -133,9 +133,9 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('7a4a7de3_6270_4982_a41d_8eca6b0d6676','2013110804531383915231','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/showTranscript.json');
+    ('279e94fc_fefc_4fa8_8c39_f20ad3625499','2013110806081383919694','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/showTranscript.json');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    (0,'db7b5a90_ea84_4937_8927_357d960d02f5','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','browser','show_transcript','72.201.124.240','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ea998389c16042f399ccff01e5bab161/f554cf423d33489e8a55e4510387c2f1/','f069174b4882642364a2fc90bb244376','2013-06-25T06:37:40.512300+00:00','','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','',-1,-1,'','','','',-1,'','','','',-1,'i4x-Medicine-HRP258-videoalpha-c26e4247f7724cc3bc407a7a3541ed90','q3cxPJGX4gc',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','7a4a7de3_6270_4982_a41d_8eca6b0d6676');
+    (0,'5b32ae6c_eb9e_41e1_9bb8_80f2d81d640f','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','browser','show_transcript','72.201.124.240','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ea998389c16042f399ccff01e5bab161/f554cf423d33489e8a55e4510387c2f1/','f069174b4882642364a2fc90bb244376','2013-06-25T06:37:40.512300+00:00','','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','',-1,-1,'','','','',-1,'','','','',-1,'i4x-Medicine-HRP258-videoalpha-c26e4247f7724cc3bc407a7a3541ed90','q3cxPJGX4gc',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','279e94fc_fefc_4fa8_8c39_f20ad3625499');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

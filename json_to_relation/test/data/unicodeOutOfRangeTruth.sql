@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS InputState (
 CREATE TABLE IF NOT EXISTS State (
     state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT NOT NULL,
-    done TINYINT NOT NULL,
+    done TINYTEXT NOT NULL,
     problem_id TEXT NOT NULL,
     student_answer VARCHAR(40) NOT NULL,
     correct_map VARCHAR(40) NOT NULL,
@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     problem_choice TEXT NOT NULL,
     question_location TEXT NOT NULL,
     submission_id TEXT NOT NULL,
-    attempts TINYINT NOT NULL,
+    attempts INT NOT NULL,
     long_answer TEXT NOT NULL,
     student_file TEXT NOT NULL,
     can_upload_file TINYTEXT NOT NULL,
@@ -133,11 +133,11 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('d0b75be5_a8e1_43a8_bb5b_903c215a7e35','2013110804531383915231','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/unicodeOutOfRange.json');
+    ('39f55f49_d696_4850_95db_29bf00a3888a','2013110806081383919694','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/unicodeOutOfRange.json');
 INSERT INTO EdxPrivate.Account (account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) VALUES 
-    ('bc41ea14_a9e7_4535_a9aa_e238d6831663','GerardChevrier','Gerard Chevrier','b328bfbc9a5846f98a8edbd6107d52f4b94c5653','gerard.chevrier@noos.fr','','','m',1954,'m','I will tried ti understand a little bit Quantum Mecanic',1,1,'','','gerard.chevrier@noos.fr','');
+    ('23adf271_a2f7_424f_8c3b_9b3ed8621701','GerardChevrier','Gerard Chevrier','b328bfbc9a5846f98a8edbd6107d52f4b94c5653','gerard.chevrier@noos.fr','','','m',1954,'m','I will tried ti understand a little bit Quantum Mecanic',1,1,'','','gerard.chevrier@noos.fr','');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    (0,'1f6d3753_e0a9_4e41_a62e_004c83a4ad1c','Mozilla/5.0 (Windows NT 5.1; rv:24.0) Gecko/20100101 Firefox/24.0','server','/create_account','212.198.164.16','','','2013-10-20T09:05:47.559906+00:00','','0:00:00','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','d0b75be5_a8e1_43a8_bb5b_903c215a7e35');
+    (0,'df14454a_1e69_4b98_a18c_0cc20dd4fb3e','Mozilla/5.0 (Windows NT 5.1; rv:24.0) Gecko/20100101 Firefox/24.0','server','/create_account','212.198.164.16','','','2013-10-20T09:05:47.559906+00:00','','0:00:00','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','39f55f49_d696_4850_95db_29bf00a3888a');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

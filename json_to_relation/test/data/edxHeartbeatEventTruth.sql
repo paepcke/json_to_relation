@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS InputState (
 CREATE TABLE IF NOT EXISTS State (
     state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT NOT NULL,
-    done TINYINT NOT NULL,
+    done TINYTEXT NOT NULL,
     problem_id TEXT NOT NULL,
     student_answer VARCHAR(40) NOT NULL,
     correct_map VARCHAR(40) NOT NULL,
@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS Main (
     problem_choice TEXT NOT NULL,
     question_location TEXT NOT NULL,
     submission_id TEXT NOT NULL,
-    attempts TINYINT NOT NULL,
+    attempts INT NOT NULL,
     long_answer TEXT NOT NULL,
     student_file TEXT NOT NULL,
     can_upload_file TINYTEXT NOT NULL,
@@ -133,9 +133,9 @@ SET foreign_key_checks=0;
 SET unique_checks=0;
 SET autocommit=0;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('aad8aaf9_f69f_4b33_a4b8_b73c38278aa1','2013110804531383915230','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/edxHeartbeatEvent.json');
+    ('9e53b058_44bf_41b8_b5e8_6b46a5911eaa','2013110806081383919693','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/edxHeartbeatEvent.json');
 INSERT INTO Main (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    (0,'22b32cf9_cef6_4c9a_99fd_c54bb6092836','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1','','','2013-07-18T08:43:32.573390+00:00','','0:00:00','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','aad8aaf9_f69f_4b33_a4b8_b73c38278aa1');
+    (0,'3929aaa1_c9de_40c1_889f_698129cc448c','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1','','','2013-07-18T08:43:32.573390+00:00','','0:00:00','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','9e53b058_44bf_41b8_b5e8_6b46a5911eaa');
 COMMIT;
 SET foreign_key_checks=1;
 SET unique_checks=1;

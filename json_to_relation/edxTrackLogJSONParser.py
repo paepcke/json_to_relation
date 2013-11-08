@@ -171,7 +171,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaHintsMainTable['submission_id'] = ColDataType.TEXT
         
         # Attempts:
-        self.schemaHintsMainTable['attempts'] = ColDataType.TINYINT
+        self.schemaHintsMainTable['attempts'] = ColDataType.INT
         
         
         # Answers 
@@ -257,7 +257,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaStateTbl = OrderedDict()
         self.schemaStateTbl['state_id'] = ColDataType.UUID
         self.schemaStateTbl['seed'] = ColDataType.TINYINT
-        self.schemaStateTbl['done'] = ColDataType.TINYINT
+        self.schemaStateTbl['done'] = ColDataType.TINYTEXT
         self.schemaStateTbl['problem_id'] = ColDataType.TEXT
         self.schemaStateTbl['student_answer'] = ColDataType.UUID
         self.schemaStateTbl['correct_map'] = ColDataType.UUID
@@ -1415,7 +1415,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         else:
             studentAnswersFKeys = []
         seed = stateDict.get('seed', '')
-        done = stateDict.get('done', -1)
+        done = stateDict.get('done', '')
+        # Can't use int for SQL, b/c Python writes as 'True'
+        done = str(done)
         problemID = stateDict.get('problem_id', '')
         correctMapsDict = stateDict.get('correct_map', None)
         if correctMapsDict is not None:
@@ -3396,7 +3398,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                             splitMailAddr[mailWordIndx + 2],
                                             splitMailAddr[mailWordIndx + 3]])
                     country = self.countryChecker.isCountry(fourgram)
-                    if country is not None:
+                    if len(country) > 0:
                         accountDict['country'] = country
                         break 
                 except IndexError:
@@ -3404,7 +3406,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 try: 
                     trigram = string.join([splitMailAddr[mailWordIndx], splitMailAddr[mailWordIndx + 1], splitMailAddr[mailWordIndx + 2]])
                     country = self.countryChecker.isCountry(trigram)
-                    if country is not None:
+                    if len(country) > 0:
                         accountDict['country'] = country
                         break 
                 except IndexError:
@@ -3413,7 +3415,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 try:
                     bigram = string.join([splitMailAddr[mailWordIndx], splitMailAddr[mailWordIndx + 1]])
                     country = self.countryChecker.isCountry(bigram)
-                    if country is not None:
+                    if len(country) > 0:
                         accountDict['country'] = country
                         break 
                 except IndexError:
@@ -3421,12 +3423,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 
                 unigram = splitMailAddr[mailWordIndx]
                 country = self.countryChecker.isCountry(unigram)
-                if country is not None:
+                if len(country) > 0:
                     accountDict['country'] = country
                     break 
-            # Make sure that zip code is null unless address is USA:
+            # Make sure that zip code is empty unless address is USA:
             if accountDict['country'] != 'USA':
-                accountDict['zipcode'] = None
+                accountDict['zipcode'] = ''
                 
             return accountDict
 
