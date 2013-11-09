@@ -167,22 +167,22 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('e3c3d0a6_65ce_430e_89fc_b57a60323a35','2013110907251384010735','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/resetProblemTest.json');
+    ('e62096f7_ab3b_4a51_8822_36cee559eb33','2013110919261384053989','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/resetProblemTest.json');
 INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
-    ('f5bdc470_815f_4ab2_83bf_041bc7919554','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','choice_2','');
+    ('19e7039a_75a0_461c_8b69_503663befe08','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','choice_2','');
 INSERT INTO CorrectMap (correct_map_id,answer_identifier,correctness,npoints,msg,hint,hintmode,queuestate) VALUES 
-    ('24ed7187_43ef_4852_a251_c5c1a301414e','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','incorrect',-1,'','','','');
+    ('fba5b467_6f09_4614_9e79_c7c371466dd2','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','incorrect',-1,'','','','');
 INSERT INTO InputState (input_state_id,problem_id,state) VALUES 
-    ('14557690_a4f2_4421_8cef_0f5253ab23fd','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','');
+    ('1a3fed0a_2084_41ba_bedc_e7e35d4846f8','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','');
 INSERT INTO State (state_id,seed,done,problem_id,student_answer,correct_map,input_state) VALUES 
-    ('4f7787df_382d_482d_ac46_06569487cd93',811,'True','','f5bdc470_815f_4ab2_83bf_041bc7919554','24ed7187_43ef_4852_a251_c5c1a301414e','14557690_a4f2_4421_8cef_0f5253ab23fd');
+    ('b8e75db4_c975_4943_abfe_c946fc6324b7',811,'True','','19e7039a_75a0_461c_8b69_503663befe08','fba5b467_6f09_4614_9e79_c7c371466dd2','1a3fed0a_2084_41ba_bedc_e7e35d4846f8');
 INSERT INTO InputState (input_state_id,problem_id,state) VALUES 
-    ('c87ebb79_e357_4867_9371_21374afc0073','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','');
+    ('e5d7289b_f944_4990_9334_acdd72825c60','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','');
 INSERT INTO State (state_id,seed,done,problem_id,student_answer,correct_map,input_state) VALUES 
-    ('6fff9d83_5785_48be_a576_d71361cde15f',93,'False','','','','c87ebb79_e357_4867_9371_21374afc0073');
+    ('f0e2dac4_ebc9_4cf4_b5aa_aefaeb4b61ce',93,'False','','','','e5d7289b_f944_4990_9334_acdd72825c60');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('5ebb2efd_97f8_4f55_926a_c47c35e7894c','115b7883_0fe0_4b5e_91fe_63784ec9e43a','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','reset_problem','24.43.226.3','x_module','','2013-06-12T21:54:33.936342','b328bfbc9a5846f98a8edbd6107d52f4b94c5653','0:00:00','','','','',-1,-1,'i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','4f7787df_382d_482d_ac46_06569487cd93','e3c3d0a6_65ce_430e_89fc_b57a60323a35'),
-    ('57cb2ad8_c92e_485b_a727_271ac501810a','115b7883_0fe0_4b5e_91fe_63784ec9e43a','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','reset_problem','24.43.226.3','x_module','','2013-06-12T21:54:33.936342','b328bfbc9a5846f98a8edbd6107d52f4b94c5653','0:00:00','','','','',-1,-1,'i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','6fff9d83_5785_48be_a576_d71361cde15f','e3c3d0a6_65ce_430e_89fc_b57a60323a35');
+    ('bca467f0_1746_4893_9b74_ab6edb56ed02','2b01e523_21c4_4d21_b9dd_a7dc7add81d8','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','reset_problem','24.43.226.3','x_module','','2013-06-12T21:54:33.936342','b328bfbc9a5846f98a8edbd6107d52f4b94c5653','0:00:00','','','','',-1,-1,'i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','b8e75db4_c975_4943_abfe_c946fc6324b7','e62096f7_ab3b_4a51_8822_36cee559eb33'),
+    ('d67768bd_72d8_4d84_9325_bb8e6ba971e6','2b01e523_21c4_4d21_b9dd_a7dc7add81d8','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','reset_problem','24.43.226.3','x_module','','2013-06-12T21:54:33.936342','b328bfbc9a5846f98a8edbd6107d52f4b94c5653','0:00:00','','','','',-1,-1,'i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','f0e2dac4_ebc9_4cf4_b5aa_aefaeb4b61ce','e62096f7_ab3b_4a51_8822_36cee559eb33');
 /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

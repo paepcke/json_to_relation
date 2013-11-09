@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-#TODO: Edx unittest for detecting server downtimes in log
-#TODO: /app21/tracking.log-20130831.gz:174310: event is not a dict in select_rubric event: '{u'category': 0, u'selection': u'1', u'location': u'i4x://Education/EDUC115N/combinedopenended/04d9f185e689415f9217a5423166891c'}' (TypeError('eval() arg 1 must be a string or code object',))
+
 #TODO: documentation: eventID is not a key: used to hold together pointers to states or answers
 #TODO: event is not a dict in problem_reset event: 'input_i4x-Engineering-QMSE01-problem-b6a3d17b9eca45f48eab332017e858ee_2_1=2.14'
 #TODO: want courseid filled in for video events and some other event_types:
@@ -15,11 +14,6 @@
 #   		   /courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/combinedopenended/b3c41df5b9ef40ea9c00e8252031207d/get_last_response
 #   		   load_video    
 #TODO: ERROR 1064 (42000) at line 5291428 in file: './tracking.log-20131001.gz.2013-10-29T18_16_21.887671_25959.sql': You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.76 Safari/' at line 1
-#TODO: testSaveAnswerInPath test case of test_edxJSON... not passing
-#TODO: change transformAndLoad to log in as root
-#
-
-#TODO: keep Account in Edx while loading. Then create it in EdxPrivate if not exist, copy all new entries to the EdxPrivate table, and drop the one in Edx. 
 '''
 Created on Sep 14, 2013
 
@@ -29,7 +23,6 @@ Created on Sep 14, 2013
 from cStringIO import StringIO
 from collections import OrderedDict
 import copy
-import datetime
 import logging
 import math
 import os

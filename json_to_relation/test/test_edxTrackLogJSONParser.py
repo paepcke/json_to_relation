@@ -29,7 +29,7 @@ PRINT_OUTS = False  # Set True to get printouts of CREATE TABLE statements
 # ending with 'Truth.sql' will be changed to be whatever
 # the test returns. Use only when you made code changes that
 # invalidate all the truth files:
-UPDATE_TRUTH = True
+UPDATE_TRUTH = False
 
 class TestEdxTrackLogJSONParser(unittest.TestCase):
     
@@ -308,20 +308,9 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        # Read the isolated problem_check event:
-        with open(testFilePath) as fd:
-            testProblemCheckEventJSON = fd.readline()
-        event = json.loads(testProblemCheckEventJSON)
         edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx')
-        # Pretend a problem_check event had just been found.
-        # Here: record is None, row to fill still empty (would
-        # normally be the main table, partially filled row).
-        # Normally a course_id would have been set by 
-        # handleCommonFields(), so put in a fake one:
-        edxParser.currCourseID = 'my_course'
-        edxParser.handleProblemCheck(None, [], event)
-
-        fileConverter.flush()
+        fileConverter.setParser(edxParser)
+        fileConverter.convert()
         dest.close()
         truthFile = open(os.path.join(os.path.dirname(__file__),"data/problem_checkEventFldOnlyTruth.sql"), 'r')
 
@@ -356,7 +345,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         else:
             self.assertFileContentEquals(truthFile, dest.name)
         
-    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testProblemCheckWithEmbeddedQuotes(self):
         testFilePath = os.path.join(os.path.dirname(__file__),"data/problem_checkSingleQuoteInside.json")
         stringSource = InURI(testFilePath)
@@ -1281,6 +1270,31 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
             self.updateTruth(dest.name, truthFile.name)
         else:
             self.assertFileContentEquals(truthFile, dest.name)
+
+
+#     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
+#     def testHuntDupKey(self):
+#         testFilePath = os.path.join(os.path.dirname(__file__),"data/huntDupKey.json")
+#         stringSource = InURI(testFilePath)
+#         
+#         resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+#         # Just use the file name of the tmp file.
+#         resultFileName = resultFile.name
+#         resultFile.close()
+#         dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+#         fileConverter = JSONToRelation(stringSource,
+#                                        dest,
+#                                        mainTableName='EdxTrackEvent'
+#                                        )
+#         edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx')
+#         fileConverter.setParser(edxParser)
+#         fileConverter.convert()
+#         dest.close()
+#         truthFile = open(os.path.join(os.path.dirname(__file__),"data/huntDupKeyTruth.sql"), 'r')
+#         if UPDATE_TRUTH:
+#             self.updateTruth(dest.name, truthFile.name)
+#         else:
+#             self.assertFileContentEquals(truthFile, dest.name)
 
 
     #--------------------------------------------------------------------------------------------------    

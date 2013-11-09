@@ -158,8 +158,8 @@ CREATE TABLE IF NOT EXISTS Main (
     FOREIGN KEY(state_fk) REFERENCES State(state_id) ON DELETE CASCADE,
     FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id) ON DELETE CASCADE
     );
-LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE;
-/*!40000 ALTER TABLE `EdxTrackEvent` DISABLE KEYS */;
+LOCK TABLES `Main` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE;
+/*!40000 ALTER TABLE `Main` DISABLE KEYS */;
 /*!40000 ALTER TABLE `State` DISABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Answer` DISABLE KEYS */;
@@ -167,11 +167,11 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('17945efe_76f6_4d37_9f9a_6cc064a83311','2013110907251384010734','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/edxHeartbeatEventDownTime.json');
+    ('d1cb9e99_473e_4f66_b98f_92d15eb3ab24','2013110919261384053988','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/edxHeartbeatEventDownTime.json');
 INSERT INTO Main (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('176e71fe_0a0c_48cd_bf42_bdc2acae4cef','547234f9_0b17_49f7_92eb_ba0ead721121','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1','','','2013-07-18T08:43:32.573390+00:00','b328bfbc9a5846f98a8edbd6107d52f4b94c5653','0:00:00','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','17945efe_76f6_4d37_9f9a_6cc064a83311'),
-    ('c40f515d_84c7_437e_b864_ded33d46fb32','d5c2bb24_62d1_4369_aea4_ec7d20f4802f','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1','','','2013-07-18T09:45:37.573390+00:00','b328bfbc9a5846f98a8edbd6107d52f4b94c5653','1:02:05','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','17945efe_76f6_4d37_9f9a_6cc064a83311');
-/*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
+    ('97fec750_e7b6_428b_b4aa_da0122e20919','0c913872_3fa8_4ebd_9869_d5b888e841c7','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1','','','2013-07-18T08:43:32.573390+00:00','b328bfbc9a5846f98a8edbd6107d52f4b94c5653','0:00:00','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','d1cb9e99_473e_4f66_b98f_92d15eb3ab24'),
+    ('14ac2411_3a84_4e8e_a5b3_bc5d3416e17e','0874a75e_e1d7_455f_a1e0_9b3d75a208ed','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1','','','2013-07-18T09:45:37.573390+00:00','b328bfbc9a5846f98a8edbd6107d52f4b94c5653','1:02:05','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','d1cb9e99_473e_4f66_b98f_92d15eb3ab24');
+/*!40000 ALTER TABLE `Main` ENABLE KEYS */;
 /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;
 /*!40000 ALTER TABLE `Answer` ENABLE KEYS */;

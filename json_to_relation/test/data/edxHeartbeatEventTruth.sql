@@ -158,8 +158,8 @@ CREATE TABLE IF NOT EXISTS Main (
     FOREIGN KEY(state_fk) REFERENCES State(state_id) ON DELETE CASCADE,
     FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id) ON DELETE CASCADE
     );
-LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE;
-/*!40000 ALTER TABLE `EdxTrackEvent` DISABLE KEYS */;
+LOCK TABLES `Main` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE;
+/*!40000 ALTER TABLE `Main` DISABLE KEYS */;
 /*!40000 ALTER TABLE `State` DISABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Answer` DISABLE KEYS */;
@@ -167,10 +167,10 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('d1c0f605_8fee_4ec7_b275_b7f7d2064e5c','2013110907251384010734','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/edxHeartbeatEvent.json');
+    ('de2e65a0_fdc7_4751_b2af_b881644dd727','2013110919261384053988','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/edxHeartbeatEvent.json');
 INSERT INTO Main (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('66ddedf1_b0fa_4e32_8aba_b44a34cfa238','518608e2_4f08_41a1_bf93_b652274d5dc0','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1','','','2013-07-18T08:43:32.573390+00:00','b328bfbc9a5846f98a8edbd6107d52f4b94c5653','0:00:00','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','d1c0f605_8fee_4ec7_b275_b7f7d2064e5c');
-/*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
+    ('d3ab48c3_e0a5_4ae0_a1a6_77d57fd4a084','5874b59c_a93a_4801_9654_a8049908935c','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1','','','2013-07-18T08:43:32.573390+00:00','b328bfbc9a5846f98a8edbd6107d52f4b94c5653','0:00:00','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','de2e65a0_fdc7_4751_b2af_b881644dd727');
+/*!40000 ALTER TABLE `Main` ENABLE KEYS */;
 /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;
 /*!40000 ALTER TABLE `Answer` ENABLE KEYS */;

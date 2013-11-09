@@ -9,13 +9,15 @@ import hashlib
 import json
 import re
 import string
+import sys
+import traceback
+from unidecode import unidecode
 import uuid
 
 from col_data_type import ColDataType
 from generic_json_parser import GenericJSONParser
 from locationManager import LocationManager
 from output_disposition import ColumnSpec
-from unidecode import unidecode
 
 
 EDX_HEARTBEAT_PERIOD = 360 # seconds
@@ -100,53 +102,6 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     # ' {"success": "correct", "correct_map": {"i4x-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_2_1": {"hint": "", "hintmode": null'
     problemXFindCourseID = p = re.compile(r'[^-]*([^:]*)')
     
-
-    # Preamble for MySQL dumps to make loads fast:
-    dumpPreamble = "/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;\n" +\
-                    "/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;\n" +\
-                    "/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;\n" +\
-                    "/*!40101 SET NAMES utf8 */;\n" +\
-                    "/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;\n" +\
-                    "/*!40103 SET TIME_ZONE='+00:00' */;\n" +\
-                    "/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;\n" +\
-                    "/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n" +\
-                    "/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;\n" +\
-                    "/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;\n"
-    
-    # Preamble to table creation:
-    dumpTableCreationPreamble = "/*!40101 SET @saved_cs_client     = @@character_set_client */;\n" +\
-                                "/*!40101 SET character_set_client = utf8 */;\n"
-
-    # Preamble before all INSERTs:
-    dumpInsertPreamble = "LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE;\n" +\
-                         "/*!40000 ALTER TABLE `EdxTrackEvent` DISABLE KEYS */;\n" +\
-                         "/*!40000 ALTER TABLE `State` DISABLE KEYS */;\n" +\
-                         "/*!40000 ALTER TABLE `InputState` DISABLE KEYS */;\n" +\
-                         "/*!40000 ALTER TABLE `Answer` DISABLE KEYS */;\n" +\
-                         "/*!40000 ALTER TABLE `CorrectMap` DISABLE KEYS */;\n" +\
-                         "/*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;\n" +\
-                         "/*!40000 ALTER TABLE `Account` DISABLE KEYS */;\n"
-
-  
-    # Postscript after INSERTs:
-    dumpPostscript1 =    "/*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;\n" +\
-                         "/*!40000 ALTER TABLE `State` ENABLE KEYS */;\n" +\
-                         "/*!40000 ALTER TABLE `InputState` ENABLE KEYS */;\n" +\
-                         "/*!40000 ALTER TABLE `Answer` ENABLE KEYS */;\n" +\
-                         "/*!40000 ALTER TABLE `CorrectMap` ENABLE KEYS */;\n" +\
-                         "/*!40000 ALTER TABLE `LoadInfo` ENABLE KEYS */;\n" +\
-                         "/*!40000 ALTER TABLE `Account` ENABLE KEYS */;\n" +\
-                         "UNLOCK TABLES;\n"
-    # In between goes the Account table copy-to-private-db, and drop in Edx:
-    dumpPostscript2 =  	 "/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;\n" +\
-                    	 "/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;\n" +\
-                    	 "/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;\n" +\
-                    	 "/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;\n" +\
-                    	 "/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;\n" +\
-                    	 "/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;\n" +\
-                    	 "/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;\n" +\
-                    	 "/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;\n"
-    
     def __init__(self, jsonToRelationConverter, mainTableName, logfileID='', progressEvery=1000, replaceTables=False, dbName='test'):
         '''
         Constructor
@@ -172,6 +127,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
         self.mainTableName = mainTableName
         self.dbName = dbName
+        
+        self.setupMySqlDumpControlInstructions()
+                
         # Prepare as much as possible outside parsing of
         # each line; Build the schema:
         
@@ -416,6 +374,55 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         loadInfoDict['load_file'] = self.jsonToRelationConverter.loadFile
         self.currLoadInfoFK = self.pushLoadInfo(loadInfoDict)
         
+    def setupMySqlDumpControlInstructions(self):
+
+        # Preamble for MySQL dumps to make loads fast:
+        self.dumpPreamble       = "/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;\n" +\
+                        		  "/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;\n" +\
+                        		  "/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;\n" +\
+                        		  "/*!40101 SET NAMES utf8 */;\n" +\
+                        		  "/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;\n" +\
+                        		  "/*!40103 SET TIME_ZONE='+00:00' */;\n" +\
+                        		  "/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;\n" +\
+                        		  "/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n" +\
+                        		  "/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;\n" +\
+                        		  "/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;\n"
+            
+        # Preamble to table creation:
+        self.dumpTableCreationPreamble = "/*!40101 SET @saved_cs_client     = @@character_set_client */;\n" +\
+                                         "/*!40101 SET character_set_client = utf8 */;\n"
+        
+        # Construct the SQL statement that precedes INSERT statements:
+        self.dumpInsertPreamble = "LOCK TABLES `%s` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE;\n" % self.mainTableName +\
+                            	  "/*!40000 ALTER TABLE `%s` DISABLE KEYS */;\n" % self.mainTableName +\
+                            	  "/*!40000 ALTER TABLE `State` DISABLE KEYS */;\n" +\
+                            	  "/*!40000 ALTER TABLE `InputState` DISABLE KEYS */;\n" +\
+                            	  "/*!40000 ALTER TABLE `Answer` DISABLE KEYS */;\n" +\
+                            	  "/*!40000 ALTER TABLE `CorrectMap` DISABLE KEYS */;\n" +\
+                            	  "/*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;\n" +\
+                            	  "/*!40000 ALTER TABLE `Account` DISABLE KEYS */;\n"
+        
+        self.dumpPostscript1    =  "/*!40000 ALTER TABLE `%s` ENABLE KEYS */;\n" % self.mainTableName +\
+                            		"/*!40000 ALTER TABLE `State` ENABLE KEYS */;\n" +\
+                            		"/*!40000 ALTER TABLE `InputState` ENABLE KEYS */;\n" +\
+                            		"/*!40000 ALTER TABLE `Answer` ENABLE KEYS */;\n" +\
+                            		"/*!40000 ALTER TABLE `CorrectMap` ENABLE KEYS */;\n" +\
+                            		"/*!40000 ALTER TABLE `LoadInfo` ENABLE KEYS */;\n" +\
+                            		"/*!40000 ALTER TABLE `Account` ENABLE KEYS */;\n" +\
+                            		"UNLOCK TABLES;\n"           
+
+
+        # In between Postscript1 and Postscript 2goes the Account table copy-to-private-db, and drop in Edx:
+        self.dumpPostscript2 =  	"/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;\n" +\
+		                    	    "/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;\n" +\
+		                    	    "/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;\n" +\
+		                    	    "/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;\n" +\
+		                    	    "/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;\n" +\
+		                    	    "/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;\n" +\
+		                    	    "/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;\n" +\
+		                    	    "/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;\n"
+
+        
     def processOneJSONObject(self, jsonStr, row):
         '''
         Given one line from the EdX Track log, produce one row
@@ -478,6 +485,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @return: the filled-in row
         @rtype: [<any>]
         '''
+        # No error has occurred yet in processing this JSON str:
+        self.errorOccurred = False
         self.jsonToRelationConverter.bumpLineCounter()
         try:
             # Turn top level JSON object to dict:
@@ -785,12 +794,18 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             else:
                 self.logWarn("Unknown event type '%s' in tracklog row %s" % (eventType, self.jsonToRelationConverter.makeFileCitation()))
                 return
+        except Exception as e:
+            # Note whether any error occurred, so that
+            # the finally clause can act accordingly:
+            self.errorOccurred = True
+            # Re-raise same error:
+            raise
         finally:
             self.reportProgressIfNeeded()
             # If above code generated anything to INSERT into SQL
             # table, do that now. If row is None, then nothing needs
             # to be inserted (e.g. heartbeats):
-            if row is not None and len(row) != 0:
+            if row is not None and len(row) != 0 and not self.errorOccurred:
                 self.jsonToRelationConverter.pushToTable(self.resultTriplet(row, self.mainTableName))
             # Clean out data structures in preparation for next 
             # call to this method:
@@ -842,7 +857,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @type replaceTables: Boolean
         '''
         self.jsonToRelationConverter.pushString('USE %s;\n' % self.dbName)
-        self.jsonToRelationConverter.pushString(EdXTrackLogJSONParser.dumpPreamble)
+        self.jsonToRelationConverter.pushString(self.dumpPreamble)
         if replaceTables:
             # Need to suppress foreign key checks, so that we
             # can DROP the tables; this includes the main Account tbl in db EdxPrivate
@@ -863,7 +878,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.colNamesByTable['LoadInfo'] = []
 
         # Load acceleration for table creation:
-        self.jsonToRelationConverter.pushString(EdXTrackLogJSONParser.dumpTableCreationPreamble)
+        self.jsonToRelationConverter.pushString(self.dumpTableCreationPreamble)
 
         self.createAnswerTable()
         self.createCorrectMapTable()
@@ -874,7 +889,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.createMainTable()
         
         # Several switches to speed up the bulk load:
-        self.jsonToRelationConverter.pushString(EdXTrackLogJSONParser.dumpInsertPreamble)
+        self.jsonToRelationConverter.pushString(self.dumpInsertPreamble)
     
     def genOneCreateStatement(self, tableName, schemaDict, primaryKeyName=None, foreignKeyColNames=None, autoincrement=False):
         '''
@@ -3205,13 +3220,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         We do what's needed to close out the transform.
         '''
         # Unlock tables, and return checking to its normal behavior:
-        self.jsonToRelationConverter.pushString(EdXTrackLogJSONParser.dumpPostscript1)
+        self.jsonToRelationConverter.pushString(self.dumpPostscript1)
         # Copy the temporary Account entries from
         # the tmp table in Edx to the final dest
         # in EdxPrivate:
         self.createMergeAccountTbl()
         # Restore various defaults:
-        self.jsonToRelationConverter.pushString(EdXTrackLogJSONParser.dumpPostscript2)
+        self.jsonToRelationConverter.pushString(self.dumpPostscript2)
     
     def createMergeAccountTbl(self):
         '''
@@ -3571,5 +3586,3 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         #return hashlib.sha224(username).hexdigest()''
         return hashlib.new('ripemd160', 'cathym').hexdigest()
         
-    def getDumpPostscript(self):
-        return EdXTrackLogJSONParser.dumpPostscript
