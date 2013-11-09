@@ -4,7 +4,7 @@
 # files. Transforms the log files, and places the
 # resulting .sql files in the destination dir.
 # Assumes that json@sql.py is in subdir scripts.
-# I.e.: run in json_to_relation proj root.
+# I.e.: run in json_to_relation proj root. 
 
 USAGE="Usage: transform.sh sqlDestDir logFiles"
 
