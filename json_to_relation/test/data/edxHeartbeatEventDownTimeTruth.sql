@@ -1,9 +1,19 @@
 CREATE DATABASE IF NOT EXISTS Edx;
 CREATE DATABASE IF NOT EXISTS EdxPrivate;
-USE test;
-SET foreign_key_checks = 0;
-DROP TABLE IF EXISTS Main, Answer, InputState, CorrectMap, State, EdxPrivate.Account, LoadInfo;
-SET foreign_key_checks = 1;
+USE Edx;
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+DROP TABLE IF EXISTS Main, Answer, InputState, CorrectMap, State, Account, EdxPrivate.Account, LoadInfo;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(40) NOT NULL PRIMARY KEY,
     problem_id TEXT NOT NULL,
@@ -37,6 +47,25 @@ CREATE TABLE IF NOT EXISTS State (
     FOREIGN KEY(correct_map) REFERENCES CorrectMap(correct_map_id) ON DELETE CASCADE,
     FOREIGN KEY(input_state) REFERENCES InputState(input_state_id) ON DELETE CASCADE
     );
+CREATE TABLE IF NOT EXISTS Account (
+    account_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    screen_name TEXT NOT NULL,
+    name TEXT NOT NULL,
+    anon_screen_name TEXT NOT NULL,
+    mailing_address TEXT NOT NULL,
+    zipcode TINYTEXT NOT NULL,
+    country TINYTEXT NOT NULL,
+    gender TINYTEXT NOT NULL,
+    year_of_birth TINYINT NOT NULL,
+    level_of_education TINYTEXT NOT NULL,
+    goals TEXT NOT NULL,
+    honor_code TINYINT NOT NULL,
+    terms_of_service TINYINT NOT NULL,
+    course_id TEXT NOT NULL,
+    enrollment_action TINYTEXT NOT NULL,
+    email TEXT NOT NULL,
+    receive_emails TINYTEXT NOT NULL
+    );
 CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     account_id VARCHAR(40) NOT NULL PRIMARY KEY,
     screen_name TEXT NOT NULL,
@@ -62,7 +91,7 @@ CREATE TABLE IF NOT EXISTS LoadInfo (
     load_file TEXT NOT NULL
     );
 CREATE TABLE IF NOT EXISTS Main (
-    _id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    _id VARCHAR(40) NOT NULL PRIMARY KEY,
     event_id VARCHAR(40) NOT NULL,
     agent TEXT NOT NULL,
     event_source TINYTEXT NOT NULL,
@@ -129,14 +158,34 @@ CREATE TABLE IF NOT EXISTS Main (
     FOREIGN KEY(state_fk) REFERENCES State(state_id) ON DELETE CASCADE,
     FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id) ON DELETE CASCADE
     );
-SET foreign_key_checks=0;
-SET unique_checks=0;
-SET autocommit=0;
+LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE;
+/*!40000 ALTER TABLE `EdxTrackEvent` DISABLE KEYS */;
+/*!40000 ALTER TABLE `State` DISABLE KEYS */;
+/*!40000 ALTER TABLE `InputState` DISABLE KEYS */;
+/*!40000 ALTER TABLE `Answer` DISABLE KEYS */;
+/*!40000 ALTER TABLE `CorrectMap` DISABLE KEYS */;
+/*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
+/*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('56336509_a17f_4a3f_ac20_b6efa8f546a7','2013110806081383919693','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/edxHeartbeatEventDownTime.json');
+    ('17945efe_76f6_4d37_9f9a_6cc064a83311','2013110907251384010734','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/edxHeartbeatEventDownTime.json');
 INSERT INTO Main (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    (0,'96360553_a69c_48dd_b4ba_25ff7a842104','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1','','','2013-07-18T08:43:32.573390+00:00','','0:00:00','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','56336509_a17f_4a3f_ac20_b6efa8f546a7'),
-    (0,'ad950ccc_e902_47b3_b91e_08498f4c8aec','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1','','','2013-07-18T09:45:37.573390+00:00','','1:02:05','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','56336509_a17f_4a3f_ac20_b6efa8f546a7');
-COMMIT;
-SET foreign_key_checks=1;
-SET unique_checks=1;
+    ('176e71fe_0a0c_48cd_bf42_bdc2acae4cef','547234f9_0b17_49f7_92eb_ba0ead721121','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1','','','2013-07-18T08:43:32.573390+00:00','b328bfbc9a5846f98a8edbd6107d52f4b94c5653','0:00:00','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','17945efe_76f6_4d37_9f9a_6cc064a83311'),
+    ('c40f515d_84c7_437e_b864_ded33d46fb32','d5c2bb24_62d1_4369_aea4_ec7d20f4802f','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1','','','2013-07-18T09:45:37.573390+00:00','b328bfbc9a5846f98a8edbd6107d52f4b94c5653','1:02:05','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','17945efe_76f6_4d37_9f9a_6cc064a83311');
+/*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
+/*!40000 ALTER TABLE `State` ENABLE KEYS */;
+/*!40000 ALTER TABLE `InputState` ENABLE KEYS */;
+/*!40000 ALTER TABLE `Answer` ENABLE KEYS */;
+/*!40000 ALTER TABLE `CorrectMap` ENABLE KEYS */;
+/*!40000 ALTER TABLE `LoadInfo` ENABLE KEYS */;
+/*!40000 ALTER TABLE `Account` ENABLE KEYS */;
+UNLOCK TABLES;
+INSERT INTO EdxPrivate.Account (account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) SELECT account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails FROM Edx.Account;
+DROP TABLE Edx.Account;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
