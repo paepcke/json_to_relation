@@ -1,14 +1,18 @@
+#!/usr/bin/env python
+
 '''
 Created on Nov 9, 2013
 
 @author: paepcke
 '''
+import argparse
 import datetime
 import logging
 import os
 import re
 import subprocess
 import sys
+import socket
 
 import boto
 
@@ -24,12 +28,19 @@ class TrackLogPuller(object):
     
     Technique for pulling files from S3 based on draft by Sef Kloninger. 
     '''
-
-    LOCAL_LOG_STORE = "/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsSep20_2013/tracking/"
-    #LOCAL_LOG_STORE = "/home/dataman/Data/EdX/tracking/"
+    
+    hostname = socket.gethostname()
+    if hostname == 'duo':
+        LOCAL_LOG_STORE = "/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsSep20_2013/tracking/"
+    elif hostname == 'mono':
+        LOCAL_LOG_STORE = "/home/paepcke/Project/VPOL/Data/EdXTrackingOct22_2013/"
+    elif hostname == 'datastage':
+        LOCAL_LOG_STORE = "/home/dataman/Data/EdX/tracking/"
     LOG_BUCKETNAME = "stanford-edx-logs"
     
     FILE_DATE_PATTERN = re.compile(r'[^-]*-([0-9]*)[^.]*\.gz')
+
+# ----------------------------------------  Public Methods ----------------------
 
     def __init__(self, loggingLevel=logging.INFO, logFile=None):
         '''
@@ -98,7 +109,9 @@ class TrackLogPuller(object):
                 continue
             
         for rlogFileObj in rLogFileObjs:
+            
             rLogPath = str(rlogFileObj.name)
+            #self.logDebug('Looking at remote track log file %s' % rLogPath)            
             if rLogPath[-1] == "/":
                 # Ignore subdir names like 'app10/'
                 continue
@@ -120,18 +133,24 @@ class TrackLogPuller(object):
                 rfileObjsToGet.append(rlogFileObj)
         return rfileObjsToGet
 
-    def pullNewFiles(self, destDir, dryRun=False):
+    def pullNewFiles(self, destDir=None, dryRun=False):
         '''
         Given a root directory, copy track log files from S3 into subdirectories
         app10, app11, app20, etc. Only files that have not been processed yet
         are loaded. The load history file is consulted to ensure this selection.
-        A list of full path for the newly downloaded files is returned.  The
-        history file is 
+        A list of full paths for the newly downloaded files is returned.  The
+        history file is by default in TrackLogPuller.LOCAL_LOG_STORE
         @param destDir: directory from which app10/filename, etc. descend.
         @type destDir: String
+        @param dryRun: if True, only log what *would* be done. Cause no actual changes.
+        @type dryRun: Bool
         @return: list of full-path file names that have been downloaded. They have not been transformed and loaded yet.
         @rtype: [String]
         '''
+        
+        if destDir is None:
+            destDir=TrackLogPuller.LOCAL_LOG_STORE
+        
         # Identify log files at S3 that we have not pulled yet.
         # Let location of pullHistory.txt file default:
         rfileObjsToPull = self.identifyNewLogFiles(TrackLogPuller.LOCAL_LOG_STORE)
@@ -149,10 +168,11 @@ class TrackLogPuller(object):
                     # Update the history file (int, datetime):
                     (fileSize, createTime) = self.getHistoryFacts(localDest)
                     self.logInfo("Updating pullHistory.txt with .../%s,%d,%s" % (os.path.basename(localDest), fileSize, str(createTime)))
-                    histFd.write('%s,%d,%s\n' % (localDest, fileSize, str(createTime)))                    
+                    histFd.write('%s,%d,%s\n' % (localDest, fileSize, str(createTime)))
+        self.logInfo("Pulled all track log files that are new on S3, are at least one day old, and are not present locally.")                    
         return rfileObjsToPull
 
-    def runTransforms(self, logFilePaths, sqlDestDir, dryRun=False):
+    def runTransforms(self, logFilePaths, sqlDestDir=None, dryRun=False):
         '''
         Given a list of full-path log files, initiate their transform.
         Uses gnu parallel to use multiple cores if available. One error log file
@@ -160,41 +180,60 @@ class TrackLogPuller(object):
         are written to directory TransformLogs that is a sibling of the given
         sqlDestDir. Assumes that script transformGivenLogfiles.sh found by
         subprocess. Just have it in the same dir as this file.
-        @param logFilePaths: list of full paths for log files to be transformed.
+        @param logFilePaths: list of full0path track log files that are to be transformed.
         @type logFilePaths: [String]
-        @param sqlDestDir: full path to dir where sql files will be deposited.
+        @param sqlDestDir: full path to dir where sql files will be deposited. If None,
+                           SQL files will to into TrackLogPuller.LOCAL_LOG_STORE/SQL
         @type sqlDestDir: String
+        @param dryRun: if True, only log what *would* be done. Cause no actual changes.
+        @type dryRun: Bool
         '''
+        if sqlDestDir is None:
+            sqlDestDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE, 'SQL')
         shellCommand = ['transformGivenLogfiles.sh', sqlDestDir]
         # Add the logfiles as arguments:
         shellCommand.extend(logFilePaths)
         self.logInfo('Starting to transform %d newly downloaded tracklog files...' % len(logFilePaths))
         if dryRun:
             # List just the basenames of the log files.
-            self.logInfo("Would call shell script transformGivenLogfiles.sh with sql dest %s, and log files (basenames only)\n%s" % 
-                         (sqlDestDir, map(os.path.basename, logFilePaths)))
+            self.logInfo("Would call shell script transformGivenLogfiles.sh %s %s" %
+                         (sqlDestDir, logFilePaths))
+                        #(sqlDestDir, map(os.path.basename, logFilePaths)))
         else:
             subprocess.call(shellCommand)
         self.logInfo('Done transforming %d newly downloaded tracklog files...' % len(logFilePaths))
     
     
-    def createHistory(self, dirPath, histFileDestDir=None):
+    def createHistory(self, dirPath, histFileDestDir=None, dryRun=None):
         '''
         Given a directory that contains track log files, create a
-        history file for them (pullHistory.txt). Used only to repair
-        broken history files, or build the history file when
+        history file for them (pullHistory.txt). The file will look
+        as if the log files had been pulled from S3 by this script
+        automatically.
+        Used only to repair broken history files, or build the history file when
         log files have been downloaded from S3, and transformed/loaded
         manually. Normally, downloaded files are added to the history
         file automatically.
         
         @param dirPath: path to directory that contains previously downloaded track logfiles
         @type dirPath: String
+        @param histFileDestDir: directory where history file is to be placed. Default: TrackLogPuller.LOCAL_LOG_STORE
+        @type histFileDestDir: String
+        @param dryRun: if True, only log what *would* be done. Cause no actual changes.
+        @type dryRun: Bool
         '''
         if histFileDestDir is None:
-            histFileDestDir = dirPath
+            histFileDestDir = TrackLogPuller.LOCAL_LOG_STORE
         try:
+            os.makedirs(dirPath)
+        except OSError:
+            # dir and all intermediate dirs already exit; fine.
+            pass
+        try:
+            # Get all files in the dir where the track logs are stored:
             fileNames = os.listdir(dirPath)
         except IOError:
+            # Shouldn't happen.
             self.logWarn("Directory path %s is not found." % dirPath)
             
         with open(os.path.join(histFileDestDir, 'pullHistory.txt'), 'a') as histFd:
@@ -207,9 +246,12 @@ class TrackLogPuller(object):
                     continue
                 fullPath  = os.path.join(dirPath, maybeLogFile)
                 (fileSize, createTime) = self.getHistoryFacts(fullPath)
-                histFd.write('%s,%d,%s\n' % (fullPath, fileSize, str(createTime)))
+                if dryRun:
+                    self.logInfo('Would add to history file: "%s,%d,%s"' % (fullPath, fileSize, str(createTime)))
+                else:
+                    histFd.write('%s,%d,%s\n' % (fullPath, fileSize, str(createTime)))
             
-
+    # ----------------------------------------  Private Methods ----------------------
     def getHistoryFacts(self, logFilePath):
         '''
         Given the full path of a log file, return a tuple
@@ -246,6 +288,9 @@ class TrackLogPuller(object):
 #       # Add the handler to the logger
         self.logger.addHandler(handler)
  
+    def logDebug(self, msg):
+        self.logger.debug(msg)
+
     def logWarn(self, msg):
         self.logger.warn(msg)
 
@@ -255,74 +300,66 @@ class TrackLogPuller(object):
     def logErr(self, msg):
         self.logger.error(msg)
 
-#         
-#         
-# 
-# import sys
-# import os
-# import boto
-# 
-# 
-# 
-# 
-# myname = sys.argv[0]
-# 
-# 
-# try:
-#     conn = boto.connect_s3()
-# 
-#     log_bucket = conn.get_bucket(LOG_BUCKETNAME)
-# 
-# except boto.exception.NoAuthHandlerFound as e:
-# 
-#     # TODO: more error cases to watch here to be sure (bucket not found?)
-#     sys.stderr.write("%s: boto authentication error: %s\n" % (myname, str(e)))
-# 
-#     sys.stderr.write("suggestion: put your credentials in AWS_ACCESS_KEY and AWS_SECRET_KEY environment variables, or a ~/.boto file\n")
-# 
-#     sys.exit(1)
-# 
-# logs = log_bucket.list()
-# for log in logs:
-# 
-#     logstr = str(log.name)
-# 
-#     if logstr[-1] == "/":
-# 
-#         continue
-# 
-#     dest = LOCAL_LOG_STORE+logstr
-# 
-#     if os.path.exists(dest):
-# 
-#         if os.stat(dest).st_size == log.size:
-# 
-#             print myname, "skipping:", logstr
-#             continue
-#         else:
-#             print myname, "removing partial:", logstr
-# 
-#             os.remove(dest)
-# 
-# 
-#     print myname, "downloading:", logstr
-#     dest_path = "/".join(dest.split("/")[0:-1])
-# 
-#     if not os.path.exists(dest_path):
-# 
-#         os.makedirs(dest_path)
-#     log.get_contents_to_filename(dest)     
 
 if __name__ == '__main__':
-    # For testing:
-    puller = TrackLogPuller()
-    tracklogRoot = '/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsSep20_2013/tracking'
+    parser = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]))
+    parser.add_argument('-l', '--logFile', 
+                        help='fully qualified log file name. Default: log to stdout.',
+                        dest='logFile',
+                        default=None);
+    parser.add_argument('-d', '--dryRun', 
+                        help='show what script would do if run normally; no actual downloads or other changes are performed.', 
+                        action='store_true');
+    parser.add_argument('-v', '--verbose', 
+                        help='print operational info to console.', 
+                        dest='verbose',
+                        action='store_true');
+    parser.add_argument('--logFileDir',
+                        help='For pull: root destination of downloaded track log files; default: ' + TrackLogPuller.LOCAL_LOG_STORE +\
+                             '. For transform: root location of log files to be tranformed; default: %s.' %
+                             TrackLogPuller.LOCAL_LOG_STORE)
+    parser.add_argument('--sqlFileDir',
+                        help='For transform: destination of where transformed track log files go (.sql files); default: ' + os.path.join(TrackLogPuller.LOCAL_LOG_STORE, 'SQL') +\
+                             '. For load: location of .sql files to be loaded; default: %s.' %
+                             os.path.join(TrackLogPuller.LOCAL_LOG_STORE, 'SQL'))
+    parser.add_argument('action',
+                        help='What to do: {pull | pullTransform | pullTransformLoad'
+                        ) 
+    
+    args = parser.parse_args();
+
+    if args.action != 'pull' and\
+       args.action != 'pullTransform' and\
+       args.action != 'pullTransformLoad' and\
+       args.action != 'createHistory':
+        print("Main argument must be one of pull, pullTransform, and pullTransformAndLoad")
+        sys.exit(1)
+
+
+    # Log file:
+    if args.logFile is not None:
+        os.makedirs(args.logFile)
+
+    print('dryRun: %s' % args.dryRun)
+    print('logFile: %s' % args.logFile)
+    print('action: %s' % args.action)
+    print('verbose: %s' % args.verbose)
+
+    if args.verbose:
+        puller = TrackLogPuller(logFile=args.logFile, loggingLevel=logging.DEBUG)
+    else:
+        puller = TrackLogPuller(logFile=args.logFile)
+    
+    if args.action == 'pull':
+        puller.pullNewFiles(args.logFileDir, args.dryRun)
+    
+    sys.exit()
     #puller.createHistory('/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsSep20_2013/tracking/app10', tracklogRoot)
     #puller.createHistory('/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsSep20_2013/tracking/app11', tracklogRoot)
     #puller.createHistory('/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsSep20_2013/tracking/app20', tracklogRoot)
     #puller.createHistory('/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsSep20_2013/tracking/app21', tracklogRoot)
     #newLogObjs = puller.identifyNewLogFiles(tracklogRoot)
-    pulledFiles = puller.pullNewFiles(tracklogRoot, dryRun=False)
+
     #puller.runTransforms(newLogs, '~/tmp', dryRun=True)
     
     

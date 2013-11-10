@@ -2,6 +2,9 @@
 
 #TODO: In pullLatestLogFiles: show percentage of files downloaded as they are printed.
 #TODO: In pullLatestLogFiles: make CLI nice, with commands for pullNew/transform/load
+#TODO: In json2relation.py:    if not os.path.exists(logDir):
+#                                 os.makedirs(logDir)
+
 
 '''
 Created on Sep 14, 2013
