@@ -1,25 +1,8 @@
 #!/usr/bin/env python
-#TODO: Edx unittest for detecting server downtimes in log
-#TODO: /app21/tracking.log-20130831.gz:174310: event is not a dict in select_rubric event: '{u'category': 0, u'selection': u'1', u'location': u'i4x://Education/EDUC115N/combinedopenended/04d9f185e689415f9217a5423166891c'}' (TypeError('eval() arg 1 must be a string or code object',))
-#TODO: documentation: eventID is not a key: used to hold together pointers to states or answers
-#TODO: event is not a dict in problem_reset event: 'input_i4x-Engineering-QMSE01-problem-b6a3d17b9eca45f48eab332017e858ee_2_1=2.14'
-#TODO: want courseid filled in for video events and some other event_types:
-#   		   seq_goto     
-#   		   /courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/sequential/5798494e781844498921bff40c5e014a/goto_position
-#   		   show_transcript
-#   		   /heartbeat
-#   		   /courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/sequential/162de22b243243e9bf8111266303c9fa/goto_position
-#   		   seq_next
-#   		   pause_video
-#   		   /courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/combinedopenended/b3c41df5b9ef40ea9c00e8252031207d/get_legend
-#   		   /courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/combinedopenended/b3c41df5b9ef40ea9c00e8252031207d/get_last_response
-#   		   load_video    
-#TODO: ERROR 1064 (42000) at line 5291428 in file: './tracking.log-20131001.gz.2013-10-29T18_16_21.887671_25959.sql': You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.76 Safari/' at line 1
-#TODO: testSaveAnswerInPath test case of test_edxJSON... not passing
-#TODO: Scramble UID, adding table UIDMap
-#TODO: change transformAndLoad to log in as root
-#TODO: done still get None
-#TODO: zipcode
+
+#TODO: In pullLatestLogFiles: show percentage of files downloaded as they are printed.
+#TODO: In pullLatestLogFiles: make CLI nice, with commands for pullNew/transform/load
+
 '''
 Created on Sep 14, 2013
 
@@ -29,7 +12,6 @@ Created on Sep 14, 2013
 from cStringIO import StringIO
 from collections import OrderedDict
 import copy
-import datetime
 import logging
 import math
 import os
@@ -40,8 +22,7 @@ import time
 
 from col_data_type import ColDataType
 from generic_json_parser import GenericJSONParser
-from input_source import InputSource, InURI, InString, InMongoDB, \
-    InPipe #@UnusedImport
+from input_source import InputSource, InURI, InString, InMongoDB, InPipe
 from output_disposition import OutputDisposition, OutputFile, OutputPipe
 
 
@@ -371,10 +352,11 @@ class JSONToRelation(object):
 
             # Since we hold back SQL insertion values to include them
             # all into one INSERT statement, need to flush after last
-            # call to processOneJSONObject, after pushing COMMIT:
+            # call to processOneJSONObject:
             if self.destination.getOutputFormat() == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
-                self.processFinishedRow('FLUSH', outFd) 
-                self.pushString(self.jsonParserInstance.getDumpPostscript())
+                self.processFinishedRow('FLUSH', outFd)
+                # Give parser a chance to for sealing the sql file: 
+                self.jsonParserInstance.finish()
         
         # If output to other than MySQL table (e.g. CSV file), check whether
         # we are to prepend the column header row:

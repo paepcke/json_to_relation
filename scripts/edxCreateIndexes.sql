@@ -32,22 +32,22 @@ CREATE INDEX AnswerIdxCourseID
        ON Edx.Answer(course_id(255));
 
 CREATE INDEX AccountIdxUname
-       ON Edx.Account(username(255));
+       ON EdxPrivate.Account(username(255));
 
 CREATE INDEX AccountIdxZip
-       ON Edx.Account(zipcode(10));
+       ON EdxPrivate.Account(zipcode(10));
 
 CREATE INDEX AccountIdxCoun
-       ON Edx.Account(country(255));
+       ON EdxPrivate.Account(country(255));
 
 CREATE INDEX AccountIdxGen
-       ON Edx.Account(gender(6));
+       ON EdxPrivate.Account(gender(6));
 
 CREATE INDEX AccountIdxDOB
-       ON Edx.Account(year_of_birth);
+       ON EdxPrivate.Account(year_of_birth);
 
 CREATE INDEX AccountIdxEdu
-       ON Edx.Account(level_of_education(10));
+       ON EdxPrivate.Account(level_of_education(10));
 
 CREATE INDEX AccountIdxCouID
-       ON Edx.Account(course_id(255));
+       ON EdxPrivate.Account(course_id(255));

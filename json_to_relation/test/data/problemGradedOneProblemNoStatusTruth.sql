@@ -1,9 +1,19 @@
 CREATE DATABASE IF NOT EXISTS Edx;
 CREATE DATABASE IF NOT EXISTS EdxPrivate;
-USE test;
-SET foreign_key_checks = 0;
-DROP TABLE IF EXISTS EdxTrackEvent, Answer, InputState, CorrectMap, State, EdxPrivate.Account, LoadInfo;
-SET foreign_key_checks = 1;
+USE Edx;
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+DROP TABLE IF EXISTS EdxTrackEvent, Answer, InputState, CorrectMap, State, Account, EdxPrivate.Account, LoadInfo;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(40) NOT NULL PRIMARY KEY,
     problem_id TEXT NOT NULL,
@@ -37,6 +47,25 @@ CREATE TABLE IF NOT EXISTS State (
     FOREIGN KEY(correct_map) REFERENCES CorrectMap(correct_map_id) ON DELETE CASCADE,
     FOREIGN KEY(input_state) REFERENCES InputState(input_state_id) ON DELETE CASCADE
     );
+CREATE TABLE IF NOT EXISTS Account (
+    account_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    screen_name TEXT NOT NULL,
+    name TEXT NOT NULL,
+    anon_screen_name TEXT NOT NULL,
+    mailing_address TEXT NOT NULL,
+    zipcode TINYTEXT NOT NULL,
+    country TINYTEXT NOT NULL,
+    gender TINYTEXT NOT NULL,
+    year_of_birth TINYINT NOT NULL,
+    level_of_education TINYTEXT NOT NULL,
+    goals TEXT NOT NULL,
+    honor_code TINYINT NOT NULL,
+    terms_of_service TINYINT NOT NULL,
+    course_id TEXT NOT NULL,
+    enrollment_action TINYTEXT NOT NULL,
+    email TEXT NOT NULL,
+    receive_emails TINYTEXT NOT NULL
+    );
 CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     account_id VARCHAR(40) NOT NULL PRIMARY KEY,
     screen_name TEXT NOT NULL,
@@ -62,7 +91,7 @@ CREATE TABLE IF NOT EXISTS LoadInfo (
     load_file TEXT NOT NULL
     );
 CREATE TABLE IF NOT EXISTS EdxTrackEvent (
-    _id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    _id VARCHAR(40) NOT NULL PRIMARY KEY,
     event_id VARCHAR(40) NOT NULL,
     agent TEXT NOT NULL,
     event_source TINYTEXT NOT NULL,
@@ -129,15 +158,35 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     FOREIGN KEY(state_fk) REFERENCES State(state_id) ON DELETE CASCADE,
     FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id) ON DELETE CASCADE
     );
-SET foreign_key_checks=0;
-SET unique_checks=0;
-SET autocommit=0;
+LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE;
+/*!40000 ALTER TABLE `EdxTrackEvent` DISABLE KEYS */;
+/*!40000 ALTER TABLE `State` DISABLE KEYS */;
+/*!40000 ALTER TABLE `InputState` DISABLE KEYS */;
+/*!40000 ALTER TABLE `Answer` DISABLE KEYS */;
+/*!40000 ALTER TABLE `CorrectMap` DISABLE KEYS */;
+/*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
+/*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('83e57c29_da60_44df_8136_ba0de7edf2c4','2013110806081383919693','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemGradedOneProblemNoStatus.json');
+    ('1468c67b_4a4c_4af2_a7a8_335bac19c26f','2013110919261384053989','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemGradedOneProblemNoStatus.json');
 INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
-    ('54da5cdc_9873_4dba_a769_5ef48e5762a4','input_i4x-Medicine-SciWrite-problem-c3266c76a7854d02b881250a49054ddb_2_1','incorrect','Medicine/SciWrite/Fall2013');
+    ('3c68967b_3738_4425_846f_4bae0811779f','input_i4x-Medicine-SciWrite-problem-c3266c76a7854d02b881250a49054ddb_2_1','incorrect','Medicine/SciWrite/Fall2013');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    (0,'64ff1d81_8d9c_4808_baf0_3c54f2b635d7','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.62 Safari/537.36','browser','problem_graded','218.26.181.230','https://class.stanford.edu/courses/Medicine/SciWrite/Fall2013/courseware/c38dc89a3b544d2e847f9fdd910794fa/61d07270ba924c00b00b9eb9e71efa4e/#','90e960f83297786884208b9fc3c67e7d','2013-10-03T11:07:09.872336+00:00','','0:00:00','','','Medicine/SciWrite/Fall2013','',-1,-1,'input_i4x-Medicine-SciWrite-problem-c3266c76a7854d02b881250a49054ddb_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','54da5cdc_9873_4dba_a769_5ef48e5762a4','','83e57c29_da60_44df_8136_ba0de7edf2c4');
-COMMIT;
-SET foreign_key_checks=1;
-SET unique_checks=1;
+    ('e46a574a_bf82_4055_8385_ac060ef4f5d1','e61f7e8b_c770_4dce_80ec_785960f47cab','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.62 Safari/537.36','browser','problem_graded','218.26.181.230','https://class.stanford.edu/courses/Medicine/SciWrite/Fall2013/courseware/c38dc89a3b544d2e847f9fdd910794fa/61d07270ba924c00b00b9eb9e71efa4e/#','90e960f83297786884208b9fc3c67e7d','2013-10-03T11:07:09.872336+00:00','b328bfbc9a5846f98a8edbd6107d52f4b94c5653','0:00:00','','','Medicine/SciWrite/Fall2013','',-1,-1,'input_i4x-Medicine-SciWrite-problem-c3266c76a7854d02b881250a49054ddb_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','3c68967b_3738_4425_846f_4bae0811779f','','1468c67b_4a4c_4af2_a7a8_335bac19c26f');
+/*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
+/*!40000 ALTER TABLE `State` ENABLE KEYS */;
+/*!40000 ALTER TABLE `InputState` ENABLE KEYS */;
+/*!40000 ALTER TABLE `Answer` ENABLE KEYS */;
+/*!40000 ALTER TABLE `CorrectMap` ENABLE KEYS */;
+/*!40000 ALTER TABLE `LoadInfo` ENABLE KEYS */;
+/*!40000 ALTER TABLE `Account` ENABLE KEYS */;
+UNLOCK TABLES;
+INSERT INTO EdxPrivate.Account (account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) SELECT account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails FROM Edx.Account;
+DROP TABLE Edx.Account;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
