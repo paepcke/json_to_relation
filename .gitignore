@@ -39,3 +39,12 @@ testOutputWithHeader.csv
 os
 pymysql
 sys
+argparse
+boto
+datetime
+json_to_relation/json_to_relation.py.orig
+json_to_relation/test/data/.#seekVideoWeirdQueueState.json
+logging
+re
+socket
+subprocess
