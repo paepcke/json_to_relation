@@ -7,12 +7,14 @@ Created on Nov 9, 2013
 '''
 import argparse
 import datetime
+import getpass
+import glob
 import logging
 import os
 import re
+import socket
 import subprocess
 import sys
-import socket
 
 import boto
 
@@ -111,7 +113,7 @@ class TrackLogPuller(object):
         for rlogFileObj in rLogFileObjs:
             
             rLogPath = str(rlogFileObj.name)
-            #self.logDebug('Looking at remote track log file %s' % rLogPath)            
+            self.logDebug('Looking at remote track log file %s' % rLogPath)            
             if rLogPath[-1] == "/":
                 # Ignore subdir names like 'app10/'
                 continue
@@ -169,10 +171,13 @@ class TrackLogPuller(object):
                     (fileSize, createTime) = self.getHistoryFacts(localDest)
                     self.logInfo("Updating pullHistory.txt with .../%s,%d,%s" % (os.path.basename(localDest), fileSize, str(createTime)))
                     histFd.write('%s,%d,%s\n' % (localDest, fileSize, str(createTime)))
-        self.logInfo("Pulled all track log files that are new on S3, are at least one day old, and are not present locally.")                    
+        if dryRun:
+            self.logInfo("Would have pulled files from S3 that are at least one day old, and are not present locally.")                    
+        else:
+            self.logInfo("Pulled all track log files that are new on S3, are at least one day old, and are not present locally.")                    
         return rfileObjsToPull
 
-    def runTransforms(self, logFilePaths, sqlDestDir=None, dryRun=False):
+    def transform(self, logFilePaths, sqlDestDir=None, dryRun=False):
         '''
         Given a list of full-path log files, initiate their transform.
         Uses gnu parallel to use multiple cores if available. One error log file
@@ -188,21 +193,58 @@ class TrackLogPuller(object):
         @param dryRun: if True, only log what *would* be done. Cause no actual changes.
         @type dryRun: Bool
         '''
+        if logFilePaths is None:
+            logFilePaths = TrackLogPuller.LOCAL_LOG_STORE + '/app*/*.gz'
         if sqlDestDir is None:
             sqlDestDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE, 'SQL')
         shellCommand = ['transformGivenLogfiles.sh', sqlDestDir]
-        # Add the logfiles as arguments:
-        shellCommand.extend(logFilePaths)
-        self.logInfo('Starting to transform %d newly downloaded tracklog files...' % len(logFilePaths))
+        # Add the logfiles as arguments; if that's a wildcard expression,
+        # i.e. string, just append. Else it's assumed to an array of
+        # strings that need to be concatted:
+        if isinstance(logFilePaths, basestring):
+            shellCommand.append(logFilePaths)
+        else:
+            shellCommand.extend(logFilePaths)
+
+        # If file list is a shell glob, expand into a file list:
+        # for logging:
+        if isinstance(logFilePaths, basestring):
+            fileList = glob.glob(logFilePaths)
+
         if dryRun:
+            self.logInfo('Would start to transform %d tracklog files...' % len(fileList))            
             # List just the basenames of the log files.
             self.logInfo("Would call shell script transformGivenLogfiles.sh %s %s" %
-                         (sqlDestDir, logFilePaths))
+                         (sqlDestDir, str(logFilePaths)))
                         #(sqlDestDir, map(os.path.basename, logFilePaths)))
+            self.logInfo('Would be done transforming %d newly downloaded tracklog files...' % len(fileList))
+        else:
+            self.logInfo('Starting to transform %d tracklog files...' % len(fileList))
+            self.logDebug('Calling Bash with %s' % shellCommand)
+            subprocess.call(shellCommand)
+            self.logInfo('Done transforming %d newly downloaded tracklog files...' % len(fileList))
+
+    def load(self, pwd, sqlFileSrc=None, dryRun=False):
+        '''
+        Given a directory that contains .sql files, or an array of full-path .sql
+        files, load them into mysql.
+        @param pwd: Root password for MySQL db
+        @type pwd: String
+        @param sqlFileSrc: 
+        @type sqlFileSrc:
+        @param dryRun:
+        @type dryRun:
+        '''
+        if sqlFileSrc is None:
+            sqlFileSrc = os.listdir(TrackLogPuller.LOCAL_LOG_STORE + '/SQL')
+        # Now SQL files are guaranteed to be a list. Load them all using
+        # a bash script, which will also run the index: 
+        shellCommand = ['load.sh', pwd]
+        shellCommand.extend(sqlFileSrc)
+        if dryRun:
+            self.logInfo("Would now invoke bash command %s" % shellCommand)
         else:
             subprocess.call(shellCommand)
-        self.logInfo('Done transforming %d newly downloaded tracklog files...' % len(logFilePaths))
-    
     
     def createHistory(self, dirPath, histFileDestDir=None, dryRun=None):
         '''
@@ -276,8 +318,9 @@ class TrackLogPuller(object):
         @type logFile:
         '''
         # Set up logging:
-        self.logger = logging.getLogger('pullTackLogs')
-        self.logger.setLevel(loggingLevel)
+        #self.logger = logging.getLogger('pullTackLogs')
+        self.logger = logging.getLogger(os.path.basename(__file__))
+
         # Create file handler if requested:
         if logFile is not None:
             handler = logging.FileHandler(logFile)
@@ -285,9 +328,15 @@ class TrackLogPuller(object):
             # Create console handler:
             handler = logging.StreamHandler()
         handler.setLevel(loggingLevel)
-#       # Add the handler to the logger
+
+        # Create formatter
+        formatter = logging.Formatter("%(name)s: %(asctime)s;%(levelname)s: %(message)s")       
+        handler.setFormatter(formatter)
+        
+        # Add the handler to the logger
         self.logger.addHandler(handler)
- 
+        self.logger.setLevel(loggingLevel)
+         
     def logDebug(self, msg):
         self.logger.debug(msg)
 
@@ -303,9 +352,9 @@ class TrackLogPuller(object):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]))
-    parser.add_argument('-l', '--logFile', 
-                        help='fully qualified log file name. Default: log to stdout.',
-                        dest='logFile',
+    parser.add_argument('-l', '--errLogFile', 
+                        help='fully qualified log file name to which info and error are directed. Default: log to stdout.',
+                        dest='errLogFile',
                         default=None);
     parser.add_argument('-d', '--dryRun', 
                         help='show what script would do if run normally; no actual downloads or other changes are performed.', 
@@ -314,51 +363,116 @@ if __name__ == '__main__':
                         help='print operational info to console.', 
                         dest='verbose',
                         action='store_true');
-    parser.add_argument('--logFileDir',
+    parser.add_argument('--logs',
+                        action='append',
                         help='For pull: root destination of downloaded track log files; default: ' + TrackLogPuller.LOCAL_LOG_STORE +\
                              '. For transform: root location of log files to be tranformed; default: %s.' %
                              TrackLogPuller.LOCAL_LOG_STORE)
-    parser.add_argument('--sqlFileDir',
-                        help='For transform: destination of where transformed track log files go (.sql files); default: ' + os.path.join(TrackLogPuller.LOCAL_LOG_STORE, 'SQL') +\
-                             '. For load: location of .sql files to be loaded; default: %s.' %
+    parser.add_argument('--sql',
+                        action='append',
+                        help='For transform: destination directory of where transformed track log files go (.sql files); default: ' + os.path.join(TrackLogPuller.LOCAL_LOG_STORE, 'SQL') +\
+                             '. For load: directory of .sql files to be loaded, or list of .sql files; default: %s.' %
                              os.path.join(TrackLogPuller.LOCAL_LOG_STORE, 'SQL'))
-    parser.add_argument('action',
-                        help='What to do: {pull | pullTransform | pullTransformLoad'
+    parser.add_argument('toDo',
+                        help='What to do: {pull | transform | load | pullTransform | pullTransformLoad'
                         ) 
     
     args = parser.parse_args();
 
-    if args.action != 'pull' and\
-       args.action != 'pullTransform' and\
-       args.action != 'pullTransformLoad' and\
-       args.action != 'createHistory':
-        print("Main argument must be one of pull, pullTransform, and pullTransformAndLoad")
+    if args.toDo != 'pull' and\
+       args.toDo != 'transform' and\
+       args.toDo != 'load' and\
+       args.toDo != 'pullTransform' and\
+       args.toDo != 'pullTransformLoad' and\
+       args.toDo != 'createHistory':
+        print("Main argument must be one of pull, transform load, pullTransform, pullTransformAndLoad, and createHistory")
         sys.exit(1)
 
 
     # Log file:
-    if args.logFile is not None:
-        os.makedirs(args.logFile)
+    if args.errLogFile is not None:
+        os.makedirs(args.errLogFile)
 
     print('dryRun: %s' % args.dryRun)
-    print('logFile: %s' % args.logFile)
-    print('action: %s' % args.action)
+    print('errLogFile: %s' % args.errLogFile)
     print('verbose: %s' % args.verbose)
+    print('logs: %s' % args.logs)
+    print('sql: %s' % args.sql)
+    print('toDo: %s' % args.toDo)
 
+    #sys.exit(0)
+    
     if args.verbose:
-        puller = TrackLogPuller(logFile=args.logFile, loggingLevel=logging.DEBUG)
+        puller = TrackLogPuller(logFile=args.errLogFile, loggingLevel=logging.DEBUG)
     else:
-        puller = TrackLogPuller(logFile=args.logFile)
+        puller = TrackLogPuller(logFile=args.errLogFile)
     
-    if args.action == 'pull':
-        puller.pullNewFiles(args.logFileDir, args.dryRun)
+    if args.toDo == 'pull' or args.toDo == 'pullTransform' or args.toDo == 'pullTransformLoad':
+        # For pull cmd, 'logs' must be a writable directory (to which the track logs will be written). 
+        # It will come in as a singleton array:
+        if (args.logs is not None and not os.access(args.logs[0], os.W_OK)) or len(args.logs) > 1: 
+            puller.logErr("For pulling track log files from S3, the 'logs' parameter must either not be present, or it must be one *writable* directory (where files will be deposited).")
+            sys.exit(1)
+        receivedFiles = puller.pullNewFiles(args.logs, args.dryRun)
     
-    sys.exit()
+    if args.toDo == 'transform' or args.toDo == 'pullTransform' or args.toDo == 'pullTransformLoad':
+        # For transform cmd, logs will defaulted, or be a list of log files, or a singleton
+        # list of which the first might be a directory:
+        # Check for, and point out all errors, rather than quitting after one:
+        if args.logs is not None:
+            if os.path.isdir(args.logs[0]) and len(args.logs) > 1: 
+                puller.logErr("For transform the 'logs' parameter must either be a single directory, or a list of files.")
+                sys.exit(1)
+            # All files must exist:
+            trueFalseList = map(os.path.exists, args.logs)
+            ok = True
+            for i in range(len(trueFalseList)):
+                if not trueFalseList[i]:
+                    puller.logErr("File % does not exist." % args.logs[i])
+                    ok = False
+                if not os.access(args.logs[i], os.R_OK):
+                    puller.logErr("File % exists, but is not readable." % args.logs[i])
+                    ok = False
+            if not ok:
+                puller.logErr("Command aborted, no action was taken.")
+                sys.exit(1)
+                              
+        # args.sql must be a singleton directory:
+        if (args.sql is not None and len(args.sql) > 1) or not os.path.isdir(args.sql[0]) or not os.access(args.sql[0], os.W_OK):
+            puller.logErr("For transform command the 'sql' parameter must be a single directory where result .sql files are written.")
+            sys.exit(1)
+        puller.transform(args.logs, args.sql, args.dryRun)
+    
+    if args.toDo == 'load' or args.toDo == 'pullTransformLoad':
+        # For loading, args.sql must be None, or a readable directory, or a sequence of readable .sql files.
+        if args.sql is not None:
+            if os.path.isdir(args.sql[0]) and len(args.sql) > 1: 
+                puller.logErr("For load the 'sql' parameter must either be a single directory, or a list of files.")
+                sys.exit(1)
+            # All files must exist:
+            trueFalseList = map(os.path.exists, args.sql)
+            ok = True
+            for i in range(len(trueFalseList)):
+                if not trueFalseList[i]:
+                    puller.logErr("File % does not exist." % args.sql[i])
+                    ok = False
+                if not os.access(args.sql[i], os.R_OK):
+                    puller.logErr("File % exists, but is not readable." % args.sql[i])
+                    ok = False
+            if not ok:
+                puller.logErr("Command aborted, no action was taken.")
+                sys.exit(1)
+        
+        # For DB ops need DB root pwd:
+        pwd = getpass.getpass("Root's mysql pwd: ")
+        puller.load(pwd, args.sql, args.dryRun)
+    
+    
+    sys.exit(0)
     #puller.createHistory('/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsSep20_2013/tracking/app10', tracklogRoot)
     #puller.createHistory('/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsSep20_2013/tracking/app11', tracklogRoot)
     #puller.createHistory('/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsSep20_2013/tracking/app20', tracklogRoot)
     #puller.createHistory('/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsSep20_2013/tracking/app21', tracklogRoot)
-    #newLogObjs = puller.identifyNewLogFiles(tracklogRoot)
 
     #puller.runTransforms(newLogs, '~/tmp', dryRun=True)
     
