@@ -2729,6 +2729,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         userScreenName = postDict.get('username', '')
         accountDict['screen_name'] = userScreenName
         accountDict['name'] = postDict.get('name', '')
+        if isinstance(userScreenName, list):
+            userScreenName = userScreenName[0]
         accountDict['anon_screen_name'] = self.hashGeneral(userScreenName)
         accountDict['mailing_address'] = postDict.get('mailing_address', '')
         # Mailing addresses are enclosed in brackets, making them 
@@ -3489,7 +3491,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         ip = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['ip'], badJSONStr)                
         event = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['event'], badJSONStr)                
         
-        self.setValInRow(row, 'anon_screen_name', self.hashGeneral(screen_name))
+        if isinstance(screen_name, basestring):
+            self.setValInRow(row, 'anon_screen_name', self.hashGeneral(screen_name))
+        else:
+            self.setValInRow(row, 'anon_screen_name', '')
         #self.setValInRow(row, 'host', host)
         self.setValInRow(row, 'session', session)
         self.setValInRow(row, 'event_source', event_source)
