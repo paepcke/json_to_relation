@@ -2,7 +2,7 @@ CREATE INDEX EdxTrackEventIdxEvType
        ON Edx.EdxTrackEvent(event_type(255));
 
 CREATE INDEX EdxTrackEventIdxUname
-       ON Edx.EdxTrackEvent(username(255));
+       ON Edx.EdxTrackEvent(anon_screen_name(255));
 
 CREATE INDEX EdxTrackEventIdxCourseID
        ON Edx.EdxTrackEvent(course_id(255));
@@ -17,7 +17,7 @@ CREATE INDEX EdxTrackEventIdxVidID
        ON Edx.EdxTrackEvent(video_id(255));
 
 CREATE INDEX EdxTrackEventIdxAnsID
-       ON Edx.EdxTrackEvent(answer_id(255))
+       ON Edx.EdxTrackEvent(answer_id(255));
 
 CREATE INDEX EdxTrackEventIdxSuccess
        ON Edx.EdxTrackEvent(success(15));
@@ -32,7 +32,10 @@ CREATE INDEX AnswerIdxCourseID
        ON Edx.Answer(course_id(255));
 
 CREATE INDEX AccountIdxUname
-       ON EdxPrivate.Account(username(255));
+       ON EdxPrivate.Account(screen_name(255));
+
+CREATE INDEX AccountIdxAnonUname
+       ON EdxPrivate.Account(anon_screen_name(255));
 
 CREATE INDEX AccountIdxZip
        ON EdxPrivate.Account(zipcode(10));
