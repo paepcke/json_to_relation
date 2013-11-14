@@ -10,11 +10,11 @@
 # Can be called from anywhere, as long as cd /home/dataman/Data/EdX/tracking/SQL
 # exists.
 
-cd /home/dataman/Data/EdX/tracking/SQL
 # Ensure that log and CSV directories exist:
 mkdir -p ../TransformLogs
 mkdir -p ../CSV
 thisScriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd /home/dataman/Data/EdX/tracking/SQL
 
 echo "SQLInsertsToCSV start conversion: `date`" >> ../TransformLogs/sqlInsertsToCSV.log
 time parallel --gnu --progress $thisScriptDir/sqlInsert2CSV.py /home/dataman/Data/EdX/tracking/CSV ::: /home/dataman/Data/EdX/tracking/SQL/*.sql
