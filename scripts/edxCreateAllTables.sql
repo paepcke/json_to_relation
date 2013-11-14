@@ -53,25 +53,6 @@ CREATE TABLE IF NOT EXISTS Account (
     email TEXT NOT NULL,
     receive_emails TINYTEXT NOT NULL
     );
-CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
-    account_id VARCHAR(40) NOT NULL PRIMARY KEY,
-    screen_name TEXT NOT NULL,
-    name TEXT NOT NULL,
-    anon_screen_name TEXT NOT NULL,
-    mailing_address TEXT NOT NULL,
-    zipcode TINYTEXT NOT NULL,
-    country TINYTEXT NOT NULL,
-    gender TINYTEXT NOT NULL,
-    year_of_birth TINYINT NOT NULL,
-    level_of_education TINYTEXT NOT NULL,
-    goals TEXT NOT NULL,
-    honor_code TINYINT NOT NULL,
-    terms_of_service TINYINT NOT NULL,
-    course_id TEXT NOT NULL,
-    enrollment_action TINYTEXT NOT NULL,
-    email TEXT NOT NULL,
-    receive_emails TINYTEXT NOT NULL
-    );
 CREATE TABLE IF NOT EXISTS LoadInfo (
     load_info_id INT NOT NULL PRIMARY KEY,
     load_date_time DATETIME NOT NULL,
@@ -145,3 +126,24 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     FOREIGN KEY(state_fk) REFERENCES State(state_id) ON DELETE CASCADE,
     FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id) ON DELETE CASCADE
     );
+USE EdxPrivate;
+CREATE TABLE IF NOT EXISTS Account (
+    account_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    screen_name TEXT NOT NULL,
+    name TEXT NOT NULL,
+    anon_screen_name TEXT NOT NULL,
+    mailing_address TEXT NOT NULL,
+    zipcode TINYTEXT NOT NULL,
+    country TINYTEXT NOT NULL,
+    gender TINYTEXT NOT NULL,
+    year_of_birth TINYINT NOT NULL,
+    level_of_education TINYTEXT NOT NULL,
+    goals TEXT NOT NULL,
+    honor_code TINYINT NOT NULL,
+    terms_of_service TINYINT NOT NULL,
+    course_id TEXT NOT NULL,
+    enrollment_action TINYTEXT NOT NULL,
+    email TEXT NOT NULL,
+    receive_emails TINYTEXT NOT NULL
+    );
+USE Edx;
