@@ -15,7 +15,4 @@ fi
 cd /home/dataman/Data/EdX/tracking/CSVSorted
 outFile=`basename $1 .csv`Sorted.csv
 echo "Processing $outFile" >> ../TransformLogs/sortCSV.log
-time parallel --gnu --progress sort \
-          --field-separator=',' \
-          --key=1 \
-          --buffer-size=1G $1 > $outFile
+sort --field-separator=',' --key=1 --buffer-size=1G $1 > $outFile
