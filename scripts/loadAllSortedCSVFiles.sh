@@ -44,6 +44,8 @@ do
 	dbName='Edx'
     fi
 
+    echo "`date`: starting on $sortedCSVFile" >> $logDir/mysqlCSVLoad.log
+
     mysqlCmd="SET unique_checks=0; \
               SET foreign_key_checks = 0; \
 	      SET sql_log_bin=0; \
