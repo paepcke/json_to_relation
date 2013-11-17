@@ -7,6 +7,10 @@
 #     tracking.log-20131020.gz.2013-11-10T23_26_00.393001_16099_State_UnsortedSorted.csv
 # In particular, the (zero based) 4th fragment of each .csv file must
 # be the name of the table to which the file is directed. 
+#
+# If incoming rows duplicate keys of already existing rows, then the
+# incoming rows are ignored. It is therefore safe to re-load files
+# with fixed primary keys.
 
 usage="Usage: loadAllSortedCSVFiles.sh logDir file1.csv file2.csv..."
 
@@ -51,7 +55,8 @@ do
 	      SET sql_log_bin=0; \
               LOCK TABLES; \
 	      USE $dbName; LOAD DATA INFILE '$sortedCSVFile' \
-	      INTO TABLE $tableName \
+	      IGNORE \
+              INTO TABLE $tableName \
 	      FIELDS OPTIONALLY ENCLOSED BY \"'\" TERMINATED BY ','; \
               UNLOCK TABLES; \
 	      SET unique_checks=1; \
