@@ -44,25 +44,32 @@ do
     if [ $tableName = 'Account' ]
     then
 	dbName='EdxPrivate'
+	lockTablesCmd="LOCK TABLES Account WRITE;"
     else
 	dbName='Edx'
+	lockTablesCmd="LOCK TABLES EdxTrackEvent WRITE,Answer WRITE,State WRITE,CorrectMap WRITE,InputState WRITE,Account WRITE,LoadInfo WRITE;"
     fi
 
     echo "`date`: starting on $sortedCSVFile" >> $logDir/mysqlCSVLoad.log
 
-    mysqlCmd="SET unique_checks=0; \
-              SET foreign_key_checks = 0; \
-	      SET sql_log_bin=0; \
-              LOCK TABLES; \
-	      USE $dbName; LOAD DATA INFILE '$sortedCSVFile' \
-	      IGNORE \
-              INTO TABLE $tableName \
-	      FIELDS OPTIONALLY ENCLOSED BY \"'\" TERMINATED BY ','; \
-              UNLOCK TABLES; \
-	      SET unique_checks=1; \
-	      SET foreign_key_checks = 1; \
-	      SET sql_log_bin=1;"
+    mysqlCmd=\
+"SET unique_checks=0; \
+SET foreign_key_checks=0; \
+SET sql_log_bin=0; \
+USE $dbName; \
+$lockTablesCmd; \
+LOAD DATA LOCAL INFILE '$sortedCSVFile' \
+IGNORE \
+INTO TABLE $tableName \
+FIELDS OPTIONALLY ENCLOSED BY \"'\" TERMINATED BY ','; \
+UNLOCK TABLES; \
+SET unique_checks=1; \
+SET foreign_key_checks=1; \
+SET sql_log_bin=1;"
 
-    mysql -f -u root -p$password --local_infile=1 -e "$mysqlCmd" >> $logDir/mysqlCSVLoad.log
+  mysql -f -u root -p$password --local_infile=1 -e "$mysqlCmd" >> $logDir/mysqlCSVLoad.log
+#    echo $mysqlCmd; exit
+
+#     mysql -f -u root -p$password -e "$mysqlCmd" >> $logDir/mysqlCSVLoad.log
 done
 exit
