@@ -22,6 +22,9 @@ CREATE INDEX EdxTrackEventIdxAnsID
 CREATE INDEX EdxTrackEventIdxSuccess
        ON Edx.EdxTrackEvent(success(15));
 
+CREATE INDEX EdxTrackEventIdxTime
+       ON Edx.EdxTrackEvent(time);
+
 CREATE INDEX AnswerIdxAns
        ON Edx.Answer(answer(255));
 
