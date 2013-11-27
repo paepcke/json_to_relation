@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     receive_emails TINYTEXT NOT NULL
     );
 CREATE TABLE IF NOT EXISTS LoadInfo (
-    load_info_id INT NOT NULL PRIMARY KEY,
+    load_info_id VARCHAR(40) NOT NULL PRIMARY KEY,
     load_date_time DATETIME NOT NULL,
     load_file TEXT NOT NULL
     );
@@ -167,9 +167,9 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('52b1673f_65f2_4800_b335_767688fcf1d6','2013111104351384173336','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/showTranscript.json');
+    ('94a4f559_842c_4f6a_ba7e_d08caa765242','2013112718511385607066','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/showTranscript.json');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('9ad79a3a_1959_4733_ab60_0e93d95d4163','581040a7_bcfe_4ae2_bf8c_2d52bc953264','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','browser','show_transcript','72.201.124.240','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ea998389c16042f399ccff01e5bab161/f554cf423d33489e8a55e4510387c2f1/','f069174b4882642364a2fc90bb244376','2013-06-25T06:37:40.512300+00:00','f8fb4827a1543aae162971b84414f90c8d158657f3cd0583b87e1797','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','',-1,-1,'','','','',-1,'','','','',-1,'i4x-Medicine-HRP258-videoalpha-c26e4247f7724cc3bc407a7a3541ed90','q3cxPJGX4gc',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','52b1673f_65f2_4800_b335_767688fcf1d6');
+    ('3d8281c9_9371_4acd_a701_5c14f0d57b72','c7e953c6_c330_4bf6_a170_14c1581b8759','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','browser','show_transcript','72.201.124.240','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ea998389c16042f399ccff01e5bab161/f554cf423d33489e8a55e4510387c2f1/','f069174b4882642364a2fc90bb244376','2013-06-25T06:37:40.512300+00:00','f8fb4827a1543aae162971b84414f90c8d158657f3cd0583b87e1797','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','',-1,-1,'','','','',-1,'','','','',-1,'i4x-Medicine-HRP258-videoalpha-c26e4247f7724cc3bc407a7a3541ed90','q3cxPJGX4gc',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','94a4f559_842c_4f6a_ba7e_d08caa765242');
 /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

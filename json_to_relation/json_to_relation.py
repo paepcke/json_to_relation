@@ -357,7 +357,7 @@ class JSONToRelation(object):
             # call to processOneJSONObject:
             if self.destination.getOutputFormat() == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
                 self.processFinishedRow('FLUSH', outFd)
-                # Give parser a chance to for sealing the sql file: 
+                # Give parser a chance to seal the sql file: 
                 self.jsonParserInstance.finish()
         
         # If output to other than MySQL table (e.g. CSV file), check whether

@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     receive_emails TINYTEXT NOT NULL
     );
 CREATE TABLE IF NOT EXISTS LoadInfo (
-    load_info_id INT NOT NULL PRIMARY KEY,
+    load_info_id VARCHAR(40) NOT NULL PRIMARY KEY,
     load_date_time DATETIME NOT NULL,
     load_file TEXT NOT NULL
     );
@@ -167,11 +167,11 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('b8482733_5a5e_4043_819a_c9588079b8ab','2013111104351384173336','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/unicode.json');
+    ('1de52740_0648_4281_a474_fcb45a2aef27','2013112718511385607066','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/unicode.json');
 INSERT INTO Account (account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) VALUES 
-    ('30f3eb3b_c347_4cde_ae86_cffad1023692','Smith','Randy Smith','f8fb4827a1543aae162971b84414f90c8d158657f3cd0583b87e1797','Luise-Fischer-Strasse 60612  80945 Munchhausen','80945','USA','m',1987,'m','',1,1,'','','rsmith@gmail.com','');
+    ('a29d2eac_8e13_49d7_b4ff_df4b757f6b17','Smith','Randy Smith','f8fb4827a1543aae162971b84414f90c8d158657f3cd0583b87e1797','Luise-Fischer-Strasse 60612  80945 Munchhausen','80945','USA','m',1987,'m','',1,1,'','','rsmith@gmail.com','');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('732a1cdd_5288_4d6e_81c8_e4496bef35ca','9aac1275_a86e_4dd9_b4be_6a33b418bec5','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.72 Safari/537.36','server','/create_account','138.246.171.72','','','2013-08-26T08:24:11.658341+00:00','d14a028c2a3a2bc9476102bb288234c415a2b01f828ea62ac5b3e42f','0:00:00','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','b8482733_5a5e_4043_819a_c9588079b8ab');
+    ('9289dd0d_5966_4228_b413_ded70f6436c9','3f6690a9_0919_4ef2_884a_8b5b47fe77b2','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.72 Safari/537.36','server','/create_account','138.246.171.72','','','2013-08-26T08:24:11.658341+00:00','d14a028c2a3a2bc9476102bb288234c415a2b01f828ea62ac5b3e42f','0:00:00','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','1de52740_0648_4281_a474_fcb45a2aef27');
 /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

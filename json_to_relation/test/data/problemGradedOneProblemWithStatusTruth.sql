@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     receive_emails TINYTEXT NOT NULL
     );
 CREATE TABLE IF NOT EXISTS LoadInfo (
-    load_info_id INT NOT NULL PRIMARY KEY,
+    load_info_id VARCHAR(40) NOT NULL PRIMARY KEY,
     load_date_time DATETIME NOT NULL,
     load_file TEXT NOT NULL
     );
@@ -167,11 +167,11 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('bd0b379e_549c_4e83_84e2_9d9d1b280897','2013111104351384173329','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemGradedOneProblemWithStatus.json');
+    ('7f19957e_3ec1_4e06_a99b_b788ee821127','2013112718511385607065','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemGradedOneProblemWithStatus.json');
 INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
-    ('ae88be56_469c_4bc0_a786_164b47f80e07','input_i4x-Medicine-HRP258-problem-84bc6d2be34545eeaf4aa5f67efc965d_2_1_choice_0','correct','Medicine/HRP258/Statistics_in_Medicine');
+    ('bd4c32e2_00c8_4f85_8e9d_8aa8de973a74','input_i4x-Medicine-HRP258-problem-84bc6d2be34545eeaf4aa5f67efc965d_2_1_choice_0','correct','Medicine/HRP258/Statistics_in_Medicine');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('e7766bcc_8358_4cc0_be44_77db35588063','3686f3e8_fdcf_4991_8b6f_a612bd347abf','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.71 Safari/537.36','browser','problem_graded','68.80.222.171','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/69356ef7b30545de8dd3152e30b71735/9bfe748f573941bf990b7ca0a62c1741/','d55e2dad3eb1a4a208cb5447c1e65392','2013-07-16T18:51:35.099124+00:00','180d69eb3c620964a8aa0321890a516f9b0be9a978403cbf5ed67f6c','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','',-1,-1,'input_i4x-Medicine-HRP258-problem-84bc6d2be34545eeaf4aa5f67efc965d_2_1_choice_0','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','ae88be56_469c_4bc0_a786_164b47f80e07','','bd0b379e_549c_4e83_84e2_9d9d1b280897');
+    ('461053cc_1761_4356_a229_dd003ecbca26','abc3d221_a7ef_454c_ad3f_20dd00626ea8','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.71 Safari/537.36','browser','problem_graded','68.80.222.171','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/69356ef7b30545de8dd3152e30b71735/9bfe748f573941bf990b7ca0a62c1741/','d55e2dad3eb1a4a208cb5447c1e65392','2013-07-16T18:51:35.099124+00:00','180d69eb3c620964a8aa0321890a516f9b0be9a978403cbf5ed67f6c','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','',-1,-1,'input_i4x-Medicine-HRP258-problem-84bc6d2be34545eeaf4aa5f67efc965d_2_1_choice_0','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','bd4c32e2_00c8_4f85_8e9d_8aa8de973a74','','7f19957e_3ec1_4e06_a99b_b788ee821127');
 /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

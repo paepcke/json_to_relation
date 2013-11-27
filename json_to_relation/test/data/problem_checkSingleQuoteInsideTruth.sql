@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     receive_emails TINYTEXT NOT NULL
     );
 CREATE TABLE IF NOT EXISTS LoadInfo (
-    load_info_id INT NOT NULL PRIMARY KEY,
+    load_info_id VARCHAR(40) NOT NULL PRIMARY KEY,
     load_date_time DATETIME NOT NULL,
     load_file TEXT NOT NULL
     );
@@ -167,11 +167,11 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('4b326c46_ac3d_4012_9a1d_d964efdbacd2','2013111104351384173329','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problem_checkSingleQuoteInside.json');
+    ('d002170b_c825_41f4_a1b9_eca849cc542f','2013112718511385607065','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problem_checkSingleQuoteInside.json');
 INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
-    ('74c96d5f_ff9a_40a6_940e_42211cdf6fcf','input_i4x-Medicine-HRP258-problem-9f73ff5f71564b25856ec67ec52786b3_2_1','He hadn\'t seen','Medicine/HRP258/Statistics_in_Medicine');
+    ('e84214f8_bc7d_4faa_bc6c_4365d884292b','input_i4x-Medicine-HRP258-problem-9f73ff5f71564b25856ec67ec52786b3_2_1','He hadn\'t seen','Medicine/HRP258/Statistics_in_Medicine');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('9565f717_970e_43ed_bf81_95705cb6f3c1','6c0a27c7_cc2a_4516_b891_baf9c21ef87c','Mozilla/5.0 (iPad; CPU OS 6_1_3 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10B329 Safari/8536.25','browser','problem_check','76.7.198.45','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/468e5aba519448da8d0e299d2d55804e/','f08b13a546e6069de166c8cdbb75df61','2013-06-18T04:09:33.140025+00:00','ad057b10fc11ebff16b132451bb3924b6cf63209df58b175d0fa9966','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','',-1,-1,'input_i4x-Medicine-HRP258-problem-9f73ff5f71564b25856ec67ec52786b3_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','74c96d5f_ff9a_40a6_940e_42211cdf6fcf','','4b326c46_ac3d_4012_9a1d_d964efdbacd2');
+    ('c630b9b3_a79a_49af_afa1_993ded1517c2','7a74d570_116d_4673_b1ad_cf3d595e90b5','Mozilla/5.0 (iPad; CPU OS 6_1_3 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10B329 Safari/8536.25','browser','problem_check','76.7.198.45','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/468e5aba519448da8d0e299d2d55804e/','f08b13a546e6069de166c8cdbb75df61','2013-06-18T04:09:33.140025+00:00','ad057b10fc11ebff16b132451bb3924b6cf63209df58b175d0fa9966','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','',-1,-1,'input_i4x-Medicine-HRP258-problem-9f73ff5f71564b25856ec67ec52786b3_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','e84214f8_bc7d_4faa_bc6c_4365d884292b','','d002170b_c825_41f4_a1b9_eca849cc542f');
 /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

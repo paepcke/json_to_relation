@@ -423,9 +423,16 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
     def processOneJSONObject(self, jsonStr, row):
         '''
+        This method is the main dispatch for track log event_types.
+        It's a long method, and should be partitioned. First, bookkeeping
+        fields are filled in that are common to all events, such as the 
+        user agent, and the reference into the LoadInfo table that shows
+        on which date this row was loaded. Then a long 'case' statement
+        calls handler methods depending on the incoming track log's event_type.  
+        
         Given one line from the EdX Track log, produce one row
         of relational output. Return is an array of values, the 
-        same that is passed in. On the way, the partne JSONToRelation
+        same that is passed in. On the way, the partner JSONToRelation
         object is called to ensure that JSON fields for which new columns
         have not been created yet receive a place in the row array.    
         Different types of JSON records will be passed: server heartbeats,
@@ -3226,7 +3233,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         the last insert for one file is done.
         We do what's needed to close out the transform.
         '''
-        # Unlock tables, and return checking to its normal behavior:
+        # Unlock tables, and return foreign key checking to its normal behavior:
         self.jsonToRelationConverter.pushString(self.dumpPostscript1)
         # Copy the temporary Account entries from
         # the tmp table in Edx to the final dest
