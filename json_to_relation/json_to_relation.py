@@ -28,7 +28,6 @@ from generic_json_parser import GenericJSONParser
 from input_source import InputSource, InURI, InString, InMongoDB, InPipe
 from output_disposition import OutputDisposition, OutputFile, OutputPipe
 
-
 class JSONToRelation(object):
     '''
     Given a source with JSON structures, derive a schema, and construct 
@@ -678,3 +677,7 @@ class JSONToRelation(object):
 
     def bumpLineCounter(self):
         self.lineCounter += 1
+        
+if __name__ == "__main__":
+    # Just have this main to test the imports
+    print("I ran.")

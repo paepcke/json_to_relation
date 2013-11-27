@@ -9,8 +9,6 @@ import hashlib
 import json
 import re
 import string
-import sys
-import traceback
 from unidecode import unidecode
 import uuid
 
@@ -342,7 +340,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
         # Schema for LoadInfo table:
         self.schemaLoadInfoTbl = OrderedDict()
-        self.schemaLoadInfoTbl['load_info_id'] = ColDataType.INT
+        self.schemaLoadInfoTbl['load_info_id'] = ColDataType.UUID
         self.schemaLoadInfoTbl['load_date_time'] = ColDataType.DATETIME
         self.schemaLoadInfoTbl['load_file'] = ColDataType.TEXT
 
@@ -1050,7 +1048,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 fldName = 'anon_screen_name'
                 
             self.setValInRow(row, fldName, val)
-        # Add the foreign key to the current load info table:
+        # Add the foreign key that points to the current row in the load info table:
         self.setValInRow(row, 'load_info_fk', self.currLoadInfoFK)
         return row
 
@@ -1390,10 +1388,17 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             npoints = oneCorrectMapDict.get('npoints', -1)
             if npoints is None:
                 npoints = -1
+            # queuestate:
+            # Dict {key:'', time:''} where key is a secret string, and time is a string dump
+            #        of a DateTime object in the format '%Y%m%d%H%M%S'. Is None when not queued
             queuestate = oneCorrectMapDict.get('queuestate', '')
             if queuestate is None:
                 queuestate = ''
-
+            if len(queuestate) > 0:
+                queuestate_key  = queuestate.get('key', '')
+                queuestate_time = queuestate.get('time', '')
+                queuestate = queuestate_key + ":" + queuestate_time 
+            
             # Unique key for the CorrectMap entry (and foreign
             # key for the Event table):
             correct_map_id = self.getUniqueID()
