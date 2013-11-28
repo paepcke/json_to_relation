@@ -43,7 +43,7 @@ class OutputDisposition(object):
             self.outputDest = self
         else:
             self.outputDest = outputDestObj
-        self.tmpTableFiles = {}
+        self.csvTableFiles = {}
         self.schemas = TableSchemas()
     
     def __enter__(self):
@@ -153,9 +153,9 @@ class OutputDisposition(object):
         @return: file object open for writing
         @rtype: File
         '''
-        self.tmpTableFiles[tableName] = tempfile.NamedTemporaryFile(prefix='tmpTable', 
+        self.csvTableFiles[tableName] = tempfile.NamedTemporaryFile(prefix='tmpTable', 
                                                                     suffix=fileSuffix)
-        return self.tmpTableFiles[tableName]
+        return self.csvTableFiles[tableName]
         
         
     #--------------------- Available Output Formats
@@ -233,7 +233,7 @@ class OutputFile(OutputDisposition):
     # When looking at:"     ('7a286e24_b578_4741_b6e0_c0e8596bd456','Mozil...);\n"
     # grab everything inside the parens, including the trailing ');\n', which
     # we'll cut out in the code:
-    VALUES_PATTERN = re.compile(r'^[\s]{4}\(([^\n]*)\n')
+    VALUES_PATTERN = re.compile(r'^[\s]{4}\(([^\n]*)\n{0,1}')
     
     def __init__(self, fileName, outputFormat, options='ab'):
         '''
@@ -261,21 +261,16 @@ class OutputFile(OutputDisposition):
         # Open the output file as 'append' and 'binary'
         # The latter is needed for Windows.
         self.fileHandle = open(fileName, options)
-        if outputFormat == OutputDisposition.OutputFormat.CSV:
-            # One CSV writer for the so-far-only CSV out file:
-            self.csvWriter = csv.writer(self.fileHandle, dialect='excel', delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            # Prepare for possibly more CSV files needed for other tables:
-            self.tableCSVWriters = {}
-        elif outputFormat == OutputDisposition.OutputFormat.SQL_INSERTS_AND_CSV:
-            # Will create multiple CSV writers, one per table as we
-            # learn about their existence from calls to startNewTable():
+        if outputFormat == OutputDisposition.OutputFormat.CSV or\
+            outputFormat == OutputDisposition.OutputFormat.SQL_INSERTS_AND_CSV:
+            # Prepare for CSV files needed for the tables:
             self.tableCSVWriters = {}
         
     def close(self):
         self.fileHandle.close()
         # Also close any CSV out files that might exist:
         try:
-            for csvFD in self.tableCSVWriters.values():
+            for csvFD in self.csvTableFiles.values():
                 csvFD.close()
         except:
             pass
@@ -302,14 +297,35 @@ class OutputFile(OutputDisposition):
         if tableName is None:
             return self.name
         else:
-            fd = self.tableCSVWriters.get(tableName, None)
+            fd = self.csvTableFiles.get(tableName, None)
             if fd is None:
                 return None
             return fd.name
 
     def writerow(self, colElementArray, tableName=None):
-        # For CSV: make sure everything is a string:
-        if self.outputFormat == OutputDisposition.OutputFormat.CSV:
+        '''
+        How I wish Python had parameter type based polymorphism. Life
+        would be so much cleaner.
+        
+        ColElementArray is either an array of values (coming from
+        a CSV-only parser), or a string that contains a complete
+        MySQL INSERT statement (from MySQL dump-creating parsers).
+        In the first case, we ensure all elements in the array are
+        strings, and write to output. In the latter case we write
+        the INSERT statements to their output file. Then, if output
+        format is SQL_INSERTS_AND_CSV, we also extract the MySQL
+        values and write them to the proper CSV file.
+        @param colElementArray: either a MySQL INSERT statement, or an array of values
+        @type colElementArray: {String | [string]}
+        @param tableName: name of table to which output is destined. Only needed for 
+                  value arrays from CSV-only parsers. Their value arrays don't contain
+                  info on the destination table. INSERT statements do contain the destination table
+                  name.
+        @type tableName: String
+        '''
+        if isinstance(colElementArray, list):
+            # Simple CSV array of values; 
+            # make sure every array element is a string:
             row = map(str,colElementArray)
             if tableName is None:
                 # The main (and maybe only) table:
@@ -320,10 +336,16 @@ class OutputFile(OutputDisposition):
                 self.tableCSVWriters[tableName].writerow(row)
         else:
             # We are either outputting INSERT statements, or
-            # both those and CSV; start with the INSERTS:
-            self.fileHandle.write(colElementArray + '\n')
+            # both those and CSV, or just CSV derived from a 
+            # full MySQL INSERT parser, like edxTrackLogJSONParser. 
+            # Start with the INSERTS:
+            if self.outputFormat == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS or\
+                self.outputFormat == OutputDisposition.OutputFormat.SQL_INSERTS_AND_CSV:
+                self.fileHandle.write(colElementArray + '\n')
 
-            if self.outputFormat == OutputDisposition.OutputFormat.SQL_INSERTS_AND_CSV:
+            # If we are outputting either CSV or INSERTs and CSV, do the CSV
+            # part now:
+            if self.outputFormat != OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
                 # Strip the CSV parts out from the INSERT statement, which may
                 # contain multiple VALUE statements:
                 self.writeCSVRowsFromInsertStatement(colElementArray) 
@@ -382,13 +404,20 @@ class OutputFile(OutputDisposition):
         outFileName = self.getFileName()
         if outFileName == '/dev/null':
             return open('/dev/null', 'ab')
-        csvOutFileName = "%s_%sTable.csv" % (outFileName, tableName) 
-        self.tableCSVWriters[tableName] = csv.writer(open(csvOutFileName, 'w'), 
+        csvOutFileName = self.getCSVTableOutFileName(tableName)
+        outFile = open(csvOutFileName, 'w')
+        self.csvTableFiles[tableName] = outFile
+        self.tableCSVWriters[tableName] = csv.writer(outFile, 
                                                      dialect='excel', 
                                                      delimiter=',', 
                                                      quotechar='"', 
                                                      quoting=csv.QUOTE_MINIMAL)
         return self.tableCSVWriters[tableName]
+    
+    def getCSVTableOutFileName(self, tableName):
+        # The 'None' below ensures that we get the
+        # main file's name back:
+        return "%s_%sTable.csv" % (self.getFileName(None), tableName) 
 
     def writeCSVRowsFromInsertStatement(self, insertStatement):
         '''
@@ -433,9 +462,12 @@ class OutputFile(OutputDisposition):
             # Get just the comma-separated values list from
             # 'abfd_sfd,...);\n
             valuesList = oneValuesLineMatch.group(1)[:-2] + '\n'
-            theOutFd = self.ensureOpenCSVOutFileFromTableName(tblName)
+            # Make sure we've seen additions to this table before or,
+            # if not, have a CSV writer and a file created to receive
+            # the CSV lines:
+            self.ensureOpenCSVOutFileFromTableName(tblName)
+            theOutFd = self.csvTableFiles[tblName]
             theOutFd.write(valuesList)
-
 
 class ColumnSpec(object):
     '''

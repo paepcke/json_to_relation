@@ -355,10 +355,21 @@ class JSONToRelation(object):
             # Since we hold back SQL insertion values to include them
             # all into one INSERT statement, need to flush after last
             # call to processOneJSONObject:
-            if self.destination.getOutputFormat() == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
-                self.processFinishedRow('FLUSH', outFd)
-                # Give parser a chance to seal the sql file: 
-                self.jsonParserInstance.finish()
+#             if self.destination.getOutputFormat() == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
+#                 self.processFinishedRow('FLUSH', outFd)
+#                 # Give parser a chance to seal the sql file: 
+#                 self.jsonParserInstance.finish()
+        
+            self.processFinishedRow('FLUSH', outFd)
+            # Give parser a chance to seal the sql file. If we are 
+            # outputting only CSV, and the parser that was used generated MySQL INSERT statements,
+            # then let the finish() method know; it will include the CSV load commands, so
+            # that the main file can simply be sourced into MySQL:
+            if self.destination.getOutputFormat() == OutputDisposition.OutputFormat.CSV:
+                self.jsonParserInstance.finish(includeCSVLoadCommands=True, outputDisposition=self.destination)
+            else:
+                self.jsonParserInstance.finish(includeCSVLoadCommands=False)
+        
         
         # If output to other than MySQL table (e.g. CSV file), check whether
         # we are to prepend the column header row:
@@ -412,10 +423,11 @@ class JSONToRelation(object):
         or CSV rows. The latter are just written to outFD. MySQL insert info
         looks like this: ('tableName', 'insertSig', [valsArray]). The insertSig
         is a string as needed for the INSERT statement's column names part. 
-        Ex.: 'col1,col2'. 
+        Ex.: 'col1,col2'. The filledNewRow may also be the string 'FLUSH', which
+        triggers flushing all buffers.
         
         @param filledNewRow: the list of values for one row, possibly including empty fields  
-        @type filledNewRow: List<<any>>
+        @type filledNewRow: {(String,String,List<<any>>) | List<<any>> | String}
         @param outFd: an instance of a class that writes to the destination
         @type outFd: OutputDisposition
         '''
@@ -423,8 +435,10 @@ class JSONToRelation(object):
         # from rows destined to CSV. Parsers that generate dump
         # information as they translate JSON provide different
         # information than CSV destined parsers. MySQL dumps provide
-        # a list ('tableName', 'insertSig', [valsArray])
-        if self.destination.getOutputFormat() == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
+        # a list ('tableName', 'insertSig', [valsArray]), while the
+        # others produce just an array of values:
+        if isinstance(filledNewRow, tuple) or filledNewRow == "FLUSH":
+            # Calling parser created INSERT statements:
             filledNewRow = self.prepareMySQLRow(filledNewRow)
         if filledNewRow is not None:
             try:

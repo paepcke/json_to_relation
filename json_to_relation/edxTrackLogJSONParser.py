@@ -399,6 +399,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                             	  "/*!40000 ALTER TABLE `CorrectMap` DISABLE KEYS */;\n" +\
                             	  "/*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;\n" +\
                             	  "/*!40000 ALTER TABLE `Account` DISABLE KEYS */;\n"
+             
         
         self.dumpPostscript1    =  "/*!40000 ALTER TABLE `%s` ENABLE KEYS */;\n" % self.mainTableName +\
                             		"/*!40000 ALTER TABLE `State` ENABLE KEYS */;\n" +\
@@ -942,7 +943,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                  
         # Cut away the comma and newline after the last column spec,
         # and add newline, closing paren, and semicolon:
-        createStatement = createStatement[0:-2] + '\n    );\n'
+        createStatement = createStatement[0:-2] + '\n    ) ENGINE=MyISAM;\n'
         return createStatement 
             
 
@@ -3266,12 +3267,23 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             self.setValInRow(row, 'anon_screen_name', self.hashGeneral(email))
         return row
         
-    def finish(self):
+    def finish(self, includeCSVLoadCommands=False, outputDisposition=None):
         '''
         Called by json_to_relation parent after 
         the last insert for one file is done.
         We do what's needed to close out the transform.
+        @param includeCSVLoadCommands: if True, then the main output file will just have
+                  table locking, and turning off consistency checks. In that case we
+                  insert CSV file load statements. Otherwise the output file already
+                  has INSERT statements, and we just add table unlocking, etc.:
+        @type includeCSVLoadCommands: Boolean
+        @param outputDisposition: an OutputDisposition that offers a method getCSVTableOutFileName(tableName),
+                  which provides the fully qualified file name that is the 
+                  destination for CSV rows destined for a given table.
+        @type outputDispostion: OutputDisposition
         '''
+        if includeCSVLoadCommands:
+            self.jsonToRelationConverter.pushString(self.createCSVTableLoadCommands(outputDisposition))
         # Unlock tables, and return foreign key checking to its normal behavior:
         self.jsonToRelationConverter.pushString(self.dumpPostscript1)
         # Copy the temporary Account entries from
@@ -3280,6 +3292,26 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.createMergeAccountTbl()
         # Restore various defaults:
         self.jsonToRelationConverter.pushString(self.dumpPostscript2)
+
+    def createCSVTableLoadCommands(self, outputDisposition):
+        '''
+        Create a series of LOAD INFILE commands as a string. One load command
+        for each of the Edx track log tables.
+        @param outputDisposition: an OutputDisposition that offers a method getCSVTableOutFileName(tableName),
+                  which provides the fully qualified file name that is the 
+                  destination for CSV rows destined for a given table.
+        @type outputDisposition: OutputDisposition
+        '''
+        csvLoadCommands    = "SET sql_log_bin=0;\n"
+        for tableName in ['LoadInfo', 'InputState', 'State', 'CorrectMap', 'Answer', 'Account', 'EdxTrackEvent']:
+            filename = outputDisposition.getCSVTableOutFileName(tableName)
+            # SQL statements for LOAD INFILE all .csv tables in turn. Only used
+            # when no INSERT statement dump is being generated:
+            csvLoadCommands += "LOAD DATA LOCAL INFILE '%s' IGNORE INTO TABLE %s FIELDS OPTIONALLY ENCLOSED BY \"'\" TERMINATED BY ','; \n" %\
+                               (filename, tableName)
+        
+        csvLoadCommands += "SET sql_log_bin=1;\n"
+        return csvLoadCommands        
     
     def createMergeAccountTbl(self):
         '''

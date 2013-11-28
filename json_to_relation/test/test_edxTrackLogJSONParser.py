@@ -1296,10 +1296,10 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
             self.assertFileContentEquals(truthFile, dest.name)
 
     #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")        
-    def testProblemCheckSimpleCaseInsertAndCSV(self):        
+    def testProblemCheckSimpleCaseCSV(self):        
         # Another case that gave problems at some point; this 
         # time go through entire machinery:
-        testFilePath = os.path.join(os.path.dirname(__file__),"data/problem_checkSimpleCase.json")
+        testFilePath = os.path.join(os.path.dirname(__file__),"data/csvSimpleProblemCheck.json")
         stringSource = InURI(testFilePath)
         
         resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
@@ -1315,13 +1315,18 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
-        truthFile = open(os.path.join(os.path.dirname(__file__),"data/problem_checkSimpleCaseTruth.sql"), 'r')
+        truthFile = open(os.path.join(os.path.dirname(__file__),"data/csvSimpleProblemCheckAnswerTableTruth.csv"), 'r')
         if UPDATE_TRUTH:
             self.updateTruth(dest.name, truthFile.name)
         else:
-            self.assertFileContentEquals(truthFile, dest.name)
-        
-
+            self.assertFileContentEquals(truthFile, dest.name + '_AnswerTable.csv')
+            truthFile = open(os.path.join(os.path.dirname(__file__),"data/csvSimpleProblemCheckLoadInfoTableTruth.csv"), 'r')
+            self.assertFileContentEquals(truthFile, dest.name + '_LoadInfoTable.csv')
+            truthFile = open(os.path.join(os.path.dirname(__file__),"data/csvSimpleProblemCheckEdxTrackEventTableTruth.csv"), 'r')
+            self.assertEqual(os.stat(dest.name + '_AccountTable.csv').st_size, 0)
+            self.assertEqual(os.stat(dest.name + '_CorrectMapTable.csv').st_size, 0)
+            self.assertEqual(os.stat(dest.name + '_InputStateTable.csv').st_size, 0)
+            self.assertEqual(os.stat(dest.name + '_StateTable.csv').st_size, 0)
 
 
 
