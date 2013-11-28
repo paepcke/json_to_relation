@@ -423,11 +423,14 @@ class JSONToRelation(object):
         # from rows destined to CSV. Parsers that generate dump
         # information as they translate JSON provide different
         # information than CSV destined parsers. MySQL dumps provide
-        # a list 
+        # a list ('tableName', 'insertSig', [valsArray])
         if self.destination.getOutputFormat() == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
             filledNewRow = self.prepareMySQLRow(filledNewRow)
         if filledNewRow is not None:
-            outFd.writerow(filledNewRow)
+            try:
+                outFd.writerow(filledNewRow)
+            except Exception as e:
+                JSONToRelation.logger.warn(`e`)
 
     def prepareMySQLRow(self, insertInfo):
         '''

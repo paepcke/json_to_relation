@@ -949,18 +949,35 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def createAnswerTable(self):
         createStatement = self.genOneCreateStatement('Answer', self.schemaAnswerTbl, primaryKeyName='answer_id')
         self.jsonToRelationConverter.pushString(createStatement)
+        # Tell the output module (output_disposition.OutputFile) that
+        # it needs to know about a new table. That module will create
+        # a CSV file and CSV writer to which rows destined for this
+        # table will be written:
+        self.jsonToRelationConverter.startNewTable('Answer', self.schemaAnswerTbl)
+        
 
     def createCorrectMapTable(self):
         createStatement = self.genOneCreateStatement('CorrectMap', 
                                                      self.schemaCorrectMapTbl, 
                                                      primaryKeyName='correct_map_id')        
         self.jsonToRelationConverter.pushString(createStatement)
+        # Tell the output module (output_disposition.OutputFile) that
+        # it needs to know about a new table. That module will create
+        # a CSV file and CSV writer to which rows destined for this
+        # table will be written:
+        self.jsonToRelationConverter.startNewTable('CorrectMap', self.schemaCorrectMapTbl)
 
     def createInputStateTable(self):
         createStatement = self.genOneCreateStatement('InputState', 
                                                      self.schemaInputStateTbl, 
                                                      primaryKeyName='input_state_id')        
         self.jsonToRelationConverter.pushString(createStatement)
+        # Tell the output module (output_disposition.OutputFile) that
+        # it needs to know about a new table. That module will create
+        # a CSV file and CSV writer to which rows destined for this
+        # table will be written:
+        self.jsonToRelationConverter.startNewTable('InputState', self.schemaInputStateTbl)
+
         
     def createStateTable(self):
         # Make the foreign keys information dict ordered. Doesn't
@@ -976,6 +993,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                                      primaryKeyName='state_id', 
                                                      foreignKeyColNames=foreignKeysDict)        
         self.jsonToRelationConverter.pushString(createStatement)
+        # Tell the output module (output_disposition.OutputFile) that
+        # it needs to know about a new table. That module will create
+        # a CSV file and CSV writer to which rows destined for this
+        # table will be written:
+        self.jsonToRelationConverter.startNewTable('State', self.schemaStateTbl)
+        
 
     def createAccountTable(self):
         # Create a tmp Account tbl in the Edx db for the load
@@ -992,6 +1015,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                                      primaryKeyName='account_id'
                                                      ) 
         self.jsonToRelationConverter.pushString(createStatement)
+        # Tell the output module (output_disposition.OutputFile) that
+        # it needs to know about a new table. That module will create
+        # a CSV file and CSV writer to which rows destined for this
+        # table will be written:
+        self.jsonToRelationConverter.startNewTable('Account', self.schemaAccountTbl)
+        
 
     def createLoadInfoTable(self):
         createStatement = self.genOneCreateStatement('LoadInfo', 
@@ -999,6 +1028,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                                      primaryKeyName='load_info_id'
                                                      ) 
         self.jsonToRelationConverter.pushString(createStatement)
+        # Tell the output module (output_disposition.OutputFile) that
+        # it needs to know about a new table. That module will create
+        # a CSV file and CSV writer to which rows destined for this
+        # table will be written:
+        self.jsonToRelationConverter.startNewTable('LoadInfo', self.schemaLoadInfoTbl)
 
     def createMainTable(self):
         # Make the foreign keys information dict ordered. Doesn't
@@ -1016,7 +1050,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                                      foreignKeyColNames=foreignKeysDict,
                                                      autoincrement=False)        
         self.jsonToRelationConverter.pushString(createStatement)
-        
+        # Tell the output module (output_disposition.OutputFile) that
+        # it needs to know about a new table. That module will create
+        # a CSV file and CSV writer to which rows destined for this
+        # table will be written:
+        self.jsonToRelationConverter.startNewTable(self.mainTableName, self.schemaHintsMainTable)
+
     def handleCommonFields(self, record, row):
         # Create a unique tuple key and event key  for this event:
         self.setValInRow(row, '_id', self.getUniqueID())

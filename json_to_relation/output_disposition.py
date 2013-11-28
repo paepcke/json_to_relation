@@ -3,8 +3,10 @@ Created on Sep 14, 2013
 
 @author: paepcke
 '''
+import StringIO
 from collections import OrderedDict
 import csv
+import re
 import sys
 import tempfile
 
@@ -14,13 +16,21 @@ from col_data_type import ColDataType
 class OutputDisposition(object):
     '''
     Specifications for where completed relation rows
-    should be deposited, and in which format. Source
-    options are files, stdout, and a MySQL table.
+    should be deposited, and in which format. Current
+    output options are to files, and to stdout.
     This class is abstract, but make sure the subclasses
     invoke this super's __init__() when they are initialized.
     
     Also defined here are available output formats, of
-    which there are two: CSV, and SQL insert statements. 
+    which there are two: CSV, and SQL insert statements AND
+    CSV.
+    NOTE: currently the CSV-only format option is broken. Not
+          enough time to maintain it.
+    SQL insert statements that are directed to files will also
+    generate equivalent .csv files. The insert statement files
+    will look like the result of a mysqldump, and inserts into
+    different tables are mixed. The corresponding (values-only)
+    csv files are split: one file for each table.  
     '''
     def __init__(self, outputFormat, outputDestObj=None):
         '''
@@ -43,7 +53,7 @@ class OutputDisposition(object):
         try:
             self.outputDest.close()
         except:
-            # If the conversion itself when fine, then
+            # If the conversion itself went fine, then
             # raise this exception from the closing attempt.
             # But if the conversion failed, then have the 
             # system re-raise that earlier exception:
@@ -140,6 +150,8 @@ class OutputDisposition(object):
         @type tableName: String
         @param fileSuffix: suffix for temp file name. Ex. 'csv' for CSV outputs, or 'sql' for SQL dumps
         @type fileSuffix: String
+        @return: file object open for writing
+        @rtype: File
         '''
         self.tmpTableFiles[tableName] = tempfile.NamedTemporaryFile(prefix='tmpTable', 
                                                                     suffix=fileSuffix)
@@ -151,6 +163,7 @@ class OutputDisposition(object):
     class OutputFormat():
         CSV = 0
         SQL_INSERT_STATEMENTS = 1
+        SQL_INSERTS_AND_CSV = 2
             
 #--------------------- Available Output Destination Options:  
         
@@ -193,7 +206,7 @@ class OutputPipe(OutputDisposition):
         @param schemaHintsNewTable:
         @type schemaHintsNewTable:
         '''
-        self.schemaHints[tableName] = schemaHintsNewTable
+        self.addSchemaHints(tableName, schemaHintsNewTable)
         tmpTableFile = self.createTmpTableFile(tableName, 'csv')
         self.tableCSVWriters[tableName] = csv.writer(tmpTableFile, 
                                                      dialect='excel', 
@@ -212,7 +225,34 @@ class OutputPipe(OutputDisposition):
 
 
 class OutputFile(OutputDisposition):
+    
+    # When looking at INSERT INTO tableName (...,
+    # grab 'tableName':
+    TABLE_NAME_PATTERN = re.compile(r'[^\s]*\s[^\s]*\s([^\s]*)\s')
+    
+    # When looking at:"     ('7a286e24_b578_4741_b6e0_c0e8596bd456','Mozil...);\n"
+    # grab everything inside the parens, including the trailing ');\n', which
+    # we'll cut out in the code:
+    VALUES_PATTERN = re.compile(r'^[\s]{4}\(([^\n]*)\n')
+    
     def __init__(self, fileName, outputFormat, options='ab'):
+        '''
+        Create instance of an output file destination for converted log files.
+        Such an instance is created both for OutputFormat.SQL_INSERT_STATEMENTS and
+        for OutputFormat.CSV. In the Insert statements case the fileName is the file
+        where all INSERT statements are placed; i.e. the entire dump. If the output format
+        is CSV, then the fileName is a prefix for the file names of each generated CSV file
+        (one file for each table).
+                   
+        @param fileName: fully qualified name of output file for CSV (in case of CSV-only), 
+                   or MySQL INSERT statement dump 
+        @type fileName: String
+        @param outputFormat: whether to output CSV or MySQL INSERT statements
+        @type outputFormat: OutputDisposition.OutputFormat
+        @param options: output file options as per Python built-in 'open()'. Defaults to append/binary. The
+                  latter for compatibility with Windows
+        @type options: String
+        '''
         super(OutputFile, self).__init__(outputFormat)        
         # Make file name accessible as property just like 
         # Python file objects do:
@@ -222,32 +262,72 @@ class OutputFile(OutputDisposition):
         # The latter is needed for Windows.
         self.fileHandle = open(fileName, options)
         if outputFormat == OutputDisposition.OutputFormat.CSV:
+            # One CSV writer for the so-far-only CSV out file:
             self.csvWriter = csv.writer(self.fileHandle, dialect='excel', delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            # Prepare for possibly more CSV files needed for other tables:
+            self.tableCSVWriters = {}
+        elif outputFormat == OutputDisposition.OutputFormat.SQL_INSERTS_AND_CSV:
+            # Will create multiple CSV writers, one per table as we
+            # learn about their existence from calls to startNewTable():
             self.tableCSVWriters = {}
         
     def close(self):
         self.fileHandle.close()
+        # Also close any CSV out files that might exist:
+        try:
+            for csvFD in self.tableCSVWriters.values():
+                csvFD.close()
+        except:
+            pass
 
     def flush(self):
         self.fileHandle.flush()
+        for csvFD in self.tableCSVWriters.values():
+            try:
+                csvFD.flush()
+            except:
+                pass
 
     def __str__(self):
         return "<OutputFile:%s>" % self.getFileName()
 
-    def getFileName(self):
-        return self.name
+    def getFileName(self, tableName=None):
+        '''
+        Get file name of a MySQL INSERT statement outfile,
+        or, given a table name, the name of the outfile
+        for CSV destined to the given table.
+        @param tableName:
+        @type tableName:
+        '''
+        if tableName is None:
+            return self.name
+        else:
+            fd = self.tableCSVWriters.get(tableName, None)
+            if fd is None:
+                return None
+            return fd.name
 
     def writerow(self, colElementArray, tableName=None):
         # For CSV: make sure everything is a string:
         if self.outputFormat == OutputDisposition.OutputFormat.CSV:
             row = map(str,colElementArray)
             if tableName is None:
+                # The main (and maybe only) table:
                 self.csvWriter.writerow(row)
             else:
+                # One of the other tables for which files
+                # were opened during calls to startNewTable():
                 self.tableCSVWriters[tableName].writerow(row)
         else:
+            # We are either outputting INSERT statements, or
+            # both those and CSV; start with the INSERTS:
             self.fileHandle.write(colElementArray + '\n')
 
+            if self.outputFormat == OutputDisposition.OutputFormat.SQL_INSERTS_AND_CSV:
+                # Strip the CSV parts out from the INSERT statement, which may
+                # contain multiple VALUE statements:
+                self.writeCSVRowsFromInsertStatement(colElementArray) 
+        
     def write(self, whatToWrite):
         '''
         Write given string straight to the output. No assumption made about the format
@@ -260,17 +340,102 @@ class OutputFile(OutputDisposition):
     def startNewTable(self, tableName, schemaHintsNewTable):
         '''
         Called when parser needs to create a table beyond
-        the main table. 
-        @param schemaHintsNewTable:
-        @type schemaHintsNewTable:
+        the main table (in case of CSV-Only), or any table
+        in case of SQLInsert+CSV. 
+        @param tableName: name of new table
+        @type tableName: string
+        @param schemaHintsNewTable: map column name to column SQL type
+        @type schemaHintsNewTable: {String,ColDataType}
         '''
-        self.schemaHints[tableName] = schemaHintsNewTable
-        tmpTableFile = self.createTmpTableFile(tableName, 'csv')
-        self.tableCSVWriters[tableName] = csv.writer(tmpTableFile, 
+        self.addSchemaHints(tableName, schemaHintsNewTable)
+        if self.outputFormat == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
+            return
+        # We are producing CSV (possibly in addition to Inserts):
+        try:
+            # Already have a table writer for this table?
+            self.tableCSVWriters[tableName]
+            return # yep
+        except KeyError:
+            # OK, really is a new table caller is starting:
+            pass
+        # Ensure that we have an open FD to write to for this table:
+        if self.outputFormat == OutputDisposition.OutputFormat.CSV or\
+           self.outputFormat == OutputDisposition.OutputFormat.SQL_INSERTS_AND_CSV:
+            self.ensureOpenCSVOutFileFromTableName(tableName)
+
+    def ensureOpenCSVOutFileFromTableName(self, tableName):
+        '''
+        Checks whether an open File object exists for the given
+        table. If not, creates one. Returns the FD. The output
+        file is created in the same directory as self.out
+        @param tableName: name of table whose CSV output file we are to check for, or create
+        @type tableName: String
+        @return: a File object open for writing/appending
+        @rtype: File
+        '''
+        try:
+            # If we already have an FD for this table, return:
+            return self.tableCSVWriters[tableName]
+        except KeyError:
+            # Else create one below:
+            pass
+        outFileName = self.getFileName()
+        if outFileName == '/dev/null':
+            return open('/dev/null', 'ab')
+        csvOutFileName = "%s_%sTable.csv" % (outFileName, tableName) 
+        self.tableCSVWriters[tableName] = csv.writer(open(csvOutFileName, 'w'), 
                                                      dialect='excel', 
                                                      delimiter=',', 
                                                      quotechar='"', 
                                                      quoting=csv.QUOTE_MINIMAL)
+        return self.tableCSVWriters[tableName]
+
+    def writeCSVRowsFromInsertStatement(self, insertStatement):
+        '''
+        Takes one SQL INSERT INTO Statement, possibly including multiple VALUES
+        lines. Extracts the destination table and the values list(s), and writes
+        them to disk via the appropriate CSVWriter. The INSERT statements are
+        expected to be very regular, generated by json_to_relation. Don't use
+        this method for arbitrary INSERT statements, b/c it relies on regular
+        expressions that expect the specific format. Prerequisite: self.tableCSVWriters
+        is a dictionary that maps table names into File objects that are open
+        for writing.
+        @param insertStatement: Well-formed MySQL INSERT statement 
+        @type insertStatement: String
+        @raise exception ValueError: if table name could not be extracted from the
+               INSERT statement, or if the insertStatement contains no VALUES
+               clause. 
+        '''
+        inFD = StringIO.StringIO(insertStatement)
+        try:
+            firstLine = inFD.readline()
+            # Pick out the name of the table to which CSV is to be added:
+            tblNameMatch = OutputFile.TABLE_NAME_PATTERN.search(firstLine)
+            if tblNameMatch is None:
+                raise ValueError('No match when trying to extract table name from "%s"' % insertStatement)
+            tblName = tblNameMatch.group(1)
+        except IndexError:
+            raise ValueError('Could not extract table name from "%s"' % insertStatement)
+        
+        readAllValueTuples = False
+        while not readAllValueTuples:
+            # Get values list that belongs to this insert statement:
+            valuesLine = inFD.readline()
+            if not valuesLine.startswith('    ('):
+                readAllValueTuples = True
+                continue
+            # Extract the comma-separated values list out from the parens;
+            # first get "'fasdrew_fdsaf...',...);\n":
+            oneValuesLineMatch = OutputFile.VALUES_PATTERN.search(valuesLine)
+            if oneValuesLineMatch is None:
+                # Hopefully never happens:
+                raise ValueError('No match for values line "%s"' % insertStatement)
+            # Get just the comma-separated values list from
+            # 'abfd_sfd,...);\n
+            valuesList = oneValuesLineMatch.group(1)[:-2] + '\n'
+            theOutFd = self.ensureOpenCSVOutFileFromTableName(tblName)
+            theOutFd.write(valuesList)
+
 
 class ColumnSpec(object):
     '''
@@ -328,6 +493,7 @@ class ColumnSpec(object):
     
     def __repr__(self):
         return self.__str__()
+
     
 class TableSchemas(object):
     '''
