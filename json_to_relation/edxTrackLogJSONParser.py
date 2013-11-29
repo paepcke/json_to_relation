@@ -3671,5 +3671,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @return: hashed equivalent. Calling this function multiple times returns the same string
         @rtype: String
         '''
-        return hashlib.sha224(username).hexdigest()
+        #return hashlib.sha224(username).hexdigest()
+        oneHash = hashlib.new('ripemd160')
+        oneHash.update(username)
+        return oneHash.hexdigest()
+    
         
