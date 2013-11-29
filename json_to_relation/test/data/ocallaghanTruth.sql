@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS Answer (
     problem_id TEXT NOT NULL,
     answer TEXT NOT NULL,
     course_id TEXT NOT NULL
-    );
+    ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL PRIMARY KEY,
     answer_identifier TEXT NOT NULL,
@@ -29,12 +29,12 @@ CREATE TABLE IF NOT EXISTS CorrectMap (
     hint TEXT NOT NULL,
     hintmode TINYTEXT NOT NULL,
     queuestate TEXT NOT NULL
-    );
+    ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS InputState (
     input_state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     problem_id TEXT NOT NULL,
     state TEXT NOT NULL
-    );
+    ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS State (
     state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS State (
     FOREIGN KEY(student_answer) REFERENCES Answer(answer_id) ON DELETE CASCADE,
     FOREIGN KEY(correct_map) REFERENCES CorrectMap(correct_map_id) ON DELETE CASCADE,
     FOREIGN KEY(input_state) REFERENCES InputState(input_state_id) ON DELETE CASCADE
-    );
+    ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS Account (
     account_id VARCHAR(40) NOT NULL PRIMARY KEY,
     screen_name TEXT NOT NULL,
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS Account (
     enrollment_action TINYTEXT NOT NULL,
     email TEXT NOT NULL,
     receive_emails TINYTEXT NOT NULL
-    );
+    ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     account_id VARCHAR(40) NOT NULL PRIMARY KEY,
     screen_name TEXT NOT NULL,
@@ -84,12 +84,12 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     enrollment_action TINYTEXT NOT NULL,
     email TEXT NOT NULL,
     receive_emails TINYTEXT NOT NULL
-    );
+    ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS LoadInfo (
     load_info_id VARCHAR(40) NOT NULL PRIMARY KEY,
     load_date_time DATETIME NOT NULL,
     load_file TEXT NOT NULL
-    );
+    ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     _id VARCHAR(40) NOT NULL PRIMARY KEY,
     event_id VARCHAR(40) NOT NULL,
@@ -157,7 +157,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     FOREIGN KEY(answer_fk) REFERENCES Answer(answer_id) ON DELETE CASCADE,
     FOREIGN KEY(state_fk) REFERENCES State(state_id) ON DELETE CASCADE,
     FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id) ON DELETE CASCADE
-    );
+    ) ENGINE=MyISAM;
 LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE;
 /*!40000 ALTER TABLE `EdxTrackEvent` DISABLE KEYS */;
 /*!40000 ALTER TABLE `State` DISABLE KEYS */;
@@ -167,11 +167,11 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('dc67df83_0f10_4161_9c5d_fd3574574008','2013112718511385607065','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/ocallaghan.json');
+    ('907a73ea_4aad_4b39_bc4b_5a7adbf65e60','2013112917481385776088','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/ocallaghan.json');
 INSERT INTO Account (account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) VALUES 
-    ('d896d170_fc1b_4334_bb36_b84a97c0f656','Baz','Barry O\'Callaghan','4d5c336946c5f3064885ddf5cf97e4c492d832e9905b61876b951ce4','','','','m',1981,'a','Expand my Knowledge. ',1,1,'Education/EDUC115N/How_to_Learn_Math','','bazocallaghan@gmail.com','');
+    ('2bf27be8_271b_49b5_bc04_8c5a45d06f8d','Baz','Barry O\'Callaghan','4d5c336946c5f3064885ddf5cf97e4c492d832e9905b61876b951ce4','','','','m',1981,'a','Expand my Knowledge. ',1,1,'Education/EDUC115N/How_to_Learn_Math','','bazocallaghan@gmail.com','');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('22e80b48_b7a4_413a_bff9_06ac5cd2beb2','a1db3999_7a4e_4fbf_954e_f80d908d31ca','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','server','/create_account','153.107.97.164','','','2013-07-11T04:15:39.373794+00:00','d14a028c2a3a2bc9476102bb288234c415a2b01f828ea62ac5b3e42f','0:00:00','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','dc67df83_0f10_4161_9c5d_fd3574574008');
+    ('b9f2ebe5_5156_42b3_909a_16591995aea0','270b0481_b727_4114_8db3_376dd1be474a','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','server','/create_account','153.107.97.164','','','2013-07-11T04:15:39.373794+00:00','d14a028c2a3a2bc9476102bb288234c415a2b01f828ea62ac5b3e42f','0:00:00','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','907a73ea_4aad_4b39_bc4b_5a7adbf65e60');
 /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

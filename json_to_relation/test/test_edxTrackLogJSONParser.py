@@ -21,7 +21,7 @@ from output_disposition import OutputDisposition, ColDataType, TableSchemas, \
     ColumnSpec, OutputFile, OutputPipe # @UnusedImport
 
 
-TEST_ALL = False
+TEST_ALL = True
 PRINT_OUTS = False  # Set True to get printouts of CREATE TABLE statements
 
 # The following is very Dangerous: If True, no tests are
@@ -41,6 +41,11 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         # Match yyyymmddhhmmss<8msecDigits>:
         self.timestampRegex = r'[1-2][0-9][0-1][0-9][0-1][0-9][0-3][0-9][0-2][0-9][0-5][0-9][0-5][0-9][0-9]{8}'
         self.timestampPattern = re.compile(self.timestampRegex)
+        # Pattern that recognizes our tmp files. They start with
+        # 'oolala', followed by random junk, followed by a period and
+        # 0 to 3 file extension letters (always 3, I believe):
+        self.tmpFileNamePattern = re.compile('/tmp/oolala[^.]*\..{0,3}')
+        
         self.loginEvent = '{"username": "",   "host": "class.stanford.edu",   "event_source": "server",   "event_type": "/accounts/login",   "time": "2013-06-14T00:31:57.661338",   "ip": "98.230.189.66",   "event": "{\\"POST\\": {}, \\"GET\\": {\\"next\\": [\\"/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/80160exxx/\\"]}}",   "agent": "Mozilla/5.0 (Windows NT 5.1; rv:21.0) Gecko/20100101  Firefox/21.0",   "page": null}' 
         self.dashboardEvent = '{"username": "", "host": "class.stanford.edu", "event_source": "server", "event_type": "/accounts/login", "time": "2013-06-10T05:13:37.499008", "ip": "91.210.228.6", "event": "{\\"POST\\": {}, \\"GET\\": {\\"next\\": [\\"/dashboard\\"]}}", "agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1", "page": null}'
         self.videoEvent = '{"username": "smith", "host": "class.stanford.edu", "session": "f011450e5f78d954ce5a475de473a454", "event_source": "browser", "event_type": "speed_change_video",  "time": "2013-06-21T06:31:11.804290+00:00", "ip": "80.216.21.147", "event": "{\\"id\\":\\"i4x-Medicine-HRP258-videoalpha-be496fded4f8424da9aacc553f480fa5\\",\\"code\\": \\"html5\\",\\"currentTime\\":474.524041,\\"old_speed\\":\\"0.25\\",\\"new_speed\\":\\"1.0\\"}", "agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like  Gecko) Chrome/28.0.1500.44 Safari/537.36", "page": "https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/64abcdd9afc54c6089a284e985 3da6ea/2a8de59355e349b7ae40aba97c59736f/"}' 
@@ -1315,14 +1320,35 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
-        truthFile = open(os.path.join(os.path.dirname(__file__),"data/csvSimpleProblemCheckAnswerTableTruth.csv"), 'r')
         if UPDATE_TRUTH:
-            self.updateTruth(dest.name, truthFile.name)
+            # The main file (which loads the constituent CSV files):
+            truthFileMainTableName = os.path.join(os.path.dirname(__file__),"data/csvSimpleProblemCheckMainTableTruth.csv")
+            self.updateTruth(dest.name, truthFileMainTableName)
+            
+            # New truth for the EdxTrackEven table:
+            truthFileEdxTrackEventName = os.path.join(os.path.dirname(__file__),"data/csvSimpleProblemCheckEdxTrackEventTableTruth.csv")
+            self.updateTruth(dest.name + '_EdxTrackEventTable.csv', truthFileEdxTrackEventName)
+            
+            # New truth for the Answer table:
+            truthFileAnswerName = os.path.join(os.path.dirname(__file__),"data/csvSimpleProblemCheckAnswerTableTruth.csv")
+            self.updateTruth(dest.name + '_AnswerTable.csv', truthFileAnswerName)
+            
+            # New truth for the LoadInfo table:
+            truthFileLoadInfoName = os.path.join(os.path.dirname(__file__),"data/csvSimpleProblemCheckLoadInfoTableTruth.csv")
+            self.updateTruth(dest.name + '_LoadInfoTable.csv', truthFileLoadInfoName)
         else:
+            truthFile = open(os.path.join(os.path.dirname(__file__),"data/csvSimpleProblemCheckMainTableTruth.sql"), 'r')
+            self.assertFileContentEquals(truthFile, dest.name)
+
+            truthFile = open(os.path.join(os.path.dirname(__file__),"data/csvSimpleProblemCheckAnswerTableTruth.csv"), 'r')                        
             self.assertFileContentEquals(truthFile, dest.name + '_AnswerTable.csv')
+            
             truthFile = open(os.path.join(os.path.dirname(__file__),"data/csvSimpleProblemCheckLoadInfoTableTruth.csv"), 'r')
             self.assertFileContentEquals(truthFile, dest.name + '_LoadInfoTable.csv')
+            
             truthFile = open(os.path.join(os.path.dirname(__file__),"data/csvSimpleProblemCheckEdxTrackEventTableTruth.csv"), 'r')
+            self.assertFileContentEquals(truthFile, dest.name + '_EdxTrackEventTable.csv')            
+
             self.assertEqual(os.stat(dest.name + '_AccountTable.csv').st_size, 0)
             self.assertEqual(os.stat(dest.name + '_CorrectMapTable.csv').st_size, 0)
             self.assertEqual(os.stat(dest.name + '_InputStateTable.csv').st_size, 0)
@@ -1357,9 +1383,20 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
 
     #--------------------------------------------------------------------------------------------------    
     def assertFileContentEquals(self, expected, filePathOrStrToCompareTo):
+        '''
+        Compares two file or string contents. First arg is either an open file or a string.
+        That is the ground truth to compare to. Second argument is the same: file or string.
+        @param expected:
+        @type expected:
+        @param filePathOrStrToCompareTo:
+        @type filePathOrStrToCompareTo:
+        '''
+        # Ensure that 'expected' is a File-like object:
         if isinstance(expected, file):
+            # It's a file, just use it:
             strFile = expected
         else:
+            # Turn into a string 'file':
             strFile = StringIO.StringIO(expected)
         # Check whether filePathOrStrToCompareTo is a file path or a string:
         try:
@@ -1393,6 +1430,11 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                     expectedLine = expectedLine[0:timestampMatch.start()] + expectedLine[timestampMatch.end():]
                     fileLine = fileLine[0:timestampMatch.start()] + fileLine[timestampMatch.end():]
 
+                # Temp file names also change from run to run.
+                # Replace the variable parts (ollalaxxxxx.yyy) with "foo":
+                fileLine = self.tmpFileNamePattern.sub("foo", fileLine)
+                expectedLine = self.tmpFileNamePattern.sub("foo", expectedLine)
+                
                 self.assertEqual(expectedLine.strip(), fileLine.strip())
             
             if strFile.readline() != "":

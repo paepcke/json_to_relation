@@ -166,14 +166,15 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `CorrectMap` DISABLE KEYS */;
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
-INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('139852fb_c9cd_4eb8_a838_34cebed4834e','2013112917481385776088','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemGradedSeveralProblems.json');
-INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
-    ('a3504556_0dc6_4ae8_984f_0734e41004b5','input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_2_1_choice_1','correct',''),
-    ('09f08c6b_2747_4e03_844f_01deb8613574','input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_3_1_choice_0','correct','');
-INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('9d63ddc0_f516_4862_b5ee_cb5d42ebef42','949fb22a_49d9_45aa_9638_400aac7925fe','browser','browser','problem_graded','203.81.72.81','','adf0f47a40c885298669b7b96ae52f02','2013-08-16T13:38:49.951627+00:00','f2f3c806e34931727db292417cb233a3c1c43ba9a6c7852646b0437d','0:00:00','','','','',-1,-1,'input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_2_1_choice_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','a3504556_0dc6_4ae8_984f_0734e41004b5','','139852fb_c9cd_4eb8_a838_34cebed4834e'),
-    ('40ae022e_eab9_4c23_bfd1_e9c18854c070','949fb22a_49d9_45aa_9638_400aac7925fe','browser','browser','problem_graded','203.81.72.81','','adf0f47a40c885298669b7b96ae52f02','2013-08-16T13:38:49.951627+00:00','f2f3c806e34931727db292417cb233a3c1c43ba9a6c7852646b0437d','0:00:00','','','','',-1,-1,'input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_3_1_choice_0','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','09f08c6b_2747_4e03_844f_01deb8613574','','139852fb_c9cd_4eb8_a838_34cebed4834e');
+SET sql_log_bin=0;
+LOAD DATA LOCAL INFILE '/tmp/oolalaVvGnRm.sql_LoadInfoTable.csv' IGNORE INTO TABLE LoadInfo FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalaVvGnRm.sql_InputStateTable.csv' IGNORE INTO TABLE InputState FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalaVvGnRm.sql_StateTable.csv' IGNORE INTO TABLE State FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalaVvGnRm.sql_CorrectMapTable.csv' IGNORE INTO TABLE CorrectMap FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalaVvGnRm.sql_AnswerTable.csv' IGNORE INTO TABLE Answer FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalaVvGnRm.sql_AccountTable.csv' IGNORE INTO TABLE Account FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalaVvGnRm.sql_EdxTrackEventTable.csv' IGNORE INTO TABLE EdxTrackEvent FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+SET sql_log_bin=1;
 /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

@@ -32,15 +32,10 @@ if __name__ == "__main__":
                         help='print operational info to console.', 
                         dest='verbose',
                         action='store_true');
-    parser.add_argument('-t', '--targetFormat', 
-                        help='Output one CSV file per table, a dump file as would be created my mysqldump, or both. Default: sql_dump', 
-                        dest='targetFormat',
-                        default='sql_dump',
-                        choices = ['csv', 'sql_dump', 'sql_dump_and_csv']);
     parser.add_argument('destDir',
-                        help='file path for the destination .sql/csv file(s)')                        
+                        help='file path for the destination .sql file')                        
     parser.add_argument('inFilePath',
-                        help='json file path to be converted to sql/csv.') 
+                        help='json file path to be converted to sql.') 
     
     
     args = parser.parse_args();
@@ -72,19 +67,12 @@ if __name__ == "__main__":
     # Create an instance of JSONToRelation, taking input from the given file:
     # and pumping output to the given output path:
 
-    if args.targetFormat == 'csv':
-      outputFormat = OutputDisposition.OutputFormat.CSV
-    elif args.targetFormat == 'sql_dump':
-      outputFormat = OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS
-    else:
-      outputFormat = OutputDisposition.OutputFormat.SQL_INSERTS_AND_CSV
-
     jsonConverter = JSONToRelation(InURI(args.inFilePath),
                                    OutputFile(outFullPath,
-                                   outputFormat,
-                                   options='wb'),  # overwrite any sql file that's there
-    				   mainTableName='EdxTrackEvent',
-    				   logFile=logFile
+                                              OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS,
+                                              options='wb'),  # overwrite any sql file that's there
+    				                   mainTableName='EdxTrackEvent',
+    				                   logFile=logFile
                                    )
     jsonConverter.setParser(EdXTrackLogJSONParser(jsonConverter, 
     						  'EdxTrackEvent', 

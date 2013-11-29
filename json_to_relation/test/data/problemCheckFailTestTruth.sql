@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS Answer (
     problem_id TEXT NOT NULL,
     answer TEXT NOT NULL,
     course_id TEXT NOT NULL
-    );
+    ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL PRIMARY KEY,
     answer_identifier TEXT NOT NULL,
@@ -29,12 +29,12 @@ CREATE TABLE IF NOT EXISTS CorrectMap (
     hint TEXT NOT NULL,
     hintmode TINYTEXT NOT NULL,
     queuestate TEXT NOT NULL
-    );
+    ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS InputState (
     input_state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     problem_id TEXT NOT NULL,
     state TEXT NOT NULL
-    );
+    ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS State (
     state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS State (
     FOREIGN KEY(student_answer) REFERENCES Answer(answer_id) ON DELETE CASCADE,
     FOREIGN KEY(correct_map) REFERENCES CorrectMap(correct_map_id) ON DELETE CASCADE,
     FOREIGN KEY(input_state) REFERENCES InputState(input_state_id) ON DELETE CASCADE
-    );
+    ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS Account (
     account_id VARCHAR(40) NOT NULL PRIMARY KEY,
     screen_name TEXT NOT NULL,
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS Account (
     enrollment_action TINYTEXT NOT NULL,
     email TEXT NOT NULL,
     receive_emails TINYTEXT NOT NULL
-    );
+    ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     account_id VARCHAR(40) NOT NULL PRIMARY KEY,
     screen_name TEXT NOT NULL,
@@ -84,12 +84,12 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     enrollment_action TINYTEXT NOT NULL,
     email TEXT NOT NULL,
     receive_emails TINYTEXT NOT NULL
-    );
+    ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS LoadInfo (
     load_info_id VARCHAR(40) NOT NULL PRIMARY KEY,
     load_date_time DATETIME NOT NULL,
     load_file TEXT NOT NULL
-    );
+    ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     _id VARCHAR(40) NOT NULL PRIMARY KEY,
     event_id VARCHAR(40) NOT NULL,
@@ -157,7 +157,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     FOREIGN KEY(answer_fk) REFERENCES Answer(answer_id) ON DELETE CASCADE,
     FOREIGN KEY(state_fk) REFERENCES State(state_id) ON DELETE CASCADE,
     FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id) ON DELETE CASCADE
-    );
+    ) ENGINE=MyISAM;
 LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE;
 /*!40000 ALTER TABLE `EdxTrackEvent` DISABLE KEYS */;
 /*!40000 ALTER TABLE `State` DISABLE KEYS */;
@@ -167,61 +167,61 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('5cc15dc0_4f8b_4808_9306_3a00e4b619ab','2013112718511385607065','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemCheckFailTest.json');
+    ('b6c9a7d0_1a27_4f4e_8c35_39a1ba5a67d8','2013112917481385776088','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemCheckFailTest.json');
 INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
-    ('50821b9a_1dff_4c44_a9b2_70c22f9cdb84','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_7_1','choice_1','Medicine-HRP258'),
-    ('63d0d580_7d38_4672_91bf_f1e5bdfbe52f','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_2_1','choice_3','Medicine-HRP258'),
-    ('2a00b59e_aad1_47ca_a173_d89ddeb89758','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_9_1','choice_0,choice_1','Medicine-HRP258'),
-    ('29d65b61_b2c3_4061_9fdb_2b926b01e18b','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_6_1','choice_0','Medicine-HRP258'),
-    ('0924f8f0_12de_424e_b7ef_70ab5c9d4930','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_8_1','choice_0,choice_1,choice_2,choice_3,choice_4','Medicine-HRP258'),
-    ('8bd86df4_2544_4522_94f4_e22bc9c48a71','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_5_1','choice_2','Medicine-HRP258'),
-    ('33bd2386_b5ff_4914_8799_dd2651c24c05','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_4_1','choice_0','Medicine-HRP258'),
-    ('a1cdd0d4_087b_447e_9b3a_09bc5b7ee0e1','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_3_1','choice_0','Medicine-HRP258'),
-    ('00984273_e1a2_4fdc_9e63_4f9ebaab2597','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_7_1','choice_1','Medicine-HRP258'),
-    ('5ce39256_b72d_4185_9d81_e1982a259097','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_2_1','choice_3','Medicine-HRP258'),
-    ('18611aa9_b938_4e78_a7e6_ac3ab8610b31','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_9_1','choice_0,choice_1','Medicine-HRP258'),
-    ('eefe895d_1a43_42f7_bf2e_3470f023de86','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_6_1','choice_0','Medicine-HRP258'),
-    ('7b895d31_42fe_4175_abf7_cc890caa9f01','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_8_1','choice_0,choice_1,choice_2,choice_3,choice_4','Medicine-HRP258'),
-    ('9babc1a6_8cbd_43b3_bf1b_9c580eb24bd0','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_5_1','choice_2','Medicine-HRP258'),
-    ('46c3f489_b2c6_4332_ae47_f849ded22555','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_4_1','choice_0','Medicine-HRP258'),
-    ('e452fe4d_db06_4e3b_83a6_ee06f4591e81','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_3_1','choice_0','Medicine-HRP258');
+    ('a62d1419_1422_4825_83ac_7f69f0b509cc','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_7_1','choice_1','Medicine-HRP258'),
+    ('b6e604b0_7d4e_436b_8dde_b9d1e10cf177','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_2_1','choice_3','Medicine-HRP258'),
+    ('cc9f9247_89bd_42aa_95ea_b348ff8c95d7','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_9_1','choice_0,choice_1','Medicine-HRP258'),
+    ('3e08a986_e9c0_4cf4_9662_6f5439578bb2','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_6_1','choice_0','Medicine-HRP258'),
+    ('f0cb1024_fba2_4ce0_8b26_4fd9258a4a2b','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_8_1','choice_0,choice_1,choice_2,choice_3,choice_4','Medicine-HRP258'),
+    ('f097dcbc_9972_426a_8954_3105cb68aafc','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_5_1','choice_2','Medicine-HRP258'),
+    ('478e813c_0249_4aaa_959c_a7c6e71255e5','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_4_1','choice_0','Medicine-HRP258'),
+    ('656ead1f_5477_4e5c_a5d3_4330dd339b2d','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_3_1','choice_0','Medicine-HRP258'),
+    ('1e4a0ea7_8640_461c_be7b_edf758f43884','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_7_1','choice_1','Medicine-HRP258'),
+    ('7676ad83_4b4d_424e_9403_284b0c9dfedf','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_2_1','choice_3','Medicine-HRP258'),
+    ('f515ab15_d5b1_4c2e_a22c_ff51d851d201','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_9_1','choice_0,choice_1','Medicine-HRP258'),
+    ('5cb9ab8f_e619_4391_bab5_964a7426b76d','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_6_1','choice_0','Medicine-HRP258'),
+    ('8c5be194_3f10_4e3d_b9b6_15573d21ec30','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_8_1','choice_0,choice_1,choice_2,choice_3,choice_4','Medicine-HRP258'),
+    ('99471453_1f8a_4d59_9f1f_8c53e54193a1','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_5_1','choice_2','Medicine-HRP258'),
+    ('19c11655_10ee_4249_9a60_db77b3a76456','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_4_1','choice_0','Medicine-HRP258'),
+    ('219dc1e1_e899_44af_acdf_9e22ec204a35','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_3_1','choice_0','Medicine-HRP258');
 INSERT INTO CorrectMap (correct_map_id,answer_identifier,correctness,npoints,msg,hint,hintmode,queuestate) VALUES 
-    ('c0230e08_f38c_4b86_8a8c_a509396fddc0','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_7_1','correct',-1,'','','',''),
-    ('fc170a74_613e_410d_921c_ca8d125fa617','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_2_1','correct',-1,'','','',''),
-    ('c23e4c02_190f_4d60_b696_d6b028b8baab','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_9_1','correct',-1,'','','',''),
-    ('08a8f1bc_fbd5_48a3_b280_eee880af91d1','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_6_1','correct',-1,'','','',''),
-    ('c6ac9761_a767_49c3_a1f8_fe2304e9eb08','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_8_1','incorrect',-1,'','','',''),
-    ('09de19d2_996c_447a_b17c_2b8fc97df43c','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_5_1','correct',-1,'','','',''),
-    ('edd32d57_e965_4a01_a5d2_87bb73fbdd74','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_4_1','correct',-1,'','','',''),
-    ('f65161a2_d16b_468c_bb94_eb9fabe817cf','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_3_1','incorrect',-1,'','','','');
+    ('f96a2fb6_359e_4ec1_a401_e4345478dfbd','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_7_1','correct',-1,'','','',''),
+    ('1e82925a_d0c7_48ea_a90a_b3cee51eaadb','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_2_1','correct',-1,'','','',''),
+    ('cc1a5fff_a40f_4035_86ba_f0ca40663714','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_9_1','correct',-1,'','','',''),
+    ('1d454268_f324_4858_ad09_a354bccd3344','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_6_1','correct',-1,'','','',''),
+    ('dc8e1406_5a46_4ca9_91d0_07934146fe1a','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_8_1','incorrect',-1,'','','',''),
+    ('b9418366_cf01_4eb8_91fb_f3cbe1716ca4','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_5_1','correct',-1,'','','',''),
+    ('cc5b46f9_614e_4756_b602_f72bec49d628','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_4_1','correct',-1,'','','',''),
+    ('f6b56b81_c825_43ee_a1a4_fbce662650b3','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_3_1','incorrect',-1,'','','','');
 INSERT INTO InputState (input_state_id,problem_id,state) VALUES 
-    ('70865f0d_2792_4ce2_9dc5_1e9a719d3c0a','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_7_1',''),
-    ('4dd733bb_5038_4aec_a6bd_f36da6a0bf29','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_2_1',''),
-    ('8747469a_dbfb_4ca0_8d17_fb2b78e23137','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_9_1',''),
-    ('23b4f8c4_1bea_49e8_9480_cb0f2041d45e','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_6_1',''),
-    ('79f87fc3_469c_4832_a2fd_4bf13d22a568','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_8_1',''),
-    ('14460841_3180_4f1e_b77f_83722e8874f1','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_5_1',''),
-    ('021923cd_cca4_4e12_93d5_9cdc111de9c1','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_4_1',''),
-    ('7062304c_7025_4f09_97f2_db06846ed432','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_3_1','');
+    ('23f879ae_6835_4a14_aa0e_9fca7e9539f0','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_7_1',''),
+    ('b8783cd7_8a78_477a_af17_d4ac4fb0ecb3','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_2_1',''),
+    ('52a740a0_f766_47fd_ba99_ffb61f7f673e','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_9_1',''),
+    ('13c8ca1d_b87a_4740_bca7_6604d9f78cac','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_6_1',''),
+    ('46af9776_ae53_4ff2_978e_8a3f3151d433','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_8_1',''),
+    ('c426498e_2e25_4ab6_b030_a4cf7ef198b9','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_5_1',''),
+    ('9780c4cc_397e_484e_b146_b7efd9194f69','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_4_1',''),
+    ('94ee56f4_e02a_4069_968d_64e08934c1cb','i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_3_1','');
 INSERT INTO State (state_id,seed,done,problem_id,student_answer,correct_map,input_state) VALUES 
-    ('6c967859_902c_46f8_a36a_5bcf02bb00b3',1,'True','','00984273_e1a2_4fdc_9e63_4f9ebaab2597','c0230e08_f38c_4b86_8a8c_a509396fddc0','70865f0d_2792_4ce2_9dc5_1e9a719d3c0a'),
-    ('d0dbb415_d88d_476a_94c0_c014004c199e',1,'True','','5ce39256_b72d_4185_9d81_e1982a259097','fc170a74_613e_410d_921c_ca8d125fa617','4dd733bb_5038_4aec_a6bd_f36da6a0bf29'),
-    ('ea26e651_9397_430a_95e0_4653ca0b3faf',1,'True','','18611aa9_b938_4e78_a7e6_ac3ab8610b31','c23e4c02_190f_4d60_b696_d6b028b8baab','8747469a_dbfb_4ca0_8d17_fb2b78e23137'),
-    ('eba5eddf_2617_40ec_a164_7b72e64f0f2b',1,'True','','eefe895d_1a43_42f7_bf2e_3470f023de86','08a8f1bc_fbd5_48a3_b280_eee880af91d1','23b4f8c4_1bea_49e8_9480_cb0f2041d45e'),
-    ('7c15f2f0_81cf_4624_be29_70785c736198',1,'True','','7b895d31_42fe_4175_abf7_cc890caa9f01','c6ac9761_a767_49c3_a1f8_fe2304e9eb08','79f87fc3_469c_4832_a2fd_4bf13d22a568'),
-    ('407e2c86_9901_4669_91f3_8d6ed05fc9f6',1,'True','','9babc1a6_8cbd_43b3_bf1b_9c580eb24bd0','09de19d2_996c_447a_b17c_2b8fc97df43c','14460841_3180_4f1e_b77f_83722e8874f1'),
-    ('ab9c9d40_4aa1_4a58_a0f5_3aa22978ef26',1,'True','','46c3f489_b2c6_4332_ae47_f849ded22555','edd32d57_e965_4a01_a5d2_87bb73fbdd74','021923cd_cca4_4e12_93d5_9cdc111de9c1'),
-    ('a0de2f99_7570_49fa_a044_2437d97efa33',1,'True','','e452fe4d_db06_4e3b_83a6_ee06f4591e81','f65161a2_d16b_468c_bb94_eb9fabe817cf','7062304c_7025_4f09_97f2_db06846ed432');
+    ('b71821d1_cdd2_4f1e_93a6_ca6993ca8785',1,'True','','1e4a0ea7_8640_461c_be7b_edf758f43884','f96a2fb6_359e_4ec1_a401_e4345478dfbd','23f879ae_6835_4a14_aa0e_9fca7e9539f0'),
+    ('028f36ac_29cc_45d0_8b96_4757b69e7ca5',1,'True','','7676ad83_4b4d_424e_9403_284b0c9dfedf','1e82925a_d0c7_48ea_a90a_b3cee51eaadb','b8783cd7_8a78_477a_af17_d4ac4fb0ecb3'),
+    ('64ceb0d8_453d_4f34_830d_d51d0226eba9',1,'True','','f515ab15_d5b1_4c2e_a22c_ff51d851d201','cc1a5fff_a40f_4035_86ba_f0ca40663714','52a740a0_f766_47fd_ba99_ffb61f7f673e'),
+    ('03b0d899_fb52_4857_b5d1_2927e95cbdb8',1,'True','','5cb9ab8f_e619_4391_bab5_964a7426b76d','1d454268_f324_4858_ad09_a354bccd3344','13c8ca1d_b87a_4740_bca7_6604d9f78cac'),
+    ('e9af0439_3f09_4853_b8f8_ff420a77f1a4',1,'True','','8c5be194_3f10_4e3d_b9b6_15573d21ec30','dc8e1406_5a46_4ca9_91d0_07934146fe1a','46af9776_ae53_4ff2_978e_8a3f3151d433'),
+    ('a009bc1b_164f_4cb0_b142_98fdbdf65e07',1,'True','','99471453_1f8a_4d59_9f1f_8c53e54193a1','b9418366_cf01_4eb8_91fb_f3cbe1716ca4','c426498e_2e25_4ab6_b030_a4cf7ef198b9'),
+    ('af899414_d4df_49c4_bc6c_1ddce10f9732',1,'True','','19c11655_10ee_4249_9a60_db77b3a76456','cc5b46f9_614e_4756_b602_f72bec49d628','9780c4cc_397e_484e_b146_b7efd9194f69'),
+    ('a4529e03_b4c7_49b9_b8cf_1014af68bc43',1,'True','','219dc1e1_e899_44af_acdf_9e22ec204a35','f6b56b81_c825_43ee_a1a4_fbce662650b3','94ee56f4_e02a_4069_968d_64e08934c1cb');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('ac66a5a9_9b6f_4cec_ade6_10b5fefe0929','3a6259bf_f5ed_4f23_8357_761efb945386','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1','server','problem_check_fail','58.108.173.32','x_module','','2013-06-26T06:25:22.710746+00:00','0132acbb6cf5d98798b44b16e0a1cd4ebbad3dae74cb45fbbfbea20f','0:00:00','','','Medicine-HRP258','',-1,-1,'i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_7_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','closed','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','50821b9a_1dff_4c44_a9b2_70c22f9cdb84','6c967859_902c_46f8_a36a_5bcf02bb00b3','5cc15dc0_4f8b_4808_9306_3a00e4b619ab'),
-    ('1ed03134_67ea_4ba7_8ba2_8d6c113c4b44','3a6259bf_f5ed_4f23_8357_761efb945386','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1','server','problem_check_fail','58.108.173.32','x_module','','2013-06-26T06:25:22.710746+00:00','0132acbb6cf5d98798b44b16e0a1cd4ebbad3dae74cb45fbbfbea20f','0:00:00','','','Medicine-HRP258','',-1,-1,'i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','closed','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','63d0d580_7d38_4672_91bf_f1e5bdfbe52f','d0dbb415_d88d_476a_94c0_c014004c199e','5cc15dc0_4f8b_4808_9306_3a00e4b619ab'),
-    ('e95133bc_9599_44e5_9960_32e3cb8c82f3','3a6259bf_f5ed_4f23_8357_761efb945386','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1','server','problem_check_fail','58.108.173.32','x_module','','2013-06-26T06:25:22.710746+00:00','0132acbb6cf5d98798b44b16e0a1cd4ebbad3dae74cb45fbbfbea20f','0:00:00','','','Medicine-HRP258','',-1,-1,'i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_9_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','closed','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','2a00b59e_aad1_47ca_a173_d89ddeb89758','ea26e651_9397_430a_95e0_4653ca0b3faf','5cc15dc0_4f8b_4808_9306_3a00e4b619ab'),
-    ('58f47a05_a03b_48eb_ae1d_f99416168d3f','3a6259bf_f5ed_4f23_8357_761efb945386','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1','server','problem_check_fail','58.108.173.32','x_module','','2013-06-26T06:25:22.710746+00:00','0132acbb6cf5d98798b44b16e0a1cd4ebbad3dae74cb45fbbfbea20f','0:00:00','','','Medicine-HRP258','',-1,-1,'i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_6_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','closed','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','29d65b61_b2c3_4061_9fdb_2b926b01e18b','eba5eddf_2617_40ec_a164_7b72e64f0f2b','5cc15dc0_4f8b_4808_9306_3a00e4b619ab'),
-    ('e94910a2_f7c6_4845_ae50_52b47b596c98','3a6259bf_f5ed_4f23_8357_761efb945386','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1','server','problem_check_fail','58.108.173.32','x_module','','2013-06-26T06:25:22.710746+00:00','0132acbb6cf5d98798b44b16e0a1cd4ebbad3dae74cb45fbbfbea20f','0:00:00','','','Medicine-HRP258','',-1,-1,'i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_8_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','closed','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','0924f8f0_12de_424e_b7ef_70ab5c9d4930','7c15f2f0_81cf_4624_be29_70785c736198','5cc15dc0_4f8b_4808_9306_3a00e4b619ab'),
-    ('b0704f43_79e4_4f39_a005_4c4a0b18718f','3a6259bf_f5ed_4f23_8357_761efb945386','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1','server','problem_check_fail','58.108.173.32','x_module','','2013-06-26T06:25:22.710746+00:00','0132acbb6cf5d98798b44b16e0a1cd4ebbad3dae74cb45fbbfbea20f','0:00:00','','','Medicine-HRP258','',-1,-1,'i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_5_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','closed','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','8bd86df4_2544_4522_94f4_e22bc9c48a71','407e2c86_9901_4669_91f3_8d6ed05fc9f6','5cc15dc0_4f8b_4808_9306_3a00e4b619ab'),
-    ('9e862fc5_1206_48bc_a676_86af89ebb3be','3a6259bf_f5ed_4f23_8357_761efb945386','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1','server','problem_check_fail','58.108.173.32','x_module','','2013-06-26T06:25:22.710746+00:00','0132acbb6cf5d98798b44b16e0a1cd4ebbad3dae74cb45fbbfbea20f','0:00:00','','','Medicine-HRP258','',-1,-1,'i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_4_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','closed','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','33bd2386_b5ff_4914_8799_dd2651c24c05','ab9c9d40_4aa1_4a58_a0f5_3aa22978ef26','5cc15dc0_4f8b_4808_9306_3a00e4b619ab'),
-    ('d9d05a21_f942_4d47_9d23_6db8e3585707','3a6259bf_f5ed_4f23_8357_761efb945386','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1','server','problem_check_fail','58.108.173.32','x_module','','2013-06-26T06:25:22.710746+00:00','0132acbb6cf5d98798b44b16e0a1cd4ebbad3dae74cb45fbbfbea20f','0:00:00','','','Medicine-HRP258','',-1,-1,'i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_3_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','closed','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','a1cdd0d4_087b_447e_9b3a_09bc5b7ee0e1','a0de2f99_7570_49fa_a044_2437d97efa33','5cc15dc0_4f8b_4808_9306_3a00e4b619ab'),
-    ('33a81aa5_ccb6_4d8a_8393_4de223e6ba5e','3a6259bf_f5ed_4f23_8357_761efb945386','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1','server','problem_check_fail','58.108.173.32','x_module','','2013-06-26T06:25:22.710746+00:00','0132acbb6cf5d98798b44b16e0a1cd4ebbad3dae74cb45fbbfbea20f','0:00:00','','','Medicine-HRP258','',-1,-1,'i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_3_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','closed','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','a1cdd0d4_087b_447e_9b3a_09bc5b7ee0e1','a0de2f99_7570_49fa_a044_2437d97efa33','5cc15dc0_4f8b_4808_9306_3a00e4b619ab');
+    ('d791a77e_ce83_4e96_9159_1808c9c30807','0319457a_be7f_4cb5_a336_836ea950c4fd','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1','server','problem_check_fail','58.108.173.32','x_module','','2013-06-26T06:25:22.710746+00:00','0132acbb6cf5d98798b44b16e0a1cd4ebbad3dae74cb45fbbfbea20f','0:00:00','','','Medicine-HRP258','',-1,-1,'i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_7_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','closed','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','a62d1419_1422_4825_83ac_7f69f0b509cc','b71821d1_cdd2_4f1e_93a6_ca6993ca8785','b6c9a7d0_1a27_4f4e_8c35_39a1ba5a67d8'),
+    ('251cbe6a_34dc_408f_a3d2_caca5c2407ab','0319457a_be7f_4cb5_a336_836ea950c4fd','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1','server','problem_check_fail','58.108.173.32','x_module','','2013-06-26T06:25:22.710746+00:00','0132acbb6cf5d98798b44b16e0a1cd4ebbad3dae74cb45fbbfbea20f','0:00:00','','','Medicine-HRP258','',-1,-1,'i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','closed','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','b6e604b0_7d4e_436b_8dde_b9d1e10cf177','028f36ac_29cc_45d0_8b96_4757b69e7ca5','b6c9a7d0_1a27_4f4e_8c35_39a1ba5a67d8'),
+    ('b2ea0c9b_93cf_40e9_9998_01de5ccb5aa8','0319457a_be7f_4cb5_a336_836ea950c4fd','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1','server','problem_check_fail','58.108.173.32','x_module','','2013-06-26T06:25:22.710746+00:00','0132acbb6cf5d98798b44b16e0a1cd4ebbad3dae74cb45fbbfbea20f','0:00:00','','','Medicine-HRP258','',-1,-1,'i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_9_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','closed','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','cc9f9247_89bd_42aa_95ea_b348ff8c95d7','64ceb0d8_453d_4f34_830d_d51d0226eba9','b6c9a7d0_1a27_4f4e_8c35_39a1ba5a67d8'),
+    ('d01c9daa_71cd_4d9b_bd92_b2e5f8a9f6a2','0319457a_be7f_4cb5_a336_836ea950c4fd','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1','server','problem_check_fail','58.108.173.32','x_module','','2013-06-26T06:25:22.710746+00:00','0132acbb6cf5d98798b44b16e0a1cd4ebbad3dae74cb45fbbfbea20f','0:00:00','','','Medicine-HRP258','',-1,-1,'i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_6_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','closed','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','3e08a986_e9c0_4cf4_9662_6f5439578bb2','03b0d899_fb52_4857_b5d1_2927e95cbdb8','b6c9a7d0_1a27_4f4e_8c35_39a1ba5a67d8'),
+    ('a6837904_34f5_4f40_bc63_4aa9d4b7e2f1','0319457a_be7f_4cb5_a336_836ea950c4fd','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1','server','problem_check_fail','58.108.173.32','x_module','','2013-06-26T06:25:22.710746+00:00','0132acbb6cf5d98798b44b16e0a1cd4ebbad3dae74cb45fbbfbea20f','0:00:00','','','Medicine-HRP258','',-1,-1,'i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_8_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','closed','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','f0cb1024_fba2_4ce0_8b26_4fd9258a4a2b','e9af0439_3f09_4853_b8f8_ff420a77f1a4','b6c9a7d0_1a27_4f4e_8c35_39a1ba5a67d8'),
+    ('1145754a_32aa_42df_8ae8_262d86240b89','0319457a_be7f_4cb5_a336_836ea950c4fd','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1','server','problem_check_fail','58.108.173.32','x_module','','2013-06-26T06:25:22.710746+00:00','0132acbb6cf5d98798b44b16e0a1cd4ebbad3dae74cb45fbbfbea20f','0:00:00','','','Medicine-HRP258','',-1,-1,'i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_5_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','closed','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','f097dcbc_9972_426a_8954_3105cb68aafc','a009bc1b_164f_4cb0_b142_98fdbdf65e07','b6c9a7d0_1a27_4f4e_8c35_39a1ba5a67d8'),
+    ('6022282c_d90d_4fbd_a9e8_54794dece4f7','0319457a_be7f_4cb5_a336_836ea950c4fd','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1','server','problem_check_fail','58.108.173.32','x_module','','2013-06-26T06:25:22.710746+00:00','0132acbb6cf5d98798b44b16e0a1cd4ebbad3dae74cb45fbbfbea20f','0:00:00','','','Medicine-HRP258','',-1,-1,'i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_4_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','closed','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','478e813c_0249_4aaa_959c_a7c6e71255e5','af899414_d4df_49c4_bc6c_1ddce10f9732','b6c9a7d0_1a27_4f4e_8c35_39a1ba5a67d8'),
+    ('143ce24b_e26b_4849_bf54_ff1f88e45168','0319457a_be7f_4cb5_a336_836ea950c4fd','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1','server','problem_check_fail','58.108.173.32','x_module','','2013-06-26T06:25:22.710746+00:00','0132acbb6cf5d98798b44b16e0a1cd4ebbad3dae74cb45fbbfbea20f','0:00:00','','','Medicine-HRP258','',-1,-1,'i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_3_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','closed','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','656ead1f_5477_4e5c_a5d3_4330dd339b2d','a4529e03_b4c7_49b9_b8cf_1014af68bc43','b6c9a7d0_1a27_4f4e_8c35_39a1ba5a67d8'),
+    ('89213288_22ca_431f_a08d_e208459d73d3','0319457a_be7f_4cb5_a336_836ea950c4fd','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/536.30.1 (KHTML, like Gecko) Version/6.0.5 Safari/536.30.1','server','problem_check_fail','58.108.173.32','x_module','','2013-06-26T06:25:22.710746+00:00','0132acbb6cf5d98798b44b16e0a1cd4ebbad3dae74cb45fbbfbea20f','0:00:00','','','Medicine-HRP258','',-1,-1,'i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_3_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','closed','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','656ead1f_5477_4e5c_a5d3_4330dd339b2d','a4529e03_b4c7_49b9_b8cf_1014af68bc43','b6c9a7d0_1a27_4f4e_8c35_39a1ba5a67d8');
 /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;
