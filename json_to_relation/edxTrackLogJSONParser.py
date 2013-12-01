@@ -98,7 +98,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
     # isolate '-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_2_1":' from:
     # ' {"success": "correct", "correct_map": {"i4x-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_2_1": {"hint": "", "hintmode": null'
-    problemXFindCourseID = p = re.compile(r'[^-]*([^:]*)')
+    problemFindCourseID = re.compile(r'[^-]*([^:]*)')
+
+    # Isolate 32-bit hash inside any string, e.g.:
+    #   i4x-Medicine-HRP258-videoalpha-7cd4bf0813904612bcd583a73ade1d54
+    # or:
+    #   input_i4x-Medicine-HRP258-problem-98ca37dbf24849debcc29eb36811cb68_3_1_choice_3'
+    findHashPattern = re.compile(r'([a-f0-9]{32})')
     
     def __init__(self, jsonToRelationConverter, mainTableName, logfileID='', progressEvery=1000, replaceTables=False, dbName='test'):
         '''
@@ -3676,4 +3682,24 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         oneHash.update(username)
         return oneHash.hexdigest()
     
+    def extractOpenEdxHash(self, idStr):
+        '''
+        Given a string, such as::
+            i4x-Medicine-HRP258-videoalpha-7cd4bf0813904612bcd583a73ade1d54
+            or:
+            input_i4x-Medicine-HRP258-problem-98ca37dbf24849debcc29eb36811cb68_3_1_choice_3'
+        extract and return the 32 bit hash portion. If none is found,
+        return None. Method takes any string and finds a 32 bit hex number.
+        It is up to the caller to ensure that the return is meaningful. As
+        a minimal check, the method does ensure that there is at most one 
+        qualifying string present; we know that this is the case with problem_id
+        and other strings.
+        @param idStr: problem, module, video ID and others that might contain a 32 bit OpenEdx platform hash
+        @type idStr: string
+        '''
+        match = EdXTrackLogJSONParser.findHashPattern.search(idStr)
+        if match is not None:
+            return match.group(1)
+        else:
+            return None
         
