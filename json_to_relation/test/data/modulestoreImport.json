@@ -1,0 +1,93 @@
+{"all" : [
+	{
+		"_id" : {
+			"tag" : "i4x",
+			"org" : "edx",
+			"course" : "templates",
+			"category" : "annotatable",
+			"name" : "Annotation",
+			"revision" : null
+		},
+		"metadata" : {
+			"display_name" : "Annotation"
+		}
+	},
+	{
+		"_id" : {
+			"tag" : "i4x",
+			"org" : "Medicine",
+			"course" : "HRP258",
+			"category" : "videoalpha",
+			"name" : "67b77215c10243f1a20d81350909084a",
+			"revision" : null
+		},
+		"metadata" : {
+			"display_name" : "Module 2"
+		}
+	},
+	{
+		"_id" : {
+			"tag" : "i4x",
+			"org" : "Medicine",
+			"course" : "HRP258",
+			"category" : "vertical",
+			"name" : "e9ef4bdae8874030b2321a7699f03a82",
+			"revision" : null
+		},
+		"metadata" : {
+			"display_name" : "Quiz"
+		}
+	},
+	{
+		"_id" : {
+			"tag" : "i4x",
+			"org" : "Education",
+			"course" : "EDCC-100",
+			"category" : "video",
+			"name" : "109c60b8350a4a7aa8b7389c99fdf6ea",
+			"revision" : "draft"
+		},
+		"metadata" : {
+			"display_name" : "Setting Norms"
+		}
+	},
+	{
+		"_id" : {
+			"tag" : "i4x",
+			"org" : "Medicine",
+			"course" : "HRP258",
+			"category" : "chapter",
+			"name" : "de472d1448a74e639a41fa584c49b91e",
+			"revision" : null
+		},
+		"metadata" : {
+			"display_name" : "Unit 2: Review of Study Designs; Measures of Disease Risk and Association"
+		}
+	},
+	{
+		"_id" : {
+			"tag" : "i4x",
+			"org" : "Medicine",
+			"course" : "HRP258",
+			"category" : "problem",
+			"name" : "e252cc0b13b146c1805a90cf45aa376b",
+			"revision" : null
+		},
+		"metadata" : {
+			"display_name" : "Quiz"
+		}
+	},
+	{
+		"_id" : {
+			"tag" : "i4x",
+			"org" : "Medicine",
+			"course" : "HRP258",
+			"category" : "course_info",
+			"name" : "handouts",
+			"revision" : null
+		},
+		"metadata" : {
+			
+		}
+	}
+]}
