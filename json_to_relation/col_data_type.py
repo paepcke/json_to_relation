@@ -51,7 +51,7 @@ class ColDataType:
     BOOL=14        # IF YOU ADD ENTRIES, MODIFY isistance method below
     UUID=15        # 32 byte key via uuid.uuid4()
         
-    strings = {TINYTEXT : "TINYTEXT",
+    strings = {TINYTEXT : "VARCHAR(255)",
                TEXT     : "TEXT",
                MEDIUMTEXT : "MEDIUMTEXT",
                LONGTEXT : "LONGTEXT",

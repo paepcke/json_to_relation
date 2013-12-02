@@ -444,7 +444,7 @@ class JSONToRelation(object):
             try:
                 outFd.writerow(filledNewRow)
             except Exception as e:
-                JSONToRelation.logger.warn(`e`)
+                JSONToRelation.logger.warn('Error during writerow() call in json_to_relation.processFinishRow(): %s' % `e`)
 
     def prepareMySQLRow(self, insertInfo):
         '''

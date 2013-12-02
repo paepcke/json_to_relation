@@ -7,6 +7,7 @@ from collections import OrderedDict
 import datetime
 import hashlib
 import json
+import os
 import re
 import string
 from unidecode import unidecode
@@ -15,6 +16,7 @@ import uuid
 from col_data_type import ColDataType
 from generic_json_parser import GenericJSONParser
 from locationManager import LocationManager
+from modulestoreImporter import ModulestoreImporter
 from output_disposition import ColumnSpec
 
 
@@ -98,7 +100,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
     # isolate '-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_2_1":' from:
     # ' {"success": "correct", "correct_map": {"i4x-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_2_1": {"hint": "", "hintmode": null'
-    problemFindCourseID = re.compile(r'[^-]*([^:]*)')
+    problemXFindCourseID = re.compile(r'[^-]*([^:]*)')
 
     # Isolate 32-bit hash inside any string, e.g.:
     #   i4x-Medicine-HRP258-videoalpha-7cd4bf0813904612bcd583a73ade1d54
@@ -106,7 +108,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     #   input_i4x-Medicine-HRP258-problem-98ca37dbf24849debcc29eb36811cb68_3_1_choice_3'
     findHashPattern = re.compile(r'([a-f0-9]{32})')
     
-    def __init__(self, jsonToRelationConverter, mainTableName, logfileID='', progressEvery=1000, replaceTables=False, dbName='test'):
+    def __init__(self, jsonToRelationConverter, mainTableName, logfileID='', progressEvery=1000, replaceTables=False, dbName='test', useDisplayNameCache=False):
         '''
         Constructor
         @param jsonToRelationConverter: JSONToRelation instance
@@ -123,6 +125,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @type  replaceTables: bool
         @param dbName: database name into which tables will be created (if replaceTables is True), and into which insertions will take place.
         @type dbName: String
+        @param useDisplayNameCache: if True then use an existing cache for mapping
+                    OpenEdx hashes to human readable display names is used. Else
+                    the required information is read and parsed from a JSON file name
+                    that contains the needed information from modulestore. See
+                    modulestoreImporter.py for details. 
+        @type useDisplayNameCache: Bool                    
         '''
         super(EdXTrackLogJSONParser, self).__init__(jsonToRelationConverter, 
                                                     logfileID=logfileID, 
@@ -138,10 +146,14 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # each line; Build the schema:
         
         # Fields common to every request:
-        self.commonFldNames = ['agent','event_source','event_type','ip','page','session','time','username', 'course_id']
+        self.commonFldNames = ['agent','event_source','event_type','ip','page','session','time','username', 'course_id', 'course_display_name']
 
         # A Country lookup facility:
         self.countryChecker = LocationManager()
+    
+        # Lookup table from OpenEdx 32-bit hash values to
+        # corresponding problem, course, or video display_names:
+        self.hashMapper = ModulestoreImporter(os.path.join(os.path.dirname(__file__),'data/modulestore_latest.json'), useCache=useDisplayNameCache)
                 
         self.schemaHintsMainTable = OrderedDict()
 
@@ -165,14 +177,17 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
         # Courses
         self.schemaHintsMainTable['course_id'] = ColDataType.TEXT
+        self.schemaHintsMainTable['course_display_name'] = ColDataType.TINYTEXT
+        self.schemaHintsMainTable['resource_display_name'] = ColDataType.TINYTEXT
+        self.schemaHintsMainTable['organization'] = ColDataType.TINYTEXT
         
         # Sequence navigation:
-        self.schemaHintsMainTable['sequence_id'] = ColDataType.TEXT
+        self.schemaHintsMainTable['sequence_id'] = ColDataType.TINYTEXT
         self.schemaHintsMainTable['goto_from'] = ColDataType.INT
         self.schemaHintsMainTable['goto_dest'] = ColDataType.INT
         
         # Problems:
-        self.schemaHintsMainTable['problem_id'] = ColDataType.TEXT
+        self.schemaHintsMainTable['problem_id'] = ColDataType.TINYTEXT
         self.schemaHintsMainTable['problem_choice'] = ColDataType.TEXT
         self.schemaHintsMainTable['question_location'] = ColDataType.TEXT
         
@@ -205,7 +220,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaHintsMainTable['rubric_category'] = ColDataType.INT
 
         # Video:
-        self.schemaHintsMainTable['video_id'] = ColDataType.TEXT
+        self.schemaHintsMainTable['video_id'] = ColDataType.TINYTEXT
         self.schemaHintsMainTable['video_code'] = ColDataType.TEXT
         self.schemaHintsMainTable['video_current_time'] = ColDataType.TINYTEXT
         self.schemaHintsMainTable['video_speed'] = ColDataType.TINYTEXT
@@ -223,7 +238,6 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaHintsMainTable['answer_id'] = ColDataType.TEXT
         self.schemaHintsMainTable['hint'] = ColDataType.TEXT
         self.schemaHintsMainTable['hintmode'] = ColDataType.TINYTEXT
-        self.schemaHintsMainTable['correctness'] = ColDataType.TINYTEXT
         self.schemaHintsMainTable['msg'] = ColDataType.TEXT
         self.schemaHintsMainTable['npoints'] = ColDataType.TINYINT
         self.schemaHintsMainTable['queuestate'] = ColDataType.TEXT
@@ -1064,6 +1078,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.jsonToRelationConverter.startNewTable(self.mainTableName, self.schemaHintsMainTable)
 
     def handleCommonFields(self, record, row):
+        self.currCourseDisplayName = None
         # Create a unique tuple key and event key  for this event:
         self.setValInRow(row, '_id', self.getUniqueID())
         self.setValInRow(row, 'event_id', self.getUniqueID())
@@ -1090,11 +1105,18 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                     self.finishedRow = True
             elif fldName == 'course_id':
                 #(fullCourseName, course_id) = self.get_course_id(record.get('event', None))  # @UnusedVariable
-                (fullCourseName, course_id) = self.get_course_id(record)  # @UnusedVariable
+                (fullCourseName, course_id, displayName) = self.get_course_id(record)  # @UnusedVariable
                 val = course_id
                 # Make course_id available for places where rows are added to the Answer table.
                 # We stick the course_id there for convenience.
                 self.currCourseID = course_id
+                self.currCourseDisplayName = displayName
+            elif fldName == 'course_display_name':
+                if self.currCourseDisplayName is not None:
+                    val = self.currCourseDisplayName
+                else:
+                    (fullCourseName, course_id, displayName) = self.get_course_id(record)  # @UnusedVariable
+                    val = displayName
             elif fldName == 'username':
                 # Hash the name, and store in MySQL col 'anon_screen_name':
                 val = self.hashGeneral(val)
@@ -3394,48 +3416,63 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         course_id = ''
         eventSource = event.get('event_source', None)
         if eventSource is None:
-            return ('','')
+            return ('','','')
         if eventSource == 'server':
             # get course_id from event type
             eventType = event.get('event_type', None)
             if eventType is None:
-                return('','')
+                return('','','')
             if eventType == u'/accounts/login':
                 try:
                     post = json.loads(str(event.get('event', None)))
                 except:
-                    return('','')
+                    return('','','')
                 if post is not None:
                     getEntry = post.get('GET', None)
                     if getEntry is not None:
                         try:
                             fullCourseName = getEntry.get('next', [''])[0]
                         except:
-                            return('','')
+                            return('','','')
                     else:
-                        return('','')
+                        return('','','')
                 else:
-                    return('','')
+                    return('','','')
                 
             elif eventType.startswith('/courses'):
                 courseID = self.extractShortCourseID(eventType)
-                return(courseID, courseID)
+                return(courseID, courseID, self.getCourseDisplayName(eventType))
                  
             elif eventType.find('problem_') > -1:
                 event = event.get('event', None)
                 if event is None:
-                    return('','')
+                    return('','','')
                 courseID = self.extractCourseIDFromProblemXEvent(event)
-                return(courseID, courseID)
+                return(courseID, courseID, '')
             else:
                 fullCourseName = event.get('event_type', '')
         else:
             fullCourseName = event.get('page', '')
         if len(fullCourseName) > 0:
             course_id = self.extractShortCourseID(fullCourseName)
+            course_display_name = self.getCourseDisplayName(fullCourseName)
+        else:
+            course_display_name = ''
         if len(course_id) == 0:
             fullCourseName = ''
-        return (fullCourseName, course_id)
+        return (fullCourseName, course_id, course_display_name)
+        
+    def getCourseDisplayName(self, fullCourseName):
+        '''
+        Given a 
+        @param fullCourseName:
+        @type fullCourseName:
+        '''
+        courseHash = self.extractOpenEdxHash(fullCourseName)
+        if courseHash is None:
+            return None
+        return self.hashMapper.getDisplayName(courseHash)
+        
         
     def extractShortCourseID(self, fullCourseStr):
         if fullCourseStr is None:

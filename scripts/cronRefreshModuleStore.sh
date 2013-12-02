@@ -43,7 +43,7 @@ else
     PASSWD=$(</home/dataman/.cron/modstore.txt)
 fi
 
-targetFile=$1/modulestore`date +"%m_%d_%Y_%H_%M_%S"`.json
+targetFile=$1/modulestore_`date +"%m_%d_%Y_%H_%M_%S"`.json
 
 # For testing can limit number of returned records by replacing
 # the --eval line below like this (adds the .limit(10) clause):

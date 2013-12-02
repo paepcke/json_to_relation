@@ -6,6 +6,7 @@ Created on Nov 30, 2013
 import csv
 import json
 import os
+import pickle
 import re
 
 
@@ -65,11 +66,19 @@ class ModulestoreImporter(object):
     '''
 
 
-    def __init__(self, jsonFileName):
+    def __init__(self, jsonFileName, useCache=False):
         '''
         '''
-        if not os.path.exists(jsonFileName):
+        self.pickleFileName = os.path.join(os.path.dirname(__file__), 'data/hashLookup.pkl')
+        if not useCache and not os.path.exists(jsonFileName):
             raise IOError("File %s does not exist." % jsonFileName)
+        elif useCache and not os.path.exists(self.pickleFileName):
+            if not os.path.exists(jsonFileName):
+                # Have neither a cache file nor a json file:
+                raise IOError("Neither cache file %s nor JSON file %s exist." % (self.pickleFileName, jsonFileName))
+            # Ignore the 'use cache' given that we don't have one;
+            # Just work with the JSON file, and create the cache:
+            useCache = False
         
         # Pattern to ensure that the first non-comment char in the
         # file is '{', the opening brace. Allows any number of comments
@@ -82,6 +91,13 @@ class ModulestoreImporter(object):
             jsonStr = '{"all" :' + jsonStr + "}"
         
         # Get dict {"all" : [{...}, {...},...]}
+        if useCache:
+            with open(self.pickleFileName, 'r') as pickleFd:
+                self.hashLookup = pickle.load(pickleFd)
+            return
+        
+        # No cached operation; read JSON file, and 
+        # create a lookup dict (which we'll then cache):
         self.modstoreDict = json.loads(jsonStr)
         
         # Create a lookup table mapping hashes of problems
@@ -95,8 +111,22 @@ class ModulestoreImporter(object):
             except KeyError:
                 # The 'about' entries don't have metadata; just ignore those entries:
                 pass
+        # Save the lookup in a quick-to-load Python pickle file for future use
+        # when option useCache is true:
+        with open(self.pickleFileName, 'w') as pickleFd:
+            pickle.dump(self.hashLookup, pickleFd)
+                  
         
     def getDisplayName(self, hashStr):
+        '''
+        Given a 32-bit OpenEdx hash string, return
+        a corresponding display_name. If none found,
+        returns None
+        @param hashStr: string of 32 hex digits
+        @type hashStr: string
+        @return: a display name as was used on the course Web site
+        @rtype: {String | None} 
+        '''
         return self.hashLookup.get(hashStr, None) 
         
     def export(self, outFilePath, addHeader=True):

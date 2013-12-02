@@ -403,7 +403,9 @@ class OutputFile(OutputDisposition):
             pass
         outFileName = self.getFileName()
         if outFileName == '/dev/null':
-            return open('/dev/null', 'ab')
+            outFile = open('/dev/null', 'ab')
+            self.csvTableFiles[tableName] = outFile 
+            return outFile
         csvOutFileName = self.getCSVTableOutFileName(tableName)
         outFile = open(csvOutFileName, 'w')
         self.csvTableFiles[tableName] = outFile
