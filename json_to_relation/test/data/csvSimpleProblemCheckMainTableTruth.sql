@@ -16,9 +16,9 @@ DROP TABLE IF EXISTS EdxTrackEvent, Answer, InputState, CorrectMap, State, Accou
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(40) NOT NULL PRIMARY KEY,
-    problem_id TEXT NOT NULL,
+    problem_id VARCHAR(255) NOT NULL,
     answer TEXT NOT NULL,
-    course_id TEXT NOT NULL
+    course_id VARCHAR(255) NOT NULL
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL PRIMARY KEY,
@@ -32,14 +32,14 @@ CREATE TABLE IF NOT EXISTS CorrectMap (
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS InputState (
     input_state_id VARCHAR(40) NOT NULL PRIMARY KEY,
-    problem_id TEXT NOT NULL,
+    problem_id VARCHAR(255) NOT NULL,
     state TEXT NOT NULL
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS State (
     state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT NOT NULL,
     done VARCHAR(255) NOT NULL,
-    problem_id TEXT NOT NULL,
+    problem_id VARCHAR(255) NOT NULL,
     student_answer VARCHAR(40) NOT NULL,
     correct_map VARCHAR(40) NOT NULL,
     input_state VARCHAR(40) NOT NULL,
@@ -104,11 +104,14 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     downtime_for DATETIME NOT NULL,
     student_id TEXT NOT NULL,
     instructor_id TEXT NOT NULL,
-    course_id TEXT NOT NULL,
-    sequence_id TEXT NOT NULL,
+    course_id VARCHAR(255) NOT NULL,
+    course_display_name VARCHAR(255) NOT NULL,
+    resource_display_name VARCHAR(255) NOT NULL,
+    organization VARCHAR(255) NOT NULL,
+    sequence_id VARCHAR(255) NOT NULL,
     goto_from INT NOT NULL,
     goto_dest INT NOT NULL,
-    problem_id TEXT NOT NULL,
+    problem_id VARCHAR(255) NOT NULL,
     problem_choice TEXT NOT NULL,
     question_location TEXT NOT NULL,
     submission_id TEXT NOT NULL,
@@ -122,7 +125,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     transcript_code VARCHAR(255) NOT NULL,
     rubric_selection INT NOT NULL,
     rubric_category INT NOT NULL,
-    video_id TEXT NOT NULL,
+    video_id VARCHAR(255) NOT NULL,
     video_code TEXT NOT NULL,
     video_current_time VARCHAR(255) NOT NULL,
     video_speed VARCHAR(255) NOT NULL,
@@ -136,7 +139,6 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     answer_id TEXT NOT NULL,
     hint TEXT NOT NULL,
     hintmode VARCHAR(255) NOT NULL,
-    correctness VARCHAR(255) NOT NULL,
     msg TEXT NOT NULL,
     npoints TINYINT NOT NULL,
     queuestate TEXT NOT NULL,
@@ -167,13 +169,13 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 SET sql_log_bin=0;
-LOAD DATA LOCAL INFILE '/tmp/oolalaVvGnRm.sql_LoadInfoTable.csv' IGNORE INTO TABLE LoadInfo FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
-LOAD DATA LOCAL INFILE '/tmp/oolalaVvGnRm.sql_InputStateTable.csv' IGNORE INTO TABLE InputState FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
-LOAD DATA LOCAL INFILE '/tmp/oolalaVvGnRm.sql_StateTable.csv' IGNORE INTO TABLE State FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
-LOAD DATA LOCAL INFILE '/tmp/oolalaVvGnRm.sql_CorrectMapTable.csv' IGNORE INTO TABLE CorrectMap FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
-LOAD DATA LOCAL INFILE '/tmp/oolalaVvGnRm.sql_AnswerTable.csv' IGNORE INTO TABLE Answer FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
-LOAD DATA LOCAL INFILE '/tmp/oolalaVvGnRm.sql_AccountTable.csv' IGNORE INTO TABLE Account FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
-LOAD DATA LOCAL INFILE '/tmp/oolalaVvGnRm.sql_EdxTrackEventTable.csv' IGNORE INTO TABLE EdxTrackEvent FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalalg2JoD.sql_LoadInfoTable.csv' IGNORE INTO TABLE LoadInfo FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalalg2JoD.sql_InputStateTable.csv' IGNORE INTO TABLE InputState FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalalg2JoD.sql_StateTable.csv' IGNORE INTO TABLE State FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalalg2JoD.sql_CorrectMapTable.csv' IGNORE INTO TABLE CorrectMap FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalalg2JoD.sql_AnswerTable.csv' IGNORE INTO TABLE Answer FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalalg2JoD.sql_AccountTable.csv' IGNORE INTO TABLE Account FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalalg2JoD.sql_EdxTrackEventTable.csv' IGNORE INTO TABLE EdxTrackEvent FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
 SET sql_log_bin=1;
 /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 /*!40000 ALTER TABLE `State` ENABLE KEYS */;

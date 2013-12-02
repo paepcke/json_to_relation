@@ -16,9 +16,9 @@ DROP TABLE IF EXISTS EdxTrackEvent, Answer, InputState, CorrectMap, State, Accou
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(40) NOT NULL PRIMARY KEY,
-    problem_id TEXT NOT NULL,
+    problem_id VARCHAR(255) NOT NULL,
     answer TEXT NOT NULL,
-    course_id TEXT NOT NULL
+    course_id VARCHAR(255) NOT NULL
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL PRIMARY KEY,
@@ -32,14 +32,14 @@ CREATE TABLE IF NOT EXISTS CorrectMap (
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS InputState (
     input_state_id VARCHAR(40) NOT NULL PRIMARY KEY,
-    problem_id TEXT NOT NULL,
+    problem_id VARCHAR(255) NOT NULL,
     state TEXT NOT NULL
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS State (
     state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT NOT NULL,
     done VARCHAR(255) NOT NULL,
-    problem_id TEXT NOT NULL,
+    problem_id VARCHAR(255) NOT NULL,
     student_answer VARCHAR(40) NOT NULL,
     correct_map VARCHAR(40) NOT NULL,
     input_state VARCHAR(40) NOT NULL,
@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     downtime_for DATETIME NOT NULL,
     student_id TEXT NOT NULL,
     instructor_id TEXT NOT NULL,
-    course_id TEXT NOT NULL,
+    course_id VARCHAR(255) NOT NULL,
     course_display_name VARCHAR(255) NOT NULL,
     resource_display_name VARCHAR(255) NOT NULL,
     organization VARCHAR(255) NOT NULL,
@@ -169,9 +169,9 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('a981177c_1190_4b4d_8841_4e733f59f9c3','2013120218381386038324','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/loginAjax.json');
+    ('cba22945_0496_4500_a71f_ce92d998f1de','2013120221551386050157','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/loginAjax.json');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('385a7479_963c_4b17_ac70_5ab5c894c7ef','00ae5e93_02bb_4a2e_b71b_d60d9c9bd674','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/login_ajax','85.246.55.134','','','2013-06-10T20:47:37.580071','a064cdd09af0315fbf2f6bbc2d0256a5e56d64f7','0:00:00','','','','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','a981177c_1190_4b4d_8841_4e733f59f9c3');
+    ('33b32a86_b5e7_43f9_b5b3_242d223d909b','2ac1417d_3b60_475f_98aa_226cb4edf006','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/login_ajax','85.246.55.134','','','2013-06-10T20:47:37.580071','a064cdd09af0315fbf2f6bbc2d0256a5e56d64f7','0:00:00','','','','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','cba22945_0496_4500_a71f_ce92d998f1de');
 /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

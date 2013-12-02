@@ -16,9 +16,9 @@ DROP TABLE IF EXISTS EdxTrackEvent, Answer, InputState, CorrectMap, State, Accou
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(40) NOT NULL PRIMARY KEY,
-    problem_id TEXT NOT NULL,
+    problem_id VARCHAR(255) NOT NULL,
     answer TEXT NOT NULL,
-    course_id TEXT NOT NULL
+    course_id VARCHAR(255) NOT NULL
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL PRIMARY KEY,
@@ -32,14 +32,14 @@ CREATE TABLE IF NOT EXISTS CorrectMap (
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS InputState (
     input_state_id VARCHAR(40) NOT NULL PRIMARY KEY,
-    problem_id TEXT NOT NULL,
+    problem_id VARCHAR(255) NOT NULL,
     state TEXT NOT NULL
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS State (
     state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT NOT NULL,
     done VARCHAR(255) NOT NULL,
-    problem_id TEXT NOT NULL,
+    problem_id VARCHAR(255) NOT NULL,
     student_answer VARCHAR(40) NOT NULL,
     correct_map VARCHAR(40) NOT NULL,
     input_state VARCHAR(40) NOT NULL,
@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     downtime_for DATETIME NOT NULL,
     student_id TEXT NOT NULL,
     instructor_id TEXT NOT NULL,
-    course_id TEXT NOT NULL,
+    course_id VARCHAR(255) NOT NULL,
     course_display_name VARCHAR(255) NOT NULL,
     resource_display_name VARCHAR(255) NOT NULL,
     organization VARCHAR(255) NOT NULL,
@@ -169,9 +169,9 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('406df97a_f741_439f_8acd_5e1d1f5e29c6','2013120218391386038356','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/processSeq_Goto.json');
+    ('bde7489c_f73a_44c4_a674_c19316aab270','2013120221551386050159','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/processSeq_Goto.json');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('f6b9cee4_226b_4f65_9219_d57243ebdbf5','4b819cce_934d_4519_acf3_50399d233856','Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:21.0) Gecko/20100101 Firefox/21.0','browser','seq_goto','24.5.14.103','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/53b0357680d24191a60156e74e184be3/','009e5b5e1bd4ab5a800cafc48bad9e44','2013-06-08T23:29:58.346222','f975dd005d3db177274710127ed9ee82db4d6b5d','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','Unit 1: Descriptive Statistics and Looking at Data','','','i4x://Medicine/HRP258/sequential/53b0357680d24191a60156e74e184be3',2,1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','406df97a_f741_439f_8acd_5e1d1f5e29c6');
+    ('c542bdad_447b_4988_bd01_de95eac5551e','f3b8712d_2d0c_42c0_98cb_43573fa8b8d5','Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:21.0) Gecko/20100101 Firefox/21.0','browser','seq_goto','24.5.14.103','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/53b0357680d24191a60156e74e184be3/','009e5b5e1bd4ab5a800cafc48bad9e44','2013-06-08T23:29:58.346222','f975dd005d3db177274710127ed9ee82db4d6b5d','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','Unit 1: Descriptive Statistics and Looking at Data','','','i4x://Medicine/HRP258/sequential/53b0357680d24191a60156e74e184be3',2,1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','bde7489c_f73a_44c4_a674_c19316aab270');
 /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

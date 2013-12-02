@@ -108,7 +108,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     #   input_i4x-Medicine-HRP258-problem-98ca37dbf24849debcc29eb36811cb68_3_1_choice_3'
     findHashPattern = re.compile(r'([a-f0-9]{32})')
     
-    def __init__(self, jsonToRelationConverter, mainTableName, logfileID='', progressEvery=1000, replaceTables=False, dbName='test', useDisplayNameCache=False):
+    def __init__(self, jsonToRelationConverter, mainTableName, logfileID='', progressEvery=1000, replaceTables=False, dbName='test', useDisplayNameCache=False, testLookupDict=None):
         '''
         Constructor
         @param jsonToRelationConverter: JSONToRelation instance
@@ -130,7 +130,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                     the required information is read and parsed from a JSON file name
                     that contains the needed information from modulestore. See
                     modulestoreImporter.py for details. 
-        @type useDisplayNameCache: Bool                    
+        @type useDisplayNameCache: Bool      
+        @param testLookupDict: strictly for use by unittests. They pass in a ready-made OpenEdx hash-to-DisplayName dictionary
+                    to avoid rebuilding that every time a test is run. 
+        @type testLookupDict: {<String> : <String>}               
         '''
         super(EdXTrackLogJSONParser, self).__init__(jsonToRelationConverter, 
                                                     logfileID=logfileID, 
@@ -153,7 +156,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     
         # Lookup table from OpenEdx 32-bit hash values to
         # corresponding problem, course, or video display_names:
-        self.hashMapper = ModulestoreImporter(os.path.join(os.path.dirname(__file__),'data/modulestore_latest.json'), useCache=useDisplayNameCache)
+        self.hashMapper = ModulestoreImporter(os.path.join(os.path.dirname(__file__),'data/modulestore_latest.json'), useCache=useDisplayNameCache, testLookupDict=testLookupDict)
                 
         self.schemaHintsMainTable = OrderedDict()
 
@@ -3843,9 +3846,24 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             return None
 
     def setResourceDisplayName(self, row, openEdxHash):
+        '''
+        Given an OpenEdx hash of problem ID, video ID, or course ID,
+        set the resource_display_name in the given row. The value
+        passed in may have the actual hash embedded in a larger
+        string, as in::
+            input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_2_1
+        We fish it out of there.            
+        @param row: current row's values
+        @type row: [<any>]
+        @param openEdxHash: 32-bit hash string encoding a problem, video, or class, or 
+                       such a 32-bit hash embedded in a larger string.
+        @type openEdxHash: String
+        '''
         if openEdxHash is not None and len(openEdxHash) > 0:
+            # Fish out the actual 32-bit hash:
+            hashNum = self.extractOpenEdxHash(openEdxHash)
             # Get display name and add to main table as resource_display_name:
-            displayName = self.modulestoreImporter.getDisplayName(openEdxHash)
+            displayName = self.hashMapper.getDisplayName(hashNum)
             if displayName is not None:
                 self.setValInRow(row, 'resource_display_name', displayName)
         

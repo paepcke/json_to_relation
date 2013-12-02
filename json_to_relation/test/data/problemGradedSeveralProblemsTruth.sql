@@ -16,9 +16,9 @@ DROP TABLE IF EXISTS EdxTrackEvent, Answer, InputState, CorrectMap, State, Accou
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(40) NOT NULL PRIMARY KEY,
-    problem_id TEXT NOT NULL,
+    problem_id VARCHAR(255) NOT NULL,
     answer TEXT NOT NULL,
-    course_id TEXT NOT NULL
+    course_id VARCHAR(255) NOT NULL
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL PRIMARY KEY,
@@ -32,14 +32,14 @@ CREATE TABLE IF NOT EXISTS CorrectMap (
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS InputState (
     input_state_id VARCHAR(40) NOT NULL PRIMARY KEY,
-    problem_id TEXT NOT NULL,
+    problem_id VARCHAR(255) NOT NULL,
     state TEXT NOT NULL
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS State (
     state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT NOT NULL,
     done VARCHAR(255) NOT NULL,
-    problem_id TEXT NOT NULL,
+    problem_id VARCHAR(255) NOT NULL,
     student_answer VARCHAR(40) NOT NULL,
     correct_map VARCHAR(40) NOT NULL,
     input_state VARCHAR(40) NOT NULL,
@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     downtime_for DATETIME NOT NULL,
     student_id TEXT NOT NULL,
     instructor_id TEXT NOT NULL,
-    course_id TEXT NOT NULL,
+    course_id VARCHAR(255) NOT NULL,
     course_display_name VARCHAR(255) NOT NULL,
     resource_display_name VARCHAR(255) NOT NULL,
     organization VARCHAR(255) NOT NULL,
@@ -169,13 +169,13 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('e03d92c4_15e1_405b_94e0_1f5cb039e92a','2013120218391386038352','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemGradedSeveralProblems.json');
+    ('794f70d7_0583_4365_80e0_da1934ce603b','2013120221551386050158','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemGradedSeveralProblems.json');
 INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
-    ('dfc6b05b_3466_44bf_b700_e55f046e5b8c','input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_2_1_choice_1','correct',''),
-    ('9088cbe7_6e47_450f_82c5_a884f27bf49d','input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_3_1_choice_0','correct','');
+    ('49d223ad_2936_4241_895f_3b6dc188f6bf','input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_2_1_choice_1','correct',''),
+    ('026458d7_552e_4a82_9ebe_07754d64021c','input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_3_1_choice_0','correct','');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('a51d0c36_f747_48c3_ad17_5622377738b4','2c02b284_0197_456a_86d8_8f2464e2bed6','browser','browser','problem_graded','203.81.72.81','','adf0f47a40c885298669b7b96ae52f02','2013-08-16T13:38:49.951627+00:00','37965707e2c3a1bcb140033ad968ef962f9d4f11','0:00:00','','','','','','','',-1,-1,'input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_2_1_choice_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','dfc6b05b_3466_44bf_b700_e55f046e5b8c','','e03d92c4_15e1_405b_94e0_1f5cb039e92a'),
-    ('eb8dd36c_9fcc_4d01_b187_15f56e0798af','2c02b284_0197_456a_86d8_8f2464e2bed6','browser','browser','problem_graded','203.81.72.81','','adf0f47a40c885298669b7b96ae52f02','2013-08-16T13:38:49.951627+00:00','37965707e2c3a1bcb140033ad968ef962f9d4f11','0:00:00','','','','','','','',-1,-1,'input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_3_1_choice_0','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','9088cbe7_6e47_450f_82c5_a884f27bf49d','','e03d92c4_15e1_405b_94e0_1f5cb039e92a');
+    ('98d2a985_1c34_4434_b7a8_cd0e06820e5b','cb02b467_eca7_48da_9bd6_53ce50f61305','browser','browser','problem_graded','203.81.72.81','','adf0f47a40c885298669b7b96ae52f02','2013-08-16T13:38:49.951627+00:00','37965707e2c3a1bcb140033ad968ef962f9d4f11','0:00:00','','','','','','','',-1,-1,'input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_2_1_choice_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','49d223ad_2936_4241_895f_3b6dc188f6bf','','794f70d7_0583_4365_80e0_da1934ce603b'),
+    ('deb45ab5_3991_4060_af7b_2b26b3d50a0c','cb02b467_eca7_48da_9bd6_53ce50f61305','browser','browser','problem_graded','203.81.72.81','','adf0f47a40c885298669b7b96ae52f02','2013-08-16T13:38:49.951627+00:00','37965707e2c3a1bcb140033ad968ef962f9d4f11','0:00:00','','','','','','','',-1,-1,'input_i4x-Medicine-HRP258-problem-31fcf9829f3d461e92c1f14cbaee1743_3_1_choice_0','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','026458d7_552e_4a82_9ebe_07754d64021c','','794f70d7_0583_4365_80e0_da1934ce603b');
 /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

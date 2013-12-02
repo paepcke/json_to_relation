@@ -7,6 +7,7 @@ import StringIO
 from collections import OrderedDict
 import json
 import os
+import pickle
 import re
 import shutil
 import sys
@@ -17,6 +18,7 @@ from edxTrackLogJSONParser import EdXTrackLogJSONParser
 from input_source import InURI
 from json_to_relation import JSONToRelation
 from locationManager import LocationManager
+from modulestoreImporter import ModulestoreImporter
 from output_disposition import OutputDisposition, ColDataType, TableSchemas, \
     ColumnSpec, OutputFile, OutputPipe # @UnusedImport
 
@@ -33,9 +35,32 @@ UPDATE_TRUTH = False
 
 class TestEdxTrackLogJSONParser(unittest.TestCase):
     
+    hashLookupDict = None
+    
+    @classmethod
+    def setUpClass(cls):
+        '''
+        Called once, sets up a class variable with an OpenEdx hash-to-displayName
+        dict, which is then reused with each instantiation of EdxTrackLogJSON.
+        @param cls: TestEdxTrackLogJSONParser
+        @type cls: Class
+        '''
+        pickleFile = os.path.join(os.path.dirname(__file__), '../data/hashLookup.pkl')
+        if os.path.exists(pickleFile):
+            with open(pickleFile, 'r') as pickleFd:
+                TestEdxTrackLogJSONParser.hashLookupDict = pickle.load(pickleFd)
+        # Hash dict pickle doesn't exist yet. Make it exist:
+        jsonModulestoreExcerpt = os.path.join(os.path.dirname(__file__), '../data/modulestore_latest.json')
+        if not os.path.exists(jsonModulestoreExcerpt):
+            raise('IOError: neither OpenEdx hash-to-displayName JSON excerpt from modulestore, nor a cache thereof is available. You need to run cronRefreshModuleStore.sh')
+        ModulestoreImporter(jsonModulestoreExcerpt)
+        with open(pickleFile, 'r') as pickleFd:
+            TestEdxTrackLogJSONParser.hashLookupDict = pickle.load(pickleFd)
+    
     def setUp(self):
         
-        super(TestEdxTrackLogJSONParser, self).setUp()  
+        super(TestEdxTrackLogJSONParser, self).setUp()
+        self.hashLookupDict = TestEdxTrackLogJSONParser.hashLookupDict  
         self.uuidRegex = '[a-f0-9]{8}_[a-f0-9]{4}_[a-f0-9]{4}_[a-f0-9]{4}_[a-f0-9]{12}'
         self.pattern   = re.compile(self.uuidRegex)
         # Match yyyymmddhhmmss<8msecDigits>:
@@ -74,7 +99,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        OutputFile(os.devnull, OutputDisposition.OutputFormat.CSV),
                                        mainTableName='Main'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         s = "d\\'Orsay"
         res = edxParser.makeJSONSafe(s)
         # res should be d\\'Orsay:         
@@ -108,7 +133,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        OutputFile(os.devnull, OutputDisposition.OutputFormat.CSV),
                                        mainTableName='Main'                                       
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         badJSONStr = '{"username": "Gvnmaele", "host": "class.stanford.edu", "session": "ec36da02f42320bd1686a4f5a43daf0b", "event_source": "browser", "event_type": "problem_graded", "time": "2013-08-04T07:41:16.220676+00:00", "ip": "81.165.215.195", "event": "the event..."'        
         row = []
         edxParser.rescueBadJSON(badJSONStr, row=row)
@@ -131,7 +156,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        OutputFile(os.devnull, OutputDisposition.OutputFormat.CSV),
                                        mainTableName='Main'                                       
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fakeEvent = '"event": {"success": "correct", "correct_map": {"i4x-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_2_1": {"hint": "", "hintmode": null,'
         courseID = edxParser.extractCourseIDFromProblemXEvent(fakeEvent)
         self.assertEqual(courseID, 'Medicine-HRP258')
@@ -176,7 +201,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        OutputFile(os.devnull, OutputDisposition.OutputFormat.CSV),
                                        mainTableName='Main'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
           
         courseName = edxParser.extractShortCourseID('/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/combinedopenended/3aa97047991b4e208ebb1a72cc9ff579/')          
@@ -213,7 +238,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        OutputFile(os.devnull, OutputDisposition.OutputFormat.CSV),
                                        mainTableName='Main'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         
         row = []
@@ -234,7 +259,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest
                                        )
         
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert(prependColHeader=False)
         # We should find no heartbeat info in the table,
@@ -257,7 +282,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest
                                        )
         
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert(prependColHeader=False)
         if UPDATE_TRUTH:
@@ -271,7 +296,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        OutputFile(os.devnull, OutputDisposition.OutputFormat.CSV),
                                        mainTableName='Main'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         createStatement = edxParser.genOneCreateStatement('Answer', edxParser.schemaAnswerTbl, primaryKeyName='answer_id')
         
         if UPDATE_TRUTH:
@@ -313,7 +338,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -340,7 +365,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -364,7 +389,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -389,7 +414,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -414,7 +439,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -438,7 +463,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -463,7 +488,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -487,7 +512,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -511,7 +536,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -535,7 +560,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -559,7 +584,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -583,7 +608,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -608,7 +633,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -632,7 +657,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -656,7 +681,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -681,7 +706,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -705,7 +730,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -729,7 +754,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -753,7 +778,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -777,7 +802,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -801,7 +826,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -825,7 +850,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -853,7 +878,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -879,7 +904,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -905,7 +930,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -929,7 +954,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
 #                                        dest,
 #                                        mainTableName='EdxTrackEvent'
 #                                        )
-#         edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+#         edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
 #         fileConverter.setParser(edxParser)
 #         fileConverter.convert()
 #         dest.close()
@@ -953,7 +978,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -977,7 +1002,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -1001,7 +1026,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -1025,7 +1050,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -1049,7 +1074,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -1073,7 +1098,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -1097,7 +1122,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -1121,7 +1146,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -1145,7 +1170,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -1170,7 +1195,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -1194,7 +1219,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -1218,7 +1243,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -1242,7 +1267,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -1266,7 +1291,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -1290,7 +1315,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
@@ -1316,13 +1341,13 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                                        dest,
                                        mainTableName='EdxTrackEvent'
                                        )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
         if UPDATE_TRUTH:
             # The main file (which loads the constituent CSV files):
-            truthFileMainTableName = os.path.join(os.path.dirname(__file__),"data/csvSimpleProblemCheckMainTableTruth.csv")
+            truthFileMainTableName = os.path.join(os.path.dirname(__file__),"data/csvSimpleProblemCheckMainTableTruth.sql")
             self.updateTruth(dest.name, truthFileMainTableName)
             
             # New truth for the EdxTrackEven table:
@@ -1370,15 +1395,14 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
 #                                        dest,
 #                                        mainTableName='EdxTrackEvent'
 #                                        )
-#         edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+#         edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', testLookupDict=self.hashLookupDict)
 #         fileConverter.setParser(edxParser)
 #         fileConverter.convert()
 #         dest.close()
 #         truthFile = open(os.path.join(os.path.dirname(__file__),"data/huntDupKeyTruth.sql"), 'r')
 #         if UPDATE_TRUTH:
 #             self.updateTruth(dest.name, truthFile.name)
-#         else:
-#             self.assertFileContentEquals(truthFile, dest.name)
+#         else:,
 
 
     #--------------------------------------------------------------------------------------------------    

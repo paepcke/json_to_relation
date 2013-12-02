@@ -16,9 +16,9 @@ DROP TABLE IF EXISTS EdxTrackEvent, Answer, InputState, CorrectMap, State, Accou
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(40) NOT NULL PRIMARY KEY,
-    problem_id TEXT NOT NULL,
+    problem_id VARCHAR(255) NOT NULL,
     answer TEXT NOT NULL,
-    course_id TEXT NOT NULL
+    course_id VARCHAR(255) NOT NULL
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL PRIMARY KEY,
@@ -32,14 +32,14 @@ CREATE TABLE IF NOT EXISTS CorrectMap (
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS InputState (
     input_state_id VARCHAR(40) NOT NULL PRIMARY KEY,
-    problem_id TEXT NOT NULL,
+    problem_id VARCHAR(255) NOT NULL,
     state TEXT NOT NULL
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS State (
     state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT NOT NULL,
     done VARCHAR(255) NOT NULL,
-    problem_id TEXT NOT NULL,
+    problem_id VARCHAR(255) NOT NULL,
     student_answer VARCHAR(40) NOT NULL,
     correct_map VARCHAR(40) NOT NULL,
     input_state VARCHAR(40) NOT NULL,
@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     downtime_for DATETIME NOT NULL,
     student_id TEXT NOT NULL,
     instructor_id TEXT NOT NULL,
-    course_id TEXT NOT NULL,
+    course_id VARCHAR(255) NOT NULL,
     course_display_name VARCHAR(255) NOT NULL,
     resource_display_name VARCHAR(255) NOT NULL,
     organization VARCHAR(255) NOT NULL,
@@ -169,11 +169,11 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('3e4db8b3_da3c_4a13_b603_996f667f32d1','2013120218391386038349','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problem_checkSingleQuoteInside.json');
+    ('c3e713ac_1523_4986_996d_bf89f1c6eb7a','2013120221551386050158','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problem_checkSingleQuoteInside.json');
 INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
-    ('eca81e2d_3738_46c4_b5ce_434c41b7eb27','input_i4x-Medicine-HRP258-problem-9f73ff5f71564b25856ec67ec52786b3_2_1','He hadn\'t seen','Medicine/HRP258/Statistics_in_Medicine');
+    ('e633db4a_1846_40bb_b179_610134a73752','input_i4x-Medicine-HRP258-problem-9f73ff5f71564b25856ec67ec52786b3_2_1','He hadn\'t seen','Medicine/HRP258/Statistics_in_Medicine');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('df792f53_1685_460f_a1c3_16c79c991cd6','77d4a5d7_ec33_4614_84c1_7202fdea9f54','Mozilla/5.0 (iPad; CPU OS 6_1_3 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10B329 Safari/8536.25','browser','problem_check','76.7.198.45','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/468e5aba519448da8d0e299d2d55804e/','f08b13a546e6069de166c8cdbb75df61','2013-06-18T04:09:33.140025+00:00','fffe752ba639a6ab3859e3fcccd54fa87e3e6eea','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','Unit 1: Descriptive Statistics and Looking at Data','','','',-1,-1,'input_i4x-Medicine-HRP258-problem-9f73ff5f71564b25856ec67ec52786b3_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','eca81e2d_3738_46c4_b5ce_434c41b7eb27','','3e4db8b3_da3c_4a13_b603_996f667f32d1');
+    ('9656f9a8_5960_4f06_8acb_b836fdc93e5e','bb22daef_5850_4a8e_b0e8_82023a5691da','Mozilla/5.0 (iPad; CPU OS 6_1_3 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10B329 Safari/8536.25','browser','problem_check','76.7.198.45','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/468e5aba519448da8d0e299d2d55804e/','f08b13a546e6069de166c8cdbb75df61','2013-06-18T04:09:33.140025+00:00','fffe752ba639a6ab3859e3fcccd54fa87e3e6eea','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','Unit 1: Descriptive Statistics and Looking at Data','','','',-1,-1,'input_i4x-Medicine-HRP258-problem-9f73ff5f71564b25856ec67ec52786b3_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','e633db4a_1846_40bb_b179_610134a73752','','c3e713ac_1523_4986_996d_bf89f1c6eb7a');
 /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

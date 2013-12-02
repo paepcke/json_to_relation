@@ -78,14 +78,36 @@ class ModulestoreImporter(object):
     '''
 
 
-    def __init__(self, jsonFileName, useCache=False):
+    def __init__(self, jsonFileName, useCache=False, testLookupDict=None):
         '''
         Prepares instance for subsequent calls to getDisplayName() or
         export(). Preparations include looking for either the given file
         name, if useCache is False, or the cache file, which is a pickled
         Python dict containing OpenEdx hash codes to display_names as 
         extracted from modulestore.
+
+        @param jsonFileName: file path to JSON file that contains an excerpt
+                    of modulestore, the OpenEdx course db. This file is
+                    created using script cronRefreshModuleStore.sh.
+        @type jsonFileName: String
+        @param useCache: if True, and a file hashLookup.pkl exists in this
+                        file's 'data' subdirectory, treat .pkl file as a 
+                        pickled dict that maps OpenEdx hashes to display
+                        names. That file would have been created by an
+                        earlier instantiation of this class. 
+        @type useCache: Bool
+        @param testLookupDict: strictly for use by unittests. Since many
+                        such tests are run with fresh environments, parsing,
+                        or even unpickling the cache file slows down the test
+                        runs. This parameter, if non-null must be a dict
+                        as would normally be created in this __init__()
+                        method. 
+        @type testLookupDict: {<String>:<String>}
         '''
+        if testLookupDict is not None:
+            self.hashLookup = testLookupDict;
+            return
+        
         self.pickleFileName = os.path.join(os.path.dirname(__file__), 'data/hashLookup.pkl')
         if not useCache and not os.path.exists(str(jsonFileName)):
             raise IOError("File %s does not exist. Try setting useCache=True to use possibly existing cache; if that fails, must run cronRefreshModuleStore.sh" % jsonFileName)
