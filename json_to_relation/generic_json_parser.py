@@ -228,11 +228,8 @@ class GenericJSONParser(object):
         # Make a list that spans the missing columns, and fill
         # it with each column's default value; then concat that list with theRow:
         fillList = []
-        # Special case: the first col of EdxTrackEvent is an
-        # auto-incrementing key, so we set it to zero so that
-        # MySQL will fill it in during load:
+        # Not sure the following conditional is still needed...:
         if len(theRow) == 0 and tableName == self.jsonToRelationConverter.mainTableName:
-            theRow.append(0)
             defaultingColSpec = self.jsonToRelationConverter.getSchemaHintByPos(0, tableName)            
             self.colNamesByTable[tableName].append(defaultingColSpec.getName())
         for colPos in range(len(theRow), targetPos):

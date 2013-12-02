@@ -13,7 +13,19 @@ import re
 class ModulestoreImporter(object):
     '''
     Imports the result of a query to the modulestore (descriptions of OpenEdx courses).
-    The result is assumed to be stored in a file whose path is given to __init__().
+    That query is run by the script cronRefreshModuleStore.sh, and produces a JSON
+    file that contains just the information needed for the mapping of an OpenEdx
+    32-bit resource hash to a display_name.
+    
+    The result of that query is assumed to be stored in a file whose path is given to __init__().
+    Instances of this class parse the JSON file, creating an in-memory dict that maps the hash strings
+    to human-readable form, as extracted from modulestore via the above query (script call). 
+    For future use the __init__() method also saves that dict to a pickle file in the main 
+    source folder's 'data' subdirectory. 
+    
+    Method getDisplayName() returns display names given OpenEdx hash codes. Method
+    export() outputs the mapping to a .csv file
+    
     Example query::
 
       ssh goldengate.class.stanford.edu mongo \
@@ -68,14 +80,19 @@ class ModulestoreImporter(object):
 
     def __init__(self, jsonFileName, useCache=False):
         '''
+        Prepares instance for subsequent calls to getDisplayName() or
+        export(). Preparations include looking for either the given file
+        name, if useCache is False, or the cache file, which is a pickled
+        Python dict containing OpenEdx hash codes to display_names as 
+        extracted from modulestore.
         '''
         self.pickleFileName = os.path.join(os.path.dirname(__file__), 'data/hashLookup.pkl')
-        if not useCache and not os.path.exists(jsonFileName):
-            raise IOError("File %s does not exist." % jsonFileName)
+        if not useCache and not os.path.exists(str(jsonFileName)):
+            raise IOError("File %s does not exist. Try setting useCache=True to use possibly existing cache; if that fails, must run cronRefreshModuleStore.sh" % jsonFileName)
         elif useCache and not os.path.exists(self.pickleFileName):
             if not os.path.exists(jsonFileName):
                 # Have neither a cache file nor a json file:
-                raise IOError("Neither cache file %s nor JSON file %s exist." % (self.pickleFileName, jsonFileName))
+                raise IOError("Neither cache file %s nor JSON file %s exist. You need to run cronRefreshModuleStore.sh" % (self.pickleFileName, jsonFileName))
             # Ignore the 'use cache' given that we don't have one;
             # Just work with the JSON file, and create the cache:
             useCache = False

@@ -105,10 +105,13 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     student_id TEXT NOT NULL,
     instructor_id TEXT NOT NULL,
     course_id TEXT NOT NULL,
-    sequence_id TEXT NOT NULL,
+    course_display_name VARCHAR(255) NOT NULL,
+    resource_display_name VARCHAR(255) NOT NULL,
+    organization VARCHAR(255) NOT NULL,
+    sequence_id VARCHAR(255) NOT NULL,
     goto_from INT NOT NULL,
     goto_dest INT NOT NULL,
-    problem_id TEXT NOT NULL,
+    problem_id VARCHAR(255) NOT NULL,
     problem_choice TEXT NOT NULL,
     question_location TEXT NOT NULL,
     submission_id TEXT NOT NULL,
@@ -122,7 +125,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     transcript_code VARCHAR(255) NOT NULL,
     rubric_selection INT NOT NULL,
     rubric_category INT NOT NULL,
-    video_id TEXT NOT NULL,
+    video_id VARCHAR(255) NOT NULL,
     video_code TEXT NOT NULL,
     video_current_time VARCHAR(255) NOT NULL,
     video_speed VARCHAR(255) NOT NULL,
@@ -136,7 +139,6 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     answer_id TEXT NOT NULL,
     hint TEXT NOT NULL,
     hintmode VARCHAR(255) NOT NULL,
-    correctness VARCHAR(255) NOT NULL,
     msg TEXT NOT NULL,
     npoints TINYINT NOT NULL,
     queuestate TEXT NOT NULL,
@@ -167,11 +169,11 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('ed575130_d601_4a14_8059_d3f0771202c6','2013112921181385788686','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/ocallaghan.json');
+    ('4051bc59_b6d8_4588_aaee_9d9d9e505b8c','2013120218391386038342','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/ocallaghan.json');
 INSERT INTO Account (account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) VALUES 
-    ('efa68c69_1cc9_404f_965b_52e3c6849a89','Baz','Barry O\'Callaghan','c61c41736a76d40819e63516cc1c337959f84b6e','','','','m',1981,'a','Expand my Knowledge. ',1,1,'Education/EDUC115N/How_to_Learn_Math','','bazocallaghan@gmail.com','');
-INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('1f7a7367_366e_420c_8e27_7f306b2af387','88a2cc09_bb78_4f1e_a10f_616a3d11e228','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','server','/create_account','153.107.97.164','','','2013-07-11T04:15:39.373794+00:00','9c1185a5c5e9fc54612808977ee8f548b2258d31','0:00:00','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','ed575130_d601_4a14_8059_d3f0771202c6');
+    ('4ac7a5be_e85c_4ad8_a2cf_71a3526b46cc','Baz','Barry O\'Callaghan','c61c41736a76d40819e63516cc1c337959f84b6e','','','','m',1981,'a','Expand my Knowledge. ',1,1,'Education/EDUC115N/How_to_Learn_Math','','bazocallaghan@gmail.com','');
+INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
+    ('08a7fe22_5c0d_4b78_83ca_73b83d8bbe82','da0a588b_c693_4c51_8ff9_3d22cbf91b19','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','server','/create_account','153.107.97.164','','','2013-07-11T04:15:39.373794+00:00','9c1185a5c5e9fc54612808977ee8f548b2258d31','0:00:00','','','','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','4051bc59_b6d8_4588_aaee_9d9d9e505b8c');
 /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

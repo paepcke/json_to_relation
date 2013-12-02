@@ -105,10 +105,13 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     student_id TEXT NOT NULL,
     instructor_id TEXT NOT NULL,
     course_id TEXT NOT NULL,
-    sequence_id TEXT NOT NULL,
+    course_display_name VARCHAR(255) NOT NULL,
+    resource_display_name VARCHAR(255) NOT NULL,
+    organization VARCHAR(255) NOT NULL,
+    sequence_id VARCHAR(255) NOT NULL,
     goto_from INT NOT NULL,
     goto_dest INT NOT NULL,
-    problem_id TEXT NOT NULL,
+    problem_id VARCHAR(255) NOT NULL,
     problem_choice TEXT NOT NULL,
     question_location TEXT NOT NULL,
     submission_id TEXT NOT NULL,
@@ -122,7 +125,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     transcript_code VARCHAR(255) NOT NULL,
     rubric_selection INT NOT NULL,
     rubric_category INT NOT NULL,
-    video_id TEXT NOT NULL,
+    video_id VARCHAR(255) NOT NULL,
     video_code TEXT NOT NULL,
     video_current_time VARCHAR(255) NOT NULL,
     video_speed VARCHAR(255) NOT NULL,
@@ -136,7 +139,6 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     answer_id TEXT NOT NULL,
     hint TEXT NOT NULL,
     hintmode VARCHAR(255) NOT NULL,
-    correctness VARCHAR(255) NOT NULL,
     msg TEXT NOT NULL,
     npoints TINYINT NOT NULL,
     queuestate TEXT NOT NULL,
@@ -167,12 +169,12 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('67193da0_14dd_44bd_8e4b_c4718e136ea0','2013112921181385788687','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemCheckInPath.json');
+    ('1e183a8a_f901_4c50_9a03_a7dc48621029','2013120218391386038346','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemCheckInPath.json');
 INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
-    ('99410e77_a6c2_4072_ae04_62b1d22eb4ec','input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1','choice_3','Medicine/HRP258/Statistics_in_Medicine');
-INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('e2a490e0_197c_4138_a792_d7175c407c09','20769f4b_5e3c_4ca7_84c7_d015daceec37','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/courses/Medicine/HRP258/Statistics_in_Medicine/modx/i4x://Medicine/HRP258/problem/f0b292c175f54714b41a1b05d905dbd3/problem_check','46.12.124.66','','','2013-06-13T09:20:11.156214','3bbdb4f28c1831407f69180b754c28f5dd116cd7','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','',-1,-1,'input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','99410e77_a6c2_4072_ae04_62b1d22eb4ec','','67193da0_14dd_44bd_8e4b_c4718e136ea0'),
-    ('6737d5a8_0ec7_4e25_9bcc_d163a5ef9b54','20769f4b_5e3c_4ca7_84c7_d015daceec37','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/courses/Medicine/HRP258/Statistics_in_Medicine/modx/i4x://Medicine/HRP258/problem/f0b292c175f54714b41a1b05d905dbd3/problem_check','46.12.124.66','','','2013-06-13T09:20:11.156214','3bbdb4f28c1831407f69180b754c28f5dd116cd7','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','',-1,-1,'input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','99410e77_a6c2_4072_ae04_62b1d22eb4ec','','67193da0_14dd_44bd_8e4b_c4718e136ea0');
+    ('ae371778_ef11_45bc_b802_9b5aa5c914dd','input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1','choice_3','Medicine/HRP258/Statistics_in_Medicine');
+INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
+    ('08d7c9e1_1bdd_4097_a7c0_ac918a543888','1445b5b3_e665_440c_bfe9_66a3c5722d7c','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/courses/Medicine/HRP258/Statistics_in_Medicine/modx/i4x://Medicine/HRP258/problem/f0b292c175f54714b41a1b05d905dbd3/problem_check','46.12.124.66','','','2013-06-13T09:20:11.156214','3bbdb4f28c1831407f69180b754c28f5dd116cd7','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','Quiz','','','',-1,-1,'input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','ae371778_ef11_45bc_b802_9b5aa5c914dd','','1e183a8a_f901_4c50_9a03_a7dc48621029'),
+    ('d1dd7bae_ef66_4f17_ba42_51a0364cda7a','1445b5b3_e665_440c_bfe9_66a3c5722d7c','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/courses/Medicine/HRP258/Statistics_in_Medicine/modx/i4x://Medicine/HRP258/problem/f0b292c175f54714b41a1b05d905dbd3/problem_check','46.12.124.66','','','2013-06-13T09:20:11.156214','3bbdb4f28c1831407f69180b754c28f5dd116cd7','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','Quiz','','','',-1,-1,'input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','ae371778_ef11_45bc_b802_9b5aa5c914dd','','1e183a8a_f901_4c50_9a03_a7dc48621029');
 /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

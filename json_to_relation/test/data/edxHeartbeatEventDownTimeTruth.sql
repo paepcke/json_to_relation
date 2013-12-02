@@ -105,10 +105,13 @@ CREATE TABLE IF NOT EXISTS Main (
     student_id TEXT NOT NULL,
     instructor_id TEXT NOT NULL,
     course_id TEXT NOT NULL,
-    sequence_id TEXT NOT NULL,
+    course_display_name VARCHAR(255) NOT NULL,
+    resource_display_name VARCHAR(255) NOT NULL,
+    organization VARCHAR(255) NOT NULL,
+    sequence_id VARCHAR(255) NOT NULL,
     goto_from INT NOT NULL,
     goto_dest INT NOT NULL,
-    problem_id TEXT NOT NULL,
+    problem_id VARCHAR(255) NOT NULL,
     problem_choice TEXT NOT NULL,
     question_location TEXT NOT NULL,
     submission_id TEXT NOT NULL,
@@ -122,7 +125,7 @@ CREATE TABLE IF NOT EXISTS Main (
     transcript_code VARCHAR(255) NOT NULL,
     rubric_selection INT NOT NULL,
     rubric_category INT NOT NULL,
-    video_id TEXT NOT NULL,
+    video_id VARCHAR(255) NOT NULL,
     video_code TEXT NOT NULL,
     video_current_time VARCHAR(255) NOT NULL,
     video_speed VARCHAR(255) NOT NULL,
@@ -136,7 +139,6 @@ CREATE TABLE IF NOT EXISTS Main (
     answer_id TEXT NOT NULL,
     hint TEXT NOT NULL,
     hintmode VARCHAR(255) NOT NULL,
-    correctness VARCHAR(255) NOT NULL,
     msg TEXT NOT NULL,
     npoints TINYINT NOT NULL,
     queuestate TEXT NOT NULL,
@@ -167,10 +169,10 @@ LOCK TABLES `Main` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `Co
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('bb24a523_ba10_4335_a317_4c19ec124b1f','2013112921181385788686','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/edxHeartbeatEventDownTime.json');
-INSERT INTO Main (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('f5590d2f_1fb1_49be_aade_3104eeed66dc','7aa63ed7_1d2f_42ac_a135_f5e9996f4a70','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1','','','2013-07-18T08:43:32.573390+00:00','9c1185a5c5e9fc54612808977ee8f548b2258d31','0:00:00','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','bb24a523_ba10_4335_a317_4c19ec124b1f'),
-    ('c8564dfc_0ee4_4e85_a8e2_7a57ca1f1122','74aff58d_82a3_4a43_8d2b_09e4f4d115ff','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1','','','2013-07-18T09:45:37.573390+00:00','9c1185a5c5e9fc54612808977ee8f548b2258d31','1:02:05','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','bb24a523_ba10_4335_a317_4c19ec124b1f');
+    ('cf6b0d8b_79b8_4ffa_b310_5aea66d5c5cd','2013120218381386038333','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/edxHeartbeatEventDownTime.json');
+INSERT INTO Main (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
+    ('f0e1d0c3_5c46_4007_8920_bc78f2c36fb0','6679b2a8_a9c0_4cba_bde3_e30d328921f2','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1','','','2013-07-18T08:43:32.573390+00:00','9c1185a5c5e9fc54612808977ee8f548b2258d31','0:00:00','','','','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','cf6b0d8b_79b8_4ffa_b310_5aea66d5c5cd'),
+    ('624d57d5_9b03_488f_976c_964b3d7ad70e','355d0733_8dc2_47c3_bf80_2c0b11a4ef8a','ELB-HealthChecker/1.0','server','/heartbeat','127.0.0.1','','','2013-07-18T09:45:37.573390+00:00','9c1185a5c5e9fc54612808977ee8f548b2258d31','1:02:05','','','','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','cf6b0d8b_79b8_4ffa_b310_5aea66d5c5cd');
 /*!40000 ALTER TABLE `Main` ENABLE KEYS */;
 /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

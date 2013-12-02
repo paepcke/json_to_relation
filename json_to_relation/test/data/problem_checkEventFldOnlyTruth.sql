@@ -105,10 +105,13 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     student_id TEXT NOT NULL,
     instructor_id TEXT NOT NULL,
     course_id TEXT NOT NULL,
-    sequence_id TEXT NOT NULL,
+    course_display_name VARCHAR(255) NOT NULL,
+    resource_display_name VARCHAR(255) NOT NULL,
+    organization VARCHAR(255) NOT NULL,
+    sequence_id VARCHAR(255) NOT NULL,
     goto_from INT NOT NULL,
     goto_dest INT NOT NULL,
-    problem_id TEXT NOT NULL,
+    problem_id VARCHAR(255) NOT NULL,
     problem_choice TEXT NOT NULL,
     question_location TEXT NOT NULL,
     submission_id TEXT NOT NULL,
@@ -122,7 +125,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     transcript_code VARCHAR(255) NOT NULL,
     rubric_selection INT NOT NULL,
     rubric_category INT NOT NULL,
-    video_id TEXT NOT NULL,
+    video_id VARCHAR(255) NOT NULL,
     video_code TEXT NOT NULL,
     video_current_time VARCHAR(255) NOT NULL,
     video_speed VARCHAR(255) NOT NULL,
@@ -136,7 +139,6 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     answer_id TEXT NOT NULL,
     hint TEXT NOT NULL,
     hintmode VARCHAR(255) NOT NULL,
-    correctness VARCHAR(255) NOT NULL,
     msg TEXT NOT NULL,
     npoints TINYINT NOT NULL,
     queuestate TEXT NOT NULL,
@@ -167,23 +169,23 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('9d0b5697_7782_4cc5_95c6_241c65da1b0b','2013112921181385788686','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problem_checkEventFldOnly.json');
+    ('3bf075a8_c459_4108_8d4f_c149977ebd43','2013120218391386038344','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problem_checkEventFldOnly.json');
 INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
-    ('f3e2ef36_4faa_4474_a565_9fa279b87aa3','i4x-Medicine-HRP258-problem-4cd4e0bb39af4d36ba54b1a677e350b4_4_1','choice_1','Medicine-HRP258'),
-    ('4e1c452e_cb86_4921_aae1_40eb289747ab','i4x-Medicine-HRP258-problem-4cd4e0bb39af4d36ba54b1a677e350b4_3_1','choice_4','Medicine-HRP258'),
-    ('c7327461_aa75_4c63_9ea7_63619e159037','i4x-Medicine-HRP258-problem-4cd4e0bb39af4d36ba54b1a677e350b4_2_1','choice_2','Medicine-HRP258');
+    ('4ae24275_b08e_4f62_877f_83e9eb6dfae5','i4x-Medicine-HRP258-problem-4cd4e0bb39af4d36ba54b1a677e350b4_4_1','choice_1','Medicine-HRP258'),
+    ('e7fdf32b_6713_40f7_b9ad_fc5f0fa7532d','i4x-Medicine-HRP258-problem-4cd4e0bb39af4d36ba54b1a677e350b4_3_1','choice_4','Medicine-HRP258'),
+    ('30fb6de5_101a_49a2_94ee_a51fe3c7e7a2','i4x-Medicine-HRP258-problem-4cd4e0bb39af4d36ba54b1a677e350b4_2_1','choice_2','Medicine-HRP258');
 INSERT INTO InputState (input_state_id,problem_id,state) VALUES 
-    ('fdc45158_2336_4d6d_8865_fc0c0d5a7492','i4x-Medicine-HRP258-problem-4cd4e0bb39af4d36ba54b1a677e350b4_4_1',''),
-    ('87be52f6_f731_4ffb_8fd5_79f49e051508','i4x-Medicine-HRP258-problem-4cd4e0bb39af4d36ba54b1a677e350b4_3_1',''),
-    ('044dc096_6085_47ee_b2a2_d370a1832f0f','i4x-Medicine-HRP258-problem-4cd4e0bb39af4d36ba54b1a677e350b4_2_1','');
+    ('5d3cd209_3d7a_4aa5_ab40_cb6adb85f81f','i4x-Medicine-HRP258-problem-4cd4e0bb39af4d36ba54b1a677e350b4_4_1',''),
+    ('4b61435c_ab39_40bb_9d01_4b9afba48489','i4x-Medicine-HRP258-problem-4cd4e0bb39af4d36ba54b1a677e350b4_3_1',''),
+    ('20c094c5_b35a_4aec_b689_7dd331aeec87','i4x-Medicine-HRP258-problem-4cd4e0bb39af4d36ba54b1a677e350b4_2_1','');
 INSERT INTO State (state_id,seed,done,problem_id,student_answer,correct_map,input_state) VALUES 
-    ('a2bcccb3_8918_4c28_93f6_1aa2ee12ffcf',1,'None','','','','fdc45158_2336_4d6d_8865_fc0c0d5a7492'),
-    ('1977c59b_538a_4778_8c77_cbbb24dc0c40',1,'None','','','','87be52f6_f731_4ffb_8fd5_79f49e051508'),
-    ('a36f4804_e4a4_4571_a0d6_f4bb96f21971',1,'None','','','','044dc096_6085_47ee_b2a2_d370a1832f0f');
-INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('dd5fbde3_223a_4777_9c42_981e31012bfe','2213c7e1_0419_429d_9986_c8b1b7da7c38','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','save_problem_check','190.23.170.224','x_module','','2013-06-18T03:48:38.240193+00:00','6fae75bcc75cb5c614eb4c5e939af03625b41a0b','0:00:00','','','Medicine-HRP258','',-1,-1,'i4x-Medicine-HRP258-problem-4cd4e0bb39af4d36ba54b1a677e350b4_4_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','correct','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','f3e2ef36_4faa_4474_a565_9fa279b87aa3','a2bcccb3_8918_4c28_93f6_1aa2ee12ffcf','9d0b5697_7782_4cc5_95c6_241c65da1b0b'),
-    ('28dd4904_6682_4e28_9185_0fda5763640a','2213c7e1_0419_429d_9986_c8b1b7da7c38','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','save_problem_check','190.23.170.224','x_module','','2013-06-18T03:48:38.240193+00:00','6fae75bcc75cb5c614eb4c5e939af03625b41a0b','0:00:00','','','Medicine-HRP258','',-1,-1,'i4x-Medicine-HRP258-problem-4cd4e0bb39af4d36ba54b1a677e350b4_3_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','correct','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','4e1c452e_cb86_4921_aae1_40eb289747ab','1977c59b_538a_4778_8c77_cbbb24dc0c40','9d0b5697_7782_4cc5_95c6_241c65da1b0b'),
-    ('df28a6a8_81a6_43e6_961f_89d075c8aa23','2213c7e1_0419_429d_9986_c8b1b7da7c38','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','save_problem_check','190.23.170.224','x_module','','2013-06-18T03:48:38.240193+00:00','6fae75bcc75cb5c614eb4c5e939af03625b41a0b','0:00:00','','','Medicine-HRP258','',-1,-1,'i4x-Medicine-HRP258-problem-4cd4e0bb39af4d36ba54b1a677e350b4_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','correct','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','c7327461_aa75_4c63_9ea7_63619e159037','a36f4804_e4a4_4571_a0d6_f4bb96f21971','9d0b5697_7782_4cc5_95c6_241c65da1b0b');
+    ('b31c66aa_3e9f_4ae7_9b80_03f432c2222f',1,'None','','','','5d3cd209_3d7a_4aa5_ab40_cb6adb85f81f'),
+    ('c198c60c_bb7b_4129_aafd_19e112e02714',1,'None','','','','4b61435c_ab39_40bb_9d01_4b9afba48489'),
+    ('e9070326_67a2_4564_b6a0_5c0ef3865b7d',1,'None','','','','20c094c5_b35a_4aec_b689_7dd331aeec87');
+INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
+    ('4ff6c6f6_cb6c_4e24_a5b6_5fe9f46d6971','aba67e08_a0e1_4e7f_83c1_e21326dfa03d','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','save_problem_check','190.23.170.224','x_module','','2013-06-18T03:48:38.240193+00:00','6fae75bcc75cb5c614eb4c5e939af03625b41a0b','0:00:00','','','Medicine-HRP258','','','','',-1,-1,'i4x-Medicine-HRP258-problem-4cd4e0bb39af4d36ba54b1a677e350b4_4_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','correct','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','4ae24275_b08e_4f62_877f_83e9eb6dfae5','b31c66aa_3e9f_4ae7_9b80_03f432c2222f','3bf075a8_c459_4108_8d4f_c149977ebd43'),
+    ('be70f107_8ebe_479f_82dc_df803a8f1b54','aba67e08_a0e1_4e7f_83c1_e21326dfa03d','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','save_problem_check','190.23.170.224','x_module','','2013-06-18T03:48:38.240193+00:00','6fae75bcc75cb5c614eb4c5e939af03625b41a0b','0:00:00','','','Medicine-HRP258','','','','',-1,-1,'i4x-Medicine-HRP258-problem-4cd4e0bb39af4d36ba54b1a677e350b4_3_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','correct','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','e7fdf32b_6713_40f7_b9ad_fc5f0fa7532d','c198c60c_bb7b_4129_aafd_19e112e02714','3bf075a8_c459_4108_8d4f_c149977ebd43'),
+    ('27003fe8_83af_463b_9ae2_270f2774d390','aba67e08_a0e1_4e7f_83c1_e21326dfa03d','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','save_problem_check','190.23.170.224','x_module','','2013-06-18T03:48:38.240193+00:00','6fae75bcc75cb5c614eb4c5e939af03625b41a0b','0:00:00','','','Medicine-HRP258','','','','',-1,-1,'i4x-Medicine-HRP258-problem-4cd4e0bb39af4d36ba54b1a677e350b4_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','correct','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','30fb6de5_101a_49a2_94ee_a51fe3c7e7a2','e9070326_67a2_4564_b6a0_5c0ef3865b7d','3bf075a8_c459_4108_8d4f_c149977ebd43');
 /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

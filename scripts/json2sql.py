@@ -7,6 +7,8 @@ import argparse
 import datetime
 import time
 
+# Add json_to_relation source dir to $PATH
+# for duration of this execution:
 source_dir = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "../json_to_relation/")]
 source_dir.extend(sys.path)
 sys.path = source_dir

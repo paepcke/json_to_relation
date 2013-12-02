@@ -105,10 +105,13 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     student_id TEXT NOT NULL,
     instructor_id TEXT NOT NULL,
     course_id TEXT NOT NULL,
-    sequence_id TEXT NOT NULL,
+    course_display_name VARCHAR(255) NOT NULL,
+    resource_display_name VARCHAR(255) NOT NULL,
+    organization VARCHAR(255) NOT NULL,
+    sequence_id VARCHAR(255) NOT NULL,
     goto_from INT NOT NULL,
     goto_dest INT NOT NULL,
-    problem_id TEXT NOT NULL,
+    problem_id VARCHAR(255) NOT NULL,
     problem_choice TEXT NOT NULL,
     question_location TEXT NOT NULL,
     submission_id TEXT NOT NULL,
@@ -122,7 +125,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     transcript_code VARCHAR(255) NOT NULL,
     rubric_selection INT NOT NULL,
     rubric_category INT NOT NULL,
-    video_id TEXT NOT NULL,
+    video_id VARCHAR(255) NOT NULL,
     video_code TEXT NOT NULL,
     video_current_time VARCHAR(255) NOT NULL,
     video_speed VARCHAR(255) NOT NULL,
@@ -136,7 +139,6 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     answer_id TEXT NOT NULL,
     hint TEXT NOT NULL,
     hintmode VARCHAR(255) NOT NULL,
-    correctness VARCHAR(255) NOT NULL,
     msg TEXT NOT NULL,
     npoints TINYINT NOT NULL,
     queuestate TEXT NOT NULL,
@@ -167,11 +169,11 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('7d96fa69_815f_4613_936a_b319b3760f5b','2013112921181385788687','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemGradedOneProblemWithStatus.json');
+    ('80028bd1_7308_489a_9f72_54841dcdf7c6','2013120218391386038351','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemGradedOneProblemWithStatus.json');
 INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
-    ('b8ed3259_4833_4e0f_b40c_26a92b42580c','input_i4x-Medicine-HRP258-problem-84bc6d2be34545eeaf4aa5f67efc965d_2_1_choice_0','correct','Medicine/HRP258/Statistics_in_Medicine');
-INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('bc45bade_b0cd_40a0_aa9f_39383f0eb1b3','6ac23fc9_483a_4518_8d05_c94c93b74baa','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.71 Safari/537.36','browser','problem_graded','68.80.222.171','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/69356ef7b30545de8dd3152e30b71735/9bfe748f573941bf990b7ca0a62c1741/','d55e2dad3eb1a4a208cb5447c1e65392','2013-07-16T18:51:35.099124+00:00','2ba1c4d57437cbd7f268cd4580b8c4b70a537454','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','',-1,-1,'input_i4x-Medicine-HRP258-problem-84bc6d2be34545eeaf4aa5f67efc965d_2_1_choice_0','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','b8ed3259_4833_4e0f_b40c_26a92b42580c','','7d96fa69_815f_4613_936a_b319b3760f5b');
+    ('e87e02de_6b89_4af9_9acc_837941fbce80','input_i4x-Medicine-HRP258-problem-84bc6d2be34545eeaf4aa5f67efc965d_2_1_choice_0','correct','Medicine/HRP258/Statistics_in_Medicine');
+INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
+    ('2c2a6cdb_9aa1_4bec_8a7f_5ca153d28848','0ff69e44_84b5_4790_bccc_880bb6007612','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.71 Safari/537.36','browser','problem_graded','68.80.222.171','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/69356ef7b30545de8dd3152e30b71735/9bfe748f573941bf990b7ca0a62c1741/','d55e2dad3eb1a4a208cb5447c1e65392','2013-07-16T18:51:35.099124+00:00','2ba1c4d57437cbd7f268cd4580b8c4b70a537454','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','Unit 5: Statistical Inference','','','',-1,-1,'input_i4x-Medicine-HRP258-problem-84bc6d2be34545eeaf4aa5f67efc965d_2_1_choice_0','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','e87e02de_6b89_4af9_9acc_837941fbce80','','80028bd1_7308_489a_9f72_54841dcdf7c6');
 /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

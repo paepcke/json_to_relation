@@ -23,11 +23,11 @@ CREATE TABLE IF NOT EXISTS Answer (
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL PRIMARY KEY,
     answer_identifier TEXT NOT NULL,
-    correctness TINYTEXT NOT NULL,
+    correctness VARCHAR(255) NOT NULL,
     npoints INT NOT NULL,
     msg TEXT NOT NULL,
     hint TEXT NOT NULL,
-    hintmode TINYTEXT NOT NULL,
+    hintmode VARCHAR(255) NOT NULL,
     queuestate TEXT NOT NULL
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS InputState (
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS InputState (
 CREATE TABLE IF NOT EXISTS State (
     state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT NOT NULL,
-    done TINYTEXT NOT NULL,
+    done VARCHAR(255) NOT NULL,
     problem_id TEXT NOT NULL,
     student_answer VARCHAR(40) NOT NULL,
     correct_map VARCHAR(40) NOT NULL,
@@ -53,18 +53,18 @@ CREATE TABLE IF NOT EXISTS Account (
     name TEXT NOT NULL,
     anon_screen_name TEXT NOT NULL,
     mailing_address TEXT NOT NULL,
-    zipcode TINYTEXT NOT NULL,
-    country TINYTEXT NOT NULL,
-    gender TINYTEXT NOT NULL,
+    zipcode VARCHAR(255) NOT NULL,
+    country VARCHAR(255) NOT NULL,
+    gender VARCHAR(255) NOT NULL,
     year_of_birth TINYINT NOT NULL,
-    level_of_education TINYTEXT NOT NULL,
+    level_of_education VARCHAR(255) NOT NULL,
     goals TEXT NOT NULL,
     honor_code TINYINT NOT NULL,
     terms_of_service TINYINT NOT NULL,
     course_id TEXT NOT NULL,
-    enrollment_action TINYTEXT NOT NULL,
+    enrollment_action VARCHAR(255) NOT NULL,
     email TEXT NOT NULL,
-    receive_emails TINYTEXT NOT NULL
+    receive_emails VARCHAR(255) NOT NULL
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     account_id VARCHAR(40) NOT NULL PRIMARY KEY,
@@ -72,18 +72,18 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     name TEXT NOT NULL,
     anon_screen_name TEXT NOT NULL,
     mailing_address TEXT NOT NULL,
-    zipcode TINYTEXT NOT NULL,
-    country TINYTEXT NOT NULL,
-    gender TINYTEXT NOT NULL,
+    zipcode VARCHAR(255) NOT NULL,
+    country VARCHAR(255) NOT NULL,
+    gender VARCHAR(255) NOT NULL,
     year_of_birth TINYINT NOT NULL,
-    level_of_education TINYTEXT NOT NULL,
+    level_of_education VARCHAR(255) NOT NULL,
     goals TEXT NOT NULL,
     honor_code TINYINT NOT NULL,
     terms_of_service TINYINT NOT NULL,
     course_id TEXT NOT NULL,
-    enrollment_action TINYTEXT NOT NULL,
+    enrollment_action VARCHAR(255) NOT NULL,
     email TEXT NOT NULL,
-    receive_emails TINYTEXT NOT NULL
+    receive_emails VARCHAR(255) NOT NULL
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS LoadInfo (
     load_info_id VARCHAR(40) NOT NULL PRIMARY KEY,
@@ -94,9 +94,9 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     _id VARCHAR(40) NOT NULL PRIMARY KEY,
     event_id VARCHAR(40) NOT NULL,
     agent TEXT NOT NULL,
-    event_source TINYTEXT NOT NULL,
+    event_source VARCHAR(255) NOT NULL,
     event_type TEXT NOT NULL,
-    ip TINYTEXT NOT NULL,
+    ip VARCHAR(255) NOT NULL,
     page TEXT NOT NULL,
     session TEXT NOT NULL,
     time DATETIME NOT NULL,
@@ -105,38 +105,40 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     student_id TEXT NOT NULL,
     instructor_id TEXT NOT NULL,
     course_id TEXT NOT NULL,
-    sequence_id TEXT NOT NULL,
+    course_display_name VARCHAR(255) NOT NULL,
+    resource_display_name VARCHAR(255) NOT NULL,
+    organization VARCHAR(255) NOT NULL,
+    sequence_id VARCHAR(255) NOT NULL,
     goto_from INT NOT NULL,
     goto_dest INT NOT NULL,
-    problem_id TEXT NOT NULL,
+    problem_id VARCHAR(255) NOT NULL,
     problem_choice TEXT NOT NULL,
     question_location TEXT NOT NULL,
     submission_id TEXT NOT NULL,
     attempts INT NOT NULL,
     long_answer TEXT NOT NULL,
     student_file TEXT NOT NULL,
-    can_upload_file TINYTEXT NOT NULL,
+    can_upload_file VARCHAR(255) NOT NULL,
     feedback TEXT NOT NULL,
     feedback_response_selected TINYINT NOT NULL,
     transcript_id TEXT NOT NULL,
-    transcript_code TINYTEXT NOT NULL,
+    transcript_code VARCHAR(255) NOT NULL,
     rubric_selection INT NOT NULL,
     rubric_category INT NOT NULL,
-    video_id TEXT NOT NULL,
+    video_id VARCHAR(255) NOT NULL,
     video_code TEXT NOT NULL,
-    video_current_time TINYTEXT NOT NULL,
-    video_speed TINYTEXT NOT NULL,
-    video_old_time TINYTEXT NOT NULL,
-    video_new_time TINYTEXT NOT NULL,
-    video_seek_type TINYTEXT NOT NULL,
-    video_new_speed TINYTEXT NOT NULL,
-    video_old_speed TINYTEXT NOT NULL,
-    book_interaction_type TINYTEXT NOT NULL,
-    success TINYTEXT NOT NULL,
+    video_current_time VARCHAR(255) NOT NULL,
+    video_speed VARCHAR(255) NOT NULL,
+    video_old_time VARCHAR(255) NOT NULL,
+    video_new_time VARCHAR(255) NOT NULL,
+    video_seek_type VARCHAR(255) NOT NULL,
+    video_new_speed VARCHAR(255) NOT NULL,
+    video_old_speed VARCHAR(255) NOT NULL,
+    book_interaction_type VARCHAR(255) NOT NULL,
+    success VARCHAR(255) NOT NULL,
     answer_id TEXT NOT NULL,
     hint TEXT NOT NULL,
-    hintmode TINYTEXT NOT NULL,
-    correctness TINYTEXT NOT NULL,
+    hintmode VARCHAR(255) NOT NULL,
     msg TEXT NOT NULL,
     npoints TINYINT NOT NULL,
     queuestate TEXT NOT NULL,
@@ -144,9 +146,9 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     new_score INT NOT NULL,
     orig_total INT NOT NULL,
     new_total INT NOT NULL,
-    event_name TINYTEXT NOT NULL,
-    group_user TINYTEXT NOT NULL,
-    group_action TINYTEXT NOT NULL,
+    event_name VARCHAR(255) NOT NULL,
+    group_user VARCHAR(255) NOT NULL,
+    group_action VARCHAR(255) NOT NULL,
     position INT NOT NULL,
     badly_formatted TEXT NOT NULL,
     correctMap_fk VARCHAR(40) NOT NULL,
@@ -167,13 +169,13 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 SET sql_log_bin=0;
-LOAD DATA LOCAL INFILE '/tmp/oolalaY1nPCT.sql_LoadInfoTable.csv' IGNORE INTO TABLE LoadInfo FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
-LOAD DATA LOCAL INFILE '/tmp/oolalaY1nPCT.sql_InputStateTable.csv' IGNORE INTO TABLE InputState FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
-LOAD DATA LOCAL INFILE '/tmp/oolalaY1nPCT.sql_StateTable.csv' IGNORE INTO TABLE State FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
-LOAD DATA LOCAL INFILE '/tmp/oolalaY1nPCT.sql_CorrectMapTable.csv' IGNORE INTO TABLE CorrectMap FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
-LOAD DATA LOCAL INFILE '/tmp/oolalaY1nPCT.sql_AnswerTable.csv' IGNORE INTO TABLE Answer FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
-LOAD DATA LOCAL INFILE '/tmp/oolalaY1nPCT.sql_AccountTable.csv' IGNORE INTO TABLE Account FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
-LOAD DATA LOCAL INFILE '/tmp/oolalaY1nPCT.sql_EdxTrackEventTable.csv' IGNORE INTO TABLE EdxTrackEvent FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalazZufOy.sql_LoadInfoTable.csv' IGNORE INTO TABLE LoadInfo FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalazZufOy.sql_InputStateTable.csv' IGNORE INTO TABLE InputState FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalazZufOy.sql_StateTable.csv' IGNORE INTO TABLE State FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalazZufOy.sql_CorrectMapTable.csv' IGNORE INTO TABLE CorrectMap FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalazZufOy.sql_AnswerTable.csv' IGNORE INTO TABLE Answer FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalazZufOy.sql_AccountTable.csv' IGNORE INTO TABLE Account FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalazZufOy.sql_EdxTrackEventTable.csv' IGNORE INTO TABLE EdxTrackEvent FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
 SET sql_log_bin=1;
 /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 /*!40000 ALTER TABLE `State` ENABLE KEYS */;

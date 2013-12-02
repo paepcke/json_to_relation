@@ -176,7 +176,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaHintsMainTable['instructor_id'] = ColDataType.TEXT
         
         # Courses
-        self.schemaHintsMainTable['course_id'] = ColDataType.TEXT
+        self.schemaHintsMainTable['course_id'] = ColDataType.TINYTEXT
         self.schemaHintsMainTable['course_display_name'] = ColDataType.TINYTEXT
         self.schemaHintsMainTable['resource_display_name'] = ColDataType.TINYTEXT
         self.schemaHintsMainTable['organization'] = ColDataType.TINYTEXT
@@ -281,7 +281,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaStateTbl['state_id'] = ColDataType.UUID
         self.schemaStateTbl['seed'] = ColDataType.TINYINT
         self.schemaStateTbl['done'] = ColDataType.TINYTEXT
-        self.schemaStateTbl['problem_id'] = ColDataType.TEXT
+        self.schemaStateTbl['problem_id'] = ColDataType.TINYTEXT
         self.schemaStateTbl['student_answer'] = ColDataType.UUID
         self.schemaStateTbl['correct_map'] = ColDataType.UUID
         self.schemaStateTbl['input_state'] = ColDataType.UUID
@@ -295,9 +295,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # Schema for Answer table:
         self.schemaAnswerTbl = OrderedDict()
         self.schemaAnswerTbl['answer_id'] = ColDataType.UUID
-        self.schemaAnswerTbl['problem_id'] = ColDataType.TEXT
+        self.schemaAnswerTbl['problem_id'] = ColDataType.TINYTEXT
         self.schemaAnswerTbl['answer'] = ColDataType.TEXT
-        self.schemaAnswerTbl['course_id'] = ColDataType.TEXT
+        self.schemaAnswerTbl['course_id'] = ColDataType.TINYTEXT
 
         # Turn the SQL data types in the dict to column spec objects:
         for colName in self.schemaAnswerTbl.keys():
@@ -325,7 +325,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # Schema for InputState table:
         self.schemaInputStateTbl = OrderedDict()
         self.schemaInputStateTbl['input_state_id'] = ColDataType.UUID
-        self.schemaInputStateTbl['problem_id'] = ColDataType.TEXT
+        self.schemaInputStateTbl['problem_id'] = ColDataType.TINYTEXT
         self.schemaInputStateTbl['state'] = ColDataType.TEXT
 
         # Turn the SQL data types in the dict to column spec objects:
@@ -1279,7 +1279,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # Go through all the top-level problem_check event fields first:
         self.setValInRow(row, 'success', event.get('success', '')) 
         self.setValInRow(row, 'attempts', event.get('attempts', -1))
-        self.setValInRow(row, 'problem_id', event.get('problem_id', ''))
+        problem_id = event.get('problem_id', '')
+        self.setValInRow(row, 'problem_id', problem_id)
+        # Try to look up the human readable display name
+        # of the problem, and insert it into the main
+        # table's resource_display_name field:
+        self.setResourceDisplayName(row, problem_id)
 
         # correctMap field may consist of many correct maps.
         # Create an entry for each in the CorrectMap table,
@@ -1343,7 +1348,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             if answerFKey is not None:
                 # For convenience: enter the Answer's problem ID 
                 # in the main table's problemID field:
-                self.setValInRow(row, 'problem_id', answerToProblemMap[answerFKey] if answerToProblemMap[answerFKey] is not None else '') 
+                problemID = answerToProblemMap[answerFKey] if answerToProblemMap[answerFKey] is not None else ''
+                self.setValInRow(row, 'problem_id', problemID) 
             self.setValInRow(row, 'state_fk', stateFKey if stateFKey is not None else '')
             rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
@@ -1400,7 +1406,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             if answerFKey is not None:
                 # For convenience: enter the Answer's problem ID 
                 # in the main table's problemID field:
-                self.setValInRow(row, 'problem_id', answerToProblemMap[answerFKey])
+                problemID = answerToProblemMap[answerFKey]
+                self.setValInRow(row, 'problem_id', problemID)
+                # Try to look up the human readable display name
+                # of the problem, and insert it into the main
+                # table's resource_display_name field:
+                self.setResourceDisplayName(row, problemID)
+                
             rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
             # The next row keeps its eventID, but needs its own
@@ -1716,6 +1728,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         if postGetDict is None:
             if isinstance(event, basestring):
                 self.setValInRow(row, 'problem_id', event)
+                # Try to look up the human readable display name
+                # of the problem, and insert it into the main
+                # table's resource_display_name field:
+                self.setResourceDisplayName(row, event)
+                
                 return row
             else:
                 self.logWarn("Track log line %s: event is not a dict in problem_reset event: '%s'" %\
@@ -1729,6 +1746,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             self.logWarn("Track log line %s with event type problem_reset contains event without problem ID array: '%s'" %
                          (self.jsonToRelationConverter.makeFileCitation(), event))
         self.setValInRow(row, 'problem_id', problemIDs)
+        # Try to look up the human readable display name
+        # of the problem, and insert it into the main
+        # table's resource_display_name field:
+        self.setResourceDisplayName(row, problemIDs)
+        
         return row
 
     def handleProblemShow(self, record, row, event):
@@ -1767,6 +1789,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation(), event))
             return row
         self.setValInRow(row, 'problem_id', problemID)
+        # Try to look up the human readable display name
+        # of the problem, and insert it into the main
+        # table's resource_display_name field:
+        self.setResourceDisplayName(row, problemID)
         return row
 
     def handleProblemSave(self, record, row, event):
@@ -1822,7 +1848,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             if answerFKey is not None:
                 # For convenience: enter the Answer's problem ID 
                 # in the main table's problemID field:
-                self.setValInRow(row, 'problem_id', answerToProblemMap[answerFKey])
+                problemID = answerToProblemMap[answerFKey]
+                self.setValInRow(row, 'problem_id', problemID)
+                # Try to look up the human readable display name
+                # of the problem, and insert it into the main
+                # table's resource_display_name field:
+                self.setResourceDisplayName(row, problemID)
+                
                 rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
                 self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
                 # The next row keeps its eventID, but needs its own
@@ -2144,6 +2176,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             return row
 
         self.setValInRow(row, 'problem_id', problem_id)
+        # Try to look up the human readable display name
+        # of the problem, and insert it into the main
+        # table's resource_display_name field:
+        self.setResourceDisplayName(row, problem_id)
+
         return row
 
     def handleShowHideTranscript(self, record, row, event):
@@ -2232,6 +2269,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         problem_id = event.get('problem_id', None)
         success    = event.get('failure', None)  # 'closed' or 'unreset'
         self.setValInRow(row, 'problem_id', problem_id)
+        # Try to look up the human readable display name
+        # of the problem, and insert it into the main
+        # table's resource_display_name field:
+        self.setResourceDisplayName(row, problem_id)
+        
         self.setValInRow(row, 'success', success)
         
         answersDict = event.get('answers', None)
@@ -2278,7 +2320,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             if answerFKey is not None:
                 # For convenience: enter the Answer's problem ID 
                 # in the main table's problemID field:
-                self.setValInRow(row, 'problem_id', answerToProblemMap[answerFKey] if answerToProblemMap[answerFKey] is not None else '')
+                problemID = answerToProblemMap[answerFKey] if answerToProblemMap[answerFKey] is not None else ''
+                self.setValInRow(row, 'problem_id', problemID)
+                # Try to look up the human readable display name
+                # of the problem, and insert it into the main
+                # table's resource_display_name field:
+                self.setResourceDisplayName(row, problemID)
+                
             self.setValInRow(row, 'state_fk', stateFKey if stateFKey is not None else '')
             rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
@@ -2306,6 +2354,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         problem_id = event.get('problem_id', None)
         failure    = event.get('failure', None)  # 'closed' or 'unreset'
         self.setValInRow(row, 'problem_id', problem_id)
+        # Try to look up the human readable display name
+        # of the problem, and insert it into the main
+        # table's resource_display_name field:
+        self.setResourceDisplayName(row, problem_id)
+        
         self.setValInRow(row, 'failure', failure)
         
         stateDict = event.get('state', None)
@@ -2359,6 +2412,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
         # Store the top-level vals in the main table:
         self.setValInRow(row, 'problem_id', problem_id)
+        # Try to look up the human readable display name
+        # of the problem, and insert it into the main
+        # table's resource_display_name field:
+        self.setResourceDisplayName(row, problem_id)
         self.setValInRow(row, 'success', success)
         self.setValInRow(row, 'attempts', attempts)
         self.setValInRow(row, 'orig_score', orig_score)
@@ -2410,6 +2467,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         if success is None:
             success = event.get('success', None) # 'incorrect' or 'correct'
         self.setValInRow(row, 'problem_id', problem_id)
+        # Try to look up the human readable display name
+        # of the problem, and insert it into the main
+        # table's resource_display_name field:
+        self.setResourceDisplayName(row, problem_id)
+        
         self.setValInRow(row, 'success', success)
         
         answersDict = event.get('answers', None)
@@ -2456,7 +2518,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             if answerFKey is not None:
                 # For convenience: enter the Answer's problem ID 
                 # in the main table's problemID field:
-                self.setValInRow(row, 'problem_id', answerToProblemMap[answerFKey] if answerToProblemMap[answerFKey] is not None else '')
+                problemID = answerToProblemMap[answerFKey] if answerToProblemMap[answerFKey] is not None else ''
+                self.setValInRow(row, 'problem_id', problemID)
+                # Try to look up the human readable display name
+                # of the problem, and insert it into the main
+                # table's resource_display_name field:
+                self.setResourceDisplayName(row, problemID)
             self.setValInRow(row, 'state_fk', stateFKey if stateFKey is not None else '')
             rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
             self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
@@ -2499,6 +2566,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             return row
 
         self.setValInRow(row, 'problem_id',event.get('problem_id', '')) 
+        # Try to look up the human readable display name
+        # of the problem, and insert it into the main
+        # table's resource_display_name field:
+        self.setResourceDisplayName(row, event.get('problem_id', ''))
         
         oldStateDict = event.get('old_state', None)
         newStateDict = event.get('new_state', None)
@@ -2542,6 +2613,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
         self.setValInRow(row, 'course_id', courseID)
         self.setValInRow(row, 'problem_id', problemID)
+        # Try to look up the human readable display name
+        # of the problem, and insert it into the main
+        # table's resource_display_name field:
+        self.setResourceDisplayName(row, problemID)
+        
         return row
                 
                 
@@ -2572,6 +2648,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
         self.setValInRow(row, 'course_id', courseID)
         self.setValInRow(row, 'problem_id', problemID)
+        # Try to look up the human readable display name
+        # of the problem, and insert it into the main
+        # table's resource_display_name field:
+        self.setResourceDisplayName(row, problemID)
+        
         self.setValInRow(row, 'student_id', studentID)
         return row        
         
@@ -2605,6 +2686,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation()))
             
         self.setValInRow(row, 'problem_id', problemID)
+        # Try to look up the human readable display name
+        # of the problem, and insert it into the main
+        # table's resource_display_name field:
+        self.setResourceDisplayName(row, problemID)
         self.setValInRow(row, 'student_id', studentID)        
         self.setValInRow(row, 'instructor_id', instructorID)
         self.setValInRow(row, 'attempts', attempts)
@@ -2711,6 +2796,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             self.logWarn("Track log line %s: missing problemID in pyschometrics-histogram-generation event." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
         self.setValInRow(row, 'problem_id', problemID)
+        # Try to look up the human readable display name
+        # of the problem, and insert it into the main
+        # table's resource_display_name field:
+        self.setResourceDisplayName(row, problemID)
+                
         return row
     
     def handleAddRemoveUserGroup(self, record, row, event):
@@ -2932,7 +3022,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 if answerFKey is not None:
                     # For convenience: enter the Answer's problem ID 
                     # in the main table's problemID field:
-                    self.setValInRow(row, 'problem_id', answerToProblemMap[answerFKey])
+                    problemID = answerToProblemMap[answerFKey]
+                    self.setValInRow(row, 'problem_id', problemID)
+                    # Try to look up the human readable display name
+                    # of the problem, and insert it into the main
+                    # table's resource_display_name field:
+                    self.setResourceDisplayName(row, problemID)
+                    
                     rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
                     self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
                     # The next row keeps its eventID, but needs its own
@@ -3243,7 +3339,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             if answerFKey is not None:
                 # For convenience: enter the Answer's problem ID 
                 # in the main table's problemID field:
-                self.setValInRow(row, 'problem_id', answerToProblemMap[answerFKey])
+                problemID = answerToProblemMap[answerFKey]
+                self.setValInRow(row, 'problem_id', problemID)
+                # Try to look up the human readable display name
+                # of the problem, and insert it into the main
+                # table's resource_display_name field:
+                self.setResourceDisplayName(row, problemID)
+                
                 rowInfoTriplet = self.resultTriplet(row, self.mainTableName)
                 self.jsonToRelationConverter.pushToTable(rowInfoTriplet)
                 # The next row keeps its eventID, but needs its own
@@ -3739,4 +3841,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             return match.group(1)
         else:
             return None
+
+    def setResourceDisplayName(self, row, openEdxHash):
+        if openEdxHash is not None and len(openEdxHash) > 0:
+            # Get display name and add to main table as resource_display_name:
+            displayName = self.modulestoreImporter.getDisplayName(openEdxHash)
+            if displayName is not None:
+                self.setValInRow(row, 'resource_display_name', displayName)
         

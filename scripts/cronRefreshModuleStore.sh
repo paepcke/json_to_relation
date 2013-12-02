@@ -1,5 +1,43 @@
 #!/bin/bash
 
+# Remotely queries the OpenEdx modulestore MongoDB via goldengate.class.stanford.edu
+# Extracts just enough information into a JSON file to provide information about
+# correspondences of OpenEdx 32-bit hash codes to human readable course names, problem
+# describptions, etc. The JSON file looks like this:
+#
+# [
+#  	{
+#  		"_id" : {
+#  			"tag" : "i4x",
+#  			"org" : "edx",
+#  			"course" : "templates",
+#  			"category" : "annotatable",
+#  			"name" : "Annotation",
+#  			"revision" : null
+#  		},
+#  		"metadata" : {
+#  			"display_name" : "Annotation"
+#  		}
+#  	},
+#  	{
+#  		"_id" : {
+#  			"tag" : "i4x",
+#  			"org" : "edx",
+#  			"course" : "templates",
+#  			"category" : "conditional",
+#  			"name" : "Empty",
+#  			"revision" : null
+#  		},
+#  		"metadata" : {
+#  			"display_name" : "Empty"
+#  		}
+#  	},
+#      ...
+# ]
+#
+# If option -p is provided, script will request password for
+# modulestore repository off goldengate.
+
 USAGE='Usage: cronRefreshModuleStore.sh [-p] targetDir'
 
 PASSWD=''
