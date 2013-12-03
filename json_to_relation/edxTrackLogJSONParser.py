@@ -3879,4 +3879,4 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @return: a string of the form org/courseShortName/courseTitle
         @rtype: String
         '''
-        
+        for shortCourseName in self.has

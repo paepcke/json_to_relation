@@ -14,6 +14,14 @@ from modulestoreImporter import ModulestoreImporter
 
 TEST_ALL = True
 
+# The following is very Dangerous: If True, no tests are
+# performed. Instead, all the reference files, the ones
+# ending with 'Truth.sql' will be changed to be whatever
+# the test returns. Use only when you made code changes that
+# invalidate all the truth files:
+UPDATE_TRUTH = False
+
+
 class TestModuleStore(unittest.TestCase):
 
     hashLookupDict = None
@@ -30,10 +38,11 @@ class TestModuleStore(unittest.TestCase):
         if os.path.exists(pickleFile):
             with open(pickleFile, 'r') as pickleFd:
                 TestModuleStore.hashLookupDict = pickle.load(pickleFd)
-        # Hash dict pickle doesn't exist yet. Make it exist:
-        jsonModulestoreExcerpt = os.path.join(os.path.dirname(__file__), '../data/modulestore_latest.json')
-        if not os.path.exists(jsonModulestoreExcerpt):
-            raise('IOError: neither OpenEdx hash-to-displayName JSON excerpt from modulestore, nor a cache thereof is available. You need to run cronRefreshModuleStore.sh')
+        else:
+            # Hash dict pickle doesn't exist yet. Make it exist:
+            jsonModulestoreExcerpt = os.path.join(os.path.dirname(__file__), '../data/modulestore_latest.json')
+            if not os.path.exists(jsonModulestoreExcerpt):
+                raise('IOError: neither OpenEdx hash-to-displayName JSON excerpt from modulestore, nor a cache thereof is available. You need to run cronRefreshModuleStore.sh')
         ModulestoreImporter(jsonModulestoreExcerpt)
         with open(pickleFile, 'r') as pickleFd:
             TestModuleStore.hashLookupDict = pickle.load(pickleFd)
@@ -43,32 +52,38 @@ class TestModuleStore(unittest.TestCase):
         self.hashLookupDict = TestModuleStore.hashLookupDict  
 
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
-    def testModulestoreImportExport(self):
-
-        testFilePath = 'data/modulestoreImport.json'
-        importer = ModulestoreImporter(testFilePath, testLookupDict=self.hashLookupDict)
+    def testModulestoreImportExportInfo(self):
+        
+        testFilePath = os.path.join(os.path.dirname(__file__), 'data/modulestore_sample.json')
+        importer = ModulestoreImporter(testFilePath)
         dest = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.csv')
-        importer.export(dest)
-        truthFile = open(os.path.join(os.path.dirname(__file__),'data/modulestoreImportTruth.csv'),'r')
+        importer.exportHashInfo(dest, addHeader=True)
+        truthFile = open(os.path.join(os.path.dirname(__file__),'data/modulestore_sampleTruth.csv'),'r')
         self.assertFileContentEquals(truthFile, dest.name)
 
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testModulestoreImportLookups(self):
 
-        testFilePath = 'data/modulestoreImport.json'
+        testFilePath = os.path.join(os.path.dirname(__file__), 'data/modulestore_sample.json')
         importer = ModulestoreImporter(testFilePath, testLookupDict=self.hashLookupDict)
         self.assertEqual(importer.getDisplayName("67b77215c10243f1a20d81350909084a"), 'Module 2')
         self.assertEqual(importer.getDisplayName("e9ef4bdae8874030b2321a7699f03a82"), 'Quiz')  
         self.assertEqual(importer.getDisplayName("109c60b8350a4a7aa8b7389c99fdf6ea"), 'Setting Norms')
         self.assertEqual(importer.getDisplayName("handouts"), '')
 
-    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
-    def testFullModuleStoreExport(self):
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def testInfoExport(self):
 
-        testFilePath = '/home/paepcke/Project/VPOL/Data/FullDumps/modulestore_latest.json'
-        importer = ModulestoreImporter(testFilePath, testLookupDict=self.hashLookupDict)
-        importer.export('/home/paepcke/Project/VPOL/Data/FullDumps/modulestore_latest.csv', addHeader=True)
-        print str(importer.getDisplayName('f76abf408e84414aa9152c730fc9e95a'))
+        testFilePath = os.path.join(os.path.dirname(__file__), 'data/modulestore_sample.json')
+        importer = ModulestoreImporter(testFilePath)
+        dest = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.csv')
+        importer.export(dest, addHeader=True)
+        dest.close()
+        truthFile = open(os.path.join(os.path.dirname(__file__),"data/modulestore_sampleTruth.csv"), 'r')
+        if UPDATE_TRUTH:
+            self.updateTruth(dest.name, truthFile.name)
+        else:
+            self.assertFileContentEquals(truthFile, dest.name)
     
     # -----------------------  Utilities  ---------------------
         

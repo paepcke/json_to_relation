@@ -10,75 +10,40 @@ import pickle
 import re
 
 
-class ModulestoreImporter(object):
+class ModulestoreImporter(dict):
     '''
     Imports the result of a query to the modulestore (descriptions of OpenEdx courses).
     That query is run by the script cronRefreshModuleStore.sh, and produces a JSON
     file that contains just the information needed for the mapping of an OpenEdx
-    32-bit resource hash to a display_name.
+    32-bit resource hash to an associated organization (e.g. Medicine, Engineering, CME,...), 
+    course_short_name (e.g. ENGR14), category (e.g. problem, video, course,...), 
+    revision (e.g. Draft), and display name. Example for the latter: 'Problem 2.4' for a category
+    'problem' case, or 'Finding the p value' for a category 'video' entry.
     
-    The result of that query is assumed to be stored in a file whose path is given to __init__().
-    Instances of this class parse the JSON file, creating an in-memory dict that maps the hash strings
-    to human-readable form, as extracted from modulestore via the above query (script call). 
-    For future use the __init__() method also saves that dict to a pickle file in the main 
-    source folder's 'data' subdirectory. 
+    The result of that query is assumed to be stored in a file whose path is given to the constructor
+    of this class, which is user facing.
     
-    Method getDisplayName() returns display names given OpenEdx hash codes. Method
-    export() outputs the mapping to a .csv file
+    Instances of this class parse the JSON file, creating two in-memory dicts whose contents
+    are available via public methods. The first dict maps a short course name, like 'ENGR14' to a 
+    canonical name, like 'Engineering/ENGR14/Stats_in_engineering'. The second maps OpenEdx
+    32-bit hash number strings to information associated with that hash: organization, course
+    short name, category, revision, and display name.
     
-    Example query::
-
-      ssh goldengate.class.stanford.edu mongo \
-          stanford-edx-prod.m0.mongolayer.com:27017/stanford-edx-prod -u readonly \
-          --quiet \
-          -p<PASSWORD> \
-          --eval "\"printjson(db.modulestore.find({},\
-          {'_id' : 1, \
-    	  'metadata.display_name' : 1, \
-    	  'metadata.discussion_category' : 1, \
-    	  'metadata.discussion_target' : 1}).toArray())\"" > ~/tmp/test2.json
+    To find the canonical course name from a short course name, treat your instance
+    of this class like a dict: anonName = myModStoreImporter['ENGR14']. To find a
+    category, revision, etc., given a hash, use the corresponding methods:
+    getCategory(hash), getRevision(hash), etc. 
     
-    The file must associate a JSON array of entries with the tag 'all'. Like this::
-		 {"all" : [
-		 	{
-		 		"_id" : {
-		 			"tag" : "i4x",
-		 			"org" : "edx",
-		 			"course" : "templates",
-		 			"category" : "annotatable",
-		 			"name" : "Annotation",
-		 			"revision" : null
-		 		},
-		 		"metadata" : {
-		 			"display_name" : "Annotation"
-		 		}
-		 	},
-		 	{
-		 		"_id" : {
-		 			"tag" : "i4x",
-		 			"org" : "edx",
-		 			"course" : "templates",
-		 			"category" : "conditional",
-		 			"name" : "Empty",
-		 			"revision" : null
-		 		},
-		 		"metadata" : {
-		 			"display_name" : "Empty"
-		 		}
-		 	},
-		     ...
-		 ]}    
-		 
-	Note that the result of the above query will produce an array, i.e. the
-	file will begin with a bracket, which is not legal json. We wrap the
-	"all {...}" around the string in the file, if it is not already present: 
+    In addition to these services that are intended to be used by Python programs,
+    an instance of this class can export either or both of the dicts to .csv files.
+    See methods exportCourseNameLookup() and exportHashInfo()  
     
-    Once the import is complete, the result may be used in two ways:
-    as an in-memory database (see method query()), and as a CSV exporter.
+    To save time for Python clients, the hash-to-info dict is pickled to a file
+    as a cache. Clients may choose to use this cache as part of instance construction.
     '''
 
 
-    def __init__(self, jsonFileName, useCache=False, testLookupDict=None):
+    def __init__(self, jsonFileName, useCache=False, testLookupDict=None, pickleCachePath=None):
         '''
         Prepares instance for subsequent calls to getDisplayName() or
         export(). Preparations include looking for either the given file
@@ -103,6 +68,9 @@ class ModulestoreImporter(object):
                         as would normally be created in this __init__()
                         method. 
         @type testLookupDict: {<String>:<String>}
+        @param pickleCachePath: destination for cache of the hash-->info dict.
+                                Default is data/hashLookup.pkl 
+        @type pickleCachePath: String
         '''
         self.useCache = useCache
         self.testLookupDict = testLookupDict
@@ -115,14 +83,17 @@ class ModulestoreImporter(object):
             self.buildCourseShortNameToCourseName()            
             return
         
-        self.pickleFileName = os.path.join(os.path.dirname(__file__), 'data/hashLookup.pkl')
+        if pickleCachePath is None:
+            self.pickleCachePath = os.path.join(os.path.dirname(__file__), 'data/hashLookup.pkl')
+        else:
+            self.pickleCachePath = pickleCachePath
         
         if not useCache and not os.path.exists(str(jsonFileName)):
             raise IOError("File %s does not exist. Try setting useCache=True to use possibly existing cache; if that fails, must run cronRefreshModuleStore.sh" % jsonFileName)
-        elif useCache and not os.path.exists(self.pickleFileName):
+        elif useCache and not os.path.exists(self.pickleCachePath):
             if not os.path.exists(jsonFileName):
                 # Have neither a cache file nor a json file:
-                raise IOError("Neither cache file %s nor JSON file %s exist. You need to run cronRefreshModuleStore.sh" % (self.pickleFileName, jsonFileName))
+                raise IOError("Neither cache file %s nor JSON file %s exist. You need to run cronRefreshModuleStore.sh" % (self.pickleCachePath, jsonFileName))
             # Ignore the 'use cache' given that we don't have one;
             # Just work with the JSON file, and create the cache:
             useCache = False
@@ -134,7 +105,7 @@ class ModulestoreImporter(object):
         
         # Get dict {"all" : [{...}, {...},...]}
         if useCache:
-            with open(self.pickleFileName, 'r') as pickleFd:
+            with open(self.pickleCachePath, 'r') as pickleFd:
                 self.hashLookup = pickle.load(pickleFd)
                 # Build lookup for short course name to three-part standard name:
                 self.buildCourseShortNameToCourseName()            
@@ -145,7 +116,7 @@ class ModulestoreImporter(object):
         
         # Save the lookup in a quick-to-load Python pickle file for future use
         # when option useCache is true:
-        with open(self.pickleFileName, 'w') as pickleFd:
+        with open(self.pickleCachePath, 'w') as pickleFd:
             pickle.dump(self.hashLookup, pickleFd)
 
     # ----------------------------  Public Methods -----------------------------
@@ -165,7 +136,7 @@ class ModulestoreImporter(object):
             return None
         return infoDict['display_name']
     
-    def getOrganization(self, hashStr):
+    def getOrg(self, hashStr):
         '''
         Given a 32-bit OpenEdx hash string, return
         a corresponding 'org' entry. If none found,
@@ -217,7 +188,7 @@ class ModulestoreImporter(object):
         returns None
         @param hashStr: string of 32 hex digits
         @type hashStr: string
-        @return: the organization that offered the class or resource
+        @return: the revision of the resource associated with the hash
         @rtype: {String | None} 
         '''
         infoDict = self.hashLookup.get(hashStr, None)
@@ -225,7 +196,17 @@ class ModulestoreImporter(object):
             return None
         return infoDict['revision']
         
-    def export(self, outFilePath, addHeader=True):
+    def exportHashInfo(self, outFilePath, addHeader=True):
+        '''
+        Export the dict hash --> org/category/... to 
+        CSV with header::
+            'name_hash','org','short_course_name','category','revision','display_name'
+
+        @param outFilePath: fully qualified name of .csv output file
+        @type outFilePath: {String | File}
+        @param addHeader: whether or not to add a header line
+        @type addHeader: Bool
+        '''
 
         if not isinstance(outFilePath, basestring):
             outFilePath = outFilePath.name
@@ -251,8 +232,53 @@ class ModulestoreImporter(object):
                           entryDict['display_name']]
                 csvWriter.writerow(values)
 
-    # ----------------------------  Private Methods -----------------------------
+
+    def exportCourseNameLookup(self, outFilePath, addHeader=True):
+        '''
+        Export the dict shortCourseName --> canonicalName to
+        CSV with header::
+            'course_short_name',course_name
+        @param outFilePath: fully qualified name of .csv output file
+        @type outFilePath: {String | File}
+        @param addHeader: whether or not to add a header line
+        @type addHeader: Bool
+        '''
+
+        if not isinstance(outFilePath, basestring):
+            outFilePath = outFilePath.name
+        # Unless we are using an existing in-memory stuct,
+        # extract such a struct from a file:
+        if not self.useCache and (self.testLookupDict is None):
+            # Create the in-memory data structure from the file:
+            self.loadModstoreFromJSON()
             
+        with open(outFilePath, 'w') as outFd:
+            csvWriter = csv.writer(outFd, dialect='excel', delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            if addHeader:
+                csvWriter.writerow(['course_short_name','course_name'])
+            # Go through each short course name, and output:
+            for shortCourseName in self.keys():
+                values = [shortCourseName,self[shortCourseName]]
+                csvWriter.writerow(values)
+
+    # ----------------------------  Private Methods -----------------------------
+
+    # ------------- Dict Methods -------------------
+    
+    def __getitem__(self, course_short_name):
+        return self.courseNameLookup[course_short_name]
+    
+    def __setitem__(self, course_short_name, canonName):
+        self.courseNameLookup[course_short_name] = canonName
+    
+    def __delitem__(self, course_short_name):
+        del self.courseNameLookup[course_short_name]
+    
+    def keys(self):
+        return self.courseNameLookup.keys()
+    
+    # ------------- Support Methods -------------------
+ 
     def loadModstoreFromJSON(self):
         '''
         Given the JSON file path passed into __init__(), read that file,
@@ -288,12 +314,23 @@ class ModulestoreImporter(object):
         self.buildCourseShortNameToCourseName()
                   
     def buildCourseShortNameToCourseName(self):
+        '''
+        Creates a dict self.courseNameLookup, which maps a
+        short course name, like ENGR14 to a canonical name,
+        like 'Engineering/ENGR14/Stats_in_engineering'.
+        The canonical name is constructed like this:
+        org/course_short_name/<longCourseName>, where
+        <longCourseName> is the (JSON) _id.name field of
+        an entry of category 'course'. Those fields
+        contain the long course name.
+        '''
         self.courseNameLookup = {}
         for infoDictID in self.hashLookup.keys():
-            if self.hashLookup['category'] == 'course':
-                self.courseNameLookup[self.hashLookup['course_short_name']] =\
-                                         self.hashLookup['org'] + '/' +\
-                                         self.hashLookup['course_short_name'] + '/' +\
-                                         infoDictID
+            infoDict = self.hashLookup[infoDictID]
+            if infoDict['category'] == 'course':
+                self.courseNameLookup[infoDict['course']] =\
+                                      infoDict['org'] + '/' +\
+                                      infoDict['course'] + '/' +\
+                                      infoDictID
         
         
