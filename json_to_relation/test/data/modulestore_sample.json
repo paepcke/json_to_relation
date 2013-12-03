@@ -15,6 +15,19 @@
 	{
 		"_id" : {
 			"tag" : "i4x",
+			"org" : "ETS",
+			"course" : "101",
+			"category" : "course",
+			"name" : "EDTECH",
+			"revision" : null
+		},
+		"metadata" : {
+			"display_name" : "EDTECH"
+		}
+	},
+	{
+		"_id" : {
+			"tag" : "i4x",
 			"org" : "Medicine",
 			"course" : "HRP258",
 			"category" : "html",
@@ -75,6 +88,19 @@
 		},
 		"metadata" : {
 			"display_name" : "Module 1: Introduction to datasets"
+		}
+	},
+	{
+		"_id" : {
+			"tag" : "i4x",
+			"org" : "Stanford",
+			"course" : "Demo",
+			"category" : "html",
+			"name" : "18b21999d6424f4ca04fe2bbe188fc9e",
+			"revision" : "draft"
+		},
+		"metadata" : {
+			"display_name" : "Post video quiz"
 		}
 	},
 	{

@@ -5,7 +5,7 @@ Created on Nov 30, 2013
 '''
 import StringIO
 import os
-import pickle
+import shutil
 import tempfile
 import unittest
 
@@ -26,64 +26,58 @@ class TestModuleStore(unittest.TestCase):
 
     hashLookupDict = None
     
-    @classmethod
-    def setUpClass(cls):
-        '''
-        Called once, sets up a class variable with an OpenEdx hash-to-ModulestoreInfo
-        dict, which is then reused for each test.
-        @param cls: TestModuleStore
-        @type cls: Class
-        '''
-        pickleFile = os.path.join(os.path.dirname(__file__), '../data/hashLookup.pkl')
-        if os.path.exists(pickleFile):
-            with open(pickleFile, 'r') as pickleFd:
-                TestModuleStore.hashLookupDict = pickle.load(pickleFd)
-        else:
-            # Hash dict pickle doesn't exist yet. Make it exist:
-            jsonModulestoreExcerpt = os.path.join(os.path.dirname(__file__), '../data/modulestore_latest.json')
-            if not os.path.exists(jsonModulestoreExcerpt):
-                raise('IOError: neither OpenEdx hash-to-displayName JSON excerpt from modulestore, nor a cache thereof is available. You need to run cronRefreshModuleStore.sh')
-        ModulestoreImporter(jsonModulestoreExcerpt)
-        with open(pickleFile, 'r') as pickleFd:
-            TestModuleStore.hashLookupDict = pickle.load(pickleFd)
-
-    def setUp(self):
-        super(TestModuleStore, self).setUp()
-        self.hashLookupDict = TestModuleStore.hashLookupDict  
-
-    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
-    def testModulestoreImportExportInfo(self):
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def testModulestoreImportExportHashInfo(self):
         
         testFilePath = os.path.join(os.path.dirname(__file__), 'data/modulestore_sample.json')
-        importer = ModulestoreImporter(testFilePath)
+        pickleFilePath = os.path.join(os.path.dirname(__file__), 'data/modulestore_sample.pkl')
+        importer = ModulestoreImporter(testFilePath, pickleCachePath=pickleFilePath)
         dest = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.csv')
         importer.exportHashInfo(dest, addHeader=True)
         truthFile = open(os.path.join(os.path.dirname(__file__),'data/modulestore_sampleTruth.csv'),'r')
-        self.assertFileContentEquals(truthFile, dest.name)
+        if UPDATE_TRUTH:
+            self.updateTruth(dest.name, truthFile.name)
+        else:
+            self.assertFileContentEquals(truthFile, dest.name)
+        dest.close()
 
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testModulestoreImportLookups(self):
 
         testFilePath = os.path.join(os.path.dirname(__file__), 'data/modulestore_sample.json')
-        importer = ModulestoreImporter(testFilePath, testLookupDict=self.hashLookupDict)
-        self.assertEqual(importer.getDisplayName("67b77215c10243f1a20d81350909084a"), 'Module 2')
-        self.assertEqual(importer.getDisplayName("e9ef4bdae8874030b2321a7699f03a82"), 'Quiz')  
-        self.assertEqual(importer.getDisplayName("109c60b8350a4a7aa8b7389c99fdf6ea"), 'Setting Norms')
-        self.assertEqual(importer.getDisplayName("handouts"), '')
+        pickleFilePath = os.path.join(os.path.dirname(__file__), 'data/modulestore_sample.pkl')
+        importer = ModulestoreImporter(testFilePath, useCache=True, pickleCachePath=pickleFilePath)
+        
+        # The hash info:
+        self.assertEqual(importer.getDisplayName("Introduction_to_Sociology"), 'Introduction to Sociology')
+        self.assertEqual(importer.getDisplayName("0c6cf38317be42e0829d10cc68e7451b"), 'Quiz')  
+        self.assertEqual(importer.getDisplayName("0d6e5f3139e74c88adfdf4c90773f87f"), 'New Unit')
+        self.assertEqual(importer.getOrg("0d6e5f3139e74c88adfdf4c90773f87f"), 'Medicine')
+        self.assertEqual(importer.getCourseShortName("dc9cb4ff0c9241d2b9e075806490f992"), 'HRP258')
+        self.assertEqual(importer.getCategory("Annotation"), 'annotatable')
+        self.assertEqual(importer.getRevision("18b21999d6424f4ca04fe2bbe188fc9e"), 'draft')
+        
+        # Short coursenames to long coursenames:
+        self.assertEqual(importer['SOC131'], 'LaneCollege/SOC131/Introduction_to_Sociology')
+        self.assertEqual(importer.keys(), [u'SOC131'])
+        self.assertEqual(importer.values(), [u'LaneCollege/SOC131/Introduction_to_Sociology'])
+        self.assertEqual(importer.items(),  [(u'SOC131', u'LaneCollege/SOC131/Introduction_to_Sociology')])
+        
 
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
-    def testInfoExport(self):
+    def testCourseNameExport(self):
 
         testFilePath = os.path.join(os.path.dirname(__file__), 'data/modulestore_sample.json')
-        importer = ModulestoreImporter(testFilePath)
+        pickleFilePath = os.path.join(os.path.dirname(__file__), 'data/modulestore_sample.pkl')
+        importer = ModulestoreImporter(testFilePath, pickleCachePath=pickleFilePath)
         dest = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.csv')
-        importer.export(dest, addHeader=True)
-        dest.close()
-        truthFile = open(os.path.join(os.path.dirname(__file__),"data/modulestore_sampleTruth.csv"), 'r')
+        importer.exportCourseNameLookup(dest, addHeader=True)
+        truthFile = open(os.path.join(os.path.dirname(__file__),"data/modulestore_sampleTruth1.csv"), 'r')
         if UPDATE_TRUTH:
             self.updateTruth(dest.name, truthFile.name)
         else:
             self.assertFileContentEquals(truthFile, dest.name)
+        dest.close()
     
     # -----------------------  Utilities  ---------------------
         
@@ -124,6 +118,8 @@ class TestModuleStore(unittest.TestCase):
                 # expected is longer than what's in the file:
                 self.fail("Expected string is longer than content of output file %s" % filePath)
         
+    def updateTruth(self, newTruthFilePath, destinationTruthFilePath):
+        shutil.copy(newTruthFilePath, destinationTruthFilePath)
         
 
 if __name__ == "__main__":

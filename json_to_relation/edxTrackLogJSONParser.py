@@ -89,6 +89,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     # Picking (likely) zip codes out of a string:
     zipCodePattern = re.compile(r'[^0-9]([0-9]{5})')
     
+    hexGE32Digits = re.compile(r'[a-fA-F0-9]{32,}')
+    
     # Finding the word 'status' in problem_graded events:
     # Extract problem ID and 'correct' or 'incorrect' from 
     # a messy problem_graded event string. Two cases:
@@ -108,7 +110,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     #   input_i4x-Medicine-HRP258-problem-98ca37dbf24849debcc29eb36811cb68_3_1_choice_3'
     findHashPattern = re.compile(r'([a-f0-9]{32})')
     
-    def __init__(self, jsonToRelationConverter, mainTableName, logfileID='', progressEvery=1000, replaceTables=False, dbName='test', useDisplayNameCache=False, testLookupDict=None):
+    def __init__(self, jsonToRelationConverter, mainTableName, logfileID='', progressEvery=1000, replaceTables=False, dbName='test', useDisplayNameCache=False):
         '''
         Constructor
         @param jsonToRelationConverter: JSONToRelation instance
@@ -131,9 +133,6 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                     that contains the needed information from modulestore. See
                     modulestoreImporter.py for details. 
         @type useDisplayNameCache: Bool      
-        @param testLookupDict: strictly for use by unittests. They pass in a ready-made OpenEdx hash-to-DisplayName dictionary
-                    to avoid rebuilding that every time a test is run. 
-        @type testLookupDict: {<String> : <String>}               
         '''
         super(EdXTrackLogJSONParser, self).__init__(jsonToRelationConverter, 
                                                     logfileID=logfileID, 
@@ -156,7 +155,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     
         # Lookup table from OpenEdx 32-bit hash values to
         # corresponding problem, course, or video display_names:
-        self.hashMapper = ModulestoreImporter(os.path.join(os.path.dirname(__file__),'data/modulestore_latest.json'), useCache=useDisplayNameCache, testLookupDict=testLookupDict)
+        self.hashMapper = ModulestoreImporter(os.path.join(os.path.dirname(__file__),'data/modulestore_latest.json'), useCache=useDisplayNameCache)
+        # Make a list of all short course names 
+        # sorted by length in decreasing order. 
+        # This list is used by extractCanonicalCourseName()
+        # to pull the most likely course name from a nasty
+        # string that has a course name embedded:
+        self.courseNamesSorted = sorted(self.hashMapper.keys(), key=len, reverse=True)
                 
         self.schemaHintsMainTable = OrderedDict()
 
@@ -1107,7 +1112,6 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                     val = 'networking'
                     self.finishedRow = True
             elif fldName == 'course_id':
-                #(fullCourseName, course_id) = self.get_course_id(record.get('event', None))  # @UnusedVariable
                 (fullCourseName, course_id, displayName) = self.get_course_id(record)  # @UnusedVariable
                 val = course_id
                 # Make course_id available for places where rows are added to the Answer table.
@@ -3559,11 +3563,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         else:
             fullCourseName = event.get('page', '')
         if len(fullCourseName) > 0:
-            course_id = self.extractShortCourseID(fullCourseName)
-            course_display_name = self.getCourseDisplayName(fullCourseName)
+            course_display_name = self.extractShortCourseID(fullCourseName)
         else:
             course_display_name = ''
         if len(course_id) == 0:
+            course_id = fullCourseName
             fullCourseName = ''
         return (fullCourseName, course_id, course_display_name)
         
@@ -3867,7 +3871,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             if displayName is not None:
                 self.setValInRow(row, 'resource_display_name', self.makeInsertSafe(displayName))
         
-    def getCanonicalCourseName(self, trackLogStr):
+    def extractCanonicalCourseName(self, trackLogStr):
         '''
         Given a string believed to be the best course name
         snippet from a log entry, use the modulestoreImporter's
@@ -3876,7 +3880,22 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             /courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/sequential/1b3ac347ca064b3eaaddbc27d4200964/goto_position
         @param trackLogStr: string that hopefully contains a course short name
         @type trackLogStr: String
-        @return: a string of the form org/courseShortName/courseTitle
-        @rtype: String
+        @return: a string of the form org/courseShortName/courseTitle, or None if no course name 
+                  could be found in the given string.
+        @rtype: {String | None}
         '''
-        for shortCourseName in self.has
+        # First, remove substrings that are obviously 
+        # hashes that could match short course names:
+        trackLogStr = self.hexGE32Digits.sub('', trackLogStr)
+        
+        # We go through all course short names, starting
+        # with the longest, in decreasing length. We
+        # select the first course short name that is
+        # embedded in the given trackLogStr. Proceeding
+        # by decreasing length is needed to avoid prematurely
+        # choosing a course short name like 'db', which easily
+        # matches a hash string.
+        for shortCourseName in self.courseNamesSorted:
+            if string.find(trackLogStr, shortCourseName) > -1:
+                return self.hashMapper[shortCourseName]
+        return None

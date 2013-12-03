@@ -3,6 +3,7 @@ Created on Nov 30, 2013
 
 @author: paepcke
 '''
+from UserDict import DictMixin
 import csv
 import json
 import os
@@ -10,7 +11,7 @@ import pickle
 import re
 
 
-class ModulestoreImporter(dict):
+class ModulestoreImporter(DictMixin):
     '''
     Imports the result of a query to the modulestore (descriptions of OpenEdx courses).
     That query is run by the script cronRefreshModuleStore.sh, and produces a JSON
@@ -42,8 +43,9 @@ class ModulestoreImporter(dict):
     as a cache. Clients may choose to use this cache as part of instance construction.
     '''
 
+    hashLookupCache = None
 
-    def __init__(self, jsonFileName, useCache=False, testLookupDict=None, pickleCachePath=None):
+    def __init__(self, jsonFileName, useCache=False, pickleCachePath=None):
         '''
         Prepares instance for subsequent calls to getDisplayName() or
         export(). Preparations include looking for either the given file
@@ -61,27 +63,12 @@ class ModulestoreImporter(dict):
                         names. That file would have been created by an
                         earlier instantiation of this class. 
         @type useCache: Bool
-        @param testLookupDict: strictly for use by unittests. Since many
-                        such tests are run with fresh environments, parsing,
-                        or even unpickling the cache file slows down the test
-                        runs. This parameter, if non-null must be a dict
-                        as would normally be created in this __init__()
-                        method. 
-        @type testLookupDict: {<String>:<String>}
         @param pickleCachePath: destination for cache of the hash-->info dict.
                                 Default is data/hashLookup.pkl 
         @type pickleCachePath: String
         '''
         self.useCache = useCache
-        self.testLookupDict = testLookupDict
         self.jsonFileName = jsonFileName
-        
-        if testLookupDict is not None:
-            # Use passed-in lookup table:
-            self.hashLookup = testLookupDict
-            # Build lookup for short course name to three-part standard name:
-            self.buildCourseShortNameToCourseName()            
-            return
         
         if pickleCachePath is None:
             self.pickleCachePath = os.path.join(os.path.dirname(__file__), 'data/hashLookup.pkl')
@@ -105,10 +92,14 @@ class ModulestoreImporter(dict):
         
         # Get dict {"all" : [{...}, {...},...]}
         if useCache:
-            with open(self.pickleCachePath, 'r') as pickleFd:
-                self.hashLookup = pickle.load(pickleFd)
-                # Build lookup for short course name to three-part standard name:
-                self.buildCourseShortNameToCourseName()            
+            if ModulestoreImporter.hashLookupCache is not None:
+                self.hashLookup = ModulestoreImporter.hashLookupCache
+            else:
+                with open(self.pickleCachePath, 'r') as pickleFd:
+                    self.hashLookup = pickle.load(pickleFd)
+                    ModulestoreImporter.hashLookupCache = self.hashLookup
+            # Build lookup for short course name to three-part standard name:
+            self.buildCourseShortNameToCourseName()            
             return
     
         # No use of cache, or cache unavailble:
@@ -118,6 +109,8 @@ class ModulestoreImporter(dict):
         # when option useCache is true:
         with open(self.pickleCachePath, 'w') as pickleFd:
             pickle.dump(self.hashLookup, pickleFd)
+        # Also save it in a class var to share with other instances:
+        ModulestoreImporter.hashLookupCache = self.hashLookup
 
     # ----------------------------  Public Methods -----------------------------
         
@@ -212,7 +205,7 @@ class ModulestoreImporter(dict):
             outFilePath = outFilePath.name
         # Unless we are using an existing in-memory stuct,
         # extract such a struct from a file:
-        if not self.useCache and (self.testLookupDict is None):
+        if not self.useCache:
             # Create the in-memory data structure from the file:
             self.loadModstoreFromJSON()
             
@@ -248,7 +241,7 @@ class ModulestoreImporter(dict):
             outFilePath = outFilePath.name
         # Unless we are using an existing in-memory stuct,
         # extract such a struct from a file:
-        if not self.useCache and (self.testLookupDict is None):
+        if not self.useCache:
             # Create the in-memory data structure from the file:
             self.loadModstoreFromJSON()
             
@@ -328,9 +321,15 @@ class ModulestoreImporter(dict):
         for infoDictID in self.hashLookup.keys():
             infoDict = self.hashLookup[infoDictID]
             if infoDict['category'] == 'course':
-                self.courseNameLookup[infoDict['course']] =\
+                shortName = infoDict['course_short_name']
+                # Weed out test course names, like '1' and '123', and '2013':
+                # Require the course name to start with a letter.
+                # (Should we require at least two letter?)
+                if re.search(r'^[a-zA-Z]', shortName) is None:
+                    continue
+                self.courseNameLookup[infoDict['course_short_name']] =\
                                       infoDict['org'] + '/' +\
-                                      infoDict['course'] + '/' +\
+                                      shortName + '/' +\
                                       infoDictID
         
         
