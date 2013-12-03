@@ -7,7 +7,7 @@ Created on Oct 23, 2013
 Finds all files in subdir 'data' that end with 'Truth.sql'.
 Attempts to load them into MySql to check for errors.
 Used to ensure that unittest truth files are legal MySQL
-Assumed to be running in <json_to_relation-ProjectRoor>/scripts
+Assumed to be running in <json_to_relation-ProjectRoot>/scripts
 
 '''
 import os

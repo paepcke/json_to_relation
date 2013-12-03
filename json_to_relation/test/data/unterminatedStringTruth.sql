@@ -169,7 +169,7 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('6216c9bf_f5c3_4426_821f_1da25446eae7','2013120221551386050159','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/unterminatedString.json');
+    ('1b7f80d3_8046_45bd_bcd3_b730ccdd24a5','2013120302351386066930','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/unterminatedString.json');
 /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

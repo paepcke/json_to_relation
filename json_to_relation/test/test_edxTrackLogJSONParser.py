@@ -23,7 +23,7 @@ from output_disposition import OutputDisposition, ColDataType, TableSchemas, \
     ColumnSpec, OutputFile, OutputPipe # @UnusedImport
 
 
-TEST_ALL = True
+TEST_ALL = False
 PRINT_OUTS = False  # Set True to get printouts of CREATE TABLE statements
 
 # The following is very Dangerous: If True, no tests are
@@ -48,12 +48,17 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         pickleFile = os.path.join(os.path.dirname(__file__), '../data/hashLookup.pkl')
         if os.path.exists(pickleFile):
             with open(pickleFile, 'r') as pickleFd:
+                print("About to load pickled hash lookup dict from %sf" % pickleFile)
+                print("Done loading pickled hash lookup dict")
                 TestEdxTrackLogJSONParser.hashLookupDict = pickle.load(pickleFd)
+                return
         # Hash dict pickle doesn't exist yet. Make it exist:
         jsonModulestoreExcerpt = os.path.join(os.path.dirname(__file__), '../data/modulestore_latest.json')
         if not os.path.exists(jsonModulestoreExcerpt):
             raise('IOError: neither OpenEdx hash-to-displayName JSON excerpt from modulestore, nor a cache thereof is available. You need to run cronRefreshModuleStore.sh')
+        print("About to load modulestore JSON lookup dict from %sf", jsonModulestoreExcerpt)
         ModulestoreImporter(jsonModulestoreExcerpt)
+        print('Done loading modulestore JSON lookup dict')
         with open(pickleFile, 'r') as pickleFd:
             TestEdxTrackLogJSONParser.hashLookupDict = pickle.load(pickleFd)
     
@@ -988,7 +993,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
-    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testFullscreen(self):
         testFilePath = os.path.join(os.path.dirname(__file__),"data/fullscreen.json")
         stringSource = InURI(testFilePath)

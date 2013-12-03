@@ -104,11 +104,19 @@ class ModulestoreImporter(object):
                         method. 
         @type testLookupDict: {<String>:<String>}
         '''
+        self.useCache = useCache
+        self.testLookupDict = testLookupDict
+        self.jsonFileName = jsonFileName
+        
         if testLookupDict is not None:
-            self.hashLookup = testLookupDict;
+            # Use passed-in lookup table:
+            self.hashLookup = testLookupDict
+            # Build lookup for short course name to three-part standard name:
+            self.buildCourseShortNameToCourseName()            
             return
         
         self.pickleFileName = os.path.join(os.path.dirname(__file__), 'data/hashLookup.pkl')
+        
         if not useCache and not os.path.exists(str(jsonFileName)):
             raise IOError("File %s does not exist. Try setting useCache=True to use possibly existing cache; if that fails, must run cronRefreshModuleStore.sh" % jsonFileName)
         elif useCache and not os.path.exists(self.pickleFileName):
@@ -124,37 +132,23 @@ class ModulestoreImporter(object):
         # that start with '#':
         self.legalJSONStartPattern = re.compile('^([\s]*[#][^\n]*\n)*[\s]*[{]')
         
-        jsonStr = open(jsonFileName, 'r').read()
-        if self.legalJSONStartPattern.search(jsonStr) is None:
-            # Doesn't start with opening brace:
-            jsonStr = '{"all" :' + jsonStr + "}"
-        
         # Get dict {"all" : [{...}, {...},...]}
         if useCache:
             with open(self.pickleFileName, 'r') as pickleFd:
                 self.hashLookup = pickle.load(pickleFd)
+                # Build lookup for short course name to three-part standard name:
+                self.buildCourseShortNameToCourseName()            
             return
+    
+        # No use of cache, or cache unavailble:
+        self.loadModstoreFromJSON()
         
-        # No cached operation; read JSON file, and 
-        # create a lookup dict (which we'll then cache):
-        self.modstoreDict = json.loads(jsonStr)
-        
-        # Create a lookup table mapping hashes of problems
-        # and other modules into human-readable names:
-        self.hashLookup = {}
-        for modstoreEntryDict in self.modstoreDict['all']:
-            # modstoreEntryDict is like this:
-            # {u'_id': {u'category': u'annotatable', u'name': u'Annotation', u'course': u'templates', u'tag': u'i4x', u'org': u'edx', u'revision': None}, u'metadata': {u'display_name': u'Annotation'}}
-            try:
-                self.hashLookup[modstoreEntryDict['_id'].get('name', '')] = modstoreEntryDict['metadata'].get('display_name', '')
-            except KeyError:
-                # The 'about' entries don't have metadata; just ignore those entries:
-                pass
         # Save the lookup in a quick-to-load Python pickle file for future use
         # when option useCache is true:
         with open(self.pickleFileName, 'w') as pickleFd:
             pickle.dump(self.hashLookup, pickleFd)
-                  
+
+    # ----------------------------  Public Methods -----------------------------
         
     def getDisplayName(self, hashStr):
         '''
@@ -166,31 +160,140 @@ class ModulestoreImporter(object):
         @return: a display name as was used on the course Web site
         @rtype: {String | None} 
         '''
-        return self.hashLookup.get(hashStr, None) 
+        infoDict = self.hashLookup.get(hashStr, None)
+        if infoDict is None:
+            return None
+        return infoDict['display_name']
+    
+    def getOrganization(self, hashStr):
+        '''
+        Given a 32-bit OpenEdx hash string, return
+        a corresponding 'org' entry. If none found,
+        returns None
+        @param hashStr: string of 32 hex digits
+        @type hashStr: string
+        @return: the organization that offered the class or resource
+        @rtype: {String | None} 
+        '''
+        infoDict = self.hashLookup.get(hashStr, None)
+        if infoDict is None:
+            return None
+        return infoDict['org']
+    
+    def getCourseShortName(self, hashStr):
+        '''
+        Given a 32-bit OpenEdx hash string, return
+        a corresponding 'org' entry. If none found,
+        returns None
+        @param hashStr: string of 32 hex digits
+        @type hashStr: string
+        @return: the short name of the course associated with the hash. Ex: 'HRP258'
+        @rtype: {String | None} 
+        '''
+        infoDict = self.hashLookup.get(hashStr, None)
+        if infoDict is None:
+            return None
+        return infoDict['course_short_name']
+    
+    def getCategory(self, hashStr):
+        '''
+        Given a 32-bit OpenEdx hash string, return
+        a corresponding 'org' entry. If none found,
+        returns None
+        @param hashStr: string of 32 hex digits
+        @type hashStr: string
+        @return: the category associated with the hash. Ex.: 'problem', 'vertical', 'video'
+        @rtype: {String | None} 
+        '''
+        infoDict = self.hashLookup.get(hashStr, None)
+        if infoDict is None:
+            return None
+        return infoDict['category']
+
+    def getRevision(self, hashStr):
+        '''
+        Given a 32-bit OpenEdx hash string, return
+        a corresponding 'org' entry. If none found,
+        returns None
+        @param hashStr: string of 32 hex digits
+        @type hashStr: string
+        @return: the organization that offered the class or resource
+        @rtype: {String | None} 
+        '''
+        infoDict = self.hashLookup.get(hashStr, None)
+        if infoDict is None:
+            return None
+        return infoDict['revision']
         
     def export(self, outFilePath, addHeader=True):
+
         if not isinstance(outFilePath, basestring):
             outFilePath = outFilePath.name
+        # Unless we are using an existing in-memory stuct,
+        # extract such a struct from a file:
+        if not self.useCache and (self.testLookupDict is None):
+            # Create the in-memory data structure from the file:
+            self.loadModstoreFromJSON()
+            
         with open(outFilePath, 'w') as outFd:
             csvWriter = csv.writer(outFd, dialect='excel', delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             if addHeader:
-                csvWriter.writerow(['category','org', 'course_name','display_name','internal_name'])
-            for modstoreEntryDict in self.modstoreDict['all']:
-                # modstoreEntryDict is like this:
-                # {u'_id': {u'category': u'annotatable', u'name': u'Annotation', u'course': u'templates', u'tag': u'i4x', u'org': u'edx', u'revision': None}, u'metadata': {u'display_name': u'Annotation'}}
-                # 'About' entries have no metadata; skip them:
-                try:
-                    displayName = modstoreEntryDict['metadata'].get('display_name', ''),
-                except KeyError:
-                    continue
-
-                values = [modstoreEntryDict['_id'].get('category', ''),
-                          modstoreEntryDict['_id'].get('org', ''),
-                          modstoreEntryDict['_id'].get('course', ''),
-                          displayName,
-                          modstoreEntryDict['_id'].get('name', '')]
+                csvWriter.writerow(['name_hash','org','short_course_name','category','revision','display_name'])
+            # Go through each OpenEdx hash, retrieve the little modstore dict that's
+            # associated with it, and write to CSV:
+            for modstoreID in self.hashLookup.keys():
+                entryDict = self.hashLookup[modstoreID]
+                values = [modstoreID,
+                          entryDict['org'],
+                          entryDict['course_short_name'],
+                          entryDict['category'],
+                          entryDict['revision'],
+                          entryDict['display_name']]
                 csvWriter.writerow(values)
+
+    # ----------------------------  Private Methods -----------------------------
             
+    def loadModstoreFromJSON(self):
+        '''
+        Given the JSON file path passed into __init__(), read that file,
+        and extract a dict::
+             OpenEdxHashNum --> {org, short_course_name, category, revision, display_name}
+        That dict is stored in self.hashLookup().
+        '''
+        jsonStr = open(self.jsonFileName, 'r').read()
+        if self.legalJSONStartPattern.search(jsonStr) is None:
+            # Doesn't start with opening brace:
+            jsonStr = '{"all" :' + jsonStr + "}"
         
+        self.modstoreDict = json.loads(jsonStr)
+        
+        # Create a lookup table mapping hashes of problems
+        # and other modules into human-readable names:
+        self.hashLookup = {}
+        for modstoreEntryDict in self.modstoreDict['all']:
+            # modstoreEntryDict is like this:
+            # {u'_id': {u'category': u'annotatable', u'name': u'Annotation', u'course': u'templates', u'tag': u'i4x', u'org': u'edx', u'revision': None}, u'metadata': {u'display_name': u'Annotation'}}
+            try:
+                infoDict = {}
+                infoDict['org'] = modstoreEntryDict['_id'].get('org', '')
+                infoDict['course_short_name'] = modstoreEntryDict['_id'].get('course', '')
+                infoDict['category'] = modstoreEntryDict['_id'].get('category', '')
+                infoDict['revision'] = modstoreEntryDict['_id'].get('revision', '')
+                infoDict['display_name'] = modstoreEntryDict['metadata'].get('display_name', '')
+                self.hashLookup[modstoreEntryDict['_id'].get('name', '')] = infoDict
+            except KeyError:
+                # The 'about' entries don't have metadata; just ignore those entries:
+                pass
+        # Build lookup for short course name to three-part standard name:
+        self.buildCourseShortNameToCourseName()
+                  
+    def buildCourseShortNameToCourseName(self):
+        self.courseNameLookup = {}
+        for infoDictID in self.hashLookup.keys():
+            if self.hashLookup['category'] == 'course':
+                self.courseNameLookup[self.hashLookup['course_short_name']] =\
+                                         self.hashLookup['org'] + '/' +\
+                                         self.hashLookup['course_short_name'] + '/' +\
+                                         infoDictID
         
         

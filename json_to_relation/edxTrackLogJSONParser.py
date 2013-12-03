@@ -3865,5 +3865,18 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             # Get display name and add to main table as resource_display_name:
             displayName = self.hashMapper.getDisplayName(hashNum)
             if displayName is not None:
-                self.setValInRow(row, 'resource_display_name', displayName)
+                self.setValInRow(row, 'resource_display_name', self.makeInsertSafe(displayName))
+        
+    def getCanonicalCourseName(self, trackLogStr):
+        '''
+        Given a string believed to be the best course name
+        snippet from a log entry, use the modulestoreImporter's
+        facilities to get a canonical name. Inputs look like::
+            Medicine/HRP258/Statistics_in_Medicine
+            /courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/sequential/1b3ac347ca064b3eaaddbc27d4200964/goto_position
+        @param trackLogStr: string that hopefully contains a course short name
+        @type trackLogStr: String
+        @return: a string of the form org/courseShortName/courseTitle
+        @rtype: String
+        '''
         

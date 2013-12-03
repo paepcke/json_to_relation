@@ -169,22 +169,22 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('7b98a2d5_0e86_4947_8aec_86a449d5ce6f','2013120221551386050159','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/resetProblemTest.json');
+    ('12906bcb_a7e2_4d4d_9b62_59b7e474b934','2013120302351386066930','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/resetProblemTest.json');
 INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
-    ('85688f2c_24d3_41a1_a0fb_f4bf76547d78','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','choice_2','');
+    ('4a24cc7b_1cc2_4718_b5a2_8763b3e55242','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','choice_2','');
 INSERT INTO CorrectMap (correct_map_id,answer_identifier,correctness,npoints,msg,hint,hintmode,queuestate) VALUES 
-    ('bce033bb_6097_448c_b3f0_aa295a4edc6c','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','incorrect',-1,'','','','');
+    ('9e5902f3_7cc1_4ca3_a930_d51584e0a168','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','incorrect',-1,'','','','');
 INSERT INTO InputState (input_state_id,problem_id,state) VALUES 
-    ('537a5e54_49dc_4be7_880a_fac6f969c571','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','');
+    ('54e1cb3d_aea9_4fb0_888f_b8b43c2a7d76','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','');
 INSERT INTO State (state_id,seed,done,problem_id,student_answer,correct_map,input_state) VALUES 
-    ('dda15bed_3323_49c4_832c_6591df5cb827',811,'True','','85688f2c_24d3_41a1_a0fb_f4bf76547d78','bce033bb_6097_448c_b3f0_aa295a4edc6c','537a5e54_49dc_4be7_880a_fac6f969c571');
+    ('6d9a189b_40cb_43a2_a7c2_2caa7ffe664d',811,'True','','4a24cc7b_1cc2_4718_b5a2_8763b3e55242','9e5902f3_7cc1_4ca3_a930_d51584e0a168','54e1cb3d_aea9_4fb0_888f_b8b43c2a7d76');
 INSERT INTO InputState (input_state_id,problem_id,state) VALUES 
-    ('c0f8eee4_c7b8_49b1_95f5_322a0ef90056','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','');
+    ('036810ee_a98c_413c_8b59_d157edcf1462','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','');
 INSERT INTO State (state_id,seed,done,problem_id,student_answer,correct_map,input_state) VALUES 
-    ('70d3ab45_ffa1_4a8f_ae7f_d7a761a1c642',93,'False','','','','c0f8eee4_c7b8_49b1_95f5_322a0ef90056');
+    ('587f5321_d3e2_4769_8eb6_a55e07c9e7fd',93,'False','','','','036810ee_a98c_413c_8b59_d157edcf1462');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('453a08d1_1651_40e7_ad3e_fd7bcc91176d','ea5b652b_dc4a_4245_b2ea_ae36cc7323b7','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','reset_problem','24.43.226.3','x_module','','2013-06-12T21:54:33.936342','d9d408778a34b923abce3db9836068b9df6a2fcc','0:00:00','','','','','','','',-1,-1,'i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','dda15bed_3323_49c4_832c_6591df5cb827','7b98a2d5_0e86_4947_8aec_86a449d5ce6f'),
-    ('113ba6b6_974c_4783_b4c8_f2adc92f06f1','ea5b652b_dc4a_4245_b2ea_ae36cc7323b7','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','reset_problem','24.43.226.3','x_module','','2013-06-12T21:54:33.936342','d9d408778a34b923abce3db9836068b9df6a2fcc','0:00:00','','','','','','','',-1,-1,'i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','70d3ab45_ffa1_4a8f_ae7f_d7a761a1c642','7b98a2d5_0e86_4947_8aec_86a449d5ce6f');
+    ('c6583fd3_521c_41de_bea8_2929a51280d9','06aa7a01_946f_4e4d_884d_97d848e0f634','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','reset_problem','24.43.226.3','x_module','','2013-06-12T21:54:33.936342','d9d408778a34b923abce3db9836068b9df6a2fcc','0:00:00','','','','','Turing and Artificial Intelligence','','',-1,-1,'i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','6d9a189b_40cb_43a2_a7c2_2caa7ffe664d','12906bcb_a7e2_4d4d_9b62_59b7e474b934'),
+    ('f89be8b7_9a90_4c1a_ba8c_6d283663e702','06aa7a01_946f_4e4d_884d_97d848e0f634','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','reset_problem','24.43.226.3','x_module','','2013-06-12T21:54:33.936342','d9d408778a34b923abce3db9836068b9df6a2fcc','0:00:00','','','','','Turing and Artificial Intelligence','','',-1,-1,'i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','587f5321_d3e2_4769_8eb6_a55e07c9e7fd','12906bcb_a7e2_4d4d_9b62_59b7e474b934');
 /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

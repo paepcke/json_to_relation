@@ -5,21 +5,48 @@ Created on Nov 30, 2013
 '''
 import StringIO
 import os
+import pickle
 import tempfile
 import unittest
 
 from modulestoreImporter import ModulestoreImporter
 
-TEST_ALL = False
 
-class Test(unittest.TestCase):
+TEST_ALL = True
 
+class TestModuleStore(unittest.TestCase):
+
+    hashLookupDict = None
+    
+    @classmethod
+    def setUpClass(cls):
+        '''
+        Called once, sets up a class variable with an OpenEdx hash-to-ModulestoreInfo
+        dict, which is then reused for each test.
+        @param cls: TestModuleStore
+        @type cls: Class
+        '''
+        pickleFile = os.path.join(os.path.dirname(__file__), '../data/hashLookup.pkl')
+        if os.path.exists(pickleFile):
+            with open(pickleFile, 'r') as pickleFd:
+                TestModuleStore.hashLookupDict = pickle.load(pickleFd)
+        # Hash dict pickle doesn't exist yet. Make it exist:
+        jsonModulestoreExcerpt = os.path.join(os.path.dirname(__file__), '../data/modulestore_latest.json')
+        if not os.path.exists(jsonModulestoreExcerpt):
+            raise('IOError: neither OpenEdx hash-to-displayName JSON excerpt from modulestore, nor a cache thereof is available. You need to run cronRefreshModuleStore.sh')
+        ModulestoreImporter(jsonModulestoreExcerpt)
+        with open(pickleFile, 'r') as pickleFd:
+            TestModuleStore.hashLookupDict = pickle.load(pickleFd)
+
+    def setUp(self):
+        super(TestModuleStore, self).setUp()
+        self.hashLookupDict = TestModuleStore.hashLookupDict  
 
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testModulestoreImportExport(self):
 
         testFilePath = 'data/modulestoreImport.json'
-        importer = ModulestoreImporter(testFilePath)
+        importer = ModulestoreImporter(testFilePath, testLookupDict=self.hashLookupDict)
         dest = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.csv')
         importer.export(dest)
         truthFile = open(os.path.join(os.path.dirname(__file__),'data/modulestoreImportTruth.csv'),'r')
@@ -29,17 +56,17 @@ class Test(unittest.TestCase):
     def testModulestoreImportLookups(self):
 
         testFilePath = 'data/modulestoreImport.json'
-        importer = ModulestoreImporter(testFilePath)
+        importer = ModulestoreImporter(testFilePath, testLookupDict=self.hashLookupDict)
         self.assertEqual(importer.getDisplayName("67b77215c10243f1a20d81350909084a"), 'Module 2')
         self.assertEqual(importer.getDisplayName("e9ef4bdae8874030b2321a7699f03a82"), 'Quiz')  
         self.assertEqual(importer.getDisplayName("109c60b8350a4a7aa8b7389c99fdf6ea"), 'Setting Norms')
         self.assertEqual(importer.getDisplayName("handouts"), '')
 
     #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
-    def testFullModuleStore(self):
+    def testFullModuleStoreExport(self):
 
         testFilePath = '/home/paepcke/Project/VPOL/Data/FullDumps/modulestore_latest.json'
-        importer = ModulestoreImporter(testFilePath)
+        importer = ModulestoreImporter(testFilePath, testLookupDict=self.hashLookupDict)
         importer.export('/home/paepcke/Project/VPOL/Data/FullDumps/modulestore_latest.csv', addHeader=True)
         print str(importer.getDisplayName('f76abf408e84414aa9152c730fc9e95a'))
     
