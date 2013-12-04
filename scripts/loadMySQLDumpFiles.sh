@@ -2,7 +2,9 @@
 
 # Loads one or more SQL dump files into the locally accessible MySQL (at usual port 3306)
 # Files may be .sql, .sql.gz, or .sql.bz2. The correct decompression will
-# happen in a pipe (i.e. files are not decompressed on the disk.)
+# happen in a pipe (i.e. files are not decompressed on the disk.) This script
+# is used, for example, to load Coursera dumps. To load OpenEdx log files,
+# use executeCSVLoad.sh.
 #
 # Commandline required argument: at least one file to import. 
 # Optional arguments are -p (use password) -u <username>, and -d <dbName>.

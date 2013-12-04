@@ -34,6 +34,7 @@ MYSQL_DATADIR_DECL=`grep datadir /etc/mysql/my.cnf`
 # Extract just the directory:
 MYSQL_DATADIR=`echo $s | cut -d'=' -f 2`
 
+# Turn off MySQL indexing:
 mysqladmin flush-tables
 if [ -e ${MYSQL_DATADIR}/Edx/EdxTrackEvent.MYI ]; then myisamchk --keys-used=0 -rq ${MYSQL_DATADIR}/Edx/EdxTrackEvent.MYI; fi
 if [ -e ${MYSQL_DATADIR}/Edx/Answer.MYI ]; then myisamchk --keys-used=0 -rq ${MYSQL_DATADIR}/Edx/Answer.MYI; fi

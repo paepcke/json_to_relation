@@ -10,7 +10,7 @@ Created on Sep 24, 2013
 from collections import OrderedDict
 import unittest
 
-from json_to_relation.mysqldb import MySQLDB
+from mysqldb import MySQLDB
 
 
 #from mysqldb import MySQLDB

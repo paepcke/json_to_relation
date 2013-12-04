@@ -407,6 +407,11 @@ if __name__ == '__main__':
     else:
         puller = TrackLogPuller(logFile=args.errLogFile)
     
+    #**********************
+    print(puller.identifyNewLogFiles("/lfs/datasource/0/home/dataman/Data/EdX/tracking/pullHistory.txt"))
+    sys.exit()
+    #**********************
+    
     if args.toDo == 'pull' or args.toDo == 'pullTransform' or args.toDo == 'pullTransformLoad':
         # For pull cmd, 'logs' must be a writable directory (to which the track logs will be written). 
         # It will come in as a singleton array:

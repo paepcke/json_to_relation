@@ -7,7 +7,6 @@ import StringIO
 from collections import OrderedDict
 import json
 import os
-import pickle
 import re
 import shutil
 import sys
@@ -23,7 +22,7 @@ from output_disposition import OutputDisposition, ColDataType, TableSchemas, \
     ColumnSpec, OutputFile, OutputPipe # @UnusedImport
 
 
-TEST_ALL = True
+TEST_ALL = False
 PRINT_OUTS = False  # Set True to get printouts of CREATE TABLE statements
 
 # The following is very Dangerous: If True, no tests are
@@ -49,9 +48,10 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         '''
         # Hash dict pickle doesn't exist yet. Make it exist:
         jsonModulestoreExcerpt = os.path.join(os.path.dirname(__file__), '../data/modulestore_latest.json')
+        #jsonModulestoreExcerpt = os.path.join(os.path.dirname(__file__), 'data/modulestore_sample.json')
         if not os.path.exists(jsonModulestoreExcerpt):
-            raise('IOError: neither OpenEdx hash-to-displayName JSON excerpt from modulestore, nor a cache thereof is available. You need to run cronRefreshModuleStore.sh')
-        print("About to load modulestore JSON lookup dict from %sf" % jsonModulestoreExcerpt)
+            raise IOError('Neither OpenEdx hash-to-displayName JSON excerpt from modulestore, nor a cache thereof is available. You need to run cronRefreshModuleStore.sh')
+        print("About to load modulestore JSON lookup dict from %s" % jsonModulestoreExcerpt)
         ModulestoreImporter(jsonModulestoreExcerpt)
         print('Done loading modulestore JSON lookup dict')
     
@@ -216,11 +216,11 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
 
         (fullCourseName, courseName, display_name) = edxParser.get_course_id(json.loads(self.loginEvent))  # @UnusedVariable
         self.assertEqual('/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/80160exxx/', fullCourseName)
-        self.assertEqual('Medicine/HRP258/Statistics_in_Medicine', courseName)
+        self.assertEqual('Medicine/HRP258/Statistics_in_Medicine', display_name)
         
         (fullCourseName, courseName, display_name) = edxParser.get_course_id(json.loads(self.videoEvent))  # @UnusedVariable
         self.assertEqual('https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/64abcdd9afc54c6089a284e985 3da6ea/2a8de59355e349b7ae40aba97c59736f/', fullCourseName)
-        self.assertEqual('Medicine/HRP258/Statistics_in_Medicine', courseName)
+        self.assertEqual('Medicine/HRP258/Statistics_in_Medicine', display_name)
         
         (fullCourseName, courseName, display_name) = edxParser.get_course_id(json.loads(self.dashboardEvent))  # @UnusedVariable
         self.assertEqual('', fullCourseName)        
@@ -1393,6 +1393,53 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
             self.assertEqual(os.stat(dest.name + '_InputStateTable.csv').st_size, 0)
             self.assertEqual(os.stat(dest.name + '_StateTable.csv').st_size, 0)
 
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
+    def testCourseIdGetsProbId(self):
+        testFilePath = os.path.join(os.path.dirname(__file__),"data/courseIdGetsProbId.json")
+        stringSource = InURI(testFilePath)
+        
+        resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+        # Just use the file name of the tmp file.
+        resultFileName = resultFile.name
+        resultFile.close()
+        dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+        fileConverter = JSONToRelation(stringSource,
+                                       dest,
+                                       mainTableName='EdxTrackEvent'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        fileConverter.setParser(edxParser)
+        fileConverter.convert()
+        dest.close()
+        truthFile = open(os.path.join(os.path.dirname(__file__),"data/courseIdGetsProbIdTruth.sql"), 'r')
+        if UPDATE_TRUTH:
+            self.updateTruth(dest.name, truthFile.name)
+        else:
+            self.assertFileContentEquals(truthFile, dest.name)
+
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
+    def testNoCourseIDInProblemCheck(self):
+        testFilePath = os.path.join(os.path.dirname(__file__),"data/noCourseIDInProblemCheck.json")
+        stringSource = InURI(testFilePath)
+        
+        resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+        # Just use the file name of the tmp file.
+        resultFileName = resultFile.name
+        resultFile.close()
+        dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+        fileConverter = JSONToRelation(stringSource,
+                                       dest,
+                                       mainTableName='EdxTrackEvent'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        fileConverter.setParser(edxParser)
+        fileConverter.convert()
+        dest.close()
+        truthFile = open(os.path.join(os.path.dirname(__file__),"data/noCourseIDInProblemCheckTruth.sql"), 'r')
+        if UPDATE_TRUTH:
+            self.updateTruth(dest.name, truthFile.name)
+        else:
+            self.assertFileContentEquals(truthFile, dest.name)
 
 
 #     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    

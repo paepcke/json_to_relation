@@ -1992,6 +1992,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             return row
         
         videoID = valsDict.get('id', None)
+        self.setResourceDisplayName(row, videoID)
         videoCode = valsDict.get('code', None)
         videoCurrentTime = str(valsDict.get('currentTime', None))
         videoSpeed = str(valsDict.get('speed', None))
@@ -2023,6 +2024,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             return row
 
         videoID = valsDict.get('id', None)
+        self.setResourceDisplayName(row, videoID)
         videoCode = valsDict.get('code', None)
         videoOldTime = str(valsDict.get('old_time', None))
         videoNewTime = str(valsDict.get('new_time', None))
@@ -2056,6 +2058,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             return row
 
         videoID = valsDict.get('id', None)
+        self.setResourceDisplayName(row, videoID)
         videoCode = valsDict.get('code', None)
         videoCurrentTime = str(valsDict.get('currentTime', None))
         videoOldSpeed = str(valsDict.get('old_speed', None))
@@ -2093,6 +2096,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             return row
         
         videoID = valsDict.get('id', None)
+        self.setResourceDisplayName(row, videoID)
         videoCode = valsDict.get('code', None)
         videoCurrentTime = str(valsDict.get('currentTime', None))
 
@@ -2124,6 +2128,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             return row
         
         videoID = valsDict.get('id', None)
+        self.setResourceDisplayName(row, videoID)
         videoCode = valsDict.get('code', None)
         videoCurrentTime = str(valsDict.get('currentTime', None))
 
@@ -3562,13 +3567,18 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 fullCourseName = event.get('event_type', '')
         else:
             fullCourseName = event.get('page', '')
+            
+        # Abvove logic makes an error for '/dashboard' events:
+        # it assigns '/dashboard' to the fullCourseName. Correct
+        # this:
+        if fullCourseName == '/dashboard' or fullCourseName == '/heartbeat':
+            fullCourseName = ""
         if len(fullCourseName) > 0:
             course_display_name = self.extractShortCourseID(fullCourseName)
         else:
             course_display_name = ''
         if len(course_id) == 0:
             course_id = fullCourseName
-            fullCourseName = ''
         return (fullCourseName, course_id, course_display_name)
         
     def getCourseDisplayName(self, fullCourseName):
@@ -3577,10 +3587,14 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @param fullCourseName:
         @type fullCourseName:
         '''
-        courseHash = self.extractOpenEdxHash(fullCourseName)
-        if courseHash is None:
+        hashStr = self.extractOpenEdxHash(fullCourseName)
+        if hashStr is None:
             return None
-        return self.hashMapper.getDisplayName(courseHash)
+        courseShortName = self.hashMapper.getCourseShortName(hashStr)
+        if courseShortName is not None:
+            return self.hashMapper[courseShortName]
+        else:
+            return None
         
         
     def extractShortCourseID(self, fullCourseStr):

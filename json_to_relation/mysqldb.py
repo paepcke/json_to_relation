@@ -5,6 +5,7 @@ Created on Sep 24, 2013
 '''
 
 import pymysql
+#import MySQLdb
 
 
 class MySQLDB(object):
@@ -24,6 +25,9 @@ class MySQLDB(object):
         self.cursors = []
         try:
             self.connection = pymysql.connect(host=host, port=port, user=user, passwd=passwd, db=db)
+            #self.connection = MySQLdb.connect(host=host, port=port, user=user, passwd=passwd, db=db, local_infile=1)
+        
+        #except MySQLdb.OperationalError:
         except pymysql.OperationalError:
             pwd = '...............' if len(passwd) > 0 else '<no password>'
             raise ValueError('Cannot reach MySQL server with host:%s, port:%s, user:%s, pwd:%s, db:%s' %
