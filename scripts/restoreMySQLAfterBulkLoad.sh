@@ -1,8 +1,6 @@
 #!/bin/bash
 
-# Turns off indexing during bulk load of Edx log files to speed up the loads.
-# You need to call restoreMySQLAfterBulkLoad.sh when done
-# with the load. It will re-enable indexes, and update them
+# Re-enables indexes, and updates them
 # in memory into a perfectly balanced tree.
 
 sudo  myisamchk -rq /lfs/datastage/0/home/mysql/tables/mysql/Edx/EdxTrackEvent.MYI

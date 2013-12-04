@@ -350,6 +350,12 @@ class JSONToRelation(object):
                     self.jsonParserInstance.processOneJSONObject(jsonStr, newRow)
                 except (ValueError, KeyError) as e:
                     JSONToRelation.logger.warn('Line %s: bad JSON object: %s' % (self.makeFileCitation(), `e`))
+                    #***************
+                    import sys
+                    import traceback
+                    #sys.exc_info()[2].print_exc()
+                    traceback.print_tb(sys.exc_info()[2])
+                    #***************
                 self.bumpLineCounter()
 
             # Since we hold back SQL insertion values to include them

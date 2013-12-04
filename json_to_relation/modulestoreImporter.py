@@ -70,6 +70,11 @@ class ModulestoreImporter(DictMixin):
         self.useCache = useCache
         self.jsonFileName = jsonFileName
         
+        # Regex to identify long course names that end
+        # with an edX hash string: 'Medicine/HRP259/4820b254e28c4889b760884ffd049ce'
+        # is a hit, but 'Medicine/HRP259/Stats_is_fun' is not a hit: 
+        self.nameEndsWithHashPattern =  re.compile(r'(([^/]*/){2}[a-f0-9]{32}$)')
+        
         if pickleCachePath is None:
             self.pickleCachePath = os.path.join(os.path.dirname(__file__), 'data/hashLookup.pkl')
         else:
@@ -118,7 +123,7 @@ class ModulestoreImporter(DictMixin):
         '''
         Given a 32-bit OpenEdx hash string, return
         a corresponding display_name. If none found,
-        returns None
+        returns None.
         @param hashStr: string of 32 hex digits
         @type hashStr: string
         @return: a display name as was used on the course Web site
@@ -320,16 +325,27 @@ class ModulestoreImporter(DictMixin):
         self.courseNameLookup = {}
         for infoDictID in self.hashLookup.keys():
             infoDict = self.hashLookup[infoDictID]
-            if infoDict['category'] == 'course':
-                shortName = infoDict['course_short_name']
-                # Weed out test course names, like '1' and '123', and '2013':
-                # Require the course name to start with a letter.
-                # (Should we require at least two letter?)
-                if re.search(r'^[a-zA-Z]', shortName) is None:
+            shortName = infoDict['course_short_name']
+            # If we already have an entry for this short name,
+            # leave it alone:
+            try:
+                currLongName = self.courseNameLookup[shortName]
+                # Check quality: if this existing entry has an edX hash
+                # string, then try for something better. Example:
+                # Might have  Medicine/HRP259/4820b254e28c4889b760884ffd049ce7
+                # when we could have Medicine/HRP259/Working_with_stats.
+                if self.nameEndsWithHashPattern.search(currLongName) is None:
                     continue
-                self.courseNameLookup[infoDict['course_short_name']] =\
-                                      infoDict['org'] + '/' +\
-                                      shortName + '/' +\
-                                      infoDictID
+            except KeyError:
+                pass
+            # Weed out test course names, like '1' and '123', and '2013':
+            # Require the course name to start with a letter.
+            # (Should we require at least two letter?)
+            if re.search(r'^[a-zA-Z]', shortName) is None:
+                continue
+            self.courseNameLookup[shortName] =\
+                                  infoDict['org'] + '/' +\
+                                  shortName + '/' +\
+                                  infoDictID
         
         
