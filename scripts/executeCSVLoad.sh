@@ -88,19 +88,19 @@ done
 # This does not yet index the non-key columns:
 
 echo '`date`: Indexing primary and foreign keys for table EdxTrackEvent...' >> $logDir/mysqlCSVLoad.log
-time sudo  myisamchk --silent -rq /lfs/datastage/0/home/mysql/tables/mysql/Edx/EdxTrackEvent.MYI >> $logDir/mysqlCSVLoad.log
+time sudo  myisamchk -rq ${MYSQL_DATADIR}/Edx/EdxTrackEvent.MYI >> $logDir/mysqlCSVLoad.log
 echo '`date`: Indexing primary and foreign keys for table Answer...' >> $logDir/mysqlCSVLoad.log
-time sudo  myisamchk --silent -rq /lfs/datastage/0/home/mysql/tables/mysql/Edx/Answer.MYI >> $logDir/mysqlCSVLoad.log
+time sudo  myisamchk -rq ${MYSQL_DATADIR}/Edx/Answer.MYI >> $logDir/mysqlCSVLoad.log
 echo '`date`: Indexing primary and foreign keys for table CorrectMap...' >> $logDir/mysqlCSVLoad.log
-time sudo  myisamchk --silent -rq /lfs/datastage/0/home/mysql/tables/mysql/Edx/CorrectMap.MYI >> $logDir/mysqlCSVLoad.log
+time sudo  myisamchk -rq ${MYSQL_DATADIR}/Edx/CorrectMap.MYI >> $logDir/mysqlCSVLoad.log
 echo '`date`: Indexing primary and foreign keys for table InputState...' >> $logDir/mysqlCSVLoad.log
-time sudo  myisamchk --silent -rq /lfs/datastage/0/home/mysql/tables/mysql/Edx/InputState.MYI >> $logDir/mysqlCSVLoad.log
+time sudo  myisamchk -rq ${MYSQL_DATADIR}/Edx/InputState.MYI >> $logDir/mysqlCSVLoad.log
 echo '`date`: Indexing primary and foreign keys for table LoadInfo...' >> $logDir/mysqlCSVLoad.log
-time sudo  myisamchk --silent -rq /lfs/datastage/0/home/mysql/tables/mysql/Edx/LoadInfo.MYI >> $logDir/mysqlCSVLoad.log
+time sudo  myisamchk -rq ${MYSQL_DATADIR}/Edx/LoadInfo.MYI >> $logDir/mysqlCSVLoad.log
 echo '`date`: Indexing primary and foreign keys for table State...' >> $logDir/mysqlCSVLoad.log
-time sudo  myisamchk --silent -rq /lfs/datastage/0/home/mysql/tables/mysql/Edx/State.MYI >> $logDir/mysqlCSVLoad.log
+time sudo  myisamchk -rq ${MYSQL_DATADIR}/Edx/State.MYI >> $logDir/mysqlCSVLoad.log
 echo '`date`: Indexing primary and foreign keys for table EdxPrivate.Account...' >> $logDir/mysqlCSVLoad.log
-time sudo  myisamchk --silent -rq /lfs/datastage/0/home/mysql/tables/mysql/EdxPrivate/Account.MYI >> $logDir/mysqlCSVLoad.log
+time sudo  myisamchk -rq ${MYSQL_DATADIR}/EdxPrivate/Account.MYI >> $logDir/mysqlCSVLoad.log
 echo '`date`: Done indexing primary and foreign keys.' >> $logDir/mysqlCSVLoad.log
 
 # Build the other indexes:
