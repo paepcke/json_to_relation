@@ -73,7 +73,10 @@ class ModulestoreImporter(DictMixin):
         # Regex to identify long course names that end
         # with an edX hash string: 'Medicine/HRP259/4820b254e28c4889b760884ffd049ce'
         # is a hit, but 'Medicine/HRP259/Stats_is_fun' is not a hit: 
-        self.nameEndsWithHashPattern =  re.compile(r'(([^/]*/){2}[a-f0-9]{32}$)')
+        self.nameEndsWithHashPattern =  re.compile(r'(([^/]*/){2}[a-fA-F0-9]{32}$)')
+
+        # Regex to identify a 32-bit hex hash string without other info in the string:
+        self.hashStringOnlyPattern =  re.compile(r'^[a-fA-F0-9]{32}$')
         
         if pickleCachePath is None:
             self.pickleCachePath = os.path.join(os.path.dirname(__file__), 'data/hashLookup.pkl')
@@ -283,6 +286,36 @@ class ModulestoreImporter(DictMixin):
         and extract a dict::
              OpenEdxHashNum --> {org, short_course_name, category, revision, display_name}
         That dict is stored in self.hashLookup().
+        Input is the raw JSON from the modulestore. Sample lines, all regarding
+        the same class, HRP259::
+			 { "_id" : { "tag" : "i4x", "org" : "Medicine", "course" : "HRP259", "category" : "about", "name" : "video", "revision" : null } }
+			 { "_id" : { "tag" : "i4x", "org" : "Medicine", "course" : "HRP259", "category" : "chapter", "name" : "495757ee7b25401599b1ef0495b068e4", "revision" : null } }
+			 { "_id" : { "tag" : "i4x", "org" : "Medicine", "course" : "HRP259", "category" : "course", "name" : "Fall2013", "revision" : null } }
+			 { "_id" : { "tag" : "i4x", "org" : "Medicine", "course" : "HRP259", "category" : "course_info", "name" : "handouts", "revision" : null } }
+			 { "_id" : { "tag" : "i4x", "org" : "Medicine", "course" : "HRP259", "category" : "course_info", "name" : "updates", "revision" : null } }
+
+        When '_id.name' is a hash str, we want it to be the key of the
+        self.hashLookup dict we are building; these quantities are unique.
+        
+        However, very important entry for each class is the one with _id.category=='course'.
+        Its _id.name field usually holds the long name of a class, as in::
+        
+           { "_id" : { "tag" : "i4x", "org" : "Medicine", "course" : "HRP258", "category" : "course", "name" : "Statistics_in_Medicine", "revision" : null } }
+           
+        So we need to use a different key than _id.name in our self.hashLookup.
+        We *cannot* just use _id.name! In the above case, HRP258, that key would
+        be Statistics_in_Medicine, and it would work fine. But _id.name is often
+        not unique, and entries in the self.hashLookup dict would be overwritten.
+        Like this::  
+        
+		   { "_id" : { "tag" : "i4x", "org" : "HumanitiesSciences", "course" : "Bio41", "category" : "course", "name" : "Fall2013", "revision" : null } }
+		   { "_id" : { "tag" : "i4x", "org" : "HumanitiesSciences", "course" : "CHEM291", "category" : "course", "name" : "Fall2013", "revision" : null } }
+
+        Conclusion:
+           1. _id.category == 'course': self.hashLookup key <-- _id.course (e.g. 'HRP259')
+           2. _id.category != 'course' and _id.name is a hash string: self.hashLookup key <-- _id.name
+           3. _id.category != 'course' and _id.name is not a hash string: self.hashLookup key <-- '_id.course'_'_id.category'_'_id.name'
+        This scheme is not perfect, but it suffices for what we want to do.
         '''
         jsonStr = open(self.jsonFileName, 'r').read()
         if self.legalJSONStartPattern.search(jsonStr) is None:
@@ -303,8 +336,21 @@ class ModulestoreImporter(DictMixin):
                 infoDict['course_short_name'] = modstoreEntryDict['_id'].get('course', '')
                 infoDict['category'] = modstoreEntryDict['_id'].get('category', '')
                 infoDict['revision'] = modstoreEntryDict['_id'].get('revision', '')
+                infoDict['name'] = modstoreEntryDict['_id'].get('name', '')                
                 infoDict['display_name'] = modstoreEntryDict['metadata'].get('display_name', '')
-                self.hashLookup[modstoreEntryDict['_id'].get('name', '')] = infoDict
+                
+                if infoDict['category'] == 'course':
+                    key = modstoreEntryDict['_id'].get('course', '')
+                    self.hashLookup[key] = infoDict
+                elif self.hashStringOnlyPattern.search(infoDict['name']) is not None:
+                    # Name is a hash str:
+                    key = modstoreEntryDict['_id'].get('name', '')
+                    self.hashLookup[key] = infoDict
+                else:
+                    key = modstoreEntryDict['_id'].get('course', '') + '_' +\
+                          modstoreEntryDict['_id'].get('category', '') + '_' +\
+                          modstoreEntryDict['_id'].get('name', '')
+                    self.hashLookup[key] = infoDict
             except KeyError:
                 # The 'about' entries don't have metadata; just ignore those entries:
                 pass
@@ -339,7 +385,7 @@ class ModulestoreImporter(DictMixin):
             self.courseNameLookup[shortName] =\
                                   infoDict['org'] + '/' +\
                                   shortName + '/' +\
-                                  infoDictID
+                                  infoDict['name']
         
 #         for infoDictID in self.hashLookup.keys():
 #             infoDict = self.hashLookup[infoDictID]

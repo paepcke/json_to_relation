@@ -49,3 +49,5 @@ re
 socket
 subprocess
 gpg
+modulestore_*
+hashLookup.pkl

@@ -3129,6 +3129,15 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
 
+        # Interesting info is hidden in the event_type field of this
+        # type of record: the embedded hash string corresponds to a
+        # sometimes illuminating entry in the modulestore's 'metadata.display_name'
+        # field. We use our ModulestoreMapper instance self.hashMapper to
+        # get that information, and insert it in the resource_display_name field
+        # of the edXTrackEvent table (setResourceDisplayName() does nothing if
+        # given a None, so the call is safe):
+        self.setResourceDisplayName(row, record.get('event_type', None))
+
         eventDict = self.ensureDict(event) 
         if eventDict is None:
             self.logWarn("Track log line %s: event is not a dict in path-styled event: '%s'" %\
@@ -3857,6 +3866,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @param idStr: problem, module, video ID and others that might contain a 32 bit OpenEdx platform hash
         @type idStr: string
         '''
+        if idStr is None:
+            return None
         match = EdXTrackLogJSONParser.findHashPattern.search(idStr)
         if match is not None:
             return match.group(1)
