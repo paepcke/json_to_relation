@@ -25,6 +25,12 @@ then
     exit 1
 fi
 
+if [ `whoami` != 'root' ]
+then
+    echo 'You must run this script as sudo.'
+    exit
+fi
+
 read -s -p "Root's MySQL Password: " password
 echo
 
