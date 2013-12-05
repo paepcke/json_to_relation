@@ -45,33 +45,55 @@ MYSQL_DATADIR=`echo $s | cut -d'=' -f 2`
 # Turn off MySQL indexing; Begin by flushing tables:
 
 echo "`date`: Flushing table EdxTrackEvent:"
-mysql -u root -p$password -e 'FLUSH TABLES EdxTrackEvent' Edx >> $logDir/mysqlCSVLoad.log
+if [ -e ${MYSQL_DATADIR}/Edx/EdxTrackEvent.MYI ]
+then 
+    mysql -u root -p$password -e 'FLUSH TABLES EdxTrackEvent' Edx >> $logDir/mysqlCSVLoad.log
+fi
 
 echo "`date`: Flushing table Answer:"
-mysql -u root -p$password -e 'FLUSH TABLES Answer' Edx >> $logDir/mysqlCSVLoad.log
+if [ -e ${MYSQL_DATADIR}/Edx/Answer.MYI ]
+then
+    mysql -u root -p$password -e 'FLUSH TABLES Answer' Edx >> $logDir/mysqlCSVLoad.log
+fi
 
 echo "`date`: Flushing table CorrectMap:"
-mysql -u root -p$password -e 'FLUSH TABLES CorrectMap' Edx >> $logDir/mysqlCSVLoad.log
+if [ -e ${MYSQL_DATADIR}/Edx/CorrectMap.MYI ]
+then 
+    mysql -u root -p$password -e 'FLUSH TABLES CorrectMap' Edx >> $logDir/mysqlCSVLoad.log
+fi
 
 echo "`date`: Flushing table InputState:"
-mysql -u root -p$password -e 'FLUSH TABLES InputState' Edx >> $logDir/mysqlCSVLoad.log
+if [ -e ${MYSQL_DATADIR}/Edx/InputState.MYI ]
+then
+    mysql -u root -p$password -e 'FLUSH TABLES InputState' Edx >> $logDir/mysqlCSVLoad.log
+fi
 
 echo "`date`: Flushing table LoadInfo:"
-mysql -u root -p$password -e 'FLUSH TABLES LoadInfo' Edx >> $logDir/mysqlCSVLoad.log
+if [ -e ${MYSQL_DATADIR}/Edx/LoadInfo.MYI ]
+then
+    mysql -u root -p$password -e 'FLUSH TABLES LoadInfo' Edx >> $logDir/mysqlCSVLoad.log
+fi
 
 echo "`date`: Flushing table State:"
-mysql -u root -p$password -e 'FLUSH TABLES State' Edx >> $logDir/mysqlCSVLoad.log
+if [ -e ${MYSQL_DATADIR}/Edx/State.MYI ]
+then
+    mysql -u root -p$password -e 'FLUSH TABLES State' Edx >> $logDir/mysqlCSVLoad.log
+fi
 
 echo "`date`: Flushing table EdxPrivate.Account:"
-mysql -u root -p$password -e 'FLUSH TABLES Account' EdxPrivate >> $logDir/mysqlCSVLoad.log
+if [ -e ${MYSQL_DATADIR}/EdxPrivate/Account.MYI ]
+then
+    mysql -u root -p$password -e 'FLUSH TABLES Account' EdxPrivate >> $logDir/mysqlCSVLoad.log
+fi
 
 # Turn off indexing table by table:
 
 if [ -e ${MYSQL_DATADIR}/Edx/EdxTrackEvent.MYI ]; then myisamchk --keys-used=0 -rq ${MYSQL_DATADIR}/Edx/EdxTrackEvent.MYI; fi
 if [ -e ${MYSQL_DATADIR}/Edx/Answer.MYI ]; then myisamchk --keys-used=0 -rq ${MYSQL_DATADIR}/Edx/Answer.MYI; fi
 if [ -e ${MYSQL_DATADIR}/Edx/State.MYI ]; then myisamchk --keys-used=0 -rq ${MYSQL_DATADIR}/Edx/State.MYI; fi
+if [ -e ${MYSQL_DATADIR}/Edx/InputState.MYI ]; then myisamchk --keys-used=0 -rq ${MYSQL_DATADIR}/Edx/InputState.MYI; fi
 if [ -e ${MYSQL_DATADIR}/Edx/CorrectMap.MYI ]; then myisamchk --keys-used=0 -rq ${MYSQL_DATADIR}/Edx/CorrectMap.MYI; fi
-if [ -e ${MYSQL_DATADIR}/Edx/LoadInfor.MYI ]; then myisamchk --keys-used=0 -rq ${MYSQL_DATADIR}/Edx/LoadInfo.MYI; fi
+if [ -e ${MYSQL_DATADIR}/Edx/LoadInfo.MYI ]; then myisamchk --keys-used=0 -rq ${MYSQL_DATADIR}/Edx/LoadInfo.MYI; fi
 if [ -e ${MYSQL_DATADIR}/Edx/Account.MYI ]; then myisamchk --keys-used=0 -rq ${MYSQL_DATADIR}/Edx/Account.MYI; fi
 if [ -e ${MYSQL_DATADIR}/EdxPrivate/Account.MYI ]; then myisamchk --keys-used=0 -rq ${MYSQL_DATADIR}/EdxPrivate/Account.MYI; fi
 
@@ -117,10 +139,10 @@ echo "`date`: indexing Edx..EdxTrackEvent(course_id(255))"
 mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxCourseID ON Edx.EdxTrackEvent(course_id(255))'
 
 echo "`date`: indexing Edx..EdxTrackEvent(course_display_name(255))"
-mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxCourseID ON Edx.EdxTrackEvent(course_display_name(255))'
+mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxCourseDisplayName ON Edx.EdxTrackEvent(course_display_name(255))'
 
 echo "`date`: indexing Edx..EdxTrackEvent(resource_display_name(255))"
-mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxCourseID ON Edx.EdxTrackEvent(resource_display_name(255))'
+mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxResourceDisplayName ON Edx.EdxTrackEvent(resource_display_name(255))'
 
 echo "`date`: indexing Edx..EdxTrackEvent(sequence_id(255))"
 mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxSeqID ON Edx.EdxTrackEvent(sequence_id(255))'
