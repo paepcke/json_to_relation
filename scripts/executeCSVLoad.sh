@@ -44,25 +44,25 @@ MYSQL_DATADIR=`echo $s | cut -d'=' -f 2`
 
 # Turn off MySQL indexing; Begin by flushing tables:
 
-echo '`date`: Flushing table EdxTrackEvent:'
+echo "`date`: Flushing table EdxTrackEvent:"
 mysql -u root -p$password -e 'FLUSH TABLES EdxTrackEvent' Edx >> $logDir/mysqlCSVLoad.log
 
-echo '`date`: Flushing table Answer:'
+echo "`date`: Flushing table Answer:"
 mysql -u root -p$password -e 'FLUSH TABLES Answer' Edx >> $logDir/mysqlCSVLoad.log
 
-echo '`date`: Flushing table CorrectMap:'
+echo "`date`: Flushing table CorrectMap:"
 mysql -u root -p$password -e 'FLUSH TABLES CorrectMap' Edx >> $logDir/mysqlCSVLoad.log
 
-echo '`date`: Flushing table InputState:'
+echo "`date`: Flushing table InputState:"
 mysql -u root -p$password -e 'FLUSH TABLES InputState' Edx >> $logDir/mysqlCSVLoad.log
 
-echo '`date`: Flushing table LoadInfo:'
+echo "`date`: Flushing table LoadInfo:"
 mysql -u root -p$password -e 'FLUSH TABLES LoadInfo' Edx >> $logDir/mysqlCSVLoad.log
 
-echo '`date`: Flushing table State:'
+echo "`date`: Flushing table State:"
 mysql -u root -p$password -e 'FLUSH TABLES State' Edx >> $logDir/mysqlCSVLoad.log
 
-echo '`date`: Flushing table EdxPrivate.Account:'
+echo "`date`: Flushing table EdxPrivate.Account:"
 mysql -u root -p$password -e 'FLUSH TABLES Account' EdxPrivate >> $logDir/mysqlCSVLoad.log
 
 # Turn off indexing table by table:
@@ -87,92 +87,92 @@ done
 # happens in memory, and will leave prefectly balanced btrees.
 # This does not yet index the non-key columns:
 
-echo '`date`: Indexing primary and foreign keys for table EdxTrackEvent...' >> $logDir/mysqlCSVLoad.log
+echo "`date`: Indexing primary and foreign keys for table EdxTrackEvent..." >> $logDir/mysqlCSVLoad.log
 time sudo  myisamchk -rq ${MYSQL_DATADIR}/Edx/EdxTrackEvent.MYI >> $logDir/mysqlCSVLoad.log
-echo '`date`: Indexing primary and foreign keys for table Answer...' >> $logDir/mysqlCSVLoad.log
+echo "`date`: Indexing primary and foreign keys for table Answer..." >> $logDir/mysqlCSVLoad.log
 time sudo  myisamchk -rq ${MYSQL_DATADIR}/Edx/Answer.MYI >> $logDir/mysqlCSVLoad.log
-echo '`date`: Indexing primary and foreign keys for table CorrectMap...' >> $logDir/mysqlCSVLoad.log
+echo "`date`: Indexing primary and foreign keys for table CorrectMap..." >> $logDir/mysqlCSVLoad.log
 time sudo  myisamchk -rq ${MYSQL_DATADIR}/Edx/CorrectMap.MYI >> $logDir/mysqlCSVLoad.log
-echo '`date`: Indexing primary and foreign keys for table InputState...' >> $logDir/mysqlCSVLoad.log
+echo "`date`: Indexing primary and foreign keys for table InputState..." >> $logDir/mysqlCSVLoad.log
 time sudo  myisamchk -rq ${MYSQL_DATADIR}/Edx/InputState.MYI >> $logDir/mysqlCSVLoad.log
-echo '`date`: Indexing primary and foreign keys for table LoadInfo...' >> $logDir/mysqlCSVLoad.log
+echo "`date`: Indexing primary and foreign keys for table LoadInfo..." >> $logDir/mysqlCSVLoad.log
 time sudo  myisamchk -rq ${MYSQL_DATADIR}/Edx/LoadInfo.MYI >> $logDir/mysqlCSVLoad.log
-echo '`date`: Indexing primary and foreign keys for table State...' >> $logDir/mysqlCSVLoad.log
+echo "`date`: Indexing primary and foreign keys for table State..." >> $logDir/mysqlCSVLoad.log
 time sudo  myisamchk -rq ${MYSQL_DATADIR}/Edx/State.MYI >> $logDir/mysqlCSVLoad.log
-echo '`date`: Indexing primary and foreign keys for table EdxPrivate.Account...' >> $logDir/mysqlCSVLoad.log
+echo "`date`: Indexing primary and foreign keys for table EdxPrivate.Account..." >> $logDir/mysqlCSVLoad.log
 time sudo  myisamchk -rq ${MYSQL_DATADIR}/EdxPrivate/Account.MYI >> $logDir/mysqlCSVLoad.log
-echo '`date`: Done indexing primary and foreign keys.' >> $logDir/mysqlCSVLoad.log
+echo "`date`: Done indexing primary and foreign keys." >> $logDir/mysqlCSVLoad.log
 
 # Build the other indexes:
 
 #mysql -u root -p$password < edxCreateIndexes.sql
 
-echo '`date`: indexing Edx.EdxTrackEvent(event_type(255))'
-CREATE INDEX EdxTrackEventIdxEvType ON Edx.EdxTrackEvent(event_type(255))
+echo "`date`: indexing Edx.EdxTrackEvent(event_type(255))"
+mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxEvType ON Edx.EdxTrackEvent(event_type(255))'
 
-echo '`date`: indexing Edx..EdxTrackEvent(anon_screen_name(255))'
-CREATE INDEX EdxTrackEventIdxUname ON Edx.EdxTrackEvent(anon_screen_name(255));
+echo "`date`: indexing Edx..EdxTrackEvent(anon_screen_name(255))"
+mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxUname ON Edx.EdxTrackEvent(anon_screen_name(255))'
 
-echo '`date`: indexing Edx..EdxTrackEvent(course_id(255))'
-CREATE INDEX EdxTrackEventIdxCourseID ON Edx.EdxTrackEvent(course_id(255));
+echo "`date`: indexing Edx..EdxTrackEvent(course_id(255))"
+mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxCourseID ON Edx.EdxTrackEvent(course_id(255))'
 
-echo '`date`: indexing Edx..EdxTrackEvent(course_display_name(255))'
-CREATE INDEX EdxTrackEventIdxCourseID ON Edx.EdxTrackEvent(course_display_name(255));
+echo "`date`: indexing Edx..EdxTrackEvent(course_display_name(255))"
+mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxCourseID ON Edx.EdxTrackEvent(course_display_name(255))'
 
-echo '`date`: indexing Edx..EdxTrackEvent(resource_display_name(255))'
-CREATE INDEX EdxTrackEventIdxCourseID ON Edx.EdxTrackEvent(resource_display_name(255));
+echo "`date`: indexing Edx..EdxTrackEvent(resource_display_name(255))"
+mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxCourseID ON Edx.EdxTrackEvent(resource_display_name(255))'
 
-echo '`date`: indexing Edx..EdxTrackEvent(sequence_id(255))'
-CREATE INDEX EdxTrackEventIdxSeqID ON Edx.EdxTrackEvent(sequence_id(255));
+echo "`date`: indexing Edx..EdxTrackEvent(sequence_id(255))"
+mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxSeqID ON Edx.EdxTrackEvent(sequence_id(255))'
 
-echo '`date`: indexing Edx..EdxTrackEvent(problem_id(255))'
-CREATE INDEX EdxTrackEventIdxProbID ON Edx.EdxTrackEvent(problem_id(255));
+echo "`date`: indexing Edx..EdxTrackEvent(problem_id(255))"
+mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxProbID ON Edx.EdxTrackEvent(problem_id(255))'
 
-echo '`date`: indexing Edx..EdxTrackEvent(video_id(255))'
-CREATE INDEX EdxTrackEventIdxVidID ON Edx.EdxTrackEvent(video_id(255));
+echo "`date`: indexing Edx..EdxTrackEvent(video_id(255))"
+mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxVidID ON Edx.EdxTrackEvent(video_id(255))'
 
-echo '`date`: indexing Edx..EdxTrackEvent(answer_id(255))'
-CREATE INDEX EdxTrackEventIdxAnsID ON Edx.EdxTrackEvent(answer_id(255));
+echo "`date`: indexing Edx..EdxTrackEvent(answer_id(255))"
+mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxAnsID ON Edx.EdxTrackEvent(answer_id(255))'
 
-echo '`date`: indexing Edx..EdxTrackEvent(success(15))'
-CREATE INDEX EdxTrackEventIdxSuccess ON Edx.EdxTrackEvent(success(15));
+echo "`date`: indexing Edx..EdxTrackEvent(success(15))"
+mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxSuccess ON Edx.EdxTrackEvent(success(15))'
 
-echo '`date`: indexing Edx..EdxTrackEvent(time)'
-CREATE INDEX EdxTrackEventIdxTime ON Edx.EdxTrackEvent(time);
+echo "`date`: indexing Edx..EdxTrackEvent(time)"
+mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxTime ON Edx.EdxTrackEvent(time)'
 
-echo '`date`: indexing Edx..Answer(answer(255))'
-CREATE INDEX AnswerIdxAns ON Edx.Answer(answer(255));
+echo "`date`: indexing Edx..Answer(answer(255))"
+mysql -u root -p$password -e 'CREATE INDEX AnswerIdxAns ON Edx.Answer(answer(255))'
 
-echo '`date`: indexing Edx..Answer(problem_id(255))'
-CREATE INDEX AnswerIdxProbID ON Edx.Answer(problem_id(255));
+echo "`date`: indexing Edx..Answer(problem_id(255))"
+mysql -u root -p$password -e 'CREATE INDEX AnswerIdxProbID ON Edx.Answer(problem_id(255))'
 
-echo '`date`: indexing Edx..Answer(course_id(255))'
-CREATE INDEX AnswerIdxCourseID ON Edx.Answer(course_id(255));
+echo "`date`: indexing Edx..Answer(course_id(255))"
+mysql -u root -p$password -e 'CREATE INDEX AnswerIdxCourseID ON Edx.Answer(course_id(255))'
 
-echo '`date`: indexing Private.Account(screen_name(255))'
-CREATE INDEX AccountIdxUname ON EdxPrivate.Account(screen_name(255));
+echo "`date`: indexing Private.Account(screen_name(255))"
+mysql -u root -p$password -e 'CREATE INDEX AccountIdxUname ON EdxPrivate.Account(screen_name(255))'
 
-echo '`date`: indexing Private.Account(anon_screen_name(255))'
-CREATE INDEX AccountIdxAnonUname ON EdxPrivate.Account(anon_screen_name(255));
+echo "`date`: indexing Private.Account(anon_screen_name(255))"
+mysql -u root -p$password -e 'CREATE INDEX AccountIdxAnonUname ON EdxPrivate.Account(anon_screen_name(255))'
 
-echo '`date`: indexing Private.Account(zipcode(10))'
-CREATE INDEX AccountIdxZip ON EdxPrivate.Account(zipcode(10));
+echo "`date`: indexing Private.Account(zipcode(10))"
+mysql -u root -p$password -e 'CREATE INDEX AccountIdxZip ON EdxPrivate.Account(zipcode(10))'
 
-echo '`date`: indexing Private.Account(country(255))'
-CREATE INDEX AccountIdxCoun ON EdxPrivate.Account(country(255));
+echo "`date`: indexing Private.Account(country(255))"
+mysql -u root -p$password -e 'CREATE INDEX AccountIdxCoun ON EdxPrivate.Account(country(255))'
 
-echo '`date`: indexing Private.Account(gender(6))'
-CREATE INDEX AccountIdxGen ON EdxPrivate.Account(gender(6));
+echo "`date`: indexing Private.Account(gender(6))"
+mysql -u root -p$password -e 'CREATE INDEX AccountIdxGen ON EdxPrivate.Account(gender(6))'
 
-echo '`date`: indexing Private.Account(year_of_birth)'
-CREATE INDEX AccountIdxDOB ON EdxPrivate.Account(year_of_birth);
+echo "`date`: indexing Private.Account(year_of_birth)"
+mysql -u root -p$password -e 'CREATE INDEX AccountIdxDOB ON EdxPrivate.Account(year_of_birth)'
 
-echo '`date`: indexing Private.Account(level_of_education(10))'
-CREATE INDEX AccountIdxEdu ON EdxPrivate.Account(level_of_education(10));
+echo "`date`: indexing Private.Account(level_of_education(10))"
+mysql -u root -p$password -e 'CREATE INDEX AccountIdxEdu ON EdxPrivate.Account(level_of_education(10))'
 
-echo '`date`: indexing Private.Account(course_id(255))'
-CREATE INDEX AccountIdxCouID ON EdxPrivate.Account(course_id(255));
+echo "`date`: indexing Private.Account(course_id(255))"
+mysql -u root -p$password -e 'CREATE INDEX AccountIdxCouID ON EdxPrivate.Account(course_id(255))'
 
-echo '`date`: Done loading' >> $logDir/mysqlCSVLoad.log
+echo "`date`: Done loading" >> $logDir/mysqlCSVLoad.log
 
 exit
