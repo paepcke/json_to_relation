@@ -321,23 +321,16 @@ class ModulestoreImporter(DictMixin):
         <longCourseName> is the (JSON) _id.name field of
         an entry of category 'course'. Those fields
         contain the long course name.
+        Input is self.hashLookup, a dict mapping hash
+        keys to little dicts with the contents of one modulestore
+        entry.
         '''
         self.courseNameLookup = {}
         for infoDictID in self.hashLookup.keys():
             infoDict = self.hashLookup[infoDictID]
+            if infoDict.get('category', None) != 'course':
+                continue
             shortName = infoDict['course_short_name']
-            # If we already have an entry for this short name,
-            # leave it alone:
-            try:
-                currLongName = self.courseNameLookup[shortName]
-                # Check quality: if this existing entry has an edX hash
-                # string, then try for something better. Example:
-                # Might have  Medicine/HRP259/4820b254e28c4889b760884ffd049ce7
-                # when we could have Medicine/HRP259/Working_with_stats.
-                if self.nameEndsWithHashPattern.search(currLongName) is None:
-                    continue
-            except KeyError:
-                pass
             # Weed out test course names, like '1' and '123', and '2013':
             # Require the course name to start with a letter.
             # (Should we require at least two letter?)
@@ -347,5 +340,33 @@ class ModulestoreImporter(DictMixin):
                                   infoDict['org'] + '/' +\
                                   shortName + '/' +\
                                   infoDictID
+        
+#         for infoDictID in self.hashLookup.keys():
+#             infoDict = self.hashLookup[infoDictID]
+#             shortName = infoDict['course_short_name']
+#             # If we already have an entry for this short name,
+#             # leave it alone, unless its long name contains
+#             # a hash str:
+#             try:
+#                 currLongName = self.courseNameLookup[shortName]
+#                 # Check quality: if this existing entry has an edX hash
+#                 # string, then try for something better. Example:
+#                 # Might have  Medicine/HRP259/4820b254e28c4889b760884ffd049ce7
+#                 # when we could have Medicine/HRP259/Working_with_stats.
+#                 if self.nameEndsWithHashPattern.search(currLongName) is None:
+#                     # Already have a better long name than a hash str:
+#                     continue
+#             except KeyError:
+#                 # No name mapping known yet:
+#                 pass
+#             # Weed out test course names, like '1' and '123', and '2013':
+#             # Require the course name to start with a letter.
+#             # (Should we require at least two letter?)
+#             if re.search(r'^[a-zA-Z]', shortName) is None:
+#                 continue
+#             self.courseNameLookup[shortName] =\
+#                                   infoDict['org'] + '/' +\
+#                                   shortName + '/' +\
+#                                   infoDictID
         
         

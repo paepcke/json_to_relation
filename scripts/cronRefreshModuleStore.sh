@@ -95,4 +95,4 @@ ssh goldengate.class.stanford.edu \
 	    	--eval "\"printjson(db.modulestore.find({}, {'_id' : 1, 'metadata.display_name' : 1}).toArray())\"" \
                 > $targetFile
 
-ln -s $targetFile $1/modulestore_latest.json
+ln $targetFile $1/modulestore_latest.json
