@@ -42,62 +42,61 @@ MYSQL_DATADIR_DECL=`grep datadir /etc/mysql/my.cnf`
 # Extract just the directory:
 MYSQL_DATADIR=`echo $s | cut -d'=' -f 2`
 
+# Array of all tables we will deal with;
+# the array is used in loops:
+tables=(EdxTrackEvent \
+        Answer \
+        CorrectMap \
+        InputState \
+        LoadInfo \
+        State \
+       )
+privateTables=(Account)
+
 # Turn off MySQL indexing; Begin by flushing tables:
 
-echo "`date`: Flushing table EdxTrackEvent:"
-if [ -e ${MYSQL_DATADIR}/Edx/EdxTrackEvent.MYI ]
-then 
-    mysql -u root -p$password -e 'FLUSH TABLES EdxTrackEvent' Edx >> $logDir/mysqlCSVLoad.log
-fi
+# Public tables:
+for table in ${tables[@]}
+do
+    echo "`date`: Flushing table $table:"
+    if [ -e ${MYSQL_DATADIR}/Edx/$table.MYI ]
+    then
+	mysql -u root -p$password -e 'FLUSH TABLES $table' Edx >> $logDir/mysqlCSVLoad.log
+    fi
+done
 
-echo "`date`: Flushing table Answer:"
-if [ -e ${MYSQL_DATADIR}/Edx/Answer.MYI ]
-then
-    mysql -u root -p$password -e 'FLUSH TABLES Answer' Edx >> $logDir/mysqlCSVLoad.log
-fi
+# Private tables:
+for table in ${privateTables[@]}
+do
+    echo "`date`: Flushing table $table:"
+    if [ -e ${MYSQL_DATADIR}/EdxPrivate/$table.MYI ]
+    then
+	mysql -u root -p$password -e 'FLUSH TABLES $table' EdxPrivate >> $logDir/mysqlCSVLoad.log
+    fi
+done
 
-echo "`date`: Flushing table CorrectMap:"
-if [ -e ${MYSQL_DATADIR}/Edx/CorrectMap.MYI ]
-then 
-    mysql -u root -p$password -e 'FLUSH TABLES CorrectMap' Edx >> $logDir/mysqlCSVLoad.log
-fi
-
-echo "`date`: Flushing table InputState:"
-if [ -e ${MYSQL_DATADIR}/Edx/InputState.MYI ]
-then
-    mysql -u root -p$password -e 'FLUSH TABLES InputState' Edx >> $logDir/mysqlCSVLoad.log
-fi
-
-echo "`date`: Flushing table LoadInfo:"
-if [ -e ${MYSQL_DATADIR}/Edx/LoadInfo.MYI ]
-then
-    mysql -u root -p$password -e 'FLUSH TABLES LoadInfo' Edx >> $logDir/mysqlCSVLoad.log
-fi
-
-echo "`date`: Flushing table State:"
-if [ -e ${MYSQL_DATADIR}/Edx/State.MYI ]
-then
-    mysql -u root -p$password -e 'FLUSH TABLES State' Edx >> $logDir/mysqlCSVLoad.log
-fi
-
-echo "`date`: Flushing table EdxPrivate.Account:"
-if [ -e ${MYSQL_DATADIR}/EdxPrivate/Account.MYI ]
-then
-    mysql -u root -p$password -e 'FLUSH TABLES Account' EdxPrivate >> $logDir/mysqlCSVLoad.log
-fi
 
 # Turn off indexing table by table:
 
-if [ -e ${MYSQL_DATADIR}/Edx/EdxTrackEvent.MYI ]; then myisamchk --keys-used=0 -rq ${MYSQL_DATADIR}/Edx/EdxTrackEvent.MYI; fi
-if [ -e ${MYSQL_DATADIR}/Edx/Answer.MYI ]; then myisamchk --keys-used=0 -rq ${MYSQL_DATADIR}/Edx/Answer.MYI; fi
-if [ -e ${MYSQL_DATADIR}/Edx/State.MYI ]; then myisamchk --keys-used=0 -rq ${MYSQL_DATADIR}/Edx/State.MYI; fi
-if [ -e ${MYSQL_DATADIR}/Edx/InputState.MYI ]; then myisamchk --keys-used=0 -rq ${MYSQL_DATADIR}/Edx/InputState.MYI; fi
-if [ -e ${MYSQL_DATADIR}/Edx/CorrectMap.MYI ]; then myisamchk --keys-used=0 -rq ${MYSQL_DATADIR}/Edx/CorrectMap.MYI; fi
-if [ -e ${MYSQL_DATADIR}/Edx/LoadInfo.MYI ]; then myisamchk --keys-used=0 -rq ${MYSQL_DATADIR}/Edx/LoadInfo.MYI; fi
-if [ -e ${MYSQL_DATADIR}/Edx/Account.MYI ]; then myisamchk --keys-used=0 -rq ${MYSQL_DATADIR}/Edx/Account.MYI; fi
-if [ -e ${MYSQL_DATADIR}/EdxPrivate/Account.MYI ]; then myisamchk --keys-used=0 -rq ${MYSQL_DATADIR}/EdxPrivate/Account.MYI; fi
+# Public tables:
+for table in ${tables[@]}
+do
+    if [ -e ${MYSQL_DATADIR}/Edx/$table.MYI ]
+    then
+	myisamchk --keys-used=0 -rq ${MYSQL_DATADIR}/Edx/$table.MYI; 
+    fi
+done
 
+# Private tables:
+for table in ${privateTables[@]}
+do
+    if [ -e ${MYSQL_DATADIR}/EdxPrivate/$table.MYI ]
+    then 
+	myisamchk --keys-used=0 -rq ${MYSQL_DATADIR}/EdxPrivate/$table.MYI; 
+    fi
+done
 
+# Do the actual loading of CSV files into their respective tables:
 for sqlFile in $@
 do  
     echo "`date`: starting on $sqlFile" >> $logDir/mysqlCSVLoad.log
@@ -109,20 +108,20 @@ done
 # happens in memory, and will leave prefectly balanced btrees.
 # This does not yet index the non-key columns:
 
-echo "`date`: Indexing primary and foreign keys for table EdxTrackEvent..." >> $logDir/mysqlCSVLoad.log
-time sudo  myisamchk -rq ${MYSQL_DATADIR}/Edx/EdxTrackEvent.MYI >> $logDir/mysqlCSVLoad.log
-echo "`date`: Indexing primary and foreign keys for table Answer..." >> $logDir/mysqlCSVLoad.log
-time sudo  myisamchk -rq ${MYSQL_DATADIR}/Edx/Answer.MYI >> $logDir/mysqlCSVLoad.log
-echo "`date`: Indexing primary and foreign keys for table CorrectMap..." >> $logDir/mysqlCSVLoad.log
-time sudo  myisamchk -rq ${MYSQL_DATADIR}/Edx/CorrectMap.MYI >> $logDir/mysqlCSVLoad.log
-echo "`date`: Indexing primary and foreign keys for table InputState..." >> $logDir/mysqlCSVLoad.log
-time sudo  myisamchk -rq ${MYSQL_DATADIR}/Edx/InputState.MYI >> $logDir/mysqlCSVLoad.log
-echo "`date`: Indexing primary and foreign keys for table LoadInfo..." >> $logDir/mysqlCSVLoad.log
-time sudo  myisamchk -rq ${MYSQL_DATADIR}/Edx/LoadInfo.MYI >> $logDir/mysqlCSVLoad.log
-echo "`date`: Indexing primary and foreign keys for table State..." >> $logDir/mysqlCSVLoad.log
-time sudo  myisamchk -rq ${MYSQL_DATADIR}/Edx/State.MYI >> $logDir/mysqlCSVLoad.log
-echo "`date`: Indexing primary and foreign keys for table EdxPrivate.Account..." >> $logDir/mysqlCSVLoad.log
-time sudo  myisamchk -rq ${MYSQL_DATADIR}/EdxPrivate/Account.MYI >> $logDir/mysqlCSVLoad.log
+# Public tables:
+for table in ${tables[@]}
+do
+    echo "`date`: Indexing primary and foreign keys for table $table..." >> $logDir/mysqlCSVLoad.log
+    time sudo myisamchk -rq ${MYSQL_DATADIR}/Edx/$table.MYI >> $logDir/mysqlCSVLoad.log
+done
+
+# Private tables:
+for table in ${privateTables[@]}
+do
+    echo "`date`: Indexing primary and foreign keys for table EdxPrivate.$table..." >> $logDir/mysqlCSVLoad.log
+    time sudo  myisamchk -rq ${MYSQL_DATADIR}/EdxPrivate/$table.MYI >> $logDir/mysqlCSVLoad.log
+done
+
 echo "`date`: Done indexing primary and foreign keys." >> $logDir/mysqlCSVLoad.log
 
 # Build the other indexes:
