@@ -26,7 +26,6 @@ do
    	    	     FROM email \
    		     INTO OUTFILE '/tmp/email_${db}.csv' \
    		     FIELDS TERMINATED BY ',' \
-   		     ENCLOSED BY '"' \
    		     LINES TERMINATED BY '\n';" $db
 done
 
