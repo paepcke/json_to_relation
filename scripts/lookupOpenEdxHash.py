@@ -2,6 +2,12 @@
 import os
 import sys
 
+# Command line tool to look up the human readable strings that
+# correspond to edX platform generated hash strings for problems and
+# videos. The given strings may be just the 32 bit hex numbers, or the 
+# long strings in tracking logs that contain that hex number somewhere 
+# inside it
+
 # Add json_to_relation source dir to $PATH
 # for duration of this execution:
 source_dir = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "../json_to_relation/")]
