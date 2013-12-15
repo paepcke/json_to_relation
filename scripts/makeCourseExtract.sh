@@ -77,7 +77,7 @@ else
     HOME_DIR=$(getent passwd $USERNAME | cut -d: -f6)
     # If the home dir has a readable file called mysql in its .ssh
     # subdir, then pull the pwd from there:
-    if test -f $HOME_DIR/.ssh/mysql && -r $HOME_DIR/.ssh/mysql
+    if test -f $HOME_DIR/.ssh/mysql && test -r $HOME_DIR/.ssh/mysql
     then
 	PASSWD=`cat $HOME_DIR/.ssh/mysql`
     fi
