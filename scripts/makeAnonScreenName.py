@@ -20,8 +20,12 @@ from edxTrackLogJSONParser import EdXTrackLogJSONParser
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print("Usage: makeAnonScreenName str1 str2 ...")
+        print("Usage: makeAnonScreenName {str1 str2 ... | -} # Use dash to read input strings from stdin, e.g. from a pipe")
         sys.exit(1)
-    for screenName in sys.argv[1:]:
-        print EdXTrackLogJSONParser.makeHash(screenName)
+    if sys.argv[1] == '-':
+        for screenName in sys.stdin:
+            print(EdXTrackLogJSONParser.makeHash(screenName))
+    else:
+        for screenName in sys.argv[1:]:
+            print(EdXTrackLogJSONParser.makeHash(screenName))
     

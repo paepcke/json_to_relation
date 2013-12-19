@@ -2,17 +2,16 @@
 
 # Given a Grep-compatible search string for finding 
 # course names in zipped OpenEdx tracking logs, and a list of
-# gzipped OpenEdx tracking logs, produce all the screen 
+# gzipped OpenEdx tracking log file names, produce all the screen 
 # names of individuals who generated events in the 
-# referenced class. 
+# referenced class. The list have duplicates removed.
 # Ex: makeScreenNameToAnonMapping.sh "ENGR14" *.gz
 # would look through all gzipped files in cwd, find
 # events that contain "ENGR14", extract the "username" field,
 # and print its value.
 #
-# The result will generally have duplicates. To eliminate those:
-#   listCourseScreenNames.sh pattern files | sort | uniq
-
+# Used by makeScreenNameToAnonTable.sh, but can be used
+# independently.
 
 USAGE="listCourseScreenNames.sh courseNameGrepPattern tracklogfile1.gz tracklogfile2.gz..."
 
@@ -34,5 +33,9 @@ shift
 #      double quote of the username field value (the dot after ': '). Then
 #      we capture anything up to the next double quote, namely the field value.
 #      The \( and \) delimit the group. We then throw the rest of the event
-#      away with .*. 
-zcat $@ | zgrep --no-filename $GREP_PATTERN | sed 's/{.username.: .\([^"]*\).*/\1/p' 
+#      away with .*. Output will be a list of screen names, one per line.
+#   3. the sed '/^\s*$/d' part removes lines that only have whitespace between
+#      the line's beginning and its end (^ and $)
+#   4. The sort and uniq remove duplicates:
+
+zcat $@ | zgrep --no-filename $GREP_PATTERN | sed 's/{.username.: .\([^"]*\).*/\1/p' | sed '/^\s*$/d' | sort | uniq
