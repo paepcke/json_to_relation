@@ -3840,6 +3840,18 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
     def hashGeneral(self, username):
         '''
+        Returns a ripemd160 40 char hash of the given name. Uses the
+        corresponding class method below. 
+        @param username: name to be hashed
+        @type username: String
+        @return: hashed equivalent. Calling this function multiple times returns the same string
+        @rtype: String
+        '''
+        return EdXTrackLogJSONParser.makeHash(username)
+        
+    @classmethod
+    def makeHash(cls, username):
+        '''
         Returns a ripemd160 40 char hash of the given name. 
         @param username: name to be hashed
         @type username: String
