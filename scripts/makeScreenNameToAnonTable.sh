@@ -1,5 +1,13 @@
 #!/bin/bash
 
+USAGE="makeScreenNameToAnonTable.sh courseNameGrepPattern tracklogfile1.gz tracklogfile2.gz..."
+
+if [ $# -lt 2 ]
+then
+    echo $USAGE
+    exit 1
+fi
+
 # Given a Grep-compatible search string for finding 
 # course names in zipped OpenEdx tracking logs, and a list of
 # gzipped OpenEdx tracking log file names, produce a CSV table
