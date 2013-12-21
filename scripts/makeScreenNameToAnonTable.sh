@@ -1,6 +1,12 @@
 #!/bin/bash
 
-USAGE="makeScreenNameToAnonTable.sh courseNameGrepPattern tracklogfile1.gz tracklogfile2.gz..."
+# Given a Grep-compatible search string for finding 
+# course names in zipped OpenEdx tracking logs, and a list of
+# gzipped OpenEdx tracking log file names, produce a CSV table
+# that maps each screen name to its equivalent anonymized version.
+# Output to stdout.
+
+USAGE="Usage: makeScreenNameToAnonTable.sh courseNameGrepPattern tracklogfile1.gz tracklogfile2.gz..."
 
 if [ $# -lt 2 ]
 then
@@ -10,12 +16,6 @@ fi
 
 # Get directory in which this script runs:
 thisScriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-# Given a Grep-compatible search string for finding 
-# course names in zipped OpenEdx tracking logs, and a list of
-# gzipped OpenEdx tracking log file names, produce a CSV table
-# that maps each screen name to its equivalent anonymized version.
-# Output to stdout.
 
 tmpScreenNames=mktemp
 
