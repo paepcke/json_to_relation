@@ -223,8 +223,8 @@ INDEXING_CMD="ALTER TABLE $DB_NAME.$TABLE_NAME \
     ADD INDEX (course_display_name(255)), \
     ADD INDEX (resource_display_name(255)), \
     ADD INDEX (success(15)), \
-    ADD INDEX (time);
-    ADD INDEX (answer);
+    ADD INDEX (time),
+    ADD INDEX (answer),
     ADD INDEX (video_seek_type(32));"
 
 
