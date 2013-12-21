@@ -217,7 +217,6 @@ fi
 #***************
 
 INDEXING_CMD="ALTER TABLE $DB_NAME.$TABLE_NAME \
-    ADD PRIMARY KEY(_id), \
     ADD INDEX (anon_screen_name(40)), \
     ADD INDEX (event_type(255)), \
     ADD INDEX (ip(16)), \
