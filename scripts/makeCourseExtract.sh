@@ -5,6 +5,8 @@
 # course_display_name contains the command line argument as a
 # substring. Use MySQL type wildcards.
 #
+# Example: makeCourseExtract.sh -p -t HRP258StatsInMed "Medicine/HRP258/Statistics_in_Medicine"
+#
 # The destination database (default 'Extracts') can be controlled via
 # the -d option. The database is created if it does not exist.
 #
