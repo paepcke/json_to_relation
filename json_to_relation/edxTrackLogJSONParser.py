@@ -1180,6 +1180,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.setValInRow(row, 'sequence_id', seqID)
         self.setValInRow(row, 'goto_from', oldIndex)
         self.setValInRow(row, 'goto_dest', newIndex)
+        # Try to find a display name for this sequence id:
+        self.setResourceDisplayName(row, seqID)
         return row
         
     def handleProblemCheck(self, record, row, event):
