@@ -15,6 +15,7 @@ source_dir.extend(sys.path)
 sys.path = source_dir
 
 from modulestoreImporter import ModulestoreImporter
+from edxTrackLogJSONParser import EdXTrackLogJSONParser
 
 if __name__ == '__main__':
 
@@ -26,4 +27,11 @@ if __name__ == '__main__':
     hashLookup = ModulestoreImporter(os.path.join(os.path.dirname(__file__),'../json_to_relation/data/modulestore_latest.json'), 
                        useCache=True)
     for hashStr in sys.argv[1:]:
-        print(hashLookup.getDisplayName(hashStr))
+        match = EdXTrackLogJSONParser.findHashPattern.search(hashStr)
+        if match is not None:
+            print(hashLookup.getDisplayName(match.group(1)))
+        else:
+            print 'None'
+        
+
+
