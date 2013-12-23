@@ -13,6 +13,7 @@ import logging
 import os
 import re
 import socket
+import string
 import subprocess
 import sys
 
@@ -33,13 +34,14 @@ class TrackLogPuller(object):
     
     hostname = socket.gethostname()
     if hostname == 'duo':
-        LOCAL_LOG_STORE = "/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsSep20_2013/tracking/"
+        LOCAL_LOG_STORE_ROOT = "/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsSep20_2013/"
     elif hostname == 'mono':
-        LOCAL_LOG_STORE = "/home/paepcke/Project/VPOL/Data/EdXTrackingOct22_2013/"
+        LOCAL_LOG_STORE_ROOT = "/home/paepcke/Project/VPOL/Data/EdXTrackingOct22_2013/"
     elif hostname == 'datastage':
-        LOCAL_LOG_STORE = "/home/dataman/Data/EdX/tracking/"
+        LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/EdX"
     LOG_BUCKETNAME = "stanford-edx-logs"
     
+    TRACKING_LOG_FILE_NAME_PATTERN = re.compile(r'tracking.log-[0-9]{8}.gz$')
     FILE_DATE_PATTERN = re.compile(r'[^-]*-([0-9]*)[^.]*\.gz')
 
 # ----------------------------------------  Public Methods ----------------------
@@ -59,90 +61,87 @@ class TrackLogPuller(object):
             self.setupLogging(loggingLevel, logFile)
             conn = boto.connect_s3()
             self.log_bucket = conn.get_bucket(TrackLogPuller.LOG_BUCKETNAME)
-            # Dict representing log pull history: maps file name to (size, processedDate)
-            self.pullHistory = {}            
         except boto.exception.NoAuthHandlerFound as e:
             # TODO: more error cases to watch here to be sure (bucket not found?)
             self.logErr("boto authentication error: %s\n%s" % 
                         (str(e), "   Suggestion: put your credentials in AWS_ACCESS_KEY and AWS_SECRET_KEY environment variables, or a ~/.boto file"))
             sys.exit(1)
         
-    def identifyNewLogFiles(self, historyFileDir):
+    def identifyNewLogFiles(self, localTrackingLogFileRoot=None):
         '''
-        Logs into S3, and retrieves list of all log files there.
-        Pulls list of previously examined log files from
-        localLogFileDir/pullHistory.txt. This file is structured like
-        this::
-            logFileName,size,processedDate
-            
-        The historyFileDir is where the history file is stored, but
-        it is also the root of the track log file subtree: historyFileDir/app10, historyFileDir/app11, etc.
-        @param historyFileDir: directory where the tack log load history file pullHistory.txt is stored. Also the root of the track log file subtree.
-        @type historyFileDir: String
-        @return: array of Amazon log files that have not been downloaded yet. Array may be empty. 
+        Logs into S3, and retrieves list of all OpenEdx tracking log files there.
+        Identifies the remote files that do not exist on the local file system,
+        and returns an array of remote S3 key names for those new log files.
+        
+        Example return:
+          ['tracking/app10/tracking.log-20130609.gz', 'tracking/app10/tracking.log-20130610.gz']
+        
+        When a local file of the same name as the a remote file is found, the
+        remote and local MD5 hashes are compared to ensure that they are indeed
+        the same files.
+        
+        @param localTrackingLogFileRoot: root of subtree that matches the subtree received from
+               S3. Two examples for S3 subtrees in Stanford's installation are: 
+               tracking/app10/foo.gz and tracking/app21/bar.gz. The localTrackingLogFileRoot
+               must in that case contain the subtree 'tracking/appNN/yyy.gz'. If None, then
+               class variable TrackLogPuller.LOCAL_LOG_STORE_ROOT is used.
+        @type localTrackingLogFileRoot: String
+        @return: array of Amazon S3 log file key names that have not been downloaded yet. Array may be empty. 
                  locations include the application server directory above each file. Ex.: 'app10/tracking.log-20130623.gz'
         @rtype: [String]
         '''
-        if historyFileDir is None:
-            raise ValueError('historyFileDir must be a string denoting directory where track log load history file pullHistory.txt lives.')
-        
         rfileObjsToGet = []
-        today = datetime.date.today()
+        if localTrackingLogFileRoot is None:
+            localTrackingLogFileRoot = TrackLogPuller.LOCAL_LOG_STORE_ROOT
         
-        # Get remote track log file names:
-        rLogFileObjs = self.log_bucket.list()
-        if rLogFileObjs is None:
-            return []
-        try:
-            historyFilePath = os.path.join(historyFileDir, 'pullHistory.txt')
-            with open(historyFilePath, 'r') as fd:
-                historyLines = fd.readlines()
-        except IOError:
-            if os.path.exists(historyFileDir):
-                advice = "   Create an empty one there, or use method createHistory() if you have manually downloaded track log files."
-                raise ValueError('No pullHistory.txt file at %s.\n%s' % (historyFileDir, advice))
-            else:
-                raise ValueError('At least one directory along the path %s does not exist, or is not searchable.' % historyFileDir)
-        for histLine in historyLines: 
-            try:
-                (logFile, size, processedDate) = histLine.split(',')
-                self.pullHistory[logFile] = (size, processedDate)
-            except ValueError:
+        # Get remote track log file key objects:
+        rLogFileKeyObjs = self.log_bucket.list()
+        if rLogFileKeyObjs is None:
+            return rfileObjsToGet
+        
+        for rlogFileKeyObj in rLogFileKeyObjs:
+            # Get paths like:
+            #   tracking/app10/tracking.log-20130609.gz
+            #   tracking/app10/tracking.log-20130610-errors
+            rLogPath = str(rlogFileKeyObj.name)
+            # If this isn't a tracking log file, skip:
+            if TrackLogPuller.TRACKING_LOG_FILE_NAME_PATTERN.search(rLogPath) is None:
                 continue
+            self.logDebug('Looking at remote track log file %s' % rLogPath)
+            localEquivPath = os.path.join(localTrackingLogFileRoot, rLogPath)
+            if os.path.exists(localEquivPath):
+                try:
+                    # Ensure that the local file is the same as the remote one, 
+                    # i.e. that we already copied it over. The following call
+                    # returns '<md5> <filename>':
+                    md5PlusFileName = subprocess.check_output(['md5sum',localEquivPath])
+                    localMD5 = md5PlusFileName.split()[0]
+                    # The etag property of an S3 key obj contains
+                    # the remote file's MD5, surrounded by double-quotes:
+                    remoteMD5 = string.strip(rlogFileKeyObj.etag, '"')
+                    if localMD5 == remoteMD5:
+                        continue
+                except Exception as e:
+                    self.logErr("Could not compare remote file %s's MD5 with that of the local equivalent %s: %s" % (rLogPath, localEquivPath, `e`))
+                    continue
             
-        for rlogFileObj in rLogFileObjs:
+            rfileObjsToGet.append(rLogPath)
             
-            rLogPath = str(rlogFileObj.name)
-            self.logDebug('Looking at remote track log file %s' % rLogPath)            
-            if rLogPath[-1] == "/":
-                # Ignore subdir names like 'app10/'
-                continue
-            rLogFileName = os.path.basename(rLogPath)
-            localEquiv = self.pullHistory.get(os.path.join(historyFileDir, rLogPath), None)
-            if localEquiv is not None:
-                # ALreay downloaded and processed this log file earlier. 
-                continue
-            # Get date from log file name; format: tracking.log-20130623.gz
-            dateMatch = TrackLogPuller.FILE_DATE_PATTERN.search(rLogFileName)
-            if dateMatch is None:
-                self.logWarn('Remote track log file name has non-standard format (expecting name like tracking.log-20130609.gz): %s' % rLogFileName)
-                continue
-            dateStr = dateMatch.groups(1)[0]
-            # Make a date obj from yyyy, mm, and dd:
-            logCreateDate = datetime.date(int(dateStr[:4]), int(dateStr[4:6]), int(dateStr[6:8]))  
-            #print today - logCreateDate
-            if (today - logCreateDate).days >= 1:
-                rfileObjsToGet.append(rlogFileObj)
         return rfileObjsToGet
 
-    def pullNewFiles(self, destDir=None, dryRun=False):
+    def pullNewFiles(self, localTrackingLogFileRoot=None, destDir=None, dryRun=False):
         '''
-        Given a root directory, copy track log files from S3 into subdirectories
-        app10, app11, app20, etc. Only files that have not been processed yet
-        are loaded. The load history file is consulted to ensure this selection.
-        A list of full paths for the newly downloaded files is returned.  The
-        history file is by default in TrackLogPuller.LOCAL_LOG_STORE
-        @param destDir: directory from which app10/filename, etc. descend.
+        Copy track log files from S3 to the local machine, if they do not
+        already exist there.
+        A list of full paths for the newly downloaded files is returned.
+        
+        @param localTrackingLogFileRoot: root of subtree that matches the subtree received from
+               S3. Two examples for S3 subtrees in Stanford's installation are: 
+               tracking/app10/foo.gz and tracking/app21/bar.gz. The localTrackingLogFileRoot
+               must in that case contain the subtree 'tracking/appNN/yyy.gz'. If None, then
+               class variable TrackLogPuller.LOCAL_LOG_STORE_ROOT is used. 
+        @type localTrackingLogFileRoot: String
+        @param destDir: directory from which subtree tracking/appNN/filename, etc. descend.
         @type destDir: String
         @param dryRun: if True, only log what *would* be done. Cause no actual changes.
         @type dryRun: Bool
@@ -151,31 +150,32 @@ class TrackLogPuller(object):
         '''
         
         if destDir is None:
-            destDir=TrackLogPuller.LOCAL_LOG_STORE
+            destDir=TrackLogPuller.LOCAL_LOG_STORE_ROOT
+        
+        if localTrackingLogFileRoot is None:
+            localTrackingLogFileRoot = TrackLogPuller.LOCAL_LOG_STORE_ROOT
         
         # Identify log files at S3 that we have not pulled yet.
-        # Let location of pullHistory.txt file default:
-        rfileObjsToPull = self.identifyNewLogFiles(TrackLogPuller.LOCAL_LOG_STORE)
-        
-        with open(os.path.join(destDir, 'pullHistory.txt'), 'a') as histFd: 
-            for rfileObjToPull in rfileObjsToPull:
-                localDest = os.path.join(TrackLogPuller.LOCAL_LOG_STORE, rfileObjToPull.name)
-                if dryRun:
-                    self.logInfo("Would download file %s from S3" % localDest)
-                    self.logInfo("Would update pullHistory.txt with stats of .../%s" % os.path.basename(localDest))
-                else:
-                    self.logInfo("Downloading file %s from S3..." % localDest)
-                    rfileObjToPull.get_contents_to_filename(localDest)
-
-                    # Update the history file (int, datetime):
-                    (fileSize, createTime) = self.getHistoryFacts(localDest)
-                    self.logInfo("Updating pullHistory.txt with .../%s,%d,%s" % (os.path.basename(localDest), fileSize, str(createTime)))
-                    histFd.write('%s,%d,%s\n' % (localDest, fileSize, str(createTime)))
+        rfileNamesToPull = self.identifyNewLogFiles(localTrackingLogFileRoot)
+        if len(rfileNamesToPull) == 0:
+            self.logInfo("No openEdx files to pull.")
+            
+        for rfileNameToPull in rfileNamesToPull:
+            localDest = os.path.join(destDir, rfileNameToPull)
+            if dryRun:
+                self.logInfo("Would download file %s from S3" % rfileNameToPull)
+            else:
+                self.logInfo("Downloading file %s from S3 to %s..." % (rfileNameToPull, localDest))
+                fileKey = self.log_bucket.get_key(rfileNameToPull)
+                if fileKey is None:
+                    self.logErr("Remote OpenEdX log file %s was detected earlier, but cannot retrieve associated key object now." % rfileNameToPull)
+                    continue
+                fileKey.get_contents_to_filename(localDest)
         if dryRun:
-            self.logInfo("Would have pulled files from S3 that are at least one day old, and are not present locally.")                    
+            self.logInfo("Would have pulled OpenEdX tracking log files from S3: %s" % str(rfileNamesToPull))
         else:
-            self.logInfo("Pulled all track log files that are new on S3, are at least one day old, and are not present locally.")                    
-        return rfileObjsToPull
+            self.logInfo("Pulled OpenEdX tracking log files from S3: %s" % str(rfileNamesToPull))
+        return rfileNamesToPull
 
     def transform(self, logFilePaths, sqlDestDir=None, dryRun=False):
         '''
@@ -188,15 +188,15 @@ class TrackLogPuller(object):
         @param logFilePaths: list of full0path track log files that are to be transformed.
         @type logFilePaths: [String]
         @param sqlDestDir: full path to dir where sql files will be deposited. If None,
-                           SQL files will to into TrackLogPuller.LOCAL_LOG_STORE/SQL
+                           SQL files will to into TrackLogPuller.LOCAL_LOG_STORE_ROOT/SQL
         @type sqlDestDir: String
         @param dryRun: if True, only log what *would* be done. Cause no actual changes.
         @type dryRun: Bool
         '''
         if logFilePaths is None:
-            logFilePaths = TrackLogPuller.LOCAL_LOG_STORE + '/app*/*.gz'
+            logFilePaths = TrackLogPuller.LOCAL_LOG_STORE_ROOT + '/app*/*.gz'
         if sqlDestDir is None:
-            sqlDestDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE, 'SQL')
+            sqlDestDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'SQL')
         shellCommand = ['transformGivenLogfiles.sh', sqlDestDir]
         # Add the logfiles as arguments; if that's a wildcard expression,
         # i.e. string, just append. Else it's assumed to an array of
@@ -236,7 +236,7 @@ class TrackLogPuller(object):
         @type dryRun:
         '''
         if sqlFileSrc is None:
-            sqlFileSrc = os.listdir(TrackLogPuller.LOCAL_LOG_STORE + '/SQL')
+            sqlFileSrc = os.listdir(TrackLogPuller.LOCAL_LOG_STORE_ROOT + '/SQL')
         # Now SQL files are guaranteed to be a list. Load them all using
         # a bash script, which will also run the index: 
         shellCommand = ['load.sh', pwd]
@@ -246,67 +246,8 @@ class TrackLogPuller(object):
         else:
             subprocess.call(shellCommand)
     
-    def createHistory(self, dirPath, histFileDestDir=None, dryRun=None):
-        '''
-        Given a directory that contains track log files, create a
-        history file for them (pullHistory.txt). The file will look
-        as if the log files had been pulled from S3 by this script
-        automatically.
-        Used only to repair broken history files, or build the history file when
-        log files have been downloaded from S3, and transformed/loaded
-        manually. Normally, downloaded files are added to the history
-        file automatically.
-        
-        @param dirPath: path to directory that contains previously downloaded track logfiles
-        @type dirPath: String
-        @param histFileDestDir: directory where history file is to be placed. Default: TrackLogPuller.LOCAL_LOG_STORE
-        @type histFileDestDir: String
-        @param dryRun: if True, only log what *would* be done. Cause no actual changes.
-        @type dryRun: Bool
-        '''
-        if histFileDestDir is None:
-            histFileDestDir = TrackLogPuller.LOCAL_LOG_STORE
-        try:
-            os.makedirs(dirPath)
-        except OSError:
-            # dir and all intermediate dirs already exit; fine.
-            pass
-        try:
-            # Get all files in the dir where the track logs are stored:
-            fileNames = os.listdir(dirPath)
-        except IOError:
-            # Shouldn't happen.
-            self.logWarn("Directory path %s is not found." % dirPath)
-            
-        with open(os.path.join(histFileDestDir, 'pullHistory.txt'), 'a') as histFd:
-            for maybeLogFile in fileNames:
-                # Do a sanity check on the file name: it must be parsed successfully
-                # the the   pattern: FILE_DATE_PATTERN
-                dateMatch = TrackLogPuller.FILE_DATE_PATTERN.search(maybeLogFile)
-                if dateMatch is None:
-                    # not a log file:
-                    continue
-                fullPath  = os.path.join(dirPath, maybeLogFile)
-                (fileSize, createTime) = self.getHistoryFacts(fullPath)
-                if dryRun:
-                    self.logInfo('Would add to history file: "%s,%d,%s"' % (fullPath, fileSize, str(createTime)))
-                else:
-                    histFd.write('%s,%d,%s\n' % (fullPath, fileSize, str(createTime)))
             
     # ----------------------------------------  Private Methods ----------------------
-    def getHistoryFacts(self, logFilePath):
-        '''
-        Given the full path of a log file, return a tuple
-        that includes the file's size in bytes, and the 
-        file's creation time as a datetime object.
-        @param logFilePath: absolute path to the log file in question
-        @type logFilePath: String
-        @return: a two-tuple that includes the file size in bytes, and a datetime object
-                 that corresponds to the creation time.
-        @rtype: (int, datetime.datetime)
-        '''
-        fileStats = os.stat(logFilePath)
-        return (fileStats.st_size, datetime.datetime.fromtimestamp(fileStats.st_ctime))
 
     def setupLogging(self, loggingLevel, logFile):
         '''
@@ -365,14 +306,14 @@ if __name__ == '__main__':
                         action='store_true');
     parser.add_argument('--logs',
                         action='append',
-                        help='For pull: root destination of downloaded track log files; default: ' + TrackLogPuller.LOCAL_LOG_STORE +\
+                        help='For pull: root destination of downloaded track log files; default: ' + TrackLogPuller.LOCAL_LOG_STORE_ROOT +\
                              '. For transform: root location of log files to be tranformed; default: %s.' %
-                             TrackLogPuller.LOCAL_LOG_STORE)
+                             TrackLogPuller.LOCAL_LOG_STORE_ROOT)
     parser.add_argument('--sql',
                         action='append',
-                        help='For transform: destination directory of where transformed track log files go (.sql files); default: ' + os.path.join(TrackLogPuller.LOCAL_LOG_STORE, 'SQL') +\
+                        help='For transform: destination directory of where transformed track log files go (.sql files); default: ' + os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'SQL') +\
                              '. For load: directory of .sql files to be loaded, or list of .sql files; default: %s.' %
-                             os.path.join(TrackLogPuller.LOCAL_LOG_STORE, 'SQL'))
+                             os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'SQL'))
     parser.add_argument('toDo',
                         help='What to do: {pull | transform | load | pullTransform | pullTransformLoad'
                         ) 
@@ -408,7 +349,10 @@ if __name__ == '__main__':
         puller = TrackLogPuller(logFile=args.errLogFile)
     
     #**********************
-    print(puller.identifyNewLogFiles("/lfs/datasource/0/home/dataman/Data/EdX/tracking/pullHistory.txt"))
+    #print(puller.identifyNewLogFiles("/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingSep20_To_Dec5_2013"))
+    #print(puller.identifyNewLogFiles("/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingSep20_To_Dec5_2013"))
+    #print(puller.identifyNewLogFiles())
+    print(puller.pullNewFiles(dryRun=False))
     sys.exit()
     #**********************
     
