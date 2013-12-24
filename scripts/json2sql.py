@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
-import sys
-import os
 import argparse
-# from cgi import logfile
 import datetime
+import os
+import re
+import socket
+import sys
 import time
 
 # Add json_to_relation source dir to $PATH
@@ -13,10 +14,65 @@ source_dir = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "../json_
 source_dir.extend(sys.path)
 sys.path = source_dir
 
+from edxTrackLogJSONParser import EdXTrackLogJSONParser
+from input_source import InURI
 from json_to_relation import JSONToRelation
 from output_disposition import OutputDisposition, OutputFile
-from input_source import InURI
-from edxTrackLogJSONParser import EdXTrackLogJSONParser
+
+
+# Transforms a single .json OpenEdX tracking log file to
+# relational tables. See argparse below for options.
+
+# For non-Stanford installations, customize the following
+# setting of LOCAL_LOG_STORE_ROOT. This is the file system 
+# directory from which S3 key paths descend. Example: Stanford's
+# S3 file keys where .json tracking logs are stored are of the form
+#    tracking/app10/tracking.log-<date>.gz
+# For transform to relational tables we copy these files
+# to /foo/bar/, so that they end up like this:
+# /foo/bar/tracking/app10/tracking.log-<date>.gz
+# LOCAL_LOG_STORE_ROOT in this example is /foo/bar/
+
+hostname = socket.gethostname()
+if hostname == 'duo':
+    LOCAL_LOG_STORE_ROOT = "/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsTests/"                            
+elif hostname == 'mono':
+    LOCAL_LOG_STORE_ROOT = "/home/paepcke/Project/VPOL/Data/EdXTrackingOct22_2013/"
+elif hostname == 'datastage':
+    LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/EdX"
+
+def buildOutputFileName(inFilePath, destDir, fileStamp):
+    '''
+    Given the full path to a .json tracking log file, a destination
+    directory where results of a transform to relational tables will
+    go, and a timestamp to ensure uniqueness, generate a new .sql
+    filename that will be used by the transform. Example: given::
+      /EdX/EdXTrackingLogsTests/tracking/app10/tracking.log-20130610.gz
+    and given destDir of /tmp, and LOCAL_LOG_STORE_ROOT being /EdX/EdXTrackingLogsTests/
+    /returns something like::
+      /tmp/racking.app10.tracking.log-20130610.gz.2013-12-05T00_33_10.462711_5050.sql
+    
+    That is the LOCAL_STORE_ROOT is removed from the infile, leaving just
+    tracking/app10/tracking.log-20130610.gz. Then the destDir is prepended,
+    the fileStamp is appended, together with a trailing .sql
+     
+    @param inFilePath: full path to .json file
+    @type inFilePath: String
+    @param destDir: full path to destination directory
+    @type destDir: String
+    @param fileStamp: timestamp
+    @type fileStamp: String
+    @return: a full filename with a .sql extension, derived from the input file name
+    @rtype: String
+    '''
+    rootEnd = inFilePath.find(LOCAL_LOG_STORE_ROOT)
+    if rootEnd < 0:
+        return os.path.join(destDir, os.path.basename(inFilePath)) + '.' + fileStamp + '.sql'
+    subTreePath = inFilePath[rootEnd+len(LOCAL_LOG_STORE_ROOT):]
+    subTreePath = re.sub('/', '.', subTreePath)
+    res = os.path.join(destDir, subTreePath + '.' + fileStamp + '.sql')
+    return res
+
 
 if __name__ == "__main__":
 
@@ -54,7 +110,13 @@ if __name__ == "__main__":
     dt = datetime.datetime.fromtimestamp(time.time())
     fileStamp = dt.isoformat().replace(':','_') + '_' + str(os.getpid())
 
-    outFullPath = os.path.join(args.destDir, os.path.basename(args.inFilePath)) + '.' + fileStamp + '.sql'
+    outFullPath = buildOutputFileName(args.inFilePath, args.destDir, fileStamp) 
+
+    #********************
+    #print('In: %s' % args.inFilePath)
+    #print('Out: %s' % outFullPath)
+    #sys.exit()
+    #********************
 
     # Log file will go to <destDir>/../TransformLogs, the file being named j2s_<inputFileName>.log:
     logDir = os.path.join(args.destDir, '..') + '/TransformLogs'
@@ -75,11 +137,11 @@ if __name__ == "__main__":
     # and pumping output to the given output path:
 
     if args.targetFormat == 'csv':
-      outputFormat = OutputDisposition.OutputFormat.CSV
+        outputFormat = OutputDisposition.OutputFormat.CSV
     elif args.targetFormat == 'sql_dump':
-      outputFormat = OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS
+        outputFormat = OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS
     else:
-      outputFormat = OutputDisposition.OutputFormat.SQL_INSERTS_AND_CSV
+        outputFormat = OutputDisposition.OutputFormat.SQL_INSERTS_AND_CSV
 
     jsonConverter = JSONToRelation(InURI(args.inFilePath),
                                    OutputFile(outFullPath,

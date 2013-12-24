@@ -14,7 +14,7 @@
 # as this script. But this script can be called
 # from anywhere.
 
-USAGE="Usage: transform.sh sqlDestDir logFiles"
+USAGE="Usage: transformGivenLogfiles.sh sqlDestDir logFiles"
 
 if [ $# -lt 2 ]
 then
@@ -23,7 +23,12 @@ then
 fi
 
 destDir=$1
-echo $destDir
+#echo $destDir
+if [ ! -d $destDir ]
+then
+    echo "First argument must be a directory; $USAGE"
+    exit 1
+fi
 shift
 #echo ${@}
 thisScriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"

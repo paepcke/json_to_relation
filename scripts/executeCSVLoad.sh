@@ -155,7 +155,7 @@ echo "`date`: dropping index on course_display_name from EdxTrackEvent"
 mysql -u root -p$password -e 'DROP INDEX EdxTrackEventIdxCourseDisplayName ON EdxTrackEvent;'
 
 echo "`date`: dropping index on resource_display_name from EdxTrackEvent"
-mysql -u root -p$password -e ''DROP INDEX EdxTrackEventIdxResourceDisplayName ON EdxTrackEvent;''
+mysql -u root -p$password -e 'DROP INDEX EdxTrackEventIdxResourceDisplayName ON EdxTrackEvent;'
 
 echo "`date`: dropping index on answer from Answer"
 mysql -u root -p$password -e 'DROP INDEX AnswerIdxAns ON Answer;'
