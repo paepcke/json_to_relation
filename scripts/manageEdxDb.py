@@ -3,10 +3,74 @@
 '''
 Created on Nov 9, 2013
 
+Script that depending on CLI options will
+  - Retrieve any new OpenEdx tracking log files from S3
+  - Transform the new files
+  - Load the resulting .csv files into the OpenEdX relational db
+
+Three variables can be set to account for installations other
+than Stanford's. See below. 
+
+usage: manageEdxDb.py [-h] [-l ERRLOGFILE] [-d] [-v] [--logs LOGS] [--sql SQL]
+                      [-u USER] [-p]
+                      toDo
+
+positional arguments:
+  toDo                  What to do: {pull | transform | load | pullTransform |
+                        pullTransformLoad
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -l ERRLOGFILE, --errLogFile ERRLOGFILE
+                        fully qualified log file name to which info and error
+                        messages are directed. Default: log to stdout.
+  -d, --dryRun          show what script would do if run normally; no actual
+                        downloads or other changes are performed.
+  -v, --verbose         print operational info to log.
+  --logs LOGS           For pull: root destination of downloaded OpenEdX
+                        tracking log .json files; default: LOCAL_LOG_STORE_ROOT 
+                          For transform: quoted string of comma or space
+                        separated individual OpenEdX tracking log files to be
+                        tranformed, and/or directories that contain such
+                        files; default: all files LOCAL_LOG_STORE_ROOT/tracking/app*/*.gz 
+                        that have not yet been transformed.
+  --sql SQL             For transform: destination directory of where the .sql
+                        and .csv files of the transformed OpenEdX tracking
+                        files go; default: LOCAL_LOG_STORE_ROOT/tracking/CSV
+                          For load: directory of .sql files to be loaded, or list of .sql
+                        files; default: LOCAL_LOG_STORE_ROOT/tracking/CSV
+  -u USER, --user USER  For load: user ID whose HOME/.ssh/mysql_root contains
+                        the localhost MySQL root password.
+  -p, --password        For load: request to be asked for pwd for operating
+                        MySQL; default: content of
+                        <currentUser>/.ssh/mysql_root if --user is
+                        unspecified, or content of
+                        <homeOfUser>/.ssh/mysql_root where <homeOfUser> is the
+                        home directory of the user specified in the --user
+                        option.
+
+At Stanford's datastage.stanford.edu machine the script will do 'the right thing'
+with just a single argument: {pull | transform | load | pullTransform | pullTransformLoad'}. 
+To use the script in other installations, modify the following constants:
+
+  - LOG_BUCKETNAME: the S3 bucket where OpenEdX tracking log files are stored as they 
+                    become available.
+  - LOCAL_LOG_STORE_ROOT: The root directory on the local machine (where this script is run),
+                    from which subtrees of loaded tracking files grow. At stanford the
+                    subtree is tracking/{app10/app11/app20/app21}. The root of that 
+                    subtree is /home/dataman/Data/EdX. An example tracking log file path
+                    is thus: /home/dataman/Data/EdX/tracking/app10/tracking.log-20130610.gz
+  - MYSQL_ROOT_USER a user name in whose HOME/.ssh the script will find the localhost MySQL
+                    root user's password in file mysql_root. If such a user is unavailable or undesired,
+                    make this constant blank, and use the -p option when calling 
+                    the script, and it will prompt for the pwd. 
+                    Or, if it is undesired to hard code that user, make sure
+                    to provide the --user option in calls that effect loading. 
+                    The .ssh/mysql_root mechanism is available to run this script in 
+                    unattended CRON jobs. 
 @author: paepcke
 '''
 import argparse
-import datetime
 import getpass
 import glob
 import logging
@@ -49,6 +113,14 @@ class TrackLogPuller(object):
         LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/EdX"
     LOG_BUCKETNAME = "stanford-edx-logs"
     
+    # UID of user in whose HOME/.ssh/ a mysql_root file contains
+    # the MySQL root pwd for access from localhost:
+    MYSQL_ROOT_USER = 'paepcke'
+    
+    # Directory into which the executeCSVLoad.sh script that is invoked
+    # from the load() method will put its log entries.
+    LOAD_LOG_DIR = ''
+    
     TRACKING_LOG_FILE_NAME_PATTERN = re.compile(r'tracking.log-[0-9]{8}.gz$')
     SQL_FILE_NAME_PATTERN = re.compile(r'.sql$')
     FILE_DATE_PATTERN = re.compile(r'[^-]*-([0-9]*)[^.]*\.gz')
@@ -66,7 +138,7 @@ class TrackLogPuller(object):
         @type logFile:
         '''
 
-        
+        TrackLogPuller.LOAD_LOG_DIR = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'Logs')        
         try:
             self.logger = None
             self.setupLogging(loggingLevel, logFile)
@@ -392,7 +464,7 @@ class TrackLogPuller(object):
         are written to directory TransformLogs that is a sibling of the given
         csvDestDir. Assumes that script transformGivenLogfiles.sh found by
         subprocess. Just have it in the same dir as this file.
-        @param logFilePaths: list of full0path track log files that are to be transformed.
+        @param logFilePaths: list of full-path track log files that are to be transformed.
         @type logFilePaths: [String]
         @param csvDestDir: full path to dir where sql files will be deposited. If None,
                            SQL files will to into TrackLogPuller.LOCAL_LOG_STORE_ROOT/SQL
@@ -404,10 +476,17 @@ class TrackLogPuller(object):
             logFilePaths = self.identifyNotTransformedLogFiles(csvDestDir=csvDestDir)
         if csvDestDir is None:
             csvDestDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/CSV')
+            
+        if len(logFilePaths) == 0:
+            self.logInfo("In transform(): all files in %s were already transformed to %s; or logFilePaths was passed as an empty list." %
+                         (os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT,'tracking/app*/*.gz'),
+                          csvDestDir))
+            return
         # Ensure that the target directory exists:
         try:
             os.makedirs(csvDestDir)
         except OSError:
+            # If call failed, all dirs already exist:
             pass
         
         thisScriptsDir = os.path.dirname(__file__)
@@ -445,9 +524,25 @@ class TrackLogPuller(object):
     def load(self, mysqlPWD=None, sqlFilesToLoad=None, csvDir=None, dryRun=False):
         '''
         Given a directory that contains .sql files, or an array of full-path .sql
-        files, load them into mysql. This script needs to use the MySQL db as
-        root, so the mysqlPWD must be the root pwd. 
-        @param mysqlPWD: Root password for MySQL db. See main section for how that pwd is obtained.
+        files, load them into mysql. The main work is done by the shell script
+        executeCSVLoad.sh. See comments in that script for more information.  
+        This executeCSVLoad.sh script needs to use the MySQL db as
+        root. As documented in executeCSVLoad.sh, there are multiple ways
+        to accomplish this. In this method we use one of two such methods.
+        If mysqlPWD is provided, it must be the MySQL localhost root pwd.
+        It is passed to executeCSVLoad.sh via the -w switch.
+        
+        If mysqlPWD is not provided, this method invokes executeCSVLoad.sh
+        with the -u option, passing MYSQL_ROOT_USER as the uid. The executeCSVLoad.sh
+        script examines that user's HOME/.ssh directory to find a file mysql_root.
+        That file, if found is expected to contain the MySQL root pwd. If that file
+        is not found, executeCSVLoad.sh will attempt to access MySQL as root without
+        a password.
+        
+        In addition, the executeCSVLoad.sh must run as sudo, which means that
+        this script must also run as sudo.
+         
+        @param mysqlPWD: Root password for MySQL db.
         @type mysqlPWD: String
         @param sqlFilesToLoad: list of .sql files that were created by transforms to load
                         If None, calls identifySQLToLoad() to select files that have
@@ -461,22 +556,41 @@ class TrackLogPuller(object):
         @param dryRun: if True, only log what *would* be done. Cause no actual changes.
         @type dryRun: Bool
         '''
+        
+        if getpass.getuser() != 'root':
+            if dryRun:
+                self.logInfo("Would reject call b/c caller is not sudo; continuing because this is a dry run.")
+            else:
+                self.logErr(("The load() method must run as root; instead it was run as %s." % getpass.getuser()))
+                return None
         if csvDir is None:
             csvDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/CSV')
         if sqlFilesToLoad is None:
             sqlFilesToLoad = self.identifySQLToLoad(csvDir=csvDir)
         if len(sqlFilesToLoad) == 0:
             return
+        logDestDir = TrackLogPuller.LOAD_LOG_DIR
+        # Ensure that the log directory exists:
+        try:
+            os.makedirs(logDestDir)
+        except OSError:
+            pass
+        
+        # Directory of this script:
+        currDir = os.path.dirname(__file__)
+        loadScriptPath = os.path.join(currDir, 'executeCSVLoad.sh')
         
         # Now SQL files are guaranteed to be a list. Load them all using
-        # a bash script, which will also run the index: 
-        shellCommand = ['load.sh', pwd]
-        shellCommand.extend(sqlFileSrc)
+        # a bash script, which will also run the index:
+        if mysqlPWD is None:
+            shellCommand = [loadScriptPath, '-u', TrackLogPuller.MYSQL_ROOT_USER, logDestDir]
+        else:
+            shellCommand = [loadScriptPath, '-w', mysqlPWD, logDestDir]
+        shellCommand.extend(sqlFilesToLoad)
         if dryRun:
             self.logInfo("Would now invoke bash command %s" % shellCommand)
         else:
             subprocess.call(shellCommand)
-    
             
     # ----------------------------------------  Private Methods ----------------------
 
@@ -521,38 +635,57 @@ class TrackLogPuller(object):
     def logErr(self, msg):
         self.logger.error(msg)
 
+    def isGzippedFile(self, filename):
+        return filename.endswith('.gz')
+    
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]))
     parser.add_argument('-l', '--errLogFile', 
-                        help='fully qualified log file name to which info and error are directed. Default: log to stdout.',
+                        help='fully qualified log file name to which info and error messages are directed. Default: log to stdout.',
                         dest='errLogFile',
                         default=None);
     parser.add_argument('-d', '--dryRun', 
                         help='show what script would do if run normally; no actual downloads or other changes are performed.', 
                         action='store_true');
     parser.add_argument('-v', '--verbose', 
-                        help='print operational info to console.', 
+                        help='print operational info to log.', 
                         dest='verbose',
                         action='store_true');
     parser.add_argument('--logs',
                         action='append',
-                        help='For pull: root destination of downloaded track log files; default: ' + TrackLogPuller.LOCAL_LOG_STORE_ROOT +\
-                             '. For transform: root location of log files to be tranformed; default: %s.' %
-                             TrackLogPuller.LOCAL_LOG_STORE_ROOT)
+                        help='For pull: root destination of downloaded OpenEdX tracking log .json files; ' +\
+                             'default LOCAL_LOG_STORE_ROOT (on this machine: ' +\
+                             TrackLogPuller.LOCAL_LOG_STORE_ROOT +\
+                             '). For transform: quoted string of comma or space separated individual '+\
+                             'OpenEdX tracking log files to be tranformed, and/or directories that contain ' +\
+                             'such files; default all files LOCAL_LOG_STORE_ROOT/app*/*.gz that have not yet been transformed ' +\
+                             '(on this machine: %s).' %
+                             os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/app*/*.gz')
+                             )
     parser.add_argument('--sql',
                         action='append',
-                        help='For transform: destination directory of where transformed track log files go (.sql files); default: ' + os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'SQL') +\
-                             '. For load: directory of .sql files to be loaded, or list of .sql files; default: %s.' %
-                             os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'SQL'))
+                        help='For transform: destination directory of where the .sql and .csv files of ' +\
+                             'the transformed OpenEdX tracking files go; ' +\
+                             'default LOCAL_LOG_STORE_ROOT/tracking/CSV (on this machine: %s' %
+                                os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/CSV')  +\
+                             '). For load: directory of .sql files to be loaded, or list of .sql files; ' +\
+                             'default LOCAL_LOG_STORE_ROOT/tracking/CSV (on this machine: %s.' %
+                             os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/CSV') +\
+                             ')'
+                             )
     parser.add_argument('-u', '--user',
                         action='append',
-                        help='For load: user ID for operating MySQL.')
+                        help='For load: user ID whose HOME/.ssh/mysql_root contains the localhost MySQL root password.')
     parser.add_argument('-p', '--password',
                         action='store_true',
-                        help='For load: request to be asked for pwd for operating MySQL; if omitted, script looks for $HOME/.ssh/mysql, and assumes its content is the pwd.')
+                        help='For load: request to be asked for pwd for operating MySQL; ' +\
+                             'default: content of %s/.ssh/mysql_root if --user is unspecified, ' % os.getenv('HOME') +\
+                             'or content of <homeOfUser>/.ssh/mysql_root where ' +\
+                             '<homeOfUser> is the home directory of the user specified in the --user option.' 
+                             )
     parser.add_argument('toDo',
-                        help='What to do: {pull | transform | load | pullTransform | pullTransformLoad'
+                        help='What to do: {pull | transform | load | pullTransform | pullTransformLoad}'
                         ) 
     
     args = parser.parse_args();
@@ -619,8 +752,8 @@ if __name__ == '__main__':
     #print(puller.identifyNewLogFiles())
     #sys.exit()
     #
-    puller.identifySQLToLoad()
-    sys.exit()
+    #puller.identifySQLToLoad()
+    #sys.exit()
     #
     #print(puller.pullNewFiles(dryRun=True))
     #sys.exit()
@@ -632,43 +765,63 @@ if __name__ == '__main__':
     #puller.transform(dryRun=True)
     #puller.transform(csvDestDir='/home/paepcke/tmp/CSV')
     #sys.exit()
+    #
+    #puller.load()
+    #sys.exit()
     #**********************
     
     if args.toDo == 'pull' or args.toDo == 'pullTransform' or args.toDo == 'pullTransformLoad':
         # For pull cmd, 'logs' must be a writable directory (to which the track logs will be written). 
         # It will come in as a singleton array:
-        if (args.logs is not None and not os.access(args.logs[0], os.W_OK)) or len(args.logs) > 1: 
+        if (args.logs is not None and not os.access(args.logs[0], os.W_OK)) or (args.logs is not None and len(args.logs)) > 1: 
             puller.logErr("For pulling track log files from S3, the 'logs' parameter must either not be present, or it must be one *writable* directory (where files will be deposited).")
             sys.exit(1)
-        receivedFiles = puller.pullNewFiles(args.logs, args.dryRun)
+        receivedFiles = puller.pullNewFiles(destDir=args.logs, dryRun=args.dryRun)
     
     if args.toDo == 'transform' or args.toDo == 'pullTransform' or args.toDo == 'pullTransformLoad':
-        # For transform cmd, logs will defaulted, or be a list of log files, or a singleton
-        # list of which the first might be a directory:
+        # For transform cmd, logs will be defaulted, or be a space-or-comma-separated string of log files/directories:
         # Check for, and point out all errors, rather than quitting after one:
         if args.logs is not None:
-            if os.path.isdir(args.logs[0]) and len(args.logs) > 1: 
-                puller.logErr("For transform the 'logs' parameter must either be a single directory, or a list of files.")
-                sys.exit(1)
-            # All files must exist:
-            trueFalseList = map(os.path.exists, args.logs)
-            ok = True
-            for i in range(len(trueFalseList)):
-                if not trueFalseList[i]:
-                    puller.logErr("File % does not exist." % args.logs[i])
-                    ok = False
-                if not os.access(args.logs[i], os.R_OK):
-                    puller.logErr("File % exists, but is not readable." % args.logs[i])
-                    ok = False
-            if not ok:
-                puller.logErr("Command aborted, no action was taken.")
-                sys.exit(1)
-                              
+            # args.logs comes as a one-element list; pull that element out:
+            logsLocs = args.logs[0]
+            # On the commandline the --logs option will have a string
+            # of either comma- or space-separated directories and/or files.
+            # Get a Python list from that:
+            logFilesOrDirs = re.split('[\s,]', logsLocs)
+            # Remove empty strings that come from use of commas *and* spaces in
+            # the cmd line option:
+            logFilesOrDirs = [logLoc for logLoc in logFilesOrDirs if len(logLoc) > 0]
+            
+            # If some of the logs arguments are directories, replace those with arrays
+            # of .gz files in those directories; for files in the argument, ensure they
+            # exist: 
+            allLogFiles = []
+            for fileOrDir in logFilesOrDirs:
+                # Whether file or directory: either must be readable:
+                if not os.access(fileOrDir, os.R_OK):
+                    puller.logErr("Tracking log file or directory '%s' not readable or non-existent; ignored." % fileOrDir)
+                    continue
+                if os.path.isdir(fileOrDir):
+                    # For directories in the args, ensure that
+                    # each gzipped file within is readable:
+                    dirFiles = filter(puller.isGzippedFile, os.listdir(fileOrDir))
+                    for dirFile in dirFiles:
+                        if not os.access(dirFile, os.R_OK):
+                            puller.logErr("Tracking log file '%s' not readable or non-existent; ignored." % os.path.join(fileOrDir, dirFile))
+                            continue
+                        allLogFiles.append(dirFile)
+                else: # arg not a directory:
+                    if puller.isGzippedFile(fileOrDir):
+                        allLogFiles.append(fileOrDir)
+                        
         # args.sql must be a singleton directory:
-        if (args.sql is not None and len(args.sql) > 1) or not os.path.isdir(args.sql[0]) or not os.access(args.sql[0], os.W_OK):
+        if (args.sql is not None and len(args.sql) > 1) or (args.sql is not None and not os.path.isdir(args.sql[0])) or (args.sql is not None and not os.access(args.sql[0], os.W_OK)):
             puller.logErr("For transform command the 'sql' parameter must be a single directory where result .sql files are written.")
             sys.exit(1)
-        puller.transform(args.logs, args.sql, args.dryRun)
+        if args.logs is None:
+            puller.transform(csvDestDir=args.sql, dryRun=args.dryRun)
+        else:
+            puller.transform(logFilePaths=allLogFiles, csvDestDir=args.sql, dryRun=args.dryRun)
     
     if args.toDo == 'load' or args.toDo == 'pullTransformLoad':
         # For loading, args.sql must be None, or a readable directory, or a sequence of readable .sql files.
@@ -689,10 +842,12 @@ if __name__ == '__main__':
             if not ok:
                 puller.logErr("Command aborted, no action was taken.")
                 sys.exit(1)
-        
         # For DB ops need DB root pwd:
-        pwd = getpass.getpass("Root's mysql pwd: ")
-        puller.load(pwd, args.sql, args.dryRun)
+        if args.password:
+            pwd = getpass.getpass("Root's mysql pwd: ")
+        else:
+            pwd = None
+        puller.load(mysqlPWD=pwd, sqlFilesToLoad=args.sql, dryRun=args.dryRun)
     
     
     sys.exit(0)
