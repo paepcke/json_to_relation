@@ -743,6 +743,7 @@ if __name__ == '__main__':
                 # No .ssh subdir of user's home, or no mysql inside .ssh:
                 puller.pwd = None
     #**********************
+    # For testing different sections:
     #print('User: ' + str(puller.user))
     #print('PWD: ' + str(puller.pwd))
     #sys.exit()
