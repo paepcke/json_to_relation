@@ -14,7 +14,7 @@
 # as this script. But this script can be called
 # from anywhere.
 
-USAGE="Usage: transformGivenLogfiles.sh sqlDestDir logFiles"
+USAGE="Usage: `basename $0` sqlDestDir logFiles"
 
 if [ $# -lt 2 ]
 then

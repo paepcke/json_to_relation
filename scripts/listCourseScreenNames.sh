@@ -13,7 +13,7 @@
 # Used by makeScreenNameToAnonTable.sh, but can be used
 # independently.
 
-USAGE="Usage: listCourseScreenNames.sh courseNameGrepPattern tracklogfile1.gz tracklogfile2.gz..."
+USAGE="Usage: `basename $0` courseNameGrepPattern tracklogfile1.gz tracklogfile2.gz..."
 
 if [ $# -lt 2 ]
 then

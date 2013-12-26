@@ -30,7 +30,7 @@
 # This script must also be run as superuser, b/c it needs
 # to examine MySQL table directories.
 
-usage="Usage: executeCSVLoad.sh [-u username][-p][-w rootpass] logDir file1.sql file2.sql... # You may be asked for MySQL root pwd."
+usage="Usage: `basename $0` [-u username][-p][-w rootpass] logDir file1.sql file2.sql... # You may be asked for MySQL root pwd."
 
 if [ $# -lt 1 ]
 then
@@ -42,12 +42,6 @@ askForPasswd=false
 USERNAME=`whoami`
 password=''
 LOGFILE_NAME='loadLog.log'
-
-if [ $USERNAME != 'root' ]
-then
-    echo "This script must be run as superuser."
-    exit 1
-fi
 
 # Keep track of number of optional args the user provided:
 NEXT_ARG=0
@@ -83,7 +77,7 @@ shift ${NEXT_ARG}
 
 if [ ! -d "$1" ]
 then
-    echo "First arg must be a directory for the log file(s): $usage"
+    echo "First arg must be an existing directory for the load log file: $usage"
     exit 1
 fi
 
@@ -123,297 +117,82 @@ MYSQL_DATADIR_DECL=`grep datadir /etc/mysql/my.cnf`
 # Extract just the directory:
 MYSQL_DATADIR=`echo $s | cut -d'=' -f 2`
 
-# Array of all tables we will deal with;
-# the array is used in loops:
-tables=(EdxTrackEvent \
-        Answer \
-        CorrectMap \
-        InputState \
-        LoadInfo \
-        State \
-       )
-privateTables=(Account)
+# Dict of tables and their primary key columns
+# Use a bash associative array (like a Python dict):
+declare -A tables
+tables=( ["EdxTrackEvent"]="_id" \
+         ["Answer"]="answer_id" \
+         ["CorrectMap"]="correct_map_id" \
+         ["InputState"]="input_state_id" \
+         ["LoadInfo"]="load_info_id" \
+         ["State"]="state_id" \
+    )
 
-# Flush Public tables:
-for table in ${tables[@]}
+declare -A privateTables
+privateTables=( ["Account"]="account_id" )
+
+# Flush Public tables; the ${!tables[@]} loops through the table names (i.e. dict keys)
+for table in ${!tables[@]}
 do
-    echo "`date`: Flushing table $table:" >> $LOG_FILE
-    if [ -e ${MYSQL_DATADIR}/Edx/$table.MYI ]
-    then
-	mysql -u root -p$password -e 'FLUSH TABLES $table' Edx >> $logDir/mysqlCSVLoad.log
-    fi
+    echo "`date`: Flushing table $table:" >> $LOG_FILE 2>&1
+    { mysql -u root -p$password -e 'FLUSH TABLES $table' Edx; } >> $LOG_FILE 2>&1
 done
 
-# Flush Private tables:
-for table in ${privateTables[@]}
+# Flush Private tables; the ${!privateTables[@]} loops through the table names (i.e. dict keys)
+for table in ${!privateTables[@]}
 do
-    echo "`date`: Flushing table $table:"  >> $LOG_FILE
-    if [ -e ${MYSQL_DATADIR}/EdxPrivate/$table.MYI ]
-    then
-	mysql -u root -p$password -e 'FLUSH TABLES $table' EdxPrivate >> $logDir/mysqlCSVLoad.log
-    fi
+    echo "`date`: Flushing table $table:"  >> $LOG_FILE 2>&1
+    { mysql -u root -p$password -e 'FLUSH TABLES $table' EdxPrivate; } >> $LOG_FILE 2>&1
 done
 
-# Drop all indexes to speed up the loading.
-# They will all be recreated after the load:
+# Remove primary keys from public tables to speed loading; the ${!tables[@]} loops through the table names (i.e. dict keys)
+for table in ${!tables[@]}
+do
+    echo "`date`: dropping primary key from Edx.$table" >> $LOG_FILE 2>&1
+    { mysql -u root -p$password -e 'DROP INDEX `PRIMARY` ON Edx.'$table';'; } >> $LOG_FILE 2>&1	
+done
 
-echo "`date`: dropping primary key of EdxTrackEvent"  >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX `PRIMARY` ON EdxTrackEvent;'
+# # Private tables; the ${!privateTables[@]} loops through the table names (i.e. dict keys)
+for table in ${!privateTables[@]}
+do
+    echo "`date`: dropping primary key from EdxPrivate.$table" >> $LOG_FILE 2>&1
+    { mysql -u root -p$password -e 'DROP INDEX `PRIMARY` ON EdxPrivate.'$table';'; } >> $LOG_FILE 2>&1
+done
 
-echo "`date`: dropping foreign key constraint correct_map_fk from EdxTrackEvent"  >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX correctMap_fk ON EdxTrackEvent;'
-
-echo "`date`: dropping foreign key constraint answer_fk from EdxTrackEvent" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX answer_fk ON EdxTrackEvent;'
-
-echo "`date`: dropping foreign key constraint state_fk from EdxTrackEvent" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX state_fk ON EdxTrackEvent;'
-
-echo "`date`: dropping foreign key constraint load_info_fk from EdxTrackEvent" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX load_info_fk ON EdxTrackEvent; '
-
-echo "`date`: dropping primary key from Answer" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX `PRIMARY` ON Answer;'
-
-echo "`date`: dropping primary key from State" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX `PRIMARY` ON State;'
-
-echo "`date`: dropping foreign key constraint student_answer from State" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX student_answer  ON STATE;'
-
-echo "`date`: dropping foreign key constraint correct_map from State" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX correct_map ON STATE;'
-
-echo "`date`: dropping foreign key constraint input_state  from State" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX input_state ON STATE;'
-
-echo "`date`: dropping primary key from InputState" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX `PRIMARY` ON InputState;'
-
-echo "`date`: dropping primary key from CorrectMap" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX `PRIMARY` ON CorrectMap;'
-
-echo "`date`: dropping primary key from LoadInfo" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX `PRIMARY` ON LoadInfo;'
-
-echo "`date`: dropping foreign key constraint student_answer from State" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX student_answer  ON STATE;'
-
-echo "`date`: dropping foreign key constraint correct_map from State" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX correct_map ON STATE;'
-
-echo "`date`: dropping foreign key constraint input_state from State" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX input_state ON STATE;'
-
-echo "`date`: dropping index on event_type from EdxTrackEvent" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX EdxTrackEventIdxEvType ON EdxTrackEvent;'
-
-echo "`date`: dropping index on anon_screen_name from EdxTrackEvent" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX EdxTrackEventIdxUname ON EdxTrackEvent;'
-
-echo "`date`: dropping index on course_id from EdxTrackEvent" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX EdxTrackEventIdxCourseID ON EdxTrackEvent;'
-
-echo "`date`: dropping index on sequence_id from EdxTrackEvent" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX EdxTrackEventIdxSeqID ON EdxTrackEvent;'
-
-echo "`date`: dropping index on problem_id from EdxTrackEvent" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX EdxTrackEventIdxProbID ON EdxTrackEvent;'
-
-echo "`date`: dropping index on video_id from EdxTrackEvent" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX EdxTrackEventIdxVidID ON EdxTrackEvent;'
-
-echo "`date`: dropping index on answer_id from EdxTrackEvent" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX EdxTrackEventIdxAnsID ON EdxTrackEvent;'
-
-echo "`date`: dropping index on success from EdxTrackEvent" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX EdxTrackEventIdxSuccess ON EdxTrackEvent;'
-
-echo "`date`: dropping index on time from EdxTrackEvent" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX EdxTrackEventIdxTime ON EdxTrackEvent;'
-
-echo "`date`: dropping index on course_display_name from EdxTrackEvent" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX EdxTrackEventIdxCourseDisplayName ON EdxTrackEvent;'
-
-echo "`date`: dropping index on resource_display_name from EdxTrackEvent" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX EdxTrackEventIdxResourceDisplayName ON EdxTrackEvent;'
-
-echo "`date`: dropping index on answer from Answer" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX AnswerIdxAns ON Answer;'
-
-echo "`date`: dropping index on problem_id from Answer" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX AnswerIdxProbID ON Answer;'
-
-echo "`date`: dropping index on course_id from Answer" >> $LOG_FILE
-mysql -u root -p$password -e 'DROP INDEX AnswerIdxCourseID ON Answer;'
-
-# Turn off indexing table by table:
-# (COMMENTED BECAUSE: presumably subsumed by above destruction of the 
-# indexes:
-
-# Public tables:
-# for table in ${tables[@]}
-# do
-#     if [ -e ${MYSQL_DATADIR}/Edx/$table.MYI ]
-#     then
-# 	myisamchk --keys-used=0 -rq ${MYSQL_DATADIR}/Edx/$table.MYI; 
-#     fi
-# done
-
-# # Private tables:
-# for table in ${privateTables[@]}
-# do
-#     if [ -e ${MYSQL_DATADIR}/EdxPrivate/$table.MYI ]
-#     then 
-# 	myisamchk --keys-used=0 -rq ${MYSQL_DATADIR}/EdxPrivate/$table.MYI; 
-#     fi
-# done
-
-# Do the actual loading of CSV files into their respective tables:
+# Do the actual loading of CSV files into their respective tables;
+# $@ are the .sql files from the CLI:
 for sqlFile in $@
 do  
-    echo "`date`: starting on $sqlFile"  >> $LOG_FILE
-    mysql -f -u root -p$password --local_infile=1 < $sqlFile >> $logDir/mysqlCSVLoad.log
-    echo "`date`: done loading $sqlFile"  >> $LOG_FILE
+    echo "`date`: starting on $sqlFile"  >> $LOG_FILE 2>&1
+    { mysql -f -u root -p$password --local_infile=1 < $sqlFile; } >> $LOG_FILE 2>&1
+    echo "`date`: done loading $sqlFile"  >> $LOG_FILE 2>&1
 done
 
-# COMMENTED because we switched to removing the indexes altogether,
-#           so myisamchk can't be used to 'repair'. Instead, tried
-#           to set the MySQL vars in /etc/mysql/my.cnf that are
-#           supposedly relevant for ensuring in-memory index building
-#           to high values.
-#
-# Re-Index the primary and foreign key fields in each table. This
-# happens in memory, and will leave prefectly balanced btrees.
-# This does not yet index the non-key columns:
+# Add primary keys back in:
+# Public tables; the ${!tables[@]} loops through the table names (i.e. dict keys)
+for table in ${!tables[@]}
+do
+    echo "`date`: adding primary key to table $table..." >> $LOG_FILE 2>&1
+    # The ${tables["$table"]} accesses the primary key column (i.e. the value of the dict):
+    { mysql -u root -p$password -e 'ALTER TABLE Edx.'$table' ADD PRIMARY KEY( '${tables["$table"]}' )'; } >> $LOG_FILE 2>&1
+done
 
-# Public tables:
-# for table in ${tables[@]}
-# do
-#     echo "`date`: Indexing primary and foreign keys for table $table..." >> $logDir/mysqlCSVLoad.log
-#     time sudo myisamchk -rq ${MYSQL_DATADIR}/Edx/$table.MYI >> $logDir/mysqlCSVLoad.log
-# done
+# Private tables; the ${!tables[@]} loops through the table names (i.e. dict keys)
+for table in ${!privateTables[@]}
+do
+    echo "`date`: adding primary key to table $table..." >> $LOG_FILE 2>&1
+    # The ${tables["$table"]} accesses the primary key column (i.e. the value of the dict):
+    { mysql -u root -p$password -e 'ALTER TABLE EdxPrivate.'$table' ADD PRIMARY KEY( '${privateTables["$table"]}' )'; } >> $LOG_FILE 2>&1
+done
 
-# # Private tables:
-# for table in ${privateTables[@]}
-# do
-#     echo "`date`: Indexing primary and foreign keys for table EdxPrivate.$table..." >> $logDir/mysqlCSVLoad.log
-#     time sudo  myisamchk -rq ${MYSQL_DATADIR}/EdxPrivate/$table.MYI >> $logDir/mysqlCSVLoad.log
-# done
+# Fix up the indexes, since we didn't update
+# them during the load:
+for table in ${tables[@]}
+do
+    echo "`date`: updating indexes..." >> $LOG_FILE 2>&1
+    { time mysqlcheck --repair --databases Edx EdxPrivate; } >> $LOG_FILE 2>&1
+done
 
-# echo "`date`: Done indexing primary and foreign keys." >> $logDir/mysqlCSVLoad.log
-
-# Build the other indexes:
-
-#mysql -u root -p$password < edxCreateIndexes.sql
-
-# Recreate the PRIMARY keys and foreign key constraints:
-
-echo "`date`: building primary key index for table EdxTrackEvent" >> $LOG_FILE
-mysql -u root -p$password -e 'ALTER TABLE EdxTrackEvent ADD PRIMARY KEY(_id);'
-
-echo "`date`: building primary key index for table Answer" >> $LOG_FILE
-mysql -u root -p$password -e 'ALTER TABLE Answer ADD PRIMARY KEY(answer_id);'
-
-echo "`date`: building primary key index for table State" >> $LOG_FILE
-mysql -u root -p$password -e 'ALTER TABLE State ADD PRIMARY KEY(state_id);'
-
-echo "`date`: building primary key index for table InputState" >> $LOG_FILE
-mysql -u root -p$password -e 'ALTER TABLE InputState ADD PRIMARY KEY(input_state_id);'
-
-echo "`date`: building primary key index for table CorrectMap" >> $LOG_FILE
-mysql -u root -p$password -e 'ALTER TABLE CorrectMap ADD PRIMARY KEY(correct_map_id);'
-
-echo "`date`: building primary key index for table LoadInfo" >> $LOG_FILE
-mysql -u root -p$password -e 'ALTER TABLE LoadInfo ADD PRIMARY KEY(load_info_id);'
-
-echo "`date`: adding foreign key constraint to correctMap_fk in table EdxTrackEvent" >> $LOG_FILE
-mysql -u root -p$password -e 'ALTER TABLE EdxTrackEvent ADD FOREIGN KEY(correctMap_fk) REFERENCES CorrectMap(correct_map_id) ON DELETE CASCADE;'
-
-echo "`date`: adding foreign key constraint to answer_fk in table EdxTrackEvent" >> $LOG_FILE
-mysql -u root -p$password -e 'ALTER TABLE EdxTrackEvent ADD FOREIGN KEY(answer_fk) REFERENCES Answer(answer_id) ON DELETE CASCADE;'
-
-echo "`date`: adding foreign key constraint to state_fk in table EdxTrackEvent" >> $LOG_FILE
-mysql -u root -p$password -e 'ALTER TABLE EdxTrackEvent ADD FOREIGN KEY(state_fk) REFERENCES State(state_id) ON DELETE CASCADE;'
-
-echo "`date`: adding foreign key constraint to load_info_fk in table EdxTrackEvent" >> $LOG_FILE
-mysql -u root -p$password -e 'ALTER TABLE EdxTrackEvent ADD FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id) ON DELETE CASCADE;'
-
-echo "`date`: adding foreign key constraint to student_answer in table State" >> $LOG_FILE
-mysql -u root -p$password -e 'ALTER TABLE State ADD FOREIGN KEY(student_answer) REFERENCES Answer(answer_id) ON DELETE CASCADE;'
-
-echo "`date`: adding foreign key constraint to correct_map in table State" >> $LOG_FILE
-mysql -u root -p$password -e 'ALTER TABLE State ADD FOREIGN KEY(correct_map) REFERENCES CorrectMap(correct_map_id) ON DELETE CASCADE;'
-
-echo "`date`: adding foreign key constraint to input_state in table State" >> $LOG_FILE
-mysql -u root -p$password -e 'ALTER TABLE State ADD FOREIGN KEY(input_state) REFERENCES InputState(input_state_id) ON DELETE CASCADE;'
-
-echo "`date`: indexing Edx.EdxTrackEvent(event_type(255))" >> $LOG_FILE
-mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxEvType ON Edx.EdxTrackEvent(event_type(255))'
-
-echo "`date`: indexing Edx.EdxTrackEvent(anon_screen_name(255))" >> $LOG_FILE
-mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxUname ON Edx.EdxTrackEvent(anon_screen_name(255))'
-
-echo "`date`: indexing Edx.EdxTrackEvent(course_id(255))" >> $LOG_FILE
-mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxCourseID ON Edx.EdxTrackEvent(course_id(255))'
-
-echo "`date`: indexing Edx.EdxTrackEvent(course_display_name(255))" >> $LOG_FILE
-mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxCourseDisplayName ON Edx.EdxTrackEvent(course_display_name(255))'
-
-echo "`date`: indexing Edx.EdxTrackEvent(resource_display_name(255))" >> $LOG_FILE
-mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxResourceDisplayName ON Edx.EdxTrackEvent(resource_display_name(255))'
-
-echo "`date`: indexing Edx.EdxTrackEvent(sequence_id(255))" >> $LOG_FILE
-mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxSeqID ON Edx.EdxTrackEvent(sequence_id(255))'
-
-echo "`date`: indexing Edx.EdxTrackEvent(problem_id(255))" >> $LOG_FILE
-mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxProbID ON Edx.EdxTrackEvent(problem_id(255))'
-
-echo "`date`: indexing Edx.EdxTrackEvent(video_id(255))" >> $LOG_FILE
-mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxVidID ON Edx.EdxTrackEvent(video_id(255))'
-
-echo "`date`: indexing Edx.EdxTrackEvent(answer_id(255))" >> $LOG_FILE
-mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxAnsID ON Edx.EdxTrackEvent(answer_id(255))'
-
-echo "`date`: indexing Edx.EdxTrackEvent(success(15))" >> $LOG_FILE
-mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxSuccess ON Edx.EdxTrackEvent(success(15))'
-
-echo "`date`: indexing Edx.EdxTrackEvent(time)" >> $LOG_FILE
-mysql -u root -p$password -e 'CREATE INDEX EdxTrackEventIdxTime ON Edx.EdxTrackEvent(time)'
-
-echo "`date`: indexing Edx.Answer(answer(255))" >> $LOG_FILE
-mysql -u root -p$password -e 'CREATE INDEX AnswerIdxAns ON Edx.Answer(answer(255))'
-
-echo "`date`: indexing Edx.Answer(problem_id(255))" >> $LOG_FILE
-mysql -u root -p$password -e 'CREATE INDEX AnswerIdxProbID ON Edx.Answer(problem_id(255))'
-
-echo "`date`: indexing Edx.Answer(course_id(255))" >> $LOG_FILE
-mysql -u root -p$password -e 'CREATE INDEX AnswerIdxCourseID ON Edx.Answer(course_id(255))'
-
-echo "`date`: indexing Private.Account(screen_name(255))" >> $LOG_FILE
-mysql -u root -p$password -e 'CREATE INDEX AccountIdxUname ON EdxPrivate.Account(screen_name(255))'
-
-echo "`date`: indexing Private.Account(anon_screen_name(255))" >> $LOG_FILE
-mysql -u root -p$password -e 'CREATE INDEX AccountIdxAnonUname ON EdxPrivate.Account(anon_screen_name(255))'
-
-echo "`date`: indexing Private.Account(zipcode(10))" >> $LOG_FILE
-mysql -u root -p$password -e 'CREATE INDEX AccountIdxZip ON EdxPrivate.Account(zipcode(10))'
-
-echo "`date`: indexing Private.Account(country(255))" >> $LOG_FILE
-mysql -u root -p$password -e 'CREATE INDEX AccountIdxCoun ON EdxPrivate.Account(country(255))'
-
-echo "`date`: indexing Private.Account(gender(6))" >> $LOG_FILE
-mysql -u root -p$password -e 'CREATE INDEX AccountIdxGen ON EdxPrivate.Account(gender(6))'
-
-echo "`date`: indexing Private.Account(year_of_birth)" >> $LOG_FILE
-mysql -u root -p$password -e 'CREATE INDEX AccountIdxDOB ON EdxPrivate.Account(year_of_birth)'
-
-echo "`date`: indexing Private.Account(level_of_education(10))" >> $LOG_FILE
-mysql -u root -p$password -e 'CREATE INDEX AccountIdxEdu ON EdxPrivate.Account(level_of_education(10))'
-
-echo "`date`: indexing Private.Account(course_id(255))" >> $LOG_FILE
-mysql -u root -p$password -e 'CREATE INDEX AccountIdxCouID ON EdxPrivate.Account(course_id(255))'
-
-echo "`date`: Done loading" >> $logDir/mysqlCSVLoad.log >> $LOG_FILE
+echo "`date`: Done updating indexes." >> $LOG_FILE 2>&1
 
 exit
