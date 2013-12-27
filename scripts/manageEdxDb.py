@@ -139,16 +139,28 @@ class TrackLogPuller(object):
         '''
 
         TrackLogPuller.LOAD_LOG_DIR = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'Logs')        
+        self.logger = None
+        self.setupLogging(loggingLevel, logFile)
+        # No connection yet to S3. That only
+        # gets established when needed:
+        self.tracking_log_bucket = None
+
+    def openS3Connection(self):
+        '''
+        Attempt to connect to Amazon S3. This connection depends on 
+        Boto, and thereby on the home directory of the user who invoked
+        manageExDb.py to have a .boto subdirectory with the requisite
+        authentication information.
+        '''
         try:
-            self.logger = None
-            self.setupLogging(loggingLevel, logFile)
             conn = boto.connect_s3()
-            self.log_bucket = conn.get_bucket(TrackLogPuller.LOG_BUCKETNAME)
+            self.tracking_log_bucket = conn.get_bucket(TrackLogPuller.LOG_BUCKETNAME)
         except boto.exception.NoAuthHandlerFound as e:
             # TODO: more error cases to watch here to be sure (bucket not found?)
             self.logErr("boto authentication error: %s\n%s" % 
                         (str(e), "   Suggestion: put your credentials in AWS_ACCESS_KEY and AWS_SECRET_KEY environment variables, or a ~/.boto file"))
-            sys.exit(1)
+            return False
+        return True
         
     def identifyNewLogFiles(self, localTrackingLogFileRoot=None):
         '''
@@ -172,13 +184,20 @@ class TrackLogPuller(object):
         @return: array of Amazon S3 log file key names that have not been downloaded yet. Array may be empty. 
                  locations include the application server directory above each file. Ex.: 'app10/tracking.log-20130623.gz'
         @rtype: [String]
+        @raise: IOError if connection to S3 cannot be established.
         '''
         rfileObjsToGet = []
         if localTrackingLogFileRoot is None:
             localTrackingLogFileRoot = TrackLogPuller.LOCAL_LOG_STORE_ROOT
         
         # Get remote track log file key objects:
-        rLogFileKeyObjs = self.log_bucket.list()
+        if self.tracking_log_bucket is None:            
+            # No connection has been established yet to S3:
+            self.logInfo("Establishing connection to Amazon S3")
+            if not self.openS3Connection():
+                self.logErr("Could not connect to Amazon 3S: %s" % sys.last_value)
+                raise IOError("Could not connect to Amazon S3 to examine existing tracking log file list.")
+        rLogFileKeyObjs = self.tracking_log_bucket.list()
         if rLogFileKeyObjs is None:
             return rfileObjsToGet
         
@@ -420,6 +439,7 @@ class TrackLogPuller(object):
         @type dryRun: Bool
         @return: list of full-path file names that have been downloaded. They have not been transformed and loaded yet.
         @rtype: [String]
+        @raise: IOError if connection to S3 cannot be established.        
         '''
         
         if destDir is None:
@@ -438,8 +458,15 @@ class TrackLogPuller(object):
             if dryRun:
                 self.logInfo("Would download file %s from S3" % rfileNameToPull)
             else:
+                self.logInfo("Establishing connection to Amazon S3")
+                if self.tracking_log_bucket is None:
+                    # No connection has been established yet to S3:
+                    if not self.openS3Connection():
+                        self.logErr("Could not connect to Amazon 3S: %s" % sys.last_value)
+                        raise IOError("Could not connect to Amazon S3 to examine existing tracking log file list.")
+                
                 self.logInfo("Downloading file %s from S3 to %s..." % (rfileNameToPull, localDest))
-                fileKey = self.log_bucket.get_key(rfileNameToPull)
+                fileKey = self.tracking_log_bucket.get_key(rfileNameToPull)
                 if fileKey is None:
                     self.logErr("Remote OpenEdX log file %s was detected earlier, but cannot retrieve associated key object now." % rfileNameToPull)
                     continue
@@ -640,13 +667,14 @@ class TrackLogPuller(object):
     
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]))
+    parser = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]), formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('-l', '--errLogFile', 
-                        help='fully qualified log file name to which info and error messages are directed. Default: log to stdout.',
+                        help='fully qualified log file name to which info and error messages \n' +\
+                             'are directed. Default: stdout.',
                         dest='errLogFile',
                         default=None);
     parser.add_argument('-d', '--dryRun', 
-                        help='show what script would do if run normally; no actual downloads or other changes are performed.', 
+                        help='show what script would do if run normally; no actual downloads \nor other changes are performed.', 
                         action='store_true');
     parser.add_argument('-v', '--verbose', 
                         help='print operational info to log.', 
@@ -654,24 +682,27 @@ if __name__ == '__main__':
                         action='store_true');
     parser.add_argument('--logs',
                         action='append',
-                        help='For pull: root destination of downloaded OpenEdX tracking log .json files; ' +\
-                             'default LOCAL_LOG_STORE_ROOT (on this machine: ' +\
-                             TrackLogPuller.LOCAL_LOG_STORE_ROOT +\
-                             '). For transform: quoted string of comma or space separated individual '+\
-                             'OpenEdX tracking log files to be tranformed, and/or directories that contain ' +\
-                             'such files; default all files LOCAL_LOG_STORE_ROOT/app*/*.gz that have not yet been transformed ' +\
-                             '(on this machine: %s).' %
-                             os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/app*/*.gz')
+                        help='For pull: root destination of downloaded OpenEdX tracking log .json files;\n' +\
+                             '    default LOCAL_LOG_STORE_ROOT (on this machine:\n' +\
+                             '    %s' % TrackLogPuller.LOCAL_LOG_STORE_ROOT +\
+                             ').\n' +\
+                             'For transform: quoted string of comma or space separated \n'+\
+                             '    individual OpenEdX tracking log files to be tranformed, \n' +\
+                             '    and/or directories that contain such files; \n' +\
+                             '    default: all files LOCAL_LOG_STORE_ROOT/app*/*.gz that have \n' +\
+                             '    not yet been transformed (on this machine:\n' + \
+                             '    %s).' % os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/app*/*.gz')
                              )
     parser.add_argument('--sql',
                         action='append',
-                        help='For transform: destination directory of where the .sql and .csv files of ' +\
-                             'the transformed OpenEdX tracking files go; ' +\
-                             'default LOCAL_LOG_STORE_ROOT/tracking/CSV (on this machine: %s' %
-                                os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/CSV')  +\
-                             '). For load: directory of .sql files to be loaded, or list of .sql files; ' +\
-                             'default LOCAL_LOG_STORE_ROOT/tracking/CSV (on this machine: %s.' %
-                             os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/CSV') +\
+                        help='For transform: destination directory of where the .sql and \n' +\
+                             '    .csv files of the transformed OpenEdX tracking files go;\n' +\
+                             '    default LOCAL_LOG_STORE_ROOT/tracking/CSV (on this machine: \n' +\
+                             '    %s' % os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/CSV')  +\
+                             ').\n' +\
+                             'For load: directory of .sql files to be loaded, or list of .sql files;\n' +\
+                             '    default LOCAL_LOG_STORE_ROOT/tracking/CSV (on this machine:\n' +\
+                             '    %s.' % os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/CSV') +\
                              ')'
                              )
     parser.add_argument('-u', '--user',
@@ -679,10 +710,10 @@ if __name__ == '__main__':
                         help='For load: user ID whose HOME/.ssh/mysql_root contains the localhost MySQL root password.')
     parser.add_argument('-p', '--password',
                         action='store_true',
-                        help='For load: request to be asked for pwd for operating MySQL; ' +\
-                             'default: content of %s/.ssh/mysql_root if --user is unspecified, ' % os.getenv('HOME') +\
-                             'or content of <homeOfUser>/.ssh/mysql_root where ' +\
-                             '<homeOfUser> is the home directory of the user specified in the --user option.' 
+                        help='For load: request to be asked for pwd for operating MySQL;\n' +\
+                             '    default: content of %s/.ssh/mysql_root if --user is unspecified,\n' % os.getenv('HOME') +\
+                             '    or content of <homeOfUser>/.ssh/mysql_root where\n' +\
+                             '    <homeOfUser> is the home directory of the user specified in the --user option.' 
                              )
     parser.add_argument('toDo',
                         help='What to do: {pull | transform | load | pullTransform | pullTransformLoad}'
