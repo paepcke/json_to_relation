@@ -17,7 +17,7 @@ usage: manageEdxDb.py [-h] [-l ERRLOGFILE] [-d] [-v] [--logsDest LOGSDEST]
                       toDo
 
 positional arguments:
-  toDo                  What to do: {pull | transform | load | pullTransform | pullTransformLoad}
+  toDo                  What to do: {pull | transform | load | pullTransform | transformLoad | pullTransformLoad}
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -518,7 +518,7 @@ class TrackLogPuller(object):
         @type dryRun: Bool
         '''
         
-        self.logDebug("Method transform() method called with logFilePaths='%s'; csvDestDir='%s'" % (logFilePaths,csvDestDir))
+        self.logDebug("Method transform() called with logFilePaths='%s'; csvDestDir='%s'" % (logFilePaths,csvDestDir))
 
         if logFilePaths is None:
             logFilePaths = self.identifyNotTransformedLogFiles(csvDestDir=csvDestDir)
@@ -576,7 +576,7 @@ class TrackLogPuller(object):
             subprocess.call(shellCommand)
             self.logInfo('Done transforming %d newly downloaded tracklog file(s)...' % len(fileList))
 
-    def load(self, mysqlPWD=None, sqlFilesToLoad=None, csvDir=None, dryRun=False):
+    def load(self, mysqlPWD=None, sqlFilesToLoad=None, logDir=None, csvDir=None, dryRun=False):
         '''
         Given a directory that contains .sql files, or an array of full-path .sql
         files, load them into mysql. The main work is done by the shell script
@@ -604,6 +604,8 @@ class TrackLogPuller(object):
                         not previously been loaded. Keeping this to None is recommended
                         to ensure that log files don't get loaded multiple times.
         @type sqlFilesToLoad: String
+        @param logDir: directory for file loadLog.log where this method directs logging.
+        @type logDir: String
         @param csvDir: directory where transforms have deposited their .sql and associated .csv files.
                        If None, assumes LOCAL_LOG_STORE_ROOT/'tracking/CSV'. Not used if
                        sqlFilesToLoad are specified explicitly.
@@ -612,7 +614,7 @@ class TrackLogPuller(object):
         @type dryRun: Bool
         '''
         
-        self.logDebug("Method load() called with sqlFilesToLoad='%s'; csvDir='%s'" % (sqlFilesToLoad,csvDir))
+        self.logDebug("Method load() called with sqlFilesToLoad='%s'; logDir=%s, csvDir='%s'" % (sqlFilesToLoad, logDir,csvDir))
         
         if getpass.getuser() != 'root':
             if dryRun:
@@ -626,10 +628,11 @@ class TrackLogPuller(object):
             sqlFilesToLoad = self.identifySQLToLoad(csvDir=csvDir)
         if len(sqlFilesToLoad) == 0:
             return
-        logDestDir = TrackLogPuller.LOAD_LOG_DIR
+        if logDir is None:
+            logDir = TrackLogPuller.LOAD_LOG_DIR
         # Ensure that the log directory exists:
         try:
-            os.makedirs(logDestDir)
+            os.makedirs(logDir)
         except OSError:
             pass
         
@@ -640,13 +643,14 @@ class TrackLogPuller(object):
         # Now SQL files are guaranteed to be a list. Load them all using
         # a bash script, which will also run the index:
         if mysqlPWD is None:
-            shellCommand = [loadScriptPath, '-u', TrackLogPuller.MYSQL_ROOT_USER, logDestDir]
+            shellCommand = [loadScriptPath, '-u', TrackLogPuller.MYSQL_ROOT_USER, logDir]
         else:
-            shellCommand = [loadScriptPath, '-w', mysqlPWD, logDestDir]
+            shellCommand = [loadScriptPath, '-w', mysqlPWD, logDir]
         shellCommand.extend(sqlFilesToLoad)
         if dryRun:
             self.logInfo("Would now invoke bash command %s" % shellCommand)
         else:
+            self.logDebug("Calling Bash with %s" % str(shellCommand))
             subprocess.call(shellCommand)
             
     # ----------------------------------------  Private Methods ----------------------
@@ -750,7 +754,7 @@ if __name__ == '__main__':
                              '    <homeOfUser> is the home directory of the user specified in the --user option.' 
                              )
     parser.add_argument('toDo',
-                        help='What to do: {pull | transform | load | pullTransform | pullTransformLoad}'
+                        help='What to do: {pull | transform | load | pullTransform | transformLoad | pullTransformLoad}'
                         ) 
     
     args = parser.parse_args();
@@ -759,13 +763,17 @@ if __name__ == '__main__':
        args.toDo != 'transform' and\
        args.toDo != 'load' and\
        args.toDo != 'pullTransform' and\
+       args.toDo != 'transformLoad' and\
        args.toDo != 'pullTransformLoad':
-        print("Main argument must be one of pull, transform load, pullTransform, and pullTransformAndLoad")
+        print("Main argument must be one of pull, transform load, pullTransform, transformLoad, and pullTransformAndLoad")
         sys.exit(1)
 
     # Log file:
     if args.errLogFile is None:
-        args.errLogFile = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'NonTransformLogs/manageDb_%s_%s.log' % (args.toDo, str(datetime.datetime.now()).replace(' ', 'T',).replace(':','_')))
+        # Default error logs go to LOCAL_LOG_STORE_ROOT/NonTransformLogs.
+        # (the transform logs go into LOCAL_LOG_STORE_ROOT/tracking/TransformLogs):
+        args.errLogFile = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'NonTransformLogs/manageDb_%s_%s.log' % 
+                                       (args.toDo, str(datetime.datetime.now()).replace(' ', 'T',).replace(':','_')))
 
     try:
         os.makedirs(os.path.dirname(args.errLogFile))
@@ -801,12 +809,12 @@ if __name__ == '__main__':
         puller.logErr("For 'pull' operation must either define LOCAL_LOG_STORE_ROOT or use command line option '--sqlDest")             
         sys.exit(1)
     if (TrackLogPuller.LOCAL_LOG_STORE_ROOT is None) and \
-        ((args.toDo == 'transform') or (args.toDo == 'pullTransform') or (args.toDo == 'pullTransformLoad')) and \
+        ((args.toDo == 'transform') or (args.toDo == 'pullTransform') or (args.toDo == 'transformLoad') or (args.toDo == 'pullTransformLoad')) and \
         (args.logsSrc is None):
         puller.logErr("For 'transform' operation must either define LOCAL_LOG_STORE_ROOT or use command line option '--logsSrc")             
         sys.exit(1)
     if (TrackLogPuller.LOCAL_LOG_STORE_ROOT is None) and \
-        ((args.toDo == 'load') or (args.toDo == 'pullTransformLoad')) and \
+        ((args.toDo == 'load') or (args.toDo == 'transformLoad') or (args.toDo == 'pullTransformLoad')) and \
         (args.sqlSrc is None):
         puller.logErr("For 'load' operation must either define LOCAL_LOG_STORE_ROOT or use command line option '--sqlSrc")             
         sys.exit(1)
@@ -873,7 +881,7 @@ if __name__ == '__main__':
             sys.exit(1)
         receivedFiles = puller.pullNewFiles(destDir=args.logsDest, dryRun=args.dryRun)
     
-    if args.toDo == 'transform' or args.toDo == 'pullTransform' or args.toDo == 'pullTransformLoad':
+    if args.toDo == 'transform' or args.toDo == 'pullTransform' or args.toDo == 'transformLoad' or args.toDo == 'pullTransformLoad':
         # For transform cmd, logs will be defaulted, or be a space-or-comma-separated string of log files/directories:
         # Check for, and point out all errors, rather than quitting after one:
         if args.logsSrc is not None:
@@ -922,7 +930,7 @@ if __name__ == '__main__':
             args.sqlDest = args.sqlDest[0]
         puller.transform(logFilePaths=allLogFiles, csvDestDir=args.sqlDest, dryRun=args.dryRun)
     
-    if args.toDo == 'load' or args.toDo == 'pullTransformLoad':
+    if args.toDo == 'load' or args.toDo == 'transformLoad' or args.toDo == 'pullTransformLoad':
         # For loading, args.sqlSrc must be None, or a readable directory, or a sequence of readable .sql files.
         if args.sqlSrc is not None:
             if os.path.isdir(args.sqlSrc[0]) and len(args.sqlSrc) > 1: 
@@ -943,7 +951,7 @@ if __name__ == '__main__':
                 sys.exit(1)
         # For DB ops need DB root pwd, which was 
         # put into puller.pwd above by various means:
-        puller.load(mysqlPWD=puller.pwd, sqlFilesToLoad=args.sqlSrc, dryRun=args.dryRun)
+        puller.load(mysqlPWD=puller.pwd, sqlFilesToLoad=args.sqlSrc, logDir=args.errLogFile, dryRun=args.dryRun)
     
     
     sys.exit(0)
