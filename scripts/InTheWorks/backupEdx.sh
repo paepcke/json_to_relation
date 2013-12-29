@@ -1,0 +1,1 @@
+ sudo mysqlhotcopy -u root -p=r3mbr^nd. Edx ~dataman/Backups/EdxEdxPrivateDec25_2013/

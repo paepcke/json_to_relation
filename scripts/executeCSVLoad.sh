@@ -43,6 +43,8 @@ USERNAME=`whoami`
 password=''
 LOGFILE_NAME='loadLog.log'
 
+# -------------------  Process Commandline Option -----------------
+
 # Keep track of number of optional args the user provided:
 NEXT_ARG=0
 while getopts "u:pw:" opt
@@ -102,6 +104,36 @@ fi
 logDir=$1
 shift
 
+# Make sure all the files remaining in the 
+# argument list are readable files:
+for file in $@
+do
+    okSoFar=1
+    # Get file extension:
+    filename=$(basename "$file")
+    extension="${filename##*.}"
+
+    if [ ! -r $file ]
+    then
+	echo "File "$file" is not readable."
+	okSoFar=0
+    elif [ -d $file ]
+    then
+	echo "File "$file" is a directory."
+	okSoFar=0
+    elif [ $extension != 'sql' ]
+    then
+	echo "File "$file" does not end with .sql (I know...picky, but better than crashing later)"
+	okSoFar=0
+    fi
+done
+if [ $okSoFar -ne 1 ]
+then
+    echo "Aborting due to above errors; nothing was done."
+    exit 1
+fi
+
+
 LOG_FILE=$logDir/$LOGFILE_NAME
 
 #**************
@@ -116,6 +148,8 @@ LOG_FILE=$logDir/$LOGFILE_NAME
 MYSQL_DATADIR_DECL=`grep datadir /etc/mysql/my.cnf`
 # Extract just the directory:
 MYSQL_DATADIR=`echo $s | cut -d'=' -f 2`
+
+# -------------------  Declare Table Vars and FLUSH MySQL Tables -----------------
 
 # Dict of tables and their primary key columns
 # Use a bash associative array (like a Python dict):
@@ -145,19 +179,23 @@ do
     { mysql -u root -p$password -e 'FLUSH TABLES $table' EdxPrivate; } >> $LOG_FILE 2>&1
 done
 
+# -------------------  Remove Primary Keys for Loading Speed -----------------
+
 # Remove primary keys from public tables to speed loading; the ${!tables[@]} loops through the table names (i.e. dict keys)
 for table in ${!tables[@]}
 do
     echo "`date`: dropping primary key from Edx.$table" >> $LOG_FILE 2>&1
-    { mysql -u root -p$password -e 'DROP INDEX `PRIMARY` ON Edx.'$table';'; } >> $LOG_FILE 2>&1	
+    { mysql -u root -p$password -e "USE Edx; CALL Edx.dropPrimaryIfExists('"$table"');"; } >> $LOG_FILE 2>&1	
 done
 
 # # Private tables; the ${!privateTables[@]} loops through the table names (i.e. dict keys)
 for table in ${!privateTables[@]}
 do
     echo "`date`: dropping primary key from EdxPrivate.$table" >> $LOG_FILE 2>&1
-    { mysql -u root -p$password -e 'DROP INDEX `PRIMARY` ON EdxPrivate.'$table';'; } >> $LOG_FILE 2>&1
+    { mysql -u root -p$password -e "USE EdxPrivate; CALL Edx.dropPrimaryIfExists('"$table"');"; } >> $LOG_FILE 2>&1	
 done
+
+# -------------------  Loading SQL Files, Which Load CSVs -----------------
 
 # Do the actual loading of CSV files into their respective tables;
 # $@ are the .sql files from the CLI:
@@ -168,30 +206,60 @@ do
     echo "`date`: done loading $sqlFile"  >> $LOG_FILE 2>&1
 done
 
+# -------------------  Restore Primary Keys -----------------
+
 # Add primary keys back in:
 # Public tables; the ${!tables[@]} loops through the table names (i.e. dict keys)
 for table in ${!tables[@]}
 do
-    echo "`date`: adding primary key to table $table..." >> $LOG_FILE 2>&1
-    # The ${tables["$table"]} accesses the primary key column (i.e. the value of the dict):
-    { mysql -u root -p$password -e 'ALTER TABLE Edx.'$table' ADD PRIMARY KEY( '${tables["$table"]}' )'; } >> $LOG_FILE 2>&1
+    echo "`date`: adding primary key to table "$table"..." >> $LOG_FILE 2>&1
+    # The ${tables["$table"]} accesses the primary key column name (i.e. the value of the dict):
+    { mysql -u root -p$password -e "USE Edx; CALL Edx.addPrimaryIfNotExists('"$table"','"${tables[$table]}"');"; } >> $LOG_FILE 2>&1
 done
 
 # Private tables; the ${!tables[@]} loops through the table names (i.e. dict keys)
 for table in ${!privateTables[@]}
 do
-    echo "`date`: adding primary key to table $table..." >> $LOG_FILE 2>&1
+    echo "`date`: adding primary key to table "$table"..." >> $LOG_FILE 2>&1
     # The ${tables["$table"]} accesses the primary key column (i.e. the value of the dict):
-    { mysql -u root -p$password -e 'ALTER TABLE EdxPrivate.'$table' ADD PRIMARY KEY( '${privateTables["$table"]}' )'; } >> $LOG_FILE 2>&1
+    { mysql -u root -p$password -e "USE EdxPrivate; CALL Edx.addPrimaryIfNotExists('"$table"','"${privateTables[$table]}"');"; } >> $LOG_FILE 2>&1
 done
 
+# -------------------  Update or First-Time-Build Non-Primary Indexes -----------------
+
 # Fix up the indexes, since we didn't update
-# them during the load:
-for table in ${tables[@]}
-do
-    echo "`date`: updating indexes..." >> $LOG_FILE 2>&1
-    { time mysqlcheck --repair --databases Edx EdxPrivate; } >> $LOG_FILE 2>&1
+# them during the load. 
+
+currScriptsDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# The '!' causes the tables dict's keys to be returned
+# as the list to traverse (i.e. the table names):
+for table in ${!tables[@]} ${!privateTables[@]}
+do  
+    # Check whether any non-primary index exists on this table.
+    # If not, create all indexes for this table. If at least
+    # one non-primary index does exist, we assume that for this
+    # table all the required indexes exist. In that case use
+    # mysqlcheck to update the existing indexes:
+    indexesExist=$(mysql Edx -se "SELECT anyIndexExists('"$table"');")
+    if [ "$indexesExist" -eq 0 ]
+    then
+	# Check whether the table is in EdxPrivate, and no indexes
+	# were found for that reason:
+	indexesExist=$(mysql EdxPrivate -se "SELECT anyIndexExists('"$table"');")
+    fi
+
+    if [ "$indexesExist" -eq 0 ]
+    then
+	# Really no indexes found for this table:
+	echo "`date`: creating all indexes for table "$table" (if needed)..." >> $LOG_FILE 2>&1
+	{ $currScriptsDir/createIndexForTable.sh $table; } >> $LOG_FILE 2>&1
+    fi
 done
+
+# Any un-updated indexes are now rebuilt in memory:
+echo "`date`: checking indexes using mysqlcheck..." >> $LOG_FILE 2>&1
+{ time mysqlcheck --repair --databases Edx EdxPrivate; } >> $LOG_FILE 2>&1
 
 echo "`date`: Done updating indexes." >> $LOG_FILE 2>&1
 

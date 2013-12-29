@@ -17,7 +17,7 @@ askForPasswd=false
 
 # Keep track of number of optional args the user provided:
 NEXT_ARG=0
-while getopts "u:p:" opt
+while getopts "u:p" opt
 do
   case $opt in
     u) # look in given user's HOME/.ssh/ for mysql_root
@@ -76,6 +76,14 @@ then
     fi
 fi
 
+# Create the mysql call password option:
+if [ -z $password ]
+then
+    pwdOption=''
+else
+    pwdOption='-p$password'
+fi
+
 # Dict of tables and the db names in which they reside.
 # Use a bash associative array (like a Python dict):
 declare -A allTables
@@ -103,8 +111,9 @@ fi
 
 #*****************
 # echo 'UID: '$USERNAME
-# echo 'Password: '$password
+# echo "Password: '"$password"'"
 # echo 'Tables to index: '$tables
+# echo "pwdOption: '"$pwdOption"'"
 # exit 0
 #*****************
 
@@ -113,45 +122,45 @@ do
     if [ $table == 'EdxTrackEvent' ]
     then
 	# The '${allTables["$table"]}' parts below resolve to the database in which the respective table resides:
-	echo "Creating index on EdxTrackEvent(event_type)..."
-	mysql -u $USERNAME -p$password -e 'CREATE INDEX EdxTrackEventIdxEvType ON '${allTables["$table"]}'.EdxTrackEvent(event_type(255));'
-	echo "Creating index on EdxTrackEvent(anon_screen_name)..."
-	mysql -u $USERNAME -p$password -e 'CREATE INDEX EdxTrackEventIdxIdxUname ON '${allTables["$table"]}'.EdxTrackEvent(anon_screen_name(255));'
-	echo "Creating index on EdxTrackEvent(course_id)..."
-	mysql -u $USERNAME -p$password -e 'CREATE INDEX EdxTrackEventIdxCourseID ON '${allTables["$table"]}'.EdxTrackEvent(course_id(255));'
-	echo "Creating index on EdxTrackEvent(course_display_name)..."
-	mysql -u $USERNAME -p$password -e 'CREATE INDEX EdxTrackEventIdxCourseDisplayName ON '${allTables["$table"]}'.EdxTrackEvent(course_display_name(255));'
-	echo "Creating index on EdxTrackEvent(resource_display_name)..."
-	mysql -u $USERNAME -p$password -e 'CREATE INDEX EdxTrackEventIdxResourceDisplayName ON '${allTables["$table"]}'.EdxTrackEvent(resource_display_name(255));'
-	echo "Creating index on EdxTrackEvent(success)..."
-	mysql -u $USERNAME -p$password -e 'CREATE INDEX EdxTrackEventIdxSuccess ON '${allTables["$table"]}'.EdxTrackEvent(success(15));'
-	echo "Creating index on EdxTrackEvent(time)..."
-	mysql -u $USERNAME -p$password -e 'CREATE INDEX EdxTrackEventIdxTime ON '${allTables["$table"]}'.EdxTrackEvent(time);'
-	echo "Creating index on EdxTrackEvent(ip)..."
-	mysql -u $USERNAME -p$password -e 'CREATE INDEX EdxTrackEventIdxIP ON '${allTables["$table"]}'.EdxTrackEvent(ip(16));'
+	echo "Creating index on EdxTrackEvent(event_type) if needed..."
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxEvType', '"${allTables[$table]}".EdxTrackEvent', 'event_type', 255);"
+	echo "Creating index on EdxTrackEvent(anon_screen_name) if needed..."
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxIdxUname', '"${allTables[$table]}".EdxTrackEvent', 'anon_screen_name', 255);"
+	echo "Creating index on EdxTrackEvent(course_id) if needed..."
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxCourseID', '"${allTables[$table]}".EdxTrackEvent', 'course_id', 255);"
+	echo "Creating index on EdxTrackEvent(course_display_name) if needed..."
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxCourseDisplayName', '"${allTables[$table]}".EdxTrackEvent', 'course_display_name', 255);"
+	echo "Creating index on EdxTrackEvent(resource_display_name) if needed..."
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxResourceDisplayName', '"${allTables[$table]}".EdxTrackEvent', 'resource_display_name', 255);"
+	echo "Creating index on EdxTrackEvent(success) if needed..."
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxSuccess', '"${allTables[$table]}".EdxTrackEvent', 'success', 15);"
+	echo "Creating index on EdxTrackEvent(time) if needed..."
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxTime', '"${allTables[$table]}".EdxTrackEvent', 'time', NULL);"
+	echo "Creating index on EdxTrackEvent(ip) if needed..."
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxIP', '"${allTables[$table]}".EdxTrackEvent', 'ip', 16);"
     elif [ $table == 'Answer' ]
     then
-	echo "Creating index on Answer(answer)..."
-	mysql -u $USERNAME -p$password -e 'CREATE INDEX AnswerIdxAns ON '${allTables["$table"]}'.Answer(answer(255));'
-	echo "Creating index on Answer(course_id)..."
-	mysql -u $USERNAME -p$password -e 'CREATE INDEX AnswerIdxCourseID ON '${allTables["$table"]}'.Answer(course_id(255));'
+	echo "Creating index on Answer(answer) if needed..."
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('AnswerIdxAns', '"${allTables[$table]}".Answer', 'answer', 255);"
+	echo "Creating index on Answer(course_id) if needed..."
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('AnswerIdxCourseID', '"${allTables[$table]}".Answer', 'course_id', 255);"
     elif [ $table == 'Account' ]
     then
-	echo "Creating index on Account(screen_name)..."
-	mysql -u $USERNAME -p$password -e 'CREATE INDEX AccountIdxUname ON '${allTables["$table"]}'.Account(screen_name(255));'
-	echo "Creating index on Account(anon_screen_name)..."
-	mysql -u $USERNAME -p$password -e 'CREATE INDEX AccountIdxAnonUname ON '${allTables["$table"]}'.Account(anon_screen_name(255));'
-	echo "Creating index on Account(zipcode)..."
-	mysql -u $USERNAME -p$password -e 'CREATE INDEX AccountIdxZip ON '${allTables["$table"]}'.Account(zipcode(10));'
-	echo "Creating index on Account(country)..."
-	mysql -u $USERNAME -p$password -e 'CREATE INDEX AccountIdxCoun ON '${allTables["$table"]}'.Account(country(255));'
-	echo "Creating index on Account(gender)..."
-	mysql -u $USERNAME -p$password -e 'CREATE INDEX AccountIdxGen ON '${allTables["$table"]}'.Account(gender(6));'
-	echo "Creating index on Account(year_of_birth)..."
-	mysql -u $USERNAME -p$password -e 'CREATE INDEX AccountIdxDOB ON '${allTables["$table"]}'.Account(year_of_birth);'
-	echo "Creating index on Account(level_of_education)..."
-	mysql -u $USERNAME -p$password -e 'CREATE INDEX AccountIdxEdu ON '${allTables["$table"]}'.Account(level_of_education(10));'
-	echo "Creating index on Account(course_id)..."
-	mysql -u $USERNAME -p$password -e 'CREATE INDEX AccountIdxCouID ON '${allTables["$table"]}'.Account(course_id(255));'
+	echo "Creating index on Account(screen_name) if needed..."
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('AccountIdxUname', '"${allTables[$table]}".Account', 'screen_name', 255);"
+	echo "Creating index on Account(anon_screen_name) if needed..."
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('AccountIdxAnonUname', '"${allTables[$table]}".Account', 'anon_screen_name', 255);"
+	echo "Creating index on Account(zipcode) if needed..."
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('AccountIdxZip', '"${allTables[$table]}".Account', 'zipcode', 10);"
+	echo "Creating index on Account(country) if needed..."
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('AccountIdxCoun', '"${allTables[$table]}".Account', 'country', 255);"
+	echo "Creating index on Account(gender) if needed..."
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('AccountIdxGen', '"${allTables[$table]}".Account', 'gender', 6);"
+	echo "Creating index on Account(year_of_birth'.."
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('AccountIdxDOB', '"${allTables[$table]}".Account', 'year_of_birth', NULL);"
+	echo "Creating index on Account(level_of_education) if needed..."
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('AccountIdxEdu', '"${allTables[$table]}".Account', 'level_of_education', 10);"
+	echo "Creating index on Account(course_id) if needed..."
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('AccountIdxCouID', '"${allTables[$table]}".Account', 'course_id', 255);"
     fi
 done
