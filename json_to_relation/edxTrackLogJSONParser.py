@@ -3478,7 +3478,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # Snip off the last comma:
         colNameList = colNameList[:-1]
         
-        copyStatement = "INSERT INTO EdxPrivate.Account (" + colNameList + ")" +\
+        copyStatement = "REPLACE INTO EdxPrivate.Account (" + colNameList + ")" +\
                         " SELECT " + colNameList + " FROM Edx.Account;\n" +\
                         "DROP TABLE Edx.Account;\n" 
         self.jsonToRelationConverter.pushString(copyStatement)
