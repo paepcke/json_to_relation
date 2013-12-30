@@ -2,6 +2,21 @@
 Created on Oct 2, 2013
 
 @author: paepcke
+
+Modifications:
+  - Dec 28, 2013: Col load_info_fk in EdxTrackEvent now properly typed to varchar(40)
+                  to match LoadInfo.load_info_id's type
+                  uses REPLACE INTO, rather than INSERT INTO
+  - Dec 28, 2013: Fixed some epydoc comment format errors.  
+  - Dec 29, 2013: Caused the ALTER ENABLE KEYS section in the output .sql file
+                  to be commented out. When loading multiple .sql files in a row,
+                  these statements caused re-creation of indexes after each load,
+                  adding significantly to the load time. Instead, manageDb.py
+                  handles the re-enabling. 
+                  In pushDBCreations() pushed a header comment into the output .sql
+                  file to warn about the commented-out ALTER ENABLE KEYS. The comment
+                  advises to uncomment if loading manually, i.e. not via
+                  manageDb.py.
 '''
 from collections import OrderedDict
 import datetime
@@ -272,7 +287,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaHintsMainTable['correctMap_fk'] = ColDataType.UUID
         self.schemaHintsMainTable['answer_fk'] = ColDataType.UUID
         self.schemaHintsMainTable['state_fk'] = ColDataType.UUID
-        self.schemaHintsMainTable['load_info_fk'] = ColDataType.INT
+        self.schemaHintsMainTable['load_info_fk'] = ColDataType.UUID
 
         # Schema hints need to be a dict that maps column names to ColumnSpec 
         # instances. The dict we built so far only the the column types. Go through
@@ -429,13 +444,20 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                             	  "/*!40000 ALTER TABLE `Account` DISABLE KEYS */;\n"
              
         
-        self.dumpPostscript1    =  "/*!40000 ALTER TABLE `%s` ENABLE KEYS */;\n" % self.mainTableName +\
-                            		"/*!40000 ALTER TABLE `State` ENABLE KEYS */;\n" +\
-                            		"/*!40000 ALTER TABLE `InputState` ENABLE KEYS */;\n" +\
-                            		"/*!40000 ALTER TABLE `Answer` ENABLE KEYS */;\n" +\
-                            		"/*!40000 ALTER TABLE `CorrectMap` ENABLE KEYS */;\n" +\
-                            		"/*!40000 ALTER TABLE `LoadInfo` ENABLE KEYS */;\n" +\
-                            		"/*!40000 ALTER TABLE `Account` ENABLE KEYS */;\n" +\
+        # Add commented-out instructions for re-enabling keys.
+        # The ENABLE KEYS instructions are therefore disabled in
+        # the transform result .sql files. They need to be
+        # executed *somewhere*. If the .sql files are loaded
+        # from the CLI, the statements in the .sql files should
+        # be uncommented (remove just the '-- '!. Normally,
+        # the manageDb.py script will do the re-enabling.
+        self.dumpPostscript1    =   "-- /*!40000 ALTER TABLE `%s` ENABLE KEYS */;\n" % self.mainTableName +\
+                            		"-- /*!40000 ALTER TABLE `State` ENABLE KEYS */;\n" +\
+                            		"-- /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;\n" +\
+                            		"-- /*!40000 ALTER TABLE `Answer` ENABLE KEYS */;\n" +\
+                            		"-- /*!40000 ALTER TABLE `CorrectMap` ENABLE KEYS */;\n" +\
+                            		"-- /*!40000 ALTER TABLE `LoadInfo` ENABLE KEYS */;\n" +\
+                            		"-- /*!40000 ALTER TABLE `Account` ENABLE KEYS */;\n" +\
                             		"UNLOCK TABLES;\n"           
 
 
@@ -873,6 +895,14 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             return (targetTableName, ','.join(self.colNamesByTable[targetTableName]), row)
     
     def pushDBCreations(self):
+        # Put a header comment at the top of the .sql file-to-be,
+        # followwed by the db creation command:
+        header = "-- If loading this file from the Linux commandline or the\n" +\
+                 "-- MySQL shell, then first remove the '-- ' chars from the\n" +\
+                 "-- 'ALTER ENABLE KEYS' statements below. Keep those chars \n" +\
+                 "-- in place if loading this .sql file via the manageDb.py script,\n" +\
+                 "-- as you should.\n"
+        self.jsonToRelationConverter.pushString(header) 
         createStatement = "CREATE DATABASE IF NOT EXISTS %s;\n" % 'Edx'
         self.jsonToRelationConverter.pushString(createStatement)
         
@@ -883,11 +913,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def pushTableCreations(self, replaceTables):
         '''
         Pushes SQL statements to caller that create all tables, main and
-        auxiliary. After these CREATE statements, 'START TRANSACTION;\n' is
-        pushed. The caller is responsible for pushing 'COMMIT;\n' when all
+        auxiliary. After these CREATE statements, 'START TRANSACTION;\\n' is
+        pushed. The caller is responsible for pushing 'COMMIT;\\n' when all
         subsequent INSERT statements have been pushed.  
-        @param replaceTables: if True, then generated CREATE statements will first DROP the various tables.
-                              if False, the CREATE statements will be IF NOT EXISTS
+        @param replaceTables: if True, then generated CREATE statements will first DROP the various tables. 
+                              If False, the CREATE statements will be IF NOT EXISTS
         @type replaceTables: Boolean
         '''
         self.jsonToRelationConverter.pushString('USE %s;\n' % self.dbName)
@@ -1702,7 +1732,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         return
         
     def pushLoadInfo(self, loadDict):
-        loadDict['load_info_id'] = self.getUniqueID()
+        #loadDict['load_info_id'] = self.getUniqueID()
+        # Make the primary-key row ID from the load file
+        # basename, so that it is reproducible:
+        loadDict['load_info_id'] = self.hashGeneral(loadDict['load_file'])
         self.jsonToRelationConverter.pushToTable(self.resultTriplet(loadDict.values(), 'LoadInfo', self.schemaLoadInfoTbl.keys()))
         return loadDict['load_info_id']
     
@@ -1977,9 +2010,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         For play_video, event looks like this::
             "{\"id\":\"i4x-Education-EDUC115N-videoalpha-c41e588863ff47bf803f14dec527be70\",\"code\":\"html5\",\"currentTime\":0}"
-        For pause_video:
+        For pause_video::
             "{\"id\":\"i4x-Education-EDUC115N-videoalpha-c5f2fd6ee9784df0a26984977658ad1d\",\"code\":\"html5\",\"currentTime\":124.017784}"
-        For load_video:
+        For load_video::
             "{\"id\":\"i4x-Education-EDUC115N-videoalpha-003bc44b4fd64cb79cdfd459e93a8275\",\"code\":\"4GlF1t_5EwI\"}"
         '''
         if event is None:
@@ -3194,8 +3227,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         The caller is expected to have verified the legitimacy of EventDict
         @param row:
         @type row:
-        @param event:
-        @type event:
+        @param eventDict:
+        @type eventDict:
         '''
 
         # Get location:
@@ -3223,8 +3256,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         The caller is expected to have verified the legitimacy of EventDict
         @param row:
         @type row:
-        @param event:
-        @type event:
+        @param eventDict:
+        @type eventDict:
         '''
 
         # Get location:
@@ -3252,8 +3285,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         The caller is expected to have verified the legitimacy of EventDict
         @param row:
         @type row:
-        @param event:
-        @type event:
+        @param eventDict:
+        @type eventDict:
         '''
 
         # Get location:
@@ -3283,8 +3316,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         The caller is expected to have verified the legitimacy of EventDict
         @param row:
         @type row:
-        @param event:
-        @type event:
+        @param eventDict:
+        @type eventDict:
         '''
 
         student_file = eventDict.get('student_file', [''])
@@ -3323,7 +3356,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
     def subHandleSaveGrade(self, row, postDict):
         '''
-        Get something like:
+        Get something like::
            "{\"POST\": {\"submission_id\": [\"60611\"], 
                         \"feedback\": [\"<p>This is a summary of a paper stating the positive effects of a certain hormone on face recognition for people with disrupted face processing [1].\\n<br>\\n<br>Face recognition is essential for social interaction and most people perform it effortlessly. But a surprisingly high number of people \\u2013 one in forty \\u2013 are impaired since birth in their ability to recognize faces [2]. This condition is called 'developmental prosopagnosia'. Its cause isn\\u2"        
         @param row:
@@ -3343,7 +3376,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
     def subHandleProblemCheckInPath(self, row, answersDict):
         '''
-        Get dict like this:
+        Get dict like this::
            {\"input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1\": [\"choice_3\"]}, 
             \"GET\": {}}"        
         @param row:
@@ -3378,7 +3411,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
     def handleAjaxLogin(self, record, row, event, eventType):
         '''
-        Events look like this:
+        Events look like this::
             "{\"POST\": {\"password\": \"********\", \"email\": [\"emil.smith@gmail.com\"], \"remember\": [\"true\"]}, \"GET\": {}}"        
         @param record:
         @type record:
@@ -3433,7 +3466,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         @param outputDisposition: an OutputDisposition that offers a method getCSVTableOutFileName(tableName),
                   which provides the fully qualified file name that is the 
                   destination for CSV rows destined for a given table.
-        @type outputDispostion: OutputDisposition
+        @type outputDisposition: OutputDisposition
         '''
         if includeCSVLoadCommands:
             self.jsonToRelationConverter.pushString(self.createCSVTableLoadCommands(outputDisposition))

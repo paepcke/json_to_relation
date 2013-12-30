@@ -27,8 +27,8 @@
 #      file is found, then the script attempts to access 
 #      MySQL as root without a pwd.
 # 
-# This script must also be run as superuser, b/c it needs
-# to examine MySQL table directories.
+# This script is complex enough that Python would have
+# been more appropriate. But it grew from a small kernel.
 
 usage="Usage: `basename $0` [-u username][-p][-w rootpass] logDir file1.sql file2.sql... # You may be asked for MySQL root pwd."
 
@@ -42,6 +42,30 @@ askForPasswd=false
 USERNAME=`whoami`
 password=''
 LOGFILE_NAME='loadLog.log'
+
+#  -------------------  Define Bash Functions -----------------
+
+inArray() {
+# Given a value to find, followed by
+# other values to check against, 
+# echo 1 if value matches any of the
+# trailing values, else 
+# echo 0.
+# Use: result=$(inArray foo bar fum foo) ---> echoes '1'
+# or:  result=$(inArray foo ${myArray[@]}) ---> echoes '1' if 'foo' is in myArray
+
+    elemToFind=$1
+    shift
+    for element in $@
+    do
+	if [ $elemToFind == $element ]
+	then
+	    echo 1
+	    return
+	fi
+    done
+    echo 0
+}
 
 # -------------------  Process Commandline Option -----------------
 
@@ -129,7 +153,7 @@ do
 done
 if [ $okSoFar -ne 1 ]
 then
-    echo "Aborting due to above errors; nothing was done."
+    echo "Aborting due to above errors; no files were loaded into the database."
     exit 1
 fi
 
@@ -185,14 +209,14 @@ done
 for table in ${!tables[@]}
 do
     echo "`date`: dropping primary key from Edx.$table" >> $LOG_FILE 2>&1
-    { mysql -u root -p$password -e "USE Edx; CALL Edx.dropPrimaryIfExists('"$table"');"; } >> $LOG_FILE 2>&1	
+    { mysql -u root -p$password -e "USE Edx; CALL dropPrimaryIfExists('"$table"');"; } >> $LOG_FILE 2>&1	
 done
 
-# # Private tables; the ${!privateTables[@]} loops through the table names (i.e. dict keys)
+# Private tables; the ${!privateTables[@]} loops through the table names (i.e. dict keys)
 for table in ${!privateTables[@]}
 do
     echo "`date`: dropping primary key from EdxPrivate.$table" >> $LOG_FILE 2>&1
-    { mysql -u root -p$password -e "USE EdxPrivate; CALL Edx.dropPrimaryIfExists('"$table"');"; } >> $LOG_FILE 2>&1	
+    { mysql -u root -p$password -e "USE EdxPrivate; CALL dropPrimaryIfExists('"$table"');"; } >> $LOG_FILE 2>&1	
 done
 
 # -------------------  Loading SQL Files, Which Load CSVs -----------------
@@ -212,55 +236,53 @@ done
 # Public tables; the ${!tables[@]} loops through the table names (i.e. dict keys)
 for table in ${!tables[@]}
 do
-    echo "`date`: adding primary key to table "$table"..." >> $LOG_FILE 2>&1
+    echo "`date`: adding primary key to table Edx."$table"..." >> $LOG_FILE 2>&1
     # The ${tables["$table"]} accesses the primary key column name (i.e. the value of the dict):
-    { mysql -u root -p$password -e "USE Edx; CALL Edx.addPrimaryIfNotExists('"$table"','"${tables[$table]}"');"; } >> $LOG_FILE 2>&1
+    { mysql -u root -p$password -e "USE Edx; CALL addPrimaryIfNotExists('"$table"','"${tables[$table]}"');"; } >> $LOG_FILE 2>&1
 done
 
 # Private tables; the ${!tables[@]} loops through the table names (i.e. dict keys)
 for table in ${!privateTables[@]}
 do
-    echo "`date`: adding primary key to table "$table"..." >> $LOG_FILE 2>&1
+    echo "`date`: adding primary key to table EdxPrivate."$table"..." >> $LOG_FILE 2>&1
     # The ${tables["$table"]} accesses the primary key column (i.e. the value of the dict):
-    { mysql -u root -p$password -e "USE EdxPrivate; CALL Edx.addPrimaryIfNotExists('"$table"','"${privateTables[$table]}"');"; } >> $LOG_FILE 2>&1
+    { mysql -u root -p$password -e "USE EdxPrivate; CALL addPrimaryIfNotExists('"$table"','"${privateTables[$table]}"');"; } >> $LOG_FILE 2>&1
 done
 
-# -------------------  Update or First-Time-Build Non-Primary Indexes -----------------
+# -------------------  Update Non-Primary Indexes -----------------
 
 # Fix up the indexes, since we didn't update
 # them during the load. 
 
 currScriptsDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# The '!' causes the tables dict's keys to be returned
-# as the list to traverse (i.e. the table names):
-for table in ${!tables[@]} ${!privateTables[@]}
-do  
-    # Check whether any non-primary index exists on this table.
-    # If not, create all indexes for this table. If at least
-    # one non-primary index does exist, we assume that for this
-    # table all the required indexes exist. In that case use
-    # mysqlcheck to update the existing indexes:
-    indexesExist=$(mysql Edx -se "SELECT anyIndexExists('"$table"');")
-    if [ "$indexesExist" -eq 0 ]
-    then
-	# Check whether the table is in EdxPrivate, and no indexes
-	# were found for that reason:
-	indexesExist=$(mysql EdxPrivate -se "SELECT anyIndexExists('"$table"');")
-    fi
-
-    if [ "$indexesExist" -eq 0 ]
-    then
-	# Really no indexes found for this table:
-	echo "`date`: creating all indexes for table "$table" (if needed)..." >> $LOG_FILE 2>&1
-	{ $currScriptsDir/createIndexForTable.sh $table; } >> $LOG_FILE 2>&1
-    fi
+# Re-Enable foreign key constraints that were disabled in the 
+# loaded .sql files:
+for table in ${!tables[@]}
+do
+    echo "`date`: re-enabling non-primary key indexes for Edx."$table"..." >> $LOG_FILE 2>&1
+    # The ${tables["$table"]} accesses the primary key column name (i.e. the value of the dict):
+    { mysql -u root -p$password -e "USE Edx; ALTER TABLE "$table" ENABLE KEYS;"; } >> $LOG_FILE 2>&1
 done
 
-# Any un-updated indexes are now rebuilt in memory:
-echo "`date`: checking indexes using mysqlcheck..." >> $LOG_FILE 2>&1
-{ time mysqlcheck --repair --databases Edx EdxPrivate; } >> $LOG_FILE 2>&1
+# Same for private tables
+for table in ${!privateTables[@]}
+do
+    echo "`date`: re-enabling non-primary key indexes for EdxPrivate."$table"..." >> $LOG_FILE 2>&1
+    # The ${tables["$table"]} accesses the primary key column name (i.e. the value of the dict):
+    { mysql -u root -p$password -e "USE EdxPrivate; ALTER TABLE "$table" ENABLE KEYS;"; } >> $LOG_FILE 2>&1
+done
+
+# Create any missing non-primary indexes:
+{ $currScriptsDir/createIndexForTable.sh; } >> $LOG_FILE 2>&1
+
+# Any un-updated indexes are now rebuilt in memory by the following:
+# We don't normally need to do this, since above indexes were either
+# newly created (in createIndexForTable.sh), or refreshed in
+# the ALTER TABLE ENABLE KEYS calls:
+#echo "`date`: checking indexes using mysqlcheck..." >> $LOG_FILE 2>&1
+#{ time mysqlcheck -u root -p$password --repair --databases Edx EdxPrivate; } >> $LOG_FILE 2>&1
 
 echo "`date`: Done updating indexes." >> $LOG_FILE 2>&1
-
+echo "-------------------------------------------------------------"  >> $LOG_FILE 2>&1
 exit

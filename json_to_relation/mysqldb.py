@@ -2,6 +2,11 @@
 Created on Sep 24, 2013
 
 @author: paepcke
+
+
+Modifications:
+  - Dec 30, 2013: Added closing of connection to close() method
+
 '''
 
 import pymysql
@@ -42,6 +47,10 @@ class MySQLDB(object):
                 cursor.close()
             except:
                 pass
+        try:
+            self.connection.close()
+        except:
+            pass
 
     def createTable(self, tableName, schema):
         '''

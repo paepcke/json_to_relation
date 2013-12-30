@@ -25,7 +25,7 @@ class OutputDisposition(object):
     which there are two: CSV, and SQL insert statements AND
     CSV.
     NOTE: currently the CSV-only format option is broken. Not
-          enough time to maintain it.
+    enough time to maintain it.
     SQL insert statements that are directed to files will also
     generate equivalent .csv files. The insert statement files
     will look like the result of a mysqldump, and inserts into
@@ -433,7 +433,7 @@ class OutputFile(OutputDisposition):
         for writing.
         @param insertStatement: Well-formed MySQL INSERT statement 
         @type insertStatement: String
-        @raise exception ValueError: if table name could not be extracted from the
+        @raise ValueError: if table name could not be extracted from the
                INSERT statement, or if the insertStatement contains no VALUES
                clause. 
         '''

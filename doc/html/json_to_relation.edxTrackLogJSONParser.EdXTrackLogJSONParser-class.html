@@ -94,10 +94,27 @@
         <span class="summary-sig-arg">logfileID</span>=<span class="summary-sig-default"><code class="variable-quote">'</code><code class="variable-string"></code><code class="variable-quote">'</code></span>,
         <span class="summary-sig-arg">progressEvery</span>=<span class="summary-sig-default">1000</span>,
         <span class="summary-sig-arg">replaceTables</span>=<span class="summary-sig-default">False</span>,
-        <span class="summary-sig-arg">dbName</span>=<span class="summary-sig-default"><code class="variable-quote">'</code><code class="variable-string">test</code><code class="variable-quote">'</code></span>)</span><br />
+        <span class="summary-sig-arg">dbName</span>=<span class="summary-sig-default"><code class="variable-quote">'</code><code class="variable-string">test</code><code class="variable-quote">'</code></span>,
+        <span class="summary-sig-arg">useDisplayNameCache</span>=<span class="summary-sig-default">False</span>)</span><br />
       Constructor</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.__init__">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="setupMySqlDumpControlInstructions"></a><span class="summary-sig-name">setupMySqlDumpControlInstructions</span>(<span class="summary-sig-arg">self</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.setupMySqlDumpControlInstructions">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -114,8 +131,7 @@
           <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#processOneJSONObject" class="summary-sig-name">processOneJSONObject</a>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">jsonStr</span>,
         <span class="summary-sig-arg">row</span>)</span><br />
-      Given one line from the EdX Track log, produce one row of relational 
-      output.</td>
+      This method is the main dispatch for track log event_types.</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.processOneJSONObject">source&nbsp;code</a></span>
             
@@ -127,7 +143,7 @@
   </tr>
 <tr>
     <td width="15%" align="right" valign="top" class="summary">
-      <span class="summary-type">&nbsp;</span>
+      <span class="summary-type">(String, String, [&lt;any&gt;])</span>
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
@@ -141,6 +157,22 @@
       JSONToRelation.prepareMySQLRow()).</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.resultTriplet">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="pushDBCreations"></a><span class="summary-sig-name">pushDBCreations</span>(<span class="summary-sig-arg">self</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.pushDBCreations">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -177,7 +209,8 @@
         <span class="summary-sig-arg">tableName</span>,
         <span class="summary-sig-arg">schemaDict</span>,
         <span class="summary-sig-arg">primaryKeyName</span>=<span class="summary-sig-default">None</span>,
-        <span class="summary-sig-arg">foreignKeyColNames</span>=<span class="summary-sig-default">None</span>)</span><br />
+        <span class="summary-sig-arg">foreignKeyColNames</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">autoincrement</span>=<span class="summary-sig-default">False</span>)</span><br />
       Given a table name and its ordered schema dict, generate a basic SQL 
       CREATE TABLE statement.</td>
           <td align="right" valign="top">
@@ -259,6 +292,38 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
+          <td><span class="summary-sig"><a name="createAccountTable"></a><span class="summary-sig-name">createAccountTable</span>(<span class="summary-sig-arg">self</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.createAccountTable">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="createLoadInfoTable"></a><span class="summary-sig-name">createLoadInfoTable</span>(<span class="summary-sig-arg">self</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.createLoadInfoTable">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
           <td><span class="summary-sig"><a name="createMainTable"></a><span class="summary-sig-name">createMainTable</span>(<span class="summary-sig-arg">self</span>)</span></td>
           <td align="right" valign="top">
             <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.createMainTable">source&nbsp;code</a></span>
@@ -318,9 +383,29 @@
         <span class="summary-sig-arg">record</span>,
         <span class="summary-sig-arg">row</span>,
         <span class="summary-sig-arg">event</span>)</span><br />
-      Gets an event JSON object string like this:</td>
+      The problem_check event comes in two flavors (assertained by 
+      observation): The most complex is this one:</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleProblemCheck">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#handleProblemCheckSimpleCase" class="summary-sig-name">handleProblemCheckSimpleCase</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">event</span>)</span><br />
+      Handle the simple case of problem_check type events.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleProblemCheckSimpleCase">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -348,7 +433,7 @@
   </tr>
 <tr>
     <td width="15%" align="right" valign="top" class="summary">
-      <span class="summary-type">[String]</span>
+      <span class="summary-type">([String], Dict&lt;String,String&gt;</span>
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
@@ -406,14 +491,46 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#pushAccountInfo" class="summary-sig-name">pushAccountInfo</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">accountDict</span>)</span><br />
+      Takes an ordered dict with the fields of a create_account event.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.pushAccountInfo">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="pushLoadInfo"></a><span class="summary-sig-name">pushLoadInfo</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">loadDict</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.pushLoadInfo">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
           <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#handleProblemReset" class="summary-sig-name">handleProblemReset</a>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">record</span>,
         <span class="summary-sig-arg">row</span>,
         <span class="summary-sig-arg">event</span>)</span><br />
-      Gets a event string like this:: &quot;{&quot;POST&quot;: 
-      {&quot;id&quot;: 
-      [&quot;i4x://Engineering/EE222/problem/e68cfc1abc494dfba585115792a7a750@draft&quot;]},
-      &quot;GET&quot;: {}}&quot; After turning this JSON into Python:</td>
+      Gets a event string like this:</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleProblemReset">source&nbsp;code</a></span>
             
@@ -453,8 +570,7 @@
         <span class="summary-sig-arg">record</span>,
         <span class="summary-sig-arg">row</span>,
         <span class="summary-sig-arg">event</span>)</span><br />
-      Gets a event string like this:: 
-      &quot;&quot;input_i4x-Education-EDUC115N-problem-44b3fb5f49884be7bc35712b176e50c4_2_1=choice_1&quot;&quot;</td>
+      Gets a event string like this:</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleProblemSave">source&nbsp;code</a></span>
             
@@ -558,18 +674,93 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a name="handleVideoPlayPause"></a><span class="summary-sig-name">handleVideoPlayPause</span>(<span class="summary-sig-arg">self</span>,
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#handleVideoPlayPause" class="summary-sig-name">handleVideoPlayPause</a>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">record</span>,
         <span class="summary-sig-arg">row</span>,
         <span class="summary-sig-arg">event</span>)</span><br />
-      For play_video, event looks like this:: 
-      &quot;{&quot;id&quot;:&quot;i4x-Education-EDUC115N-videoalpha-c41e588863ff47bf803f14dec527be70&quot;,&quot;code&quot;:&quot;html5&quot;,&quot;currentTime&quot;:0}&quot;
-      For pause_video: 
-      &quot;{&quot;id&quot;:&quot;i4x-Education-EDUC115N-videoalpha-c5f2fd6ee9784df0a26984977658ad1d&quot;,&quot;code&quot;:&quot;html5&quot;,&quot;currentTime&quot;:124.017784}&quot;
-      For load_video: 
-      &quot;{&quot;id&quot;:&quot;i4x-Education-EDUC115N-videoalpha-003bc44b4fd64cb79cdfd459e93a8275&quot;,&quot;code&quot;:&quot;4GlF1t_5EwI&quot;}&quot;</td>
+      For play_video, event looks like this:</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleVideoPlayPause">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#handleVideoSeek" class="summary-sig-name">handleVideoSeek</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">record</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">event</span>)</span><br />
+      For play_video, event looks like this:</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleVideoSeek">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#handleVideoSpeedChange" class="summary-sig-name">handleVideoSpeedChange</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">record</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">event</span>)</span><br />
+      Events look like this:</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleVideoSpeedChange">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#handleFullscreen" class="summary-sig-name">handleFullscreen</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">record</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">event</span>)</span><br />
+      Events look like this:</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleFullscreen">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#handleNotFullscreen" class="summary-sig-name">handleNotFullscreen</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">record</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">event</span>)</span><br />
+      Events look like this:</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleNotFullscreen">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -624,13 +815,115 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#handleProblemSetFail" class="summary-sig-name">handleProblemSetFail</a>(<span class="summary-sig-arg">self</span>,
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#handleShowHideTranscript" class="summary-sig-name">handleShowHideTranscript</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">record</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">event</span>)</span><br />
+      Events look like this:</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleShowHideTranscript">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#handleProblemCheckFail" class="summary-sig-name">handleProblemCheckFail</a>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">record</span>,
         <span class="summary-sig-arg">row</span>,
         <span class="summary-sig-arg">event</span>)</span><br />
       Gets events like this:</td>
           <td align="right" valign="top">
-            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleProblemSetFail">source&nbsp;code</a></span>
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleProblemCheckFail">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#handleProblemRescoreFail" class="summary-sig-name">handleProblemRescoreFail</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">record</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">event</span>)</span><br />
+      No example available.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleProblemRescoreFail">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#handleProblemRescore" class="summary-sig-name">handleProblemRescore</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">record</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">event</span>)</span><br />
+      No example available Fields: state, problemID, orig_score (int), 
+      orig_total(int), new_score(int), new_total(int), correct_map, success
+      (string 'correct' or 'incorrect'), and attempts(int)</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleProblemRescore">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#handleSaveProblemFailSuccessCheckOrReset" class="summary-sig-name">handleSaveProblemFailSuccessCheckOrReset</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">record</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">event</span>)</span><br />
+      Do have examples.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleSaveProblemFailSuccessCheckOrReset">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#handleResetProblem" class="summary-sig-name">handleResetProblem</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">record</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">event</span>)</span><br />
+      Events look like this:</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleResetProblem">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -796,12 +1089,304 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a name="handleAddRemoveUserGroup"></a><span class="summary-sig-name">handleAddRemoveUserGroup</span>(<span class="summary-sig-arg">self</span>,
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#handleAddRemoveUserGroup" class="summary-sig-name">handleAddRemoveUserGroup</a>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">record</span>,
         <span class="summary-sig-arg">row</span>,
-        <span class="summary-sig-arg">event</span>)</span></td>
+        <span class="summary-sig-arg">event</span>)</span><br />
+      This event looks like this:</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleAddRemoveUserGroup">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#handleCreateAccount" class="summary-sig-name">handleCreateAccount</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">record</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">event</span>)</span><br />
+      Get event structure like this (fictitious values):</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleCreateAccount">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#handleProblemGraded" class="summary-sig-name">handleProblemGraded</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">record</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">event</span>)</span><br />
+      Events look like this:</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleProblemGraded">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#handleReceiveEmail" class="summary-sig-name">handleReceiveEmail</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">record</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">event</span>)</span><br />
+      Event is something like this:</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleReceiveEmail">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#handlePathStyledEventTypes" class="summary-sig-name">handlePathStyledEventTypes</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">record</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">event</span>)</span><br />
+      Called when an event type is a long path-like string.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handlePathStyledEventTypes">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#subHandleIsStudentCalibrated" class="summary-sig-name">subHandleIsStudentCalibrated</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">eventDict</span>)</span><br />
+      Called from handlePathStyledEventTypes().</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.subHandleIsStudentCalibrated">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#subHandleGotoPosition" class="summary-sig-name">subHandleGotoPosition</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">eventDict</span>)</span><br />
+      Called from handlePathStyledEventTypes().</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.subHandleGotoPosition">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#subHandleProblem" class="summary-sig-name">subHandleProblem</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">eventDict</span>)</span><br />
+      Called from handlePathStyledEventTypes().</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.subHandleProblem">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#subHandleSaveAnswer" class="summary-sig-name">subHandleSaveAnswer</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">eventDict</span>)</span><br />
+      Called from handlePathStyledEventTypes().</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.subHandleSaveAnswer">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#subHandleSaveGrade" class="summary-sig-name">subHandleSaveGrade</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">postDict</span>)</span><br />
+      Get something like:</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.subHandleSaveGrade">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#subHandleProblemCheckInPath" class="summary-sig-name">subHandleProblemCheckInPath</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">answersDict</span>)</span><br />
+      Get dict like this:</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.subHandleProblemCheckInPath">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#handleAjaxLogin" class="summary-sig-name">handleAjaxLogin</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">record</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">event</span>,
+        <span class="summary-sig-arg">eventType</span>)</span><br />
+      Events look like this:</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleAjaxLogin">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#finish" class="summary-sig-name">finish</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">includeCSVLoadCommands</span>=<span class="summary-sig-default">False</span>,
+        <span class="summary-sig-arg">outputDisposition</span>=<span class="summary-sig-default">None</span>)</span><br />
+      Called by json_to_relation parent after the last insert for one file 
+      is done.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.finish">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#createCSVTableLoadCommands" class="summary-sig-name">createCSVTableLoadCommands</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">outputDisposition</span>)</span><br />
+      Create a series of LOAD INFILE commands as a string.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.createCSVTableLoadCommands">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#createMergeAccountTbl" class="summary-sig-name">createMergeAccountTbl</a>(<span class="summary-sig-arg">self</span>)</span><br />
+      Called at the very end of a load: copies all the entries from the 
+      temporary Account table in the Edx db to the permanent Account table 
+      in EdxPrivate.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.createMergeAccountTbl">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#handleBadJSON" class="summary-sig-name">handleBadJSON</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">offendingText</span>)</span><br />
+      When JSON parsing fails, place the offending text into longAnswer.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleBadJSON">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -834,9 +1419,292 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a name="getUniqueEventID"></a><span class="summary-sig-name">getUniqueEventID</span>(<span class="summary-sig-arg">self</span>)</span></td>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#getCourseDisplayName" class="summary-sig-name">getCourseDisplayName</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">fullCourseName</span>)</span><br />
+      Given a</td>
           <td align="right" valign="top">
-            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.getUniqueEventID">source&nbsp;code</a></span>
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.getCourseDisplayName">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="extractShortCourseID"></a><span class="summary-sig-name">extractShortCourseID</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">fullCourseStr</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.extractShortCourseID">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#extractCourseIDFromProblemXEvent" class="summary-sig-name">extractCourseIDFromProblemXEvent</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">event</span>)</span><br />
+      Given the 'event' field of an event of type problem_check, 
+      problem_check_fail, problem_save..., extract the course ID.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.extractCourseIDFromProblemXEvent">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#ensureDict" class="summary-sig-name">ensureDict</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">event</span>)</span><br />
+      If event is either a dict, or a string with a dict definition inside,
+      returns a dict.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.ensureDict">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#ensureArray" class="summary-sig-name">ensureArray</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">event</span>)</span><br />
+      If event is either a Python array, or a string with an array 
+      definition inside, returns the array.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.ensureArray">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">String</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#makeInsertSafe" class="summary-sig-name">makeInsertSafe</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">unsafeStr</span>)</span><br />
+      Makes the given string safe for use as a value in a MySQL INSERT 
+      statement.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.makeInsertSafe">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#makeJSONSafe" class="summary-sig-name">makeJSONSafe</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">jsonStr</span>)</span><br />
+      Given a JSON string, make it safe for loading via json.loads().</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.makeJSONSafe">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#fixOneJSONBackslashProblem" class="summary-sig-name">fixOneJSONBackslashProblem</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">matchObj</span>)</span><br />
+      Called from the pattern.sub() method in makeJSONSafe for each match 
+      of a bad backslash in jsonStr there.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.fixOneJSONBackslashProblem">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#rescueBadJSON" class="summary-sig-name">rescueBadJSON</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">badJSONStr</span>,
+        <span class="summary-sig-arg">row</span>=<span class="summary-sig-default"><code class="variable-group">[</code><code class="variable-group">]</code></span>)</span><br />
+      When JSON strings are not legal, we at least try to extract the 
+      username, host, session, event_type, event_source, and event fields 
+      verbatim, i.e.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.rescueBadJSON">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="tryJSONExtraction"></a><span class="summary-sig-name">tryJSONExtraction</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">pattern</span>,
+        <span class="summary-sig-arg">theStr</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.tryJSONExtraction">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="getUniqueID"></a><span class="summary-sig-name">getUniqueID</span>(<span class="summary-sig-arg">self</span>)</span><br />
+      Generate a universally unique key with all characters being legal in 
+      MySQL identifiers.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.getUniqueID">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="getZipAndCountryFromMailAddr"></a><span class="summary-sig-name">getZipAndCountryFromMailAddr</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">mailAddr</span>,
+        <span class="summary-sig-arg">accountDict</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.getZipAndCountryFromMailAddr">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">String</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#hashGeneral" class="summary-sig-name">hashGeneral</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">username</span>)</span><br />
+      Returns a ripemd160 40 char hash of the given name.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.hashGeneral">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#extractOpenEdxHash" class="summary-sig-name">extractOpenEdxHash</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">idStr</span>)</span><br />
+      Given a string, such as:</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.extractOpenEdxHash">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#setResourceDisplayName" class="summary-sig-name">setResourceDisplayName</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">row</span>,
+        <span class="summary-sig-arg">openEdxHash</span>)</span><br />
+      Given an OpenEdx hash of problem ID, video ID, or course ID, set the 
+      resource_display_name in the given row.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.setResourceDisplayName">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">{String | None}</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#extractCanonicalCourseName" class="summary-sig-name">extractCanonicalCourseName</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">trackLogStr</span>)</span><br />
+      Given a string believed to be the best course name snippet from a log
+      entry, use the modulestoreImporter's facilities to get a canonical 
+      name.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.extractCanonicalCourseName">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -1009,6 +1877,42 @@
     </td>
   </tr>
 </table>
+<!-- ==================== CLASS METHODS ==================== -->
+<a name="section-ClassMethods"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Class Methods</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-ClassMethods"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">String</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#makeHash" class="summary-sig-name">makeHash</a>(<span class="summary-sig-arg">cls</span>,
+        <span class="summary-sig-arg">username</span>)</span><br />
+      Returns a ripemd160 40 char hash of the given name.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.makeHash">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+</table>
 <!-- ==================== CLASS VARIABLES ==================== -->
 <a name="section-ClassVariables"></a>
 <table class="summary" border="1" cellpadding="3"
@@ -1026,6 +1930,64 @@
     </table>
   </td>
 </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="JSON_BAD_BACKSLASH_PATTERN"></a><span class="summary-name">JSON_BAD_BACKSLASH_PATTERN</span> = <code title="re.compile(r'\\([^/&quot;])')">re.compile(r'\\<code class="re-group">(</code><code class="re-group">[</code><code class="re-op">^</code>/&quot;<code class="re-group">]</code><code class="re-group">)</code>')</code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#searchPatternDict" class="summary-name">searchPatternDict</a> = <code title="{'event': re.compile(r'(?x)[\\&quot;\']event[\\&quot;\'][^:]*:(.*)'),
+ 'event_source': re.compile(r'(?x)event_source[^:]*[^&quot;\']*[&quot;\']([^&quot;\']\
+*)'),
+ 'event_type': re.compile(r'(?x)event_type[^:]*[^&quot;\']*[&quot;\']([^&quot;\']*)')\
+,
+ 'host': re.compile(r'(?x)host[^:]*[^&quot;\']*[&quot;\']([^&quot;\']*)'),
+ 'ip': re.compile(r'(?x)ip[^:]*[^&quot;\']*[&quot;\']([^&quot;\']*)'),
+ 'session': re.compile(r'(?x)session[^:]*[^&quot;\']*[&quot;\']([^&quot;\']*)'),
+..."><code class="variable-group">{</code><code class="variable-quote">'</code><code class="variable-string">event</code><code class="variable-quote">'</code><code class="variable-op">: </code>re.compile(r'<code class="re-flags">(?x)</code><code class="re-group">[</code>\\&quot;\'<code class="re-group">]</code>event<code class="re-group">[</code>\\<code class="variable-ellipsis">...</code></code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="zipCodePattern"></a><span class="summary-name">zipCodePattern</span> = <code title="re.compile(r'[^0-9]([0-9]{5})')">re.compile(r'<code class="re-group">[</code><code class="re-op">^</code>0<code class="re-op">-</code>9<code class="re-group">]</code><code class="re-group">(</code><code class="re-group">[</code>0<code class="re-op">-</code>9<code class="re-group">]</code><code class="re-op">{5}</code><code class="re-group">)</code>')</code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="hexGE32Digits"></a><span class="summary-name">hexGE32Digits</span> = <code title="re.compile(r'[a-fA-F0-9]{32,}')">re.compile(r'<code class="re-group">[</code>a<code class="re-op">-</code>fA<code class="re-op">-</code>F0<code class="re-op">-</code>9<code class="re-group">]</code><code class="re-op">{32,}</code>')</code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="json_to_relation.edxTrackLogJSONParser.EdXTrackLogJSONParser-class.html#problemGradedComplexPattern" class="summary-name">problemGradedComplexPattern</a> = <code title="re.compile(r'aria-describedby=[\\&quot;]*(input[^\\&quot;&gt;]*)[\\&quot;]*[&gt;nStatus\\:\\
+s&quot;]*([iIn]{,2}correct)')">re.compile(r'aria-describedby=<code class="re-group">[</code>\<code class="variable-ellipsis">...</code></code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="problemXFindCourseID"></a><span class="summary-name">problemXFindCourseID</span> = <code title="re.compile(r'[^-]*([^:]*)')">re.compile(r'<code class="re-group">[^</code>-<code class="re-group">]</code><code class="re-op">*</code><code class="re-group">(</code><code class="re-group">[^</code>:<code class="re-group">]</code><code class="re-op">*</code><code class="re-group">)</code>')</code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="findHashPattern"></a><span class="summary-name">findHashPattern</span> = <code title="re.compile(r'([a-f0-9]{32})')">re.compile(r'<code class="re-group">(</code><code class="re-group">[</code>a<code class="re-op">-</code>f0<code class="re-op">-</code>9<code class="re-group">]</code><code class="re-op">{32}</code><code class="re-group">)</code>')</code>
+    </td>
+  </tr>
 <tr bgcolor="#e8f0f8" >
   <th colspan="2" class="group-header"
     >&nbsp;&nbsp;&nbsp;&nbsp;Inherited from <a href="json_to_relation.generic_json_parser.GenericJSONParser-class.html">generic_json_parser.GenericJSONParser</a></th></tr>
@@ -1093,7 +2055,8 @@
         <span class="sig-arg">logfileID</span>=<span class="sig-default"><code class="variable-quote">'</code><code class="variable-string"></code><code class="variable-quote">'</code></span>,
         <span class="sig-arg">progressEvery</span>=<span class="sig-default">1000</span>,
         <span class="sig-arg">replaceTables</span>=<span class="sig-default">False</span>,
-        <span class="sig-arg">dbName</span>=<span class="sig-default"><code class="variable-quote">'</code><code class="variable-string">test</code><code class="variable-quote">'</code></span>)</span>
+        <span class="sig-arg">dbName</span>=<span class="sig-default"><code class="variable-quote">'</code><code class="variable-string">test</code><code class="variable-quote">'</code></span>,
+        <span class="sig-arg">useDisplayNameCache</span>=<span class="sig-default">False</span>)</span>
     <br /><em class="fname">(Constructor)</em>
   </h3>
   </td><td align="right" valign="top"
@@ -1117,6 +2080,11 @@
           to be deleted before inserting entries. Default: False</li>
         <li><strong class="pname"><code>dbName</code></strong> (String) - database name into which tables will be created (if replaceTables
           is True), and into which insertions will take place.</li>
+        <li><strong class="pname"><code>useDisplayNameCache</code></strong> (Bool) - if True then use an existing cache for mapping OpenEdx hashes to 
+          human readable display names is used. Else the required 
+          information is read and parsed from a JSON file name that 
+          contains the needed information from modulestore. See 
+          modulestoreImporter.py for details.</li>
     </ul></dd>
     <dt>Overrides:
         object.__init__
@@ -1140,9 +2108,15 @@
     </td>
   </tr></table>
   
+  <p>This method is the main dispatch for track log event_types. It's a 
+  long method, and should be partitioned. First, bookkeeping fields are 
+  filled in that are common to all events, such as the user agent, and the 
+  reference into the LoadInfo table that shows on which date this row was 
+  loaded. Then a long 'case' statement calls handler methods depending on 
+  the incoming track log's event_type.</p>
   <p>Given one line from the EdX Track log, produce one row of relational 
   output. Return is an array of values, the same that is passed in. On the 
-  way, the partne JSONToRelation object is called to ensure that JSON 
+  way, the partner JSONToRelation object is called to ensure that JSON 
   fields for which new columns have not been created yet receive a place in
   the row array. Different types of JSON records will be passed: server 
   heartbeats, dashboard accesses, account creations, user logins. Example 
@@ -1242,6 +2216,9 @@
           are destined for the main event table, whose schema is 'well 
           known'.</li>
     </ul></dd>
+    <dt>Returns: (String, String, [&lt;any&gt;])</dt>
+        <dd>table name, string with all comma-separated column names, and 
+          values as a 3-tuple</dd>
   </dl>
 </td></tr></table>
 </div>
@@ -1261,12 +2238,14 @@
   </tr></table>
   
   <p>Pushes SQL statements to caller that create all tables, main and 
-  auxiliary.</p>
+  auxiliary. After these CREATE statements, 'START TRANSACTION;\n' is 
+  pushed. The caller is responsible for pushing 'COMMIT;\n' when all 
+  subsequent INSERT statements have been pushed.</p>
   <dl class="fields">
     <dt>Parameters:</dt>
     <dd><ul class="nomargin-top">
         <li><strong class="pname"><code>replaceTables</code></strong> (Boolean) - if True, then generated CREATE statements will first DROP the 
-          various tables. if False, the CREATE statements will be IF NOT 
+          various tables. If False, the CREATE statements will be IF NOT 
           EXISTS</li>
     </ul></dd>
   </dl>
@@ -1283,7 +2262,8 @@
         <span class="sig-arg">tableName</span>,
         <span class="sig-arg">schemaDict</span>,
         <span class="sig-arg">primaryKeyName</span>=<span class="sig-default">None</span>,
-        <span class="sig-arg">foreignKeyColNames</span>=<span class="sig-default">None</span>)</span>
+        <span class="sig-arg">foreignKeyColNames</span>=<span class="sig-default">None</span>,
+        <span class="sig-arg">autoincrement</span>=<span class="sig-default">False</span>)</span>
   </h3>
   </td><td align="right" valign="top"
     ><span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.genOneCreateStatement">source&nbsp;code</a></span>&nbsp;
@@ -1296,7 +2276,7 @@
   this method is:</p>
 <pre class="literalblock">
 REATE TABLE myTable
-   col1 VARCHAR(32) NOT NULL Primary Key,
+   col1 VARCHAR(40) NOT NULL Primary Key,
                col2 TEXT,
                col3 INT,
                col4 VARCHAR(32),
@@ -1317,6 +2297,7 @@ REATE TABLE myTable
         <li><strong class="pname"><code>primaryKeyName</code></strong> (String) - name of the primary key column, if any</li>
         <li><strong class="pname"><code>foreignKeyColNames</code></strong> (Dict&lt;String,(String,String)&gt;) - dict mapping foreign table names to tuples (localColName, 
           foreignColName)</li>
+        <li><strong class="pname"><code>autoincrement</code></strong> (Boolean) - whether this table's primary key is autoincrement</li>
     </ul></dd>
   </dl>
 </td></tr></table>
@@ -1364,540 +2345,3 @@ REATE TABLE myTable
   </dl>
 </td></tr></table>
 </div>
-<a name="handleProblemCheck"></a>
-<div>
-<table class="details" border="1" cellpadding="3"
-       cellspacing="0" width="100%" bgcolor="white">
-<tr><td>
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
-  <tr valign="top"><td>
-  <h3 class="epydoc"><span class="sig"><span class="sig-name">handleProblemCheck</span>(<span class="sig-arg">self</span>,
-        <span class="sig-arg">record</span>,
-        <span class="sig-arg">row</span>,
-        <span class="sig-arg">event</span>)</span>
-  </h3>
-  </td><td align="right" valign="top"
-    ><span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleProblemCheck">source&nbsp;code</a></span>&nbsp;
-    </td>
-  </tr></table>
-  
-  <p>Gets an event JSON object string like this:</p>
-<pre class="literalblock">
-         {       
-           &quot;success&quot;: &quot;correct&quot;,
-           &quot;correct_map&quot;: {
-               &quot;i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1&quot;: {
-                   &quot;hint&quot;: &quot;&quot;,
-                   &quot;hintmode&quot;: null,
-                   &quot;correctness&quot;: &quot;correct&quot;,
-                   &quot;msg&quot;: &quot;&quot;,
-                   &quot;npoints&quot;: null,
-                   &quot;queuestate&quot;: null
-               },
-               &quot;i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1&quot;: {
-                   &quot;hint&quot;: &quot;&quot;,
-                   &quot;hintmode&quot;: null,
-                   &quot;correctness&quot;: &quot;correct&quot;,
-                   &quot;msg&quot;: &quot;&quot;,
-                   &quot;npoints&quot;: null,
-                   &quot;queuestate&quot;: null
-               }
-           },
-           &quot;attempts&quot;: 2,
-           &quot;answers&quot;: {
-               &quot;i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1&quot;: &quot;choice_0&quot;,
-               &quot;i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1&quot;: &quot;choice_3&quot;
-           },
-           &quot;state&quot;: {
-               &quot;student_answers&quot;: {
-                   &quot;i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1&quot;: &quot;choice_3&quot;,
-                   &quot;i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1&quot;: &quot;choice_1&quot;
-               },
-               &quot;seed&quot;: 1,
-               &quot;done&quot;: true,
-               &quot;correct_map&quot;: {
-                   &quot;i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1&quot;: {
-                       &quot;hint&quot;: &quot;&quot;,
-                       &quot;hintmode&quot;: null,
-                       &quot;correctness&quot;: &quot;incorrect&quot;,
-                       &quot;msg&quot;: &quot;&quot;,
-                       &quot;npoints&quot;: null,
-                       &quot;queuestate&quot;: null
-                   },
-                   &quot;i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1&quot;: {
-                       &quot;hint&quot;: &quot;&quot;,
-                       &quot;hintmode&quot;: null,
-                       &quot;correctness&quot;: &quot;incorrect&quot;,
-                       &quot;msg&quot;: &quot;&quot;,
-                       &quot;npoints&quot;: null,
-                       &quot;queuestate&quot;: null
-                   }
-               },
-               &quot;input_state&quot;: {
-                   &quot;i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1&quot;: {},
-                   &quot;i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1&quot;: {}
-               }
-           },
-           &quot;problem_id&quot;: &quot;i4x://Medicine/HRP258/problem/e194bcb477104d849691d8b336b65ff6&quot;
-         }        
-</pre>
-  <dl class="fields">
-    <dt>Parameters:</dt>
-    <dd><ul class="nomargin-top">
-        <li><strong class="pname"><code>record</code></strong> ()</li>
-        <li><strong class="pname"><code>row</code></strong> ()</li>
-        <li><strong class="pname"><code>event</code></strong> ()</li>
-    </ul></dd>
-  </dl>
-</td></tr></table>
-</div>
-<a name="pushCorrectMaps"></a>
-<div>
-<table class="details" border="1" cellpadding="3"
-       cellspacing="0" width="100%" bgcolor="white">
-<tr><td>
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
-  <tr valign="top"><td>
-  <h3 class="epydoc"><span class="sig"><span class="sig-name">pushCorrectMaps</span>(<span class="sig-arg">self</span>,
-        <span class="sig-arg">correctMapsDict</span>)</span>
-  </h3>
-  </td><td align="right" valign="top"
-    ><span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.pushCorrectMaps">source&nbsp;code</a></span>&nbsp;
-    </td>
-  </tr></table>
-  
-  <p>Get dicts like this:</p>
-<pre class="literalblock">
-       {&quot;i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1&quot;: {
-               &quot;hint&quot;: &quot;&quot;,
-               &quot;hintmode&quot;: null,
-               &quot;correctness&quot;: &quot;correct&quot;,
-               &quot;msg&quot;: &quot;&quot;,
-               &quot;npoints&quot;: null,
-               &quot;queuestate&quot;: null
-           },
-           &quot;i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1&quot;: {
-               &quot;hint&quot;: &quot;&quot;,
-               &quot;hintmode&quot;: null,
-               &quot;correctness&quot;: &quot;correct&quot;,
-               &quot;msg&quot;: &quot;&quot;,
-               &quot;npoints&quot;: null,
-               &quot;queuestate&quot;: null
-           }
-       }
-       The above has two correctmaps.
-</pre>
-  <dl class="fields">
-    <dt>Parameters:</dt>
-    <dd><ul class="nomargin-top">
-        <li><strong class="pname"><code>correctMapsDict</code></strong> (Dict&lt;String, Dict&lt;String,String&gt;&gt;) - dict of CorrectMap dicts</li>
-    </ul></dd>
-    <dt>Returns: [String]</dt>
-        <dd>array of unique keys, one key for each CorrectMap row the method 
-          has added. In case of the above example that would be two keys 
-          (uuids)</dd>
-  </dl>
-</td></tr></table>
-</div>
-<a name="pushAnswers"></a>
-<div>
-<table class="details" border="1" cellpadding="3"
-       cellspacing="0" width="100%" bgcolor="white">
-<tr><td>
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
-  <tr valign="top"><td>
-  <h3 class="epydoc"><span class="sig"><span class="sig-name">pushAnswers</span>(<span class="sig-arg">self</span>,
-        <span class="sig-arg">answersDict</span>)</span>
-  </h3>
-  </td><td align="right" valign="top"
-    ><span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.pushAnswers">source&nbsp;code</a></span>&nbsp;
-    </td>
-  </tr></table>
-  
-  <p>Gets structure like this:</p>
-<pre class="literalblock">
-   &quot;answers&quot;: {
-       &quot;i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1&quot;: &quot;choice_0&quot;,
-       &quot;i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1&quot;: &quot;choice_3&quot;
-   }
-</pre>
-  <dl class="fields">
-    <dt>Parameters:</dt>
-    <dd><ul class="nomargin-top">
-        <li><strong class="pname"><code>answersDict</code></strong> ()</li>
-    </ul></dd>
-    <dt>Returns: [String]</dt>
-        <dd>array of keys created for answers in answersDict</dd>
-  </dl>
-</td></tr></table>
-</div>
-<a name="pushState"></a>
-<div>
-<table class="details" border="1" cellpadding="3"
-       cellspacing="0" width="100%" bgcolor="white">
-<tr><td>
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
-  <tr valign="top"><td>
-  <h3 class="epydoc"><span class="sig"><span class="sig-name">pushState</span>(<span class="sig-arg">self</span>,
-        <span class="sig-arg">stateDict</span>)</span>
-  </h3>
-  </td><td align="right" valign="top"
-    ><span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.pushState">source&nbsp;code</a></span>&nbsp;
-    </td>
-  </tr></table>
-  
-  <p>We get a structure like this:</p>
-<pre class="literalblock">
-   {   
-       &quot;student_answers&quot;: {
-           &quot;i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1&quot;: &quot;choice_3&quot;,
-           &quot;i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1&quot;: &quot;choice_1&quot;
-       },
-       &quot;seed&quot;: 1,
-       &quot;done&quot;: true,
-       &quot;correct_map&quot;: {
-           &quot;i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1&quot;: {
-               &quot;hint&quot;: &quot;&quot;,
-               &quot;hintmode&quot;: null,
-               &quot;correctness&quot;: &quot;incorrect&quot;,
-               &quot;msg&quot;: &quot;&quot;,
-               &quot;npoints&quot;: null,
-               &quot;queuestate&quot;: null
-           },
-           &quot;i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1&quot;: {
-               &quot;hint&quot;: &quot;&quot;,
-               &quot;hintmode&quot;: null,
-               &quot;correctness&quot;: &quot;incorrect&quot;,
-               &quot;msg&quot;: &quot;&quot;,
-               &quot;npoints&quot;: null,
-               &quot;queuestate&quot;: null
-           }
-       },
-       &quot;input_state&quot;: {
-           &quot;i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1&quot;: {},
-           &quot;i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1&quot;: {}
-       }
-   }        
-</pre>
-  <dl class="fields">
-    <dt>Parameters:</dt>
-    <dd><ul class="nomargin-top">
-        <li><strong class="pname"><code>stateDict</code></strong> ()</li>
-    </ul></dd>
-    <dt>Returns: [String]</dt>
-        <dd>array of keys into State table that were created in this method</dd>
-  </dl>
-</td></tr></table>
-</div>
-<a name="pushInputStates"></a>
-<div>
-<table class="details" border="1" cellpadding="3"
-       cellspacing="0" width="100%" bgcolor="white">
-<tr><td>
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
-  <tr valign="top"><td>
-  <h3 class="epydoc"><span class="sig"><span class="sig-name">pushInputStates</span>(<span class="sig-arg">self</span>,
-        <span class="sig-arg">inputStatesDict</span>)</span>
-  </h3>
-  </td><td align="right" valign="top"
-    ><span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.pushInputStates">source&nbsp;code</a></span>&nbsp;
-    </td>
-  </tr></table>
-  
-  <p>Gets structure like this:</p>
-<pre class="literalblock">
-   {
-       &quot;i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1&quot;: {},
-       &quot;i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1&quot;: {}
-   }        
-</pre>
-  <dl class="fields">
-    <dt>Parameters:</dt>
-    <dd><ul class="nomargin-top">
-        <li><strong class="pname"><code>inputStatesDict</code></strong> ()</li>
-    </ul></dd>
-    <dt>Returns: [String]</dt>
-        <dd>array of keys created for input state problems.</dd>
-  </dl>
-</td></tr></table>
-</div>
-<a name="handleProblemReset"></a>
-<div>
-<table class="details" border="1" cellpadding="3"
-       cellspacing="0" width="100%" bgcolor="white">
-<tr><td>
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
-  <tr valign="top"><td>
-  <h3 class="epydoc"><span class="sig"><span class="sig-name">handleProblemReset</span>(<span class="sig-arg">self</span>,
-        <span class="sig-arg">record</span>,
-        <span class="sig-arg">row</span>,
-        <span class="sig-arg">event</span>)</span>
-  </h3>
-  </td><td align="right" valign="top"
-    ><span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleProblemReset">source&nbsp;code</a></span>&nbsp;
-    </td>
-  </tr></table>
-  
-  <p>Gets a event string like this:: &quot;{&quot;POST&quot;: 
-  {&quot;id&quot;: 
-  [&quot;i4x://Engineering/EE222/problem/e68cfc1abc494dfba585115792a7a750@draft&quot;]},
-  &quot;GET&quot;: {}}&quot; After turning this JSON into Python:</p>
-<pre class="literalblock">
-u'POST': {u'id': [u'i4x://Engineering/EE222/problem/e68cfc1abc494dfba585115792a7a750@draft']}, u'GET': {}}
-</pre>
-  <dl class="fields">
-    <dt>Parameters:</dt>
-    <dd><ul class="nomargin-top">
-        <li><strong class="pname"><code>record</code></strong> ()</li>
-        <li><strong class="pname"><code>row</code></strong> ()</li>
-        <li><strong class="pname"><code>event</code></strong> ()</li>
-    </ul></dd>
-  </dl>
-</td></tr></table>
-</div>
-<a name="handleProblemShow"></a>
-<div>
-<table class="details" border="1" cellpadding="3"
-       cellspacing="0" width="100%" bgcolor="white">
-<tr><td>
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
-  <tr valign="top"><td>
-  <h3 class="epydoc"><span class="sig"><span class="sig-name">handleProblemShow</span>(<span class="sig-arg">self</span>,
-        <span class="sig-arg">record</span>,
-        <span class="sig-arg">row</span>,
-        <span class="sig-arg">event</span>)</span>
-  </h3>
-  </td><td align="right" valign="top"
-    ><span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleProblemShow">source&nbsp;code</a></span>&nbsp;
-    </td>
-  </tr></table>
-  
-  <p>Gets a event string like this:</p>
-<pre class="literalblock">
-&quot;{&quot;problem&quot;:&quot;i4x://Medicine/HRP258/problem/c5cf8f02282544729aadd1f9c7ccbc87&quot;}&quot;
-</pre>
-  <p>After turning this JSON into Python:: {u'problem': 
-  u'i4x://Medicine/HRP258/problem/c5cf8f02282544729aadd1f9c7ccbc87'}</p>
-  <dl class="fields">
-    <dt>Parameters:</dt>
-    <dd><ul class="nomargin-top">
-        <li><strong class="pname"><code>record</code></strong> ()</li>
-        <li><strong class="pname"><code>row</code></strong> ()</li>
-        <li><strong class="pname"><code>event</code></strong> ()</li>
-    </ul></dd>
-  </dl>
-</td></tr></table>
-</div>
-<a name="handleProblemSave"></a>
-<div>
-<table class="details" border="1" cellpadding="3"
-       cellspacing="0" width="100%" bgcolor="white">
-<tr><td>
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
-  <tr valign="top"><td>
-  <h3 class="epydoc"><span class="sig"><span class="sig-name">handleProblemSave</span>(<span class="sig-arg">self</span>,
-        <span class="sig-arg">record</span>,
-        <span class="sig-arg">row</span>,
-        <span class="sig-arg">event</span>)</span>
-  </h3>
-  </td><td align="right" valign="top"
-    ><span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleProblemSave">source&nbsp;code</a></span>&nbsp;
-    </td>
-  </tr></table>
-  
-  <p>Gets a event string like this:: 
-  &quot;&quot;input_i4x-Education-EDUC115N-problem-44b3fb5f49884be7bc35712b176e50c4_2_1=choice_1&quot;&quot;</p>
-  <p>After splitting this string on '=': 
-  ['&quot;input_i4x-Education-EDUC115N-problem-44b3fb5f49884be7bc35712b176e50c4_2_1',
-  'choice_1&quot;']</p>
-  <dl class="fields">
-    <dt>Parameters:</dt>
-    <dd><ul class="nomargin-top">
-        <li><strong class="pname"><code>record</code></strong> ()</li>
-        <li><strong class="pname"><code>row</code></strong> ()</li>
-        <li><strong class="pname"><code>event</code></strong> ()</li>
-    </ul></dd>
-  </dl>
-</td></tr></table>
-</div>
-<a name="handleQuestionProblemHidingShowing"></a>
-<div>
-<table class="details" border="1" cellpadding="3"
-       cellspacing="0" width="100%" bgcolor="white">
-<tr><td>
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
-  <tr valign="top"><td>
-  <h3 class="epydoc"><span class="sig"><span class="sig-name">handleQuestionProblemHidingShowing</span>(<span class="sig-arg">self</span>,
-        <span class="sig-arg">record</span>,
-        <span class="sig-arg">row</span>,
-        <span class="sig-arg">event</span>)</span>
-  </h3>
-  </td><td align="right" valign="top"
-    ><span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleQuestionProblemHidingShowing">source&nbsp;code</a></span>&nbsp;
-    </td>
-  </tr></table>
-  
-  <p>Gets a event string like this:: 
-  &quot;{&quot;location&quot;:&quot;i4x://Education/EDUC115N/combinedopenended/c8af7daea1f54436b0b25930b1631845&quot;}&quot;
-  After importing from JSON into Python:</p>
-<pre class="literalblock">
-u'location': u'i4x://Education/EDUC115N/combinedopenended/c8af7daea1f54436b0b25930b1631845'}
-</pre>
-  <dl class="fields">
-  </dl>
-</td></tr></table>
-</div>
-<a name="handleProblemSetFail"></a>
-<div>
-<table class="details" border="1" cellpadding="3"
-       cellspacing="0" width="100%" bgcolor="white">
-<tr><td>
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
-  <tr valign="top"><td>
-  <h3 class="epydoc"><span class="sig"><span class="sig-name">handleProblemSetFail</span>(<span class="sig-arg">self</span>,
-        <span class="sig-arg">record</span>,
-        <span class="sig-arg">row</span>,
-        <span class="sig-arg">event</span>)</span>
-  </h3>
-  </td><td align="right" valign="top"
-    ><span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.handleProblemSetFail">source&nbsp;code</a></span>&nbsp;
-    </td>
-  </tr></table>
-  
-  <p>Gets events like this:</p>
-<pre class="literalblock">
-   {
-     &quot;failure&quot;: &quot;unreset&quot;,
-     &quot;state&quot;: {
-       &quot;student_answers&quot;: {
-         &quot;i4x-Education-EDUC115N-problem-ab38a55d2eb145ae8cec26acebaca27f_2_1&quot;: &quot;choice_0&quot;
-       },
-       &quot;seed&quot;: 89,
-       &quot;done&quot;: true,
-       &quot;correct_map&quot;: {
-         &quot;i4x-Education-EDUC115N-problem-ab38a55d2eb145ae8cec26acebaca27f_2_1&quot;: {
-           &quot;hint&quot;: &quot;&quot;,
-           &quot;hintmode&quot;: null,
-           &quot;correctness&quot;: &quot;correct&quot;,
-           &quot;msg&quot;: &quot;&quot;,
-           &quot;npoints&quot;: null,
-           &quot;queuestate&quot;: null
-         }
-       },
-       &quot;input_state&quot;: {
-         &quot;i4x-Education-EDUC115N-problem-ab38a55d2eb145ae8cec26acebaca27f_2_1&quot;: {
-           
-         }
-       }
-     },
-     &quot;problem_id&quot;: &quot;i4x:\/\/Education\/EDUC115N\/problem\/ab38a55d2eb145ae8cec26acebaca27f&quot;,
-     &quot;answers&quot;: {
-       &quot;i4x-Education-EDUC115N-problem-ab38a55d2eb145ae8cec26acebaca27f_2_1&quot;: &quot;choice_0&quot;
-     }
-   }        
-</pre>
-  <dl class="fields">
-    <dt>Parameters:</dt>
-    <dd><ul class="nomargin-top">
-        <li><strong class="pname"><code>record</code></strong> ()</li>
-        <li><strong class="pname"><code>row</code></strong> ()</li>
-        <li><strong class="pname"><code>event</code></strong> ()</li>
-    </ul></dd>
-  </dl>
-</td></tr></table>
-</div>
-<a name="get_course_id"></a>
-<div>
-<table class="details" border="1" cellpadding="3"
-       cellspacing="0" width="100%" bgcolor="white">
-<tr><td>
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
-  <tr valign="top"><td>
-  <h3 class="epydoc"><span class="sig"><span class="sig-name">get_course_id</span>(<span class="sig-arg">self</span>,
-        <span class="sig-arg">event</span>)</span>
-  </h3>
-  </td><td align="right" valign="top"
-    ><span class="codelink"><a href="json_to_relation.edxTrackLogJSONParser-pysrc.html#EdXTrackLogJSONParser.get_course_id">source&nbsp;code</a></span>&nbsp;
-    </td>
-  </tr></table>
-  
-  <p>Given a 'pythonized' JSON tracking event object, find the course URL, 
-  and extract the course name from it. A number of different events occur, 
-  which do not contain course IDs: server heartbeats, account creation, 
-  dashboard accesses. Among them are logins, which look like this:</p>
-<pre class="literalblock">
-   {&quot;username&quot;: &quot;&quot;, 
-    &quot;host&quot;: &quot;class.stanford.edu&quot;, 
-    &quot;event_source&quot;: &quot;server&quot;, 
-    &quot;event_type&quot;: &quot;/accounts/login&quot;, 
-    &quot;time&quot;: &quot;2013-06-14T00:31:57.661338&quot;, 
-    &quot;ip&quot;: &quot;98.230.189.66&quot;, 
-    &quot;event&quot;: &quot;{
-               &quot;POST&quot;: {}, 
-               &quot;GET&quot;: {
-                    &quot;next&quot;: [&quot;/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/80160e.../&quot;]}}&quot;, 
-    &quot;agent&quot;: &quot;Mozilla/5.0 (Windows NT 5.1; rv:21.0) Gecko/20100101
-    Firefox/21.0&quot;, 
-    &quot;page&quot;: null
-    }
-</pre>
-  <p>Notice the 'event' key's value being a *string* containing JSON, 
-  rather than a nested JSON object. This requires special attention. Buried
-  inside that string is the 'next' tag, whose value is an array with a long
-  (here partially elided) hex number. This is where the course number is 
-  extracted.</p>
-  <dl class="fields">
-    <dt>Parameters:</dt>
-    <dd><ul class="nomargin-top">
-        <li><strong class="pname"><code>event</code></strong> (Dict&lt;String,Dict&lt;&lt;any&gt;&gt;) - JSON record of an edx tracking event as internalized dict</li>
-    </ul></dd>
-    <dt>Returns: {(String,String) | None}</dt>
-        <dd>two-tuple: fulle name of course in which event occurred, and 
-          descriptive name. None if course ID could not be obtained.</dd>
-  </dl>
-</td></tr></table>
-</div>
-<br />
-<!-- ==================== NAVIGATION BAR ==================== -->
-<table class="navbar" border="0" width="100%" cellpadding="0"
-       bgcolor="#a0c0ff" cellspacing="0">
-  <tr valign="middle">
-
-  <!-- Tree link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
-
-  <!-- Index link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
-
-  <!-- Help link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
-
-      <th class="navbar" width="100%"></th>
-  </tr>
-</table>
-<table border="0" cellpadding="0" cellspacing="0" width="100%%">
-  <tr>
-    <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Wed Oct 16 17:51:59 2013
-    </td>
-    <td align="right" class="footer">
-      <a target="mainFrame" href="http://epydoc.sourceforge.net"
-        >http://epydoc.sourceforge.net</a>
-    </td>
-  </tr>
-</table>
-
-<script type="text/javascript">
-  <!--
-  // Private objects are initially displayed (because if
-  // javascript is turned off then we want them to be
-  // visible); but by default, we want to hide them.  So hide
-  // them unless we have a cookie that says to show them.
-  checkCookie();
-  // -->
-</script>
-</body>
-</html>

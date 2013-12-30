@@ -10,6 +10,13 @@
 Created on Sep 14, 2013
 
 @author: paepcke
+
+Modifications:
+  - Dec 28, 2013: Account copy from Edx to EdxPrivate after load now
+                  uses REPLACE INTO, rather than INSERT INTO
+  - Dec 29, 2013: changed load time for LoadInfo to local time (was gmtime).
+                  Also ensured that the time str entered into LoadInfo
+                  is ISO compliant.
 '''
 
 from cStringIO import StringIO
@@ -21,7 +28,7 @@ import os
 import re
 import shutil
 import tempfile
-import time
+import datetime
 
 from col_data_type import ColDataType
 from generic_json_parser import GenericJSONParser
@@ -143,7 +150,8 @@ class JSONToRelation(object):
         self.destination = destination
         self.mainTableName = mainTableName
         # Greenwich Mean Time (UTC) as yyyymmddhhssmm
-        self.loadDateTime = time.strftime('%Y%m%d%H%M%s', time.gmtime())
+        # self.loadDateTime = time.strftime('%Y%m%d%H%M%s', time.localtime())
+        self.loadDateTime = datetime.datetime.now().isoformat()
         self.loadFile = jsonSource.getSourceName()
 
         # Check schemaHints correctness:

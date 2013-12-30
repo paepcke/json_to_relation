@@ -1,7 +1,16 @@
 # Stored procedures used for administering the Edx
 # tracking log database and others.
 
-USE Edx;
+# NOTE: these functions and procedures need to be
+#       defined in both the Edx and EdxPrivate
+#       databases. I tried defining them once
+#       in Edx, and then replicating a row
+#       in mysql.proc, changing only the database
+#       column content. But it got to crufty, and
+#       vulnerable to future MySQL version mods.
+#
+#       Instead this file is 'source'ed into 
+#       MySQL twice by defineMySQLProcedures.sh.
 
 # Set the statement delimiter to something other than ';'
 # so the procedure can use ';':
@@ -25,7 +34,7 @@ BEGIN
            WHERE TABLE_SCHEMA = DATABASE() 
              AND table_name = the_table_name 
     	 AND index_name = the_index_name)  
-          > 0)
+          = 0)
       THEN
           # Different CREATE INDEX statement depending on whether
           # a prefix length is required:
@@ -81,7 +90,7 @@ END//
 
 #--------------------------
 # addPrimaryIfNotExists
-#-----------
+#----------------------
 
 # Add primary key if it does not exist yet.
 
@@ -94,9 +103,10 @@ BEGIN
            WHERE TABLE_SCHEMA = DATABASE() 
              AND table_name = the_table_name 
     	 AND index_name = 'PRIMARY')  
-          > 0)
+         = 0)
       THEN
-      	  SET @s = CONCAT('ALTER TABLE ' , 
+          # 'IGNORE' will refuse to add duplicates:
+      	  SET @s = CONCAT('ALTER IGNORE TABLE ' , 
       			  the_table_name, 
 			  ' ADD PRIMARY KEY ( ',
       			  the_col_name, 
@@ -124,9 +134,9 @@ BEGIN
   	   AND index_name = 'PRIMARY')  
         > 0)
     THEN
-        SET @s = CONCAT('DROP INDEX `PRIMARY`' ,
-  		        ' ON ' ,
-        		the_table_name
+        SET @s = CONCAT('ALTER TABLE ' ,
+        		the_table_name,
+			' DROP PRIMARY KEY;'
         		);
        PREPARE stmt FROM @s;
        EXECUTE stmt;
@@ -158,15 +168,11 @@ BEGIN
 END//
 
 #--------------------------
-# anyIndexExists (for Edx)
-#-------------------------
+# anyIndexExists
+#---------------
 
 # Given a table return 1 if any non-PRIMARY
 # index exists on that table, else returns 0.
-# NOTE: following this definition, we replicate
-#       this function into the EdxPrivate DB.
-#       Any changes here need to be replicated
-#       to the copy down below.
 
 DROP FUNCTION IF EXISTS anyIndexExists//
 CREATE FUNCTION anyIndexExists(the_table_name varchar(255))
@@ -184,36 +190,6 @@ BEGIN
    END IF;
 END//
 
-#--------------------------
-# anyIndexExists (for EdxPrivate)
-#--------------------------------
-
-# Given a table return 1 if any non-PRIMARY
-# index exists on that table, else returns 0.
-# NOTE: following this definition is a replica
-#       of the function above. Changes must
-#       be made in both.
-# [I tried doing a copy using mysql.proc, but
-#  it got to crufty and vulnerable to changes
-#  in the MySQL system tables in future versions.
-
-USE EdxPrivate//
-DROP FUNCTION IF EXISTS anyIndexExists//
-CREATE FUNCTION anyIndexExists(the_table_name varchar(255))
-RETURNS BOOL
-BEGIN
-    IF ((SELECT COUNT(*)
-         FROM information_schema.statistics 
-         WHERE TABLE_SCHEMA = DATABASE() 
-           AND table_name = the_table_name 
-    	   AND Index_name != 'Primary') > 0)
-   THEN
-       RETURN 1;
-   ELSE
-       RETURN 0;
-   END IF;
-END//
-USE Edx//
 
 
 # Restore standard delimiter:
