@@ -506,7 +506,11 @@ class TrackLogPuller(object):
                 if self.tracking_log_bucket is None:
                     # No connection has been established yet to S3:
                     if not self.openS3Connection():
-                        self.logErr("Could not connect to Amazon 3S: %s" % sys.last_value)
+                        try:
+                            self.logErr("Could not connect to Amazon 3S: %s" % sys.last_value)
+                        except AttributeError:
+                            # The last_value wasn't initialized yet:
+                            sys.last_value = ""
                         raise IOError("Could not connect to Amazon S3 to examine existing tracking log file list.")
                 
                 self.logInfo("Downloading file %s from S3 to %s..." % (rfileNameToPull, localDest))
