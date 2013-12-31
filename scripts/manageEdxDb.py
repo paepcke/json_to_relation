@@ -239,7 +239,9 @@ class TrackLogPuller(object):
                 continue
             self.logDebug('Looking at remote track log file %s' % rLogPath)
             localEquivPath = os.path.join(localTrackingLogFileRoot, rLogPath)
+            self.logDebug("Check against local path: %s" % localEquivPath)
             if os.path.exists(localEquivPath):
+                self.logDebug("Local path: %s does exist; checking MD5 of remote & local." % localEquivPath)
                 try:
                     # Ensure that the local file is the same as the remote one, 
                     # i.e. that we already copied it over. The following call
@@ -254,6 +256,8 @@ class TrackLogPuller(object):
                 except Exception as e:
                     self.logErr("Could not compare remote file %s's MD5 with that of the local equivalent %s: %s" % (rLogPath, localEquivPath, `e`))
                     continue
+            else:
+                self.logDebug("Local path: %s does not exist." % localEquivPath)
             
             rfileObjsToGet.append(rLogPath)
             

@@ -11,12 +11,12 @@ Modifications:
   - Dec 29, 2013: Caused the ALTER ENABLE KEYS section in the output .sql file
                   to be commented out. When loading multiple .sql files in a row,
                   these statements caused re-creation of indexes after each load,
-                  adding significantly to the load time. Instead, manageDb.py
+                  adding significantly to the load time. Instead, manageEdxDb.py
                   handles the re-enabling. 
                   In pushDBCreations() pushed a header comment into the output .sql
                   file to warn about the commented-out ALTER ENABLE KEYS. The comment
                   advises to uncomment if loading manually, i.e. not via
-                  manageDb.py.
+                  manageEdxDb.py.
 '''
 from collections import OrderedDict
 import datetime
@@ -450,7 +450,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # executed *somewhere*. If the .sql files are loaded
         # from the CLI, the statements in the .sql files should
         # be uncommented (remove just the '-- '!. Normally,
-        # the manageDb.py script will do the re-enabling.
+        # the manageEdxDb.py script will do the re-enabling.
         self.dumpPostscript1    =   "-- /*!40000 ALTER TABLE `%s` ENABLE KEYS */;\n" % self.mainTableName +\
                             		"-- /*!40000 ALTER TABLE `State` ENABLE KEYS */;\n" +\
                             		"-- /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;\n" +\
@@ -900,7 +900,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         header = "-- If loading this file from the Linux commandline or the\n" +\
                  "-- MySQL shell, then first remove the '-- ' chars from the\n" +\
                  "-- 'ALTER ENABLE KEYS' statements below. Keep those chars \n" +\
-                 "-- in place if loading this .sql file via the manageDb.py script,\n" +\
+                 "-- in place if loading this .sql file via the manageEdxDb.py script,\n" +\
                  "-- as you should.\n"
         self.jsonToRelationConverter.pushString(header) 
         createStatement = "CREATE DATABASE IF NOT EXISTS %s;\n" % 'Edx'
