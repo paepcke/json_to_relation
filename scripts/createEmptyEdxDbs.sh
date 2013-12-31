@@ -47,7 +47,7 @@ done
 
 # Keep track of number of optional args the user provided:
 NEXT_ARG=0
-while getopts "u:p" opt
+while getopts ":u:p" opt
 do
   case $opt in
     u) # look in given user's HOME/.ssh/ for mysql_root
@@ -79,7 +79,7 @@ done
 # Shift past all the optional parms:
 shift ${NEXT_ARG}
 
-if $askForPasswd
+if $askForPasswd && [ -z $PASSWD ]
 then
     # The -s option suppresses echo:
     read -s -p "Password for "$USERNAME" on MySQL server: " PASSWD
@@ -104,5 +104,10 @@ fi
 #**************
 
 currScriptsDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-mysql -u $USERNAME -p$PASSWD < ${currScriptsDir}/createEmptyEdxDbs.sql
+if [ -z $PASSWD ]
+then
+    mysql -u $USERNAME < ${currScriptsDir}/createEmptyEdxDbs.sql
+else
+    mysql -u $USERNAME -p$PASSWD < ${currScriptsDir}/createEmptyEdxDbs.sql
+fi
 $currScriptsDir/defineMySQLProcedures.sh -u $USERNAME -p$PASSWD
