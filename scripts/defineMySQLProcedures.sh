@@ -49,10 +49,6 @@ do
       needPasswd=true
       NEXT_ARG=$((NEXT_ARG + 1))
       ;;
-    h)
-      echo $USAGE
-      exit 0
-     ;;
     \?)
       # If the $PASSWD is set, we *assume* that 
       # the unrecognized option was a

@@ -252,7 +252,10 @@ class TrackLogPuller(object):
                     # the remote file's MD5, surrounded by double-quotes:
                     remoteMD5 = string.strip(rlogFileKeyObj.etag, '"')
                     if localMD5 == remoteMD5:
+                        self.logDebug("File MD5s match; will not pull remote file.")
                         continue
+                    else:
+                        self.logDebug("File MD5s do not match; pull remote file.")
                 except Exception as e:
                     self.logErr("Could not compare remote file %s's MD5 with that of the local equivalent %s: %s" % (rLogPath, localEquivPath, `e`))
                     continue
