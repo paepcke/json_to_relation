@@ -80,4 +80,4 @@ fi
 
 currScriptsDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 mysql -u $USERNAME -p$password < ${currScriptsDir}/createEmptyEdxDbs.sql
-$currScriptsDir/defineMySQLProcedures.sh
+$currScriptsDir/defineMySQLProcedures.sh -u $USERNAME $password
