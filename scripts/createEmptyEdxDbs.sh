@@ -11,7 +11,7 @@ usage="Usage: `basename $0` [-u username][-p]"
 
 askForPasswd=false
 USERNAME=`whoami`
-password=''
+PASSWD=''
 
 # Issue dire warning and ask for confirmation:
 read -p "This command will delete databases Edx and EdxPrivate! Confirm with capital-Y " confirmation
@@ -25,6 +25,25 @@ else
 fi
 
 # -------------------  Process Commandline Option -----------------
+
+# Check whether given -pPassword, i.e. fused -p with a 
+# pwd string:
+
+for arg in $@
+do
+   # The sed -r option enables extended regex, which
+   # makes the '+' metachar wor. The -n option
+   # says to print only if pattern matches:
+   PASSWD=`echo $arg | sed -r -n 's/-p(.+)/\1/p'`
+   if [ -z $PASSWD ]
+   then
+       continue
+   else
+       #echo "Pwd is:"$PASSWD
+       break
+   fi
+done
+
 
 # Keep track of number of optional args the user provided:
 NEXT_ARG=0
@@ -40,13 +59,19 @@ do
       NEXT_ARG=$((NEXT_ARG + 1))
       ;;
     \?)
-      # Illegal option; the getopts provided the error message
-      echo $USAGE
-      exit 1
-      ;;
-    :)
-      echo $USAGE
-      exit 1
+      # If the $PASSWD is set, we *assume* that 
+      # the unrecognized option was a
+      # -pMyPassword, and don't signal
+      # an error. Therefore, if $PASSWD is 
+      # set then illegal options are quietly 
+      # ignored:
+      if [ ! -z $PASSWD ]
+      then 
+	  continue
+      else
+	  echo $USAGE
+	  exit 1
+      fi
       ;;
   esac
 done
@@ -57,9 +82,9 @@ shift ${NEXT_ARG}
 if $askForPasswd
 then
     # The -s option suppresses echo:
-    read -s -p "Password for "$USERNAME" on MySQL server: " password
+    read -s -p "Password for "$USERNAME" on MySQL server: " PASSWD
     echo
-elif [ -z $password ]
+elif [ -z $PASSWD ]
 then
     # Get home directory of whichever user will
     # log into MySQL:
@@ -68,16 +93,16 @@ then
     # subdir, then pull the pwd from there:
     if test -f $HOME_DIR/.ssh/mysql && test -r $HOME_DIR/.ssh/mysql
     then
-	password=`cat $HOME_DIR/.ssh/mysql`
+	PASSWD=`cat $HOME_DIR/.ssh/mysql`
     fi
 fi
 
 #**************
 #echo 'UID: '$USERNAME
-#echo 'Password: '$password
+#echo 'Password: '$PASSWD
 #exit 0
 #**************
 
 currScriptsDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-mysql -u $USERNAME -p$password < ${currScriptsDir}/createEmptyEdxDbs.sql
-$currScriptsDir/defineMySQLProcedures.sh -u $USERNAME $password
+mysql -u $USERNAME -p$PASSWD < ${currScriptsDir}/createEmptyEdxDbs.sql
+$currScriptsDir/defineMySQLProcedures.sh -u $USERNAME $PASSWD
