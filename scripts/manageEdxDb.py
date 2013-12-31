@@ -503,7 +503,11 @@ class TrackLogPuller(object):
             self.logInfo("No openEdx files to pull.")
         else:
             if pullLimit is not None and pullLimit > -1:
+                numToPull = len(rfileNamesToPull)
                 rfileNamesToPull = rfileNamesToPull[0:pullLimit]
+                self.logDebug('Limiting tracking logs to pull from %d to %d' % (numToPull, len(rfileNamesToPull)))
+            else:
+                self.logDebug('No pullLimit specified; will pull all %d new tracking log files.' % len(rfileNamesToPull))
             
         for rfileNameToPull in rfileNamesToPull:
             localDest = os.path.join(destDir, rfileNameToPull)
@@ -594,6 +598,16 @@ class TrackLogPuller(object):
         else:
             fileList = logFilePaths
 
+        # Place where each invocation of the underlying json2sql.py
+        # will write a log file for its transform process (json2sql.py
+        # is called by transformGivenLogfiles.sh, which we invoked
+        # below. This level of abstraction shouldn't know what those
+        # underlying scripts do, but we need to tell user of 
+        # manageEdxDb where the logs are, and json2sql.py is called
+        # many times in parallel; so we compromise:
+        logDir = os.path.join(csvDestDir, '..') + '/TransformLogs'
+        print('Transform logs will be in %s' % logDir)
+        
         if dryRun:
             self.logInfo('Would start to transform %d tracklog files...' % len(fileList))            
             # List just the basenames of the log files.
@@ -712,6 +726,7 @@ class TrackLogPuller(object):
         # Create file handler if requested:
         if logFile is not None:
             handler = logging.FileHandler(logFile)
+            print('Logging of control flow will go to %s' % logFile)            
         else:
             # Create console handler:
             handler = logging.StreamHandler()
@@ -1014,7 +1029,7 @@ if __name__ == '__main__':
         # put into puller.pwd above by various means:
         puller.load(mysqlPWD=puller.pwd, sqlFilesToLoad=sqlFilesToLoad, logDir=os.path.dirname(args.errLogFile), dryRun=args.dryRun)
     
-    
+    puller.logInfo('Processing %s done.' % args.toDo)
     sys.exit(0)
     #puller.createHistory('/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsSep20_2013/tracking/app10', tracklogRoot)
     #puller.createHistory('/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsSep20_2013/tracking/app11', tracklogRoot)

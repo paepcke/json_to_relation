@@ -159,6 +159,7 @@ fi
 
 
 LOG_FILE=$logDir/$LOGFILE_NAME
+echo "Load process is logging to "$LOG_FILE
 
 #**************
 # echo 'Password: '$password

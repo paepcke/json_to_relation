@@ -14,7 +14,7 @@
 # as this script. But this script can be called
 # from anywhere.
 
-USAGE="Usage: `basename $0` sqlDestDir logFiles"
+USAGE="Usage: `basename $0` sqlDestDir trackingLogFile1 trackingLogFile2..."
 
 if [ $# -lt 2 ]
 then
