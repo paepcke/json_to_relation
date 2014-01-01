@@ -96,5 +96,21 @@ ssh goldengate.class.stanford.edu \
 	    	--eval "\"printjson(db.modulestore.find({}, {'_id' : 1, 'metadata.display_name' : 1}).toArray())\"" \
                 > $targetFile
 
-rm $TARGET_DIR/modulestore_latest.json
-ln $targetFile $TARGET_DIR/modulestore_latest.json
+# Remove the linked-to 'modulestore_latest.json'
+# if it exists; we'll make a new link below:
+if [ -e $TARGET_DIR/modulestore_latest.json ]
+then
+    rm $TARGET_DIR/modulestore_latest.json
+fi
+
+# If $targetFile is empty, the above pull failed.
+# Remove the empty file (-s: 'not zero size'; so
+# negation of that is 'if is zero size'):
+if [ -s $targetFile ]
+then
+    ln $targetFile $TARGET_DIR/modulestore_latest.json
+else
+    rm $targetFile
+    exit 1
+fi
+

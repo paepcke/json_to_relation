@@ -71,6 +71,7 @@ class ModulestoreImporter(DictMixin):
                argument is left at None, no logging is done.
         @type GenericJSONParser
         @raise OSError: when there is a problem calling the cronRefreshModuleStore.sh script.
+        @raise ValueError: when modulestore JSON could not be parsed.
         '''
         self.useCache = useCache
         self.jsonFileName = jsonFileName
@@ -215,6 +216,7 @@ class ModulestoreImporter(DictMixin):
         @type outFilePath: {String | File}
         @param addHeader: whether or not to add a header line
         @type addHeader: Bool
+        @raise ValueError: when modulestore JSON could not be parsed.
         '''
 
         if not isinstance(outFilePath, basestring):
@@ -251,6 +253,7 @@ class ModulestoreImporter(DictMixin):
         @type outFilePath: {String | File}
         @param addHeader: whether or not to add a header line
         @type addHeader: Bool
+        @raise ValueError: when modulestore JSON could not be parsed.
         '''
 
         if not isinstance(outFilePath, basestring):
@@ -349,7 +352,12 @@ class ModulestoreImporter(DictMixin):
             # Doesn't start with opening brace:
             jsonStr = '{"all" :' + jsonStr + "}"
         
-        self.modstoreDict = json.loads(jsonStr)
+        try:
+            self.modstoreDict = json.loads(jsonStr)
+        except ValueError:
+            errMsg = "Bad JSON found in module store extract file %s: %s" % (self.jsonFileName, jsonStr)
+            self.logError(errMsg)
+            raise ValueError(errMsg)
         
         # Create a lookup table mapping hashes of problems
         # and other modules into human-readable names:

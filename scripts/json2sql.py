@@ -147,17 +147,29 @@ if __name__ == "__main__":
     else:
         outputFormat = OutputDisposition.OutputFormat.SQL_INSERTS_AND_CSV
 
+    outSQLFile = OutputFile(outFullPath, outputFormat, options='wb')  # overwrite any sql file that's there
     jsonConverter = JSONToRelation(InURI(args.inFilePath),
-                                   OutputFile(outFullPath,
-                                   outputFormat,
-                                   options='wb'),  # overwrite any sql file that's there
-    				   mainTableName='EdxTrackEvent',
-    				   logFile=logFile
+                                   outSQLFile,
+                                   mainTableName='EdxTrackEvent',
+    				               logFile=logFile
                                    )
-    jsonConverter.setParser(EdXTrackLogJSONParser(jsonConverter, 
-    						  'EdxTrackEvent', 
-    						  replaceTables=args.dropTables, 
-    						  dbName='Edx'
-    						  ))
+    try:
+        jsonConverter.setParser(EdXTrackLogJSONParser(jsonConverter, 
+        						  'EdxTrackEvent', 
+        						  replaceTables=args.dropTables, 
+        						  dbName='Edx'
+        						  ))
+    except Exception as e:
+        with open(logFile, 'w') as fd:
+            fd.write("In json2sql: could not create EdXTrackLogJSONParser: %s" % `e`)
+        # Try to delete the .sql file that was created when 
+        # the OutputFile instance was made in the JSONToRelation
+        # instantiation statement above:
+        try:
+            outSQLFile.remove();
+        except Exception as e:
+            pass
+        sys.exit(1)
+        
     jsonConverter.convert()
 

@@ -2,12 +2,17 @@
 Created on Sep 14, 2013
 
 @author: paepcke
+
+Modifications:
+  - Jan 1, 2013: added remove() method to OutputFile
+  
 '''
 import StringIO
 from collections import OrderedDict
 import csv
 import re
 import sys
+import os
 import tempfile
 
 from col_data_type import ColDataType
@@ -282,6 +287,12 @@ class OutputFile(OutputDisposition):
                 csvFD.flush()
             except:
                 pass
+            
+    def remove(self):
+        try:
+            os.remove(self.fileHandle.name)
+        except:
+            pass
 
     def __str__(self):
         return "<OutputFile:%s>" % self.getFileName()
