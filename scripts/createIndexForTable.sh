@@ -4,7 +4,7 @@
 #       tables had to be deleted, and were then loaded
 #       (and thereby created) from scratch. In that case
 #       all the indexes would be missing. No need to
-#       use this script after using manageEdxDb.sh
+#       use this script if using manageEdxDb.sh
 # Optionally given one or more table names in the Edx 
 # or EdxPrivate databases, create the indexes that are 
 # needed for those tables. If no tables are given,
@@ -13,11 +13,33 @@
 usage="Usage: `basename $0` [-u username][-p] [tableName [tableName ...]]"
 
 USERNAME=`whoami`
+PASSWD=''
 askForPasswd=false
+
+# -------------------  Process Commandline Option -----------------                
+
+# Check whether given -pPassword, i.e. fused -p with a 
+# pwd string:
+
+for arg in $@
+do
+   # The sed -r option enables extended regex, which
+   # makes the '+' metachar wor. The -n option
+   # says to print only if pattern matches:
+   PASSWD=`echo $arg | sed -r -n 's/-p(.+)/\1/p'`
+   if [ -z $PASSWD ]
+   then
+       continue
+   else
+       #echo "Pwd is:"$PASSWD
+       break
+   fi
+done
+
 
 # Keep track of number of optional args the user provided:
 NEXT_ARG=0
-while getopts "u:p" opt
+while getopts ":u:p" opt
 do
   case $opt in
     u) # look in given user's HOME/.ssh/ for mysql_root
@@ -29,9 +51,19 @@ do
       NEXT_ARG=$((NEXT_ARG + 1))
       ;;
     \?)
-      # Illegal option; the getopts provided the error message
-      echo $USAGE
-      exit 1
+      # If the $PASSWD is set, we *assume* that 
+      # the unrecognized option was a
+      # -pMyPassword, and don't signal
+      # an error. Therefore, if $PASSWD is 
+      # set then illegal options are quietly 
+      # ignored:
+      if [ ! -z $PASSWD ]
+      then 
+	  continue
+      else
+	  echo $USAGE
+	  exit 1
+      fi
       ;;
     :)
       echo $USAGE
@@ -44,12 +76,12 @@ done
 shift ${NEXT_ARG}
 
 
-if $askForPasswd
+if $askForPasswd && [ -z $PASSWD ]
 then
     # The -s option suppresses echo:
-    read -s -p "Password for $USERNAME on MySQL server: " password
+    read -s -p "Password for $USERNAME on MySQL server: " PASSWD
     echo
-elif [ -z $password ]
+elif [ -z $PASSWD ]
 then
     if [ $USERNAME == "root" ]
     then
@@ -60,7 +92,7 @@ then
         # subdir, then pull the pwd from there:
 	if test -f $HOME_DIR/.ssh/mysql_root && test -r $HOME_DIR/.ssh/mysql_root
 	then
-	    password=`cat $HOME_DIR/.ssh/mysql_root`
+	    PASSWD=`cat $HOME_DIR/.ssh/mysql_root`
 	fi
     else
         # Get home directory of whichever user will
@@ -71,17 +103,17 @@ then
         # subdir, then pull the pwd from there:
 	if test -f $HOME_DIR/.ssh/mysql && test -r $HOME_DIR/.ssh/mysql
 	then
-	    password=`cat $HOME_DIR/.ssh/mysql`
+	    PASSWD=`cat $HOME_DIR/.ssh/mysql`
 	fi
     fi
 fi
 
 # Create the mysql call password option:
-if [ -z $password ]
+if [ -z $PASSWD ]
 then
     pwdOption=''
 else
-    pwdOption='-p$password'
+    pwdOption='-p'$PASSWD
 fi
 
 # Dict of tables and the db names in which they reside.
@@ -111,7 +143,7 @@ fi
 
 #*****************
 # echo 'UID: '$USERNAME
-# echo "Password: '"$password"'"
+# echo "Password: '"$PASSWD"'"
 # echo 'Tables to index: '$tables
 # echo "pwdOption: '"$pwdOption"'"
 # exit 0

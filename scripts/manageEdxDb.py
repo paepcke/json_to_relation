@@ -65,14 +65,6 @@ To use the script in other installations, modify the following constants:
                     subtree is tracking/{app10/app11/app20/app21}. The root of that 
                     subtree is /home/dataman/Data/EdX. An example tracking log file path
                     is thus: /home/dataman/Data/EdX/tracking/app10/tracking.log-20130610.gz
-  - MYSQL_ROOT_USER a user name in whose HOME/.ssh the script will find the localhost MySQL
-                    root user's password in file mysql_root. If such a user is unavailable or undesired,
-                    make this constant blank, and use the -p option when calling 
-                    the script, and it will prompt for the pwd. 
-                    Or, if it is undesired to hard code that user, make sure
-                    to provide the --user option in calls that effect loading. 
-                    The .ssh/mysql_root mechanism is available to run this script in 
-                    unattended CRON jobs. 
 @author: paepcke
 '''
 
@@ -131,13 +123,6 @@ class TrackLogPuller(object):
         LOCAL_LOG_STORE_ROOT = None
     LOG_BUCKETNAME = "stanford-edx-logs"
     
-    # UID of user in whose HOME/.ssh/ a mysql_root file contains
-    # the MySQL root pwd for access from localhost. If set to None,
-    # then invocation of this script needs to use the -p option,
-    # or must provide this user in the -u option:
-    #MYSQL_ROOT_USER = None
-    MYSQL_ROOT_USER = 'paepcke'
-    
     # Directory into which the executeCSVLoad.sh script that is invoked
     # from the load() method will put its log entries.
     LOAD_LOG_DIR = ''
@@ -183,7 +168,7 @@ class TrackLogPuller(object):
             return False
         return True
         
-    def identifyNewLogFiles(self, localTrackingLogFileRoot=None):
+    def identifyNewLogFiles(self, localTrackingLogFileRoot=None, pullLimit=None):
         '''
         Logs into S3, and retrieves list of all OpenEdx tracking log files there.
         Identifies the remote files that do not exist on the local file system,
@@ -202,13 +187,20 @@ class TrackLogPuller(object):
                must in that case contain the subtree 'tracking/appNN/yyy.gz'. If None, then
                class variable TrackLogPuller.LOCAL_LOG_STORE_ROOT is used.
         @type localTrackingLogFileRoot: String
+        @param pullLimit: maximum number of tracking log files returned by 
+               this method that the caller wishes to download. If None then
+               caller wants to know about all tracking log files that are on
+               S3, but not local. The caller specifying this limit saves this
+               method some MD5 checking, though that operation is fast.
+        @type pullLimit: int
         @return: array of Amazon S3 log file key names that have not been downloaded yet. Array may be empty. 
                  locations include the application server directory above each file. Ex.: 'app10/tracking.log-20130623.gz'
         @rtype: [String]
         @raise: IOError if connection to S3 cannot be established.
         '''
 
-        self.logDebug("Method identifyNewLogFiles() called with localTrackingLogFileRoot='%s'" % localTrackingLogFileRoot)
+        self.logDebug("Method identifyNewLogFiles() called with localTrackingLogFileRoot='%s' and pullLimit=%s" % 
+                      (localTrackingLogFileRoot, str(pullLimit)))
         
         rfileObjsToGet = []
         if localTrackingLogFileRoot is None:
@@ -263,6 +255,8 @@ class TrackLogPuller(object):
                 self.logDebug("Local path: %s does not exist." % localEquivPath)
             
             rfileObjsToGet.append(rLogPath)
+            if len(rfileObjsToGet) >= pullLimit:
+                break
             
         return rfileObjsToGet
 
@@ -501,14 +495,14 @@ class TrackLogPuller(object):
             localTrackingLogFileRoot = TrackLogPuller.LOCAL_LOG_STORE_ROOT
         
         # Identify log files at S3 that we have not pulled yet.
-        rfileNamesToPull = self.identifyNewLogFiles(localTrackingLogFileRoot)
+        rfileNamesToPull = self.identifyNewLogFiles(localTrackingLogFileRoot, pullLimit=pullLimit)
         if len(rfileNamesToPull) == 0:
             self.logInfo("No openEdx files to pull.")
         else:
             if pullLimit is not None and pullLimit > -1:
-                numToPull = len(rfileNamesToPull)
+                #numToPull = len(rfileNamesToPull)
                 rfileNamesToPull = rfileNamesToPull[0:pullLimit]
-                self.logDebug('Limiting tracking logs to pull from %d to %d' % (numToPull, len(rfileNamesToPull)))
+                #self.logDebug('Limiting tracking logs to pull from %d to %d' % (numToPull, len(rfileNamesToPull)))
             else:
                 self.logDebug('No pullLimit specified; will pull all %d new tracking log files.' % len(rfileNamesToPull))
             
@@ -642,16 +636,12 @@ class TrackLogPuller(object):
         If mysqlPWD is provided, it must be the MySQL localhost root pwd.
         It is passed to executeCSVLoad.sh via the -w switch.
         
-        If mysqlPWD is not provided, this method invokes executeCSVLoad.sh
-        with the -u option, passing MYSQL_ROOT_USER as the uid. The executeCSVLoad.sh
-        script examines that user's HOME/.ssh directory to find a file mysql_root.
-        That file, if found is expected to contain the MySQL root pwd. If that file
-        is not found, executeCSVLoad.sh will attempt to access MySQL as root without
-        a password.
+        If mysqlPWD is not provided, then the executeCSVLoad.sh script, which
+        this method invokes examines the current user's HOME/.ssh directory 
+        to find a file mysql_root. That file, if found is expected to contain 
+        the MySQL root pwd. If that file is not found, executeCSVLoad.sh will 
+        attempt to access MySQL as root without a password.
         
-        In addition, the executeCSVLoad.sh must run as sudo, which means that
-        this script must also run as sudo.
-         
         @param mysqlPWD: Root password for MySQL db. (See usage info in file header for how pwd can be provided)
         @type mysqlPWD: String
         @param sqlFilesToLoad: list of .sql files that were created by transforms to load
@@ -697,7 +687,7 @@ class TrackLogPuller(object):
         # build a 'shadow' command for reporting to the log, such
         # that pwd does not show up in the log:
         if mysqlPWD is None:
-            shellCommand = [loadScriptPath, '-u', TrackLogPuller.MYSQL_ROOT_USER, logDir]
+            shellCommand = [loadScriptPath, logDir]
             shadowCmd = copy.copy(shellCommand)
         else:
             shellCommand = [loadScriptPath, '-w', mysqlPWD, logDir]
@@ -885,10 +875,7 @@ if __name__ == '__main__':
         sys.exit(1)
     
     if args.user is None:
-        if TrackLogPuller.MYSQL_ROOT_USER is None: 
-            puller.user = getpass.getuser()
-        else:
-            puller.user = TrackLogPuller.MYSQL_ROOT_USER
+        puller.user = getpass.getuser()
     else:
         puller.user = args.user
         

@@ -41,7 +41,7 @@ fi
 askForPasswd=false
 USERNAME=`whoami`
 password=''
-LOGFILE_NAME='loadLog.log'
+LOGFILE_NAME='loadLog'`date +%Y-%m-%dT%H_%M_%S`.log
 
 #  -------------------  Define Bash Functions -----------------
 
@@ -275,7 +275,7 @@ do
 done
 
 # Create any missing non-primary indexes:
-{ $currScriptsDir/createIndexForTable.sh; } >> $LOG_FILE 2>&1
+{ $currScriptsDir/createIndexForTable.sh -u root -p$password; } >> $LOG_FILE 2>&1
 
 # Any un-updated indexes are now rebuilt in memory by the following:
 # We don't normally need to do this, since above indexes were either
