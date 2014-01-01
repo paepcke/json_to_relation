@@ -295,6 +295,12 @@ class GenericJSONParser(object):
     def logInfo(self, msg):
         self.jsonToRelationConverter.__class__.logger.info(msg)
      
+    def logError(self, msg):
+        self.jsonToRelationConverter.__class__.logger.error(msg)
+
+    def logDebug(self, msg):
+        self.jsonToRelationConverter.__class__.logger.debug(msg)
+
 
 class Stack(object):
     '''

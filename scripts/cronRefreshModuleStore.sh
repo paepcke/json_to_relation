@@ -38,17 +38,10 @@
 # If option -p is provided, script will request password for
 # modulestore repository off goldengate.
 
-USAGE='Usage: `basename $0` [-p] targetDir'
+USAGE="Usage: `basename $0` [-p] targetDir"
 
 PASSWD=''
 needPasswd=false
-
-# Require at least the target directory:
-if [ $# -lt 1 ]
-then
-   echo $USAGE
-   exit 1
-fi
 
 # Keep track of number of optional args the user provided:
 NEXT_ARG=0
@@ -71,6 +64,14 @@ done
 # Shift past all the optional parms:
 shift ${NEXT_ARG}
 
+# Require at least the target directory:
+if [ $# -lt 1 ]
+then
+   echo $USAGE
+   exit 1
+fi
+
+TARGET_DIR=$1
 
 if $needPasswd
 then
@@ -78,10 +79,10 @@ then
     read -s -p "Password for user 'readonly' on modulestore repo: " PASSWD
     echo
 else
-    PASSWD=$(</home/dataman/.cron/modstore.txt)
+    PASSWD=$(<$HOME/.ssh/modstore)
 fi
 
-targetFile=$1/modulestore_`date +"%m_%d_%Y_%H_%M_%S"`.json
+targetFile=$TARGET_DIR/modulestore_`date +"%m_%d_%Y_%H_%M_%S"`.json
 
 # For testing can limit number of returned records by replacing
 # the --eval line below like this (adds the .limit(10) clause):
@@ -95,4 +96,5 @@ ssh goldengate.class.stanford.edu \
 	    	--eval "\"printjson(db.modulestore.find({}, {'_id' : 1, 'metadata.display_name' : 1}).toArray())\"" \
                 > $targetFile
 
-ln $targetFile $1/modulestore_latest.json
+rm $TARGET_DIR/modulestore_latest.json
+ln $targetFile $TARGET_DIR/modulestore_latest.json

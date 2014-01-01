@@ -121,11 +121,11 @@ if __name__ == "__main__":
     # Log file will go to <destDir>/../TransformLogs, the file being named j2s_<inputFileName>.log:
     logDir = os.path.join(args.destDir, '..') + '/TransformLogs'
     if not os.access(logDir, os.W_OK):
-      try:
-        os.makedirs(logDir)
-      except OSError:
-        # Log dir already existed:
-        pass
+        try:
+            os.makedirs(logDir)
+        except OSError:
+            # Log dir already existed:
+            pass
 
     logFile = os.path.join(logDir, 'j2s_%s_%s.log' % (os.path.basename(args.inFilePath), fileStamp))
     

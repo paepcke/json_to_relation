@@ -169,8 +169,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.countryChecker = LocationManager()
     
         # Lookup table from OpenEdx 32-bit hash values to
-        # corresponding problem, course, or video display_names:
-        self.hashMapper = ModulestoreImporter(os.path.join(os.path.dirname(__file__),'data/modulestore_latest.json'), useCache=useDisplayNameCache)
+        # corresponding problem, course, or video display_names.
+        # This call can cause a portion of the modulestore to be
+        # pulled from S3, which may cause exceptions. Those
+        # are caught and logged by the caller:
+        self.hashMapper = ModulestoreImporter(os.path.join(os.path.dirname(__file__),'data/modulestore_latest.json'), 
+                                              useCache=useDisplayNameCache, 
+                                              parent=self)
         # Make a list of all short course names 
         # sorted by length in decreasing order. 
         # This list is used by extractCanonicalCourseName()

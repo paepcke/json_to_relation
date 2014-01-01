@@ -9,7 +9,7 @@ import json
 import os
 import pickle
 import re
-
+import subprocess
 
 class ModulestoreImporter(DictMixin):
     '''
@@ -45,7 +45,7 @@ class ModulestoreImporter(DictMixin):
 
     hashLookupCache = None
 
-    def __init__(self, jsonFileName, useCache=False, pickleCachePath=None):
+    def __init__(self, jsonFileName, useCache=False, pickleCachePath=None, parent=None):
         '''
         Prepares instance for subsequent calls to getDisplayName() or
         export(). Preparations include looking for either the given file
@@ -66,9 +66,15 @@ class ModulestoreImporter(DictMixin):
         @param pickleCachePath: destination for cache of the hash-->info dict.
                                 Default is data/hashLookup.pkl 
         @type pickleCachePath: String
+        @param parent: the caller object. If provided, that object must provide
+               methods logInfo(), logWarn(), logDebug(), and logError(). If this
+               argument is left at None, no logging is done.
+        @type GenericJSONParser
+        @raise OSError: when there is a problem calling the cronRefreshModuleStore.sh script.
         '''
         self.useCache = useCache
         self.jsonFileName = jsonFileName
+        self.parent = parent
         
         # Regex to identify long course names that end
         # with an edX hash string: 'Medicine/HRP259/4820b254e28c4889b760884ffd049ce'
@@ -84,11 +90,13 @@ class ModulestoreImporter(DictMixin):
             self.pickleCachePath = pickleCachePath
         
         if not useCache and not os.path.exists(str(jsonFileName)):
-            raise IOError("File %s does not exist. Try setting useCache=True to use possibly existing cache; if that fails, must run cronRefreshModuleStore.sh" % jsonFileName)
+            self.importModstore(jsonFileName)
+            #raise IOError("File %s does not exist. Try setting useCache=True to use possibly existing cache; if that fails, must run cronRefreshModuleStore.sh" % jsonFileName)
         elif useCache and not os.path.exists(self.pickleCachePath):
             if not os.path.exists(jsonFileName):
                 # Have neither a cache file nor a json file:
-                raise IOError("Neither cache file %s nor JSON file %s exist. You need to run cronRefreshModuleStore.sh" % (self.pickleCachePath, jsonFileName))
+                self.importModstore(jsonFileName)
+                # raise IOError("Neither cache file %s nor JSON file %s exist. You need to run cronRefreshModuleStore.sh" % (self.pickleCachePath, jsonFileName))
             # Ignore the 'use cache' given that we don't have one;
             # Just work with the JSON file, and create the cache:
             useCache = False
@@ -280,6 +288,25 @@ class ModulestoreImporter(DictMixin):
     
     # ------------- Support Methods -------------------
  
+    def importModstore(self, jsonFileName):
+        '''
+        Connects to S3 modulestore MongoDB and loads an
+        excerpt into the jsonFileName's directory, where
+        the methods above can find it.
+        @param jsonFileName: target name of JSON file into which the modstore excerpt
+               is to be loaded. The underlying script, cronRefreshModuleStore.sh,
+               is hard-coded to link the JSON file to modulestore_latest.json. So
+               only the directory part of jsonFileName is used.
+        @type jsonFileName: String
+        @raise OSError: when there is a problem calling the cronRefreshModuleStore.sh script.
+        '''
+        self.logInfo("About to pull module store from S3 (useCache=%s; jsonFileName=%s..." % (self.useCache, self.jsonFileName))
+        thisProgsDir = os.path.dirname(__file__)
+        modstoreRefreshScriptDir = os.path.join(thisProgsDir, '../scripts')
+        shellCommand = [os.path.join(modstoreRefreshScriptDir, 'cronRefreshModuleStore.sh'), os.path.dirname(jsonFileName)]
+        subprocess.call(shellCommand)
+        self.logInfo("Done pulling module store from S3")
+ 
     def loadModstoreFromJSON(self):
         '''
         Given the JSON file path passed into __init__(), read that file,
@@ -415,4 +442,15 @@ class ModulestoreImporter(DictMixin):
 #                                   shortName + '/' +\
 #                                   infoDictID
         
-        
+    def logInfo(self, msg):
+        if self.parent is not None:
+            self.parent.logInfo(msg)
+            
+    def logError(self, msg):
+        if self.parent is not None:
+            self.parent.logError(msg)
+            
+    def logDebug(self, msg):
+        if self.parent is not None:
+            self.parent.logDebug(msg)
+    
