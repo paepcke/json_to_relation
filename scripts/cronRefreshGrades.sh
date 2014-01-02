@@ -13,7 +13,7 @@
 # invoke the script with various combinations of 
 # user ids and pwds on the commandline.
 
-USAGE='Usage: `basename $0` [-u localMySQLUser][-s remoteMySQLUser][-p][-pLocalMySQLPwd][-r][-rRemoteMySQLPwd]'
+USAGE='Usage: '`basename $0`' [-u localMySQLUser][-s remoteMySQLUser][-p][-pLocalMySQLPwd][-r][-rRemoteMySQLPwd]'
 
 # If option -p is provided, script will request password for
 # local MySQL db.
@@ -173,7 +173,7 @@ mkdir -p $(dirname ${targetFile})
 # resulting table from tab-sep to comma-sep:
 ssh goldengate.class.stanford.edu "mysql --host=edx-prod-ro.cn2cujs3bplc.us-west-1.rds.amazonaws.com \
                                          -u $REMOTE_USERNAME \
-                                          -p$REMOTE_MYSQL_PASSWD \
+                                          -p"$REMOTE_MYSQL_PASSWD" \
                                           -e \"USE edxprod; \
                                              SELECT user_id, grade, course_id, distinction, status, name \
                                              FROM  certificates_generatedcertificate LIMIT 10;\" \

@@ -30,7 +30,7 @@
 # This script is complex enough that Python would have
 # been more appropriate. But it grew from a small kernel.
 
-usage="Usage: `basename $0` [-u username][-p][-w rootpass] logDir file1.sql file2.sql... # You may be asked for MySQL root pwd."
+usage="Usage: "`basename $0`" [-u username][-p][-w rootpass] logDir file1.sql file2.sql... # You may be asked for MySQL root pwd."
 
 if [ $# -lt 1 ]
 then

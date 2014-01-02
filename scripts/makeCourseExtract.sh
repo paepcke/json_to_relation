@@ -49,7 +49,7 @@
 #    o video_old_speed
 #    o video_seek_type
 
-USAGE="Usage: `basename $0` [-u uid][-p][-d dbName][-t tableName][-a] courseNamePattern"
+USAGE="Usage: "`basename $0`" [-u uid][-p][-d dbName][-t tableName][-a] courseNamePattern"
 
 if [ $# -lt 1 ]
 then

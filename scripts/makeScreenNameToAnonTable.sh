@@ -6,7 +6,7 @@
 # that maps each screen name to its equivalent anonymized version.
 # Output to stdout.
 
-USAGE="Usage: `basename $0` courseNameGrepPattern tracklogfile1.gz tracklogfile2.gz..."
+USAGE="Usage: "`basename $0`" courseNameGrepPattern tracklogfile1.gz tracklogfile2.gz..."
 
 if [ $# -lt 2 ]
 then

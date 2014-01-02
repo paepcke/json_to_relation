@@ -38,7 +38,7 @@
 # If option -p is provided, script will request password for
 # modulestore repository off goldengate.
 
-USAGE="Usage: `basename $0` [-p] targetDir"
+USAGE="Usage: "`basename $0`" [-p] targetDir"
 
 PASSWD=''
 needPasswd=false

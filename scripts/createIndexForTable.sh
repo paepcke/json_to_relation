@@ -10,7 +10,7 @@
 # needed for those tables. If no tables are given,
 # will create the indexes for all tables.
 
-usage="Usage: `basename $0` [-u username][-p] [tableName [tableName ...]]"
+usage="Usage: "`basename $0`" [-u username][-p] [tableName [tableName ...]]"
 
 USERNAME=`whoami`
 PASSWD=''

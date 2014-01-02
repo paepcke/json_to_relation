@@ -6,7 +6,7 @@
 # to install the stored prodcedures and functions required
 # for operation.
 
-usage="Usage: `basename $0` [-u username][-p]"
+usage="Usage: "`basename $0`" [-u username][-p]"
 
 
 askForPasswd=false
