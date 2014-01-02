@@ -220,7 +220,8 @@ class TrackLogPuller(object):
         rLogFileKeyObjs = self.tracking_log_bucket.list()
         if rLogFileKeyObjs is None:
             return rfileObjsToGet
-        self.logInfo("Examining %d remote tracking log files." % len(rLogFileKeyObjs))
+        
+        self.logInfo("Examining %d remote tracking log files." % self.getNumOfRemoteTrackingLogFiles())
         for rlogFileKeyObj in rLogFileKeyObjs:
             # Get paths like:
             #   tracking/app10/tracking.log-20130609.gz
@@ -255,7 +256,7 @@ class TrackLogPuller(object):
                 self.logDebug("Local path: %s does not exist." % localEquivPath)
             
             rfileObjsToGet.append(rLogPath)
-            if len(rfileObjsToGet) >= pullLimit:
+            if pullLimit is not None and len(rfileObjsToGet) >= pullLimit:
                 break
             
         return rfileObjsToGet
@@ -702,6 +703,25 @@ class TrackLogPuller(object):
             subprocess.call(shellCommand)
             
     # ----------------------------------------  Private Methods ----------------------
+
+    def getNumOfRemoteTrackingLogFiles(self):
+        '''
+        Return current number of tracking log files on S3
+        in bucket LOG_BUCKETNAME. Uses s3cmd's 'ls' commnad::
+          s3cmd ls -r s3://<bucketName> | grep .*tracking.*\.gz | wc -l'
+        @return: number of OpenEdX tracking log files in remote S3 bucket.
+        @rtype: int
+        '''
+        # Splice multiple pipes together:
+        pipe_bucket_ls = subprocess.Popen(['s3cmd','ls','-r','s3://%s'%TrackLogPuller.LOG_BUCKETNAME] , stdout=subprocess.PIPE)
+        pipe_grep = subprocess.Popen(['grep', '.*tracking.*\.gz'], stdin=pipe_bucket_ls.stdout, stdout=subprocess.PIPE)
+        pipe_wc = subprocess.Popen(['wc', '-l'], stdin=pipe_grep.stdout, stdout=subprocess.PIPE)
+        # Get something like: ('414\n', None)
+        stdoutAndstderr = pipe_wc.communicate()
+        try:
+            return int(stdoutAndstderr[0])
+        except (ValueError, IndexError):
+            self.logErr("In method getNumOfRemoteTrackingLogFiles(): S3 call returned unexpected result: %s", str(stdoutAndstderr))
 
     def setupLogging(self, loggingLevel, logFile):
         '''
