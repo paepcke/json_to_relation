@@ -220,7 +220,7 @@ class TrackLogPuller(object):
         rLogFileKeyObjs = self.tracking_log_bucket.list()
         if rLogFileKeyObjs is None:
             return rfileObjsToGet
-        
+        self.logInfo("Examining %d remote tracking log files." % len(rLogFileKeyObjs))
         for rlogFileKeyObj in rLogFileKeyObjs:
             # Get paths like:
             #   tracking/app10/tracking.log-20130609.gz
