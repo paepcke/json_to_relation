@@ -707,6 +707,32 @@ class TrackLogPuller(object):
     def getNumOfRemoteTrackingLogFiles(self):
         '''
         Return current number of tracking log files on S3
+        in bucket LOG_BUCKETNAME. Using an s3 command as
+        shown in the working method getNumOfRemoteTrackingLogFilesUsingS3Cmd()
+        below would be great. But then we'd require S3cmd as a
+        dependency. Boto only seems to offer an iterator through
+        all of a bucket's keys, without a len() method. So this
+        method runs through that iterator, counting. Yikes, but
+        not a big deal with the number of files we are working
+        with here.
+        @return: number of OpenEdX tracking log files in remote S3 bucket.
+        @rtype: int
+        '''
+        count = 0
+        rLogFileKeyObjs = self.tracking_log_bucket.list()
+        if rLogFileKeyObjs is None:
+            return 0
+        for rlogFileKeyObj in rLogFileKeyObjs:  # @UnusedVariable
+            rLogPath = str(rlogFileKeyObj.name)
+            # If this isn't a tracking log file, skip:
+            if TrackLogPuller.TRACKING_LOG_FILE_NAME_PATTERN.search(rLogPath) is None:
+                continue
+            count += 1
+        return count
+    
+    def getNumOfRemoteTrackingLogFilesUsingS3Cmd(self):
+        '''
+        Return current number of tracking log files on S3
         in bucket LOG_BUCKETNAME. Uses s3cmd's 'ls' commnad::
           s3cmd ls -r s3://<bucketName> | grep .*tracking.*\.gz | wc -l'
         @return: number of OpenEdX tracking log files in remote S3 bucket.
