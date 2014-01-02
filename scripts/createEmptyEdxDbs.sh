@@ -16,7 +16,7 @@ PASSWD=''
 # Issue dire warning and ask for confirmation:
 read -p "This command will delete databases Edx and EdxPrivate! Confirm with capital-Y " confirmation
 
-if [ $confirmation != 'Y' ]
+if [ $confirmation != 'Y' ] || [ -z $confirmation ]
 then
    echo "Aborting...good for you!"
    exit 0

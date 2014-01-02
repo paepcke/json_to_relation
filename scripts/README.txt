@@ -21,14 +21,9 @@ each of its actions in 'pretend' mode, if given the
 Script manageEdxDb.py: most used script.
 
 Script makeCourseExtract.sh takes a MySQL compatible regex pattern
-that selects course names from data column course_display_name in
+that selects course names from data column 'course_display_name' in
 table EdxTrackEvent. Creates a table in database Extracts that
 contains tracking log data only from the respective course.
-
-The cronRefreshModuleStore.sh script is a Stanford-specific utility
-that retrieves the latest copy of the modulestore to localhost so that
-it can be used in the transform process to dereference video and
-problem hashes to human-readable form.
 
 The lookupOpenEdxHash.py script is a command line tool to look up the
 human readable strings that correspond to OpenEdX platform generated
@@ -47,13 +42,26 @@ tracking log files, and generates a list of all screen names, i.e.
 values of the field with key 'username.' The script can be used alone,
 but is mostly used by makeScreenNameToAnonTable.sh.
 
+The cronRefreshModuleStore.sh script is a Stanford-specific utility
+that retrieves the latest copy of the modulestore to localhost so that
+it can be used in the transform process to dereference video and
+problem hashes to human-readable form.
+
+The cronRefreshGrades.sh script is a Stanford-specific utility
+that retrieves selected columns from table
+certificates_generatedcertificate in the edxprod database on
+S3. This table holds grades computed for the purpose of
+certificate granting. These are not the grades that result from
+the LMS computing grades including policies, like 'drop the worst
+assignment.' This script will likely switch to pulling those
+grades when they become available.
+
 Script createEmptyEdxDbs.sh is dangerous! After requesting
 confirmation, the script deletes all content from databases 
 Edx and EdxPrivate. Do use this script, rather than manually
 dropping and re-creating these two databases. Reason: the
 script also defines stored procedures and functions needed
 for db administration.
-
 
 # ------------ Private Scripts ---------------
 
