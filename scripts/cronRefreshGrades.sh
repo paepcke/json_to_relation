@@ -171,13 +171,15 @@ mkdir -p $(dirname ${targetFile})
 # there, do the query, and redirect the result
 # into a *local* file. The 'sed' pipe turns the
 # resulting table from tab-sep to comma-sep:
+
 ssh goldengate.class.stanford.edu "mysql --host=edx-prod-ro.cn2cujs3bplc.us-west-1.rds.amazonaws.com \
-                                         -u $REMOTE_USERNAME \
+                                         -u "$REMOTE_USERNAME" \
                                           -p"$REMOTE_MYSQL_PASSWD" \
                                           -e \"USE edxprod; \
                                              SELECT user_id, grade, course_id, distinction, status, name \
-                                             FROM  certificates_generatedcertificate LIMIT 10;\" \
+                                             FROM  certificates_generatedcertificate;\" \
                                           | sed 's/\t/,/g'" > $targetFile
+
 # ------------------ Load CSV Into Local MySQL -------------------
 
 # Get directory in which this script is running,
@@ -188,28 +190,33 @@ currScriptsDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # use below:
 MYSQL_LOAD_CMD="LOAD DATA LOCAL INFILE '$targetFile' IGNORE INTO TABLE Grades FIELDS OPTIONALLY ENCLOSED BY \"'\" TERMINATED BY ',' IGNORE 1 LINES;"
 
-
 # Distinguish between MySQL pwd known, vs. unspecified.
 # If $LOCAL_MYSQL_PASSWD is empty, then don't provide
 # the -p option to MySQL:
 
 if [ ! -z $LOCAL_MYSQL_PASSWD ]
 then
-    # Drop existing table:
+    # Drop Grades table if it exists:
     mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE EdxPrivate; DROP TABLE IF EXISTS Grades;\n"
+
     # Create table 'Grades' in EdxPrivate, if it doesn't exist:
     mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD < $currScriptsDir/cronRefreshGradesCrTable.sql
+
     # Do the load:
-    mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PWD -e "USE EdxPrivate; $MYSQL_LOAD_CMD"
+    mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE EdxPrivate; $MYSQL_LOAD_CMD"
+
     # Build the indexes:
-    mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PWD < $currScriptsDir/cronRefreshGradesMkIndexes.sql
+    mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD < $currScriptsDir/cronRefreshGradesMkIndexes.sql
 else
     # Drop existing table:
     mysql -u $LOCAL_USERNAME -e "USE EdxPrivate; DROP TABLE IF EXISTS Grades;"
+
     # Create table 'Grades' in EdxPrivate, if it doesn't exist:
     mysql -u $LOCAL_USERNAME < $currScriptsDir/cronRefreshGradesCrTable.sql
+
     # Do the load:
     mysql -u $LOCAL_USERNAME -e "USE EdxPrivate; $MYSQL_LOAD_CMD"
+
     # Build the indexes:
     mysql -u $LOCAL_USERNAME < $currScriptsDir/cronRefreshGradesMkIndexes.sql
 fi
