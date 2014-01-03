@@ -1,11 +1,12 @@
-# Creates all necessary indexes on table EdxPrivate.Grades
+# Creates all necessary indexes on table EdxPrivate.UserGrades
 # Uses stored procedure createIndexIfNotExists(), which
 # is defined in mysqlProcAndFuncBodies.sql:
 
 USE EdxPrivate; 
-CALL createIndexIfNotExists('GradesUIDIdx', 'Grades', 'user_id', NULL);
-CALL createIndexIfNotExists('GradesGradeIdx', 'Grades', 'grade', NULL);
-CALL createIndexIfNotExists('GradesCourseIDIdx', 'Grades', 'course_id', 255);
-CALL createIndexIfNotExists('GradesDistinctionIdx', 'Grades', 'distinction', NULL);
-CALL createIndexIfNotExists('GradesStatusIdx', 'Grades', 'status', 50);
-CALL createIndexIfNotExists('GradesNameIdx', 'Grades', 'name', 255);
+CALL createIndexIfNotExists('GradesUIDIdx', 'UserGrades', 'user_int_id', NULL);
+CALL createIndexIfNotExists('UserGradesGradeIdx', 'UserGrades', 'grade', NULL);
+CALL createIndexIfNotExists('UserGradesCourseIDIdx', 'UserGrades', 'course_id', 255);
+CALL createIndexIfNotExists('UserGradesDistinctionIdx', 'UserGrades', 'distinction', NULL);
+CALL createIndexIfNotExists('UserGradesStatusIdx', 'UserGrades', 'status', 50);
+CALL createIndexIfNotExists('UserGradesNameIdx', 'UserGrades', 'name', 255);
+CALL createIndexIfNotExists('UserGradesNameIdx', 'UserGrades', 'screen_name', 255);

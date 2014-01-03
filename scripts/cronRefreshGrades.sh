@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Refreshes the EdxPrivate.Grades table. Logs into edxprod via
+# Refreshes the EdxPrivate.UserGrades table. Logs into edxprod via
 # goldengate.class.stanford.edu, and retrieves a subset of
-# columns from table certificates_generatedcertificate. Drops
-# the local EdxPrivate.Grades table, and recreates it empty.
-# Loads the certificates_generatedcertificate excerpt into 
-# the local MySQL's EdxPrivate.Grades table, and creates
+# columns from tables auth_user and certificates_generatedcertificate. Drops
+# the local EdxPrivate.UserGrades table, and recreates it empty.
+# Loads the auth_user/certificates_generatedcertificate excerpt into 
+# the local MySQL's EdxPrivate.UserGrades table, and creates
 # indexes.
 #
 # To figure out what all the preliminary sections do,
@@ -172,13 +172,32 @@ mkdir -p $(dirname ${targetFile})
 # into a *local* file. The 'sed' pipe turns the
 # resulting table from tab-sep to comma-sep:
 
+
 ssh goldengate.class.stanford.edu "mysql --host=edx-prod-ro.cn2cujs3bplc.us-west-1.rds.amazonaws.com \
                                          -u "$REMOTE_USERNAME" \
                                           -p"$REMOTE_MYSQL_PASSWD" \
                                           -e \"USE edxprod; \
-                                             SELECT user_id, grade, course_id, distinction, status, name \
-                                             FROM  certificates_generatedcertificate;\" \
+                                             SELECT name, auth_user.username as screen_name, grade, \
+                                                    course_id, distinction, status, \
+                                                    auth_user.id as user_int_id \
+                                             FROM certificates_generatedcertificate RIGHT OUTER JOIN auth_user \
+                                             ON certificates_generatedcertificate.user_id = auth_user.id LIMIT 10;\" \
                                           | sed 's/\t/,/g'" > $targetFile
+
+
+# The following is a simpler option of the above, which does not
+# pull the user screen name from auth_user; I couldn't bear
+# just delete it:
+# ssh goldengate.class.stanford.edu "mysql --host=edx-prod-ro.cn2cujs3bplc.us-west-1.rds.amazonaws.com \
+#                                          -u "$REMOTE_USERNAME" \
+#                                           -p"$REMOTE_MYSQL_PASSWD" \
+#                                           -e \"USE edxprod; \
+#                                              SELECT user_id, grade, course_id, distinction, status, name \
+#                                              FROM  certificates_generatedcertificate;\" \
+#                                           | sed 's/\t/,/g'" > $targetFile
+
+
+
 
 # ------------------ Load CSV Into Local MySQL -------------------
 
@@ -188,7 +207,7 @@ currScriptsDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Construct the CSV load command for
 # use below:
-MYSQL_LOAD_CMD="LOAD DATA LOCAL INFILE '$targetFile' IGNORE INTO TABLE Grades FIELDS OPTIONALLY ENCLOSED BY \"'\" TERMINATED BY ',' IGNORE 1 LINES;"
+MYSQL_LOAD_CMD="LOAD DATA LOCAL INFILE '$targetFile' IGNORE INTO TABLE UserGrades FIELDS OPTIONALLY ENCLOSED BY \"'\" TERMINATED BY ',' IGNORE 1 LINES;"
 
 # Distinguish between MySQL pwd known, vs. unspecified.
 # If $LOCAL_MYSQL_PASSWD is empty, then don't provide
@@ -196,10 +215,10 @@ MYSQL_LOAD_CMD="LOAD DATA LOCAL INFILE '$targetFile' IGNORE INTO TABLE Grades FI
 
 if [ ! -z $LOCAL_MYSQL_PASSWD ]
 then
-    # Drop Grades table if it exists:
-    mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE EdxPrivate; DROP TABLE IF EXISTS Grades;\n"
+    # Drop UserGrades table if it exists:
+    mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE EdxPrivate; DROP TABLE IF EXISTS UserGrades;\n"
 
-    # Create table 'Grades' in EdxPrivate, if it doesn't exist:
+    # Create table 'UserGrades' in EdxPrivate, if it doesn't exist:
     mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD < $currScriptsDir/cronRefreshGradesCrTable.sql
 
     # Do the load:
@@ -209,9 +228,9 @@ then
     mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD < $currScriptsDir/cronRefreshGradesMkIndexes.sql
 else
     # Drop existing table:
-    mysql -u $LOCAL_USERNAME -e "USE EdxPrivate; DROP TABLE IF EXISTS Grades;"
+    mysql -u $LOCAL_USERNAME -e "USE EdxPrivate; DROP TABLE IF EXISTS UserGrades;"
 
-    # Create table 'Grades' in EdxPrivate, if it doesn't exist:
+    # Create table 'UserGrades' in EdxPrivate, if it doesn't exist:
     mysql -u $LOCAL_USERNAME < $currScriptsDir/cronRefreshGradesCrTable.sql
 
     # Do the load:
