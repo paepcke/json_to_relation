@@ -191,6 +191,86 @@ BEGIN
 END//
 
 
+#--------------------------
+# latestLog
+#----------
+
+# Return the load date, and log collection date of the 
+# most recent tracking log that has been loaded 
+# into Edx.
+#
+# Returns (load date, date when log was collected)
+#
+# Uses the load_file name field of the LoadInfo table.
+# Entries there look like this:
+#
+#    file:///home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsTests/tracking/app10/tracking.log-20130610.gz
+#
+# The hairy SELECT below works like this:
+#    1. Get the location of "log-" towards the end of the file name: LOCATE('log-', load_file)
+#    2. Adjust that location to point past the "log-" to the start of the load date: +4
+#    3. Use that pointer into the file name as the second arg
+#       in the call SUBSTR(str,startPos,len): The "8" is the length
+#       of the file names date part.
+#
+# Returns string of form: Loaded: 2013-12-30 13:20:57; Collected: 20130610 
+
+DROP FUNCTION IF EXISTS latestLog//
+
+CREATE FUNCTION latestLog()
+RETURNS varchar(50)
+BEGIN
+    # See header comment for explanation of this SELECT
+    SELECT load_date_time, 
+           MAX(SUBSTR(load_file, LOCATE('log-', load_file)+4, 8)) AS log_date
+    FROM Edx.LoadInfo
+    INTO @loadDateTime, @collectDate;
+    return CONCAT('Loaded: ',
+                  @loadDateTime,
+		  '; collected: ',
+		  @collectDate);
+END//
+
+#--------------------------
+# earliestLog
+#------------
+
+# Return the load date, and log collection date of the 
+# oldest tracking log that has been loaded 
+# into Edx.
+#
+# Returns (load date, date when log was collected)
+#
+# Uses the load_file name field of the LoadInfo table.
+# Entries there look like this:
+#
+#    file:///home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsTests/tracking/app10/tracking.log-20130610.gz
+#
+# The hairy SELECT below works like this:
+#    1. Get the location of "log-" towards the end of the file name: LOCATE('log-', load_file)
+#    2. Adjust that location to point past the "log-" to the start of the load date: +4
+#    3. Use that pointer into the file name as the second arg
+#       in the call SUBSTR(str,startPos,len): The "8" is the length
+#       of the file names date part.
+#
+# Returns string of form: Loaded: 2013-12-30 13:20:57; Collected: 20130610 
+
+DROP FUNCTION IF EXISTS earliestLog//
+
+CREATE FUNCTION earliestLog()
+RETURNS varchar(50)
+BEGIN
+    # See header comment for explanation of this SELECT
+    SELECT load_date_time, 
+           MIN(SUBSTR(load_file, LOCATE('log-', load_file)+4, 8)) AS log_date
+    FROM Edx.LoadInfo
+    INTO @loadDateTime, @collectDate;
+    return CONCAT('Loaded: ',
+                  @loadDateTime,
+		  '; collected: ',
+		  @collectDate);
+END//
+
 
 # Restore standard delimiter:
 delimiter ;

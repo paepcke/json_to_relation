@@ -181,7 +181,7 @@ ssh goldengate.class.stanford.edu "mysql --host=edx-prod-ro.cn2cujs3bplc.us-west
                                                     course_id, distinction, status, \
                                                     auth_user.id as user_int_id \
                                              FROM certificates_generatedcertificate RIGHT OUTER JOIN auth_user \
-                                             ON certificates_generatedcertificate.user_id = auth_user.id LIMIT 10;\" \
+                                             ON certificates_generatedcertificate.user_id = auth_user.id;\" \
                                           | sed 's/\t/,/g'" > $targetFile
 
 
