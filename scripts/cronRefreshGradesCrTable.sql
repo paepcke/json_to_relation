@@ -1,6 +1,6 @@
 CREATE DATABASE IF NOT EXISTS EdxPrivate;
 USE EdxPrivate;
-CREATE TABLE IF NOT EXISTS EdxPrivate.UserGrades (
+CREATE TABLE IF NOT EXISTS EdxPrivate.UserGrade (
     name VARCHAR(255) NOT NULL DEFAULT '',
     screen_name VARCHAR(255) NOT NULL DEFAULT '',
     grade int NOT NULL DEFAULT 0,

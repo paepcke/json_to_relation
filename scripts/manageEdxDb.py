@@ -385,9 +385,9 @@ class TrackLogPuller(object):
             csvDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/CSV')
         # Get content of LoadInfo file names in MySQL db Edx:
         if self.pwd:
-            mysqldb = MySQLDB(user='root', passwd=self.pwd, db='Edx')
+            mysqldb = MySQLDB(user=self.user, passwd=self.pwd, db='Edx')
         else:
-            mysqldb = MySQLDB(user='root', db='Edx')
+            mysqldb = MySQLDB(user=self.user, db='Edx')
         loadedJSONFiles = []
         try:
             for jsonFileName in mysqldb.query("SELECT load_file FROM LoadInfo"):
@@ -845,13 +845,12 @@ if __name__ == '__main__':
                         )
     parser.add_argument('-u', '--user',
                         action='store',
-                        help='For load: user ID whose HOME/.ssh/mysql_root contains the localhost MySQL root password.')
+                        help='For load: User ID that is to log into MySQL. Default: the user who is invoking this script.')
     parser.add_argument('-p', '--password',
                         action='store_true',
                         help='For load: request to be asked for pwd for operating MySQL;\n' +\
-                             '    default: content of %s/.ssh/mysql_root if --user is unspecified,\n' % os.getenv('HOME') +\
-                             '    or content of <homeOfUser>/.ssh/mysql_root where\n' +\
-                             '    <homeOfUser> is the home directory of the user specified in the --user option.' 
+                             '    default: content of scriptInvokingUser$Home/.ssh/mysql if --user is unspecified,\n' +\
+                             '    or, if specified user is root, then the content of scriptInvokingUser$Home/.ssh/mysql_root.'
                              )
     parser.add_argument('toDo',
                         help='What to do: {pull | transform | load | pullTransform | transformLoad | pullTransformLoad}'
@@ -937,8 +936,12 @@ if __name__ == '__main__':
             # but the one specified in the -u cli arg:
             userHomeDir = os.path.join(os.path.dirname(currUserHomeDir), puller.user)
             try:
-                with open(os.path.join(userHomeDir, '.ssh/mysql_root')) as fd:
-                    puller.pwd = fd.readline().strip()
+                if puller.user == 'root':
+                    with open(os.path.join(currUserHomeDir, '.ssh/mysql_root')) as fd:
+                        puller.pwd = fd.readline().strip()
+                else:
+                    with open(os.path.join(userHomeDir, '.ssh/mysql')) as fd:
+                        puller.pwd = fd.readline().strip()
             except IOError:
                 # No .ssh subdir of user's home, or no mysql inside .ssh:
                 puller.pwd = None

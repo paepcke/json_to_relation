@@ -1,11 +1,12 @@
 #!/bin/bash
 
-# Refreshes the EdxPrivate.UserGrades table. Logs into edxprod via
+# Specific to Stanford installation.
+# Refreshes the EdxPrivate.UserGrade table. Logs into edxprod via
 # goldengate.class.stanford.edu, and retrieves a subset of
 # columns from tables auth_user and certificates_generatedcertificate. Drops
-# the local EdxPrivate.UserGrades table, and recreates it empty.
+# the local EdxPrivate.UserGrade table, and recreates it empty.
 # Loads the auth_user/certificates_generatedcertificate excerpt into 
-# the local MySQL's EdxPrivate.UserGrades table, and creates
+# the local MySQL's EdxPrivate.UserGrade table, and creates
 # indexes.
 #
 # To figure out what all the preliminary sections do,
@@ -170,8 +171,21 @@ mkdir -p $(dirname ${targetFile})
 # SSH to remote machine, log into MySQL from
 # there, do the query, and redirect the result
 # into a *local* file. The 'sed' pipe turns the
-# resulting table from tab-sep to comma-sep:
+# resulting table from tab-sep to comma-sep,
+# and encloses each column value in double quotes
+# to protect value-internal commas. Like this:
+#
+#    sed 's/\([^\t]*\)\t/\"\1\",/g'
+#
+# s/
 
+
+# NOTE: script addAnonToUserGrade.py relies on
+#       auth_user.username, i.e. the screen_name
+#       being in a known place, origin 0. If
+#       you change the position in the SELECT
+#       below, then change the following constant:
+SCREEN_NAME_POS=1
 
 ssh goldengate.class.stanford.edu "mysql --host=edx-prod-ro.cn2cujs3bplc.us-west-1.rds.amazonaws.com \
                                          -u "$REMOTE_USERNAME" \
@@ -182,43 +196,45 @@ ssh goldengate.class.stanford.edu "mysql --host=edx-prod-ro.cn2cujs3bplc.us-west
                                                     auth_user.id as user_int_id \
                                              FROM certificates_generatedcertificate RIGHT OUTER JOIN auth_user \
                                              ON certificates_generatedcertificate.user_id = auth_user.id;\" \
-                                          | sed 's/\t/,/g'" > $targetFile
-
-
-# The following is a simpler option of the above, which does not
-# pull the user screen name from auth_user; I couldn't bear
-# just delete it:
-# ssh goldengate.class.stanford.edu "mysql --host=edx-prod-ro.cn2cujs3bplc.us-west-1.rds.amazonaws.com \
-#                                          -u "$REMOTE_USERNAME" \
-#                                           -p"$REMOTE_MYSQL_PASSWD" \
-#                                           -e \"USE edxprod; \
-#                                              SELECT user_id, grade, course_id, distinction, status, name \
-#                                              FROM  certificates_generatedcertificate;\" \
-#                                           | sed 's/\t/,/g'" > $targetFile
+                                  " > $targetFile
 
 
 
-
-# ------------------ Load CSV Into Local MySQL -------------------
+# ----------------- Fill in the Screen Name Hash Column anon_screen_name ----------
 
 # Get directory in which this script is running,
 # and where its support scripts therefore live:
 currScriptsDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# Construct the CSV load command for
-# use below:
-MYSQL_LOAD_CMD="LOAD DATA LOCAL INFILE '$targetFile' IGNORE INTO TABLE UserGrades FIELDS OPTIONALLY ENCLOSED BY \"'\" TERMINATED BY ',' IGNORE 1 LINES;"
-
-# Distinguish between MySQL pwd known, vs. unspecified.
-# If $LOCAL_MYSQL_PASSWD is empty, then don't provide
-# the -p option to MySQL:
+# The CSV file does not yet have values for the
+# anon_screen_name column. The following adds
+# those values to the end of each TSV row:
 
 if [ ! -z $LOCAL_MYSQL_PASSWD ]
 then
-    # Drop UserGrades table if it exists:
-    mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE EdxPrivate; DROP TABLE IF EXISTS UserGrades;\n"
+    $currScriptsDir/addAnonToUserGradeTable.py -u $LOCAL_USERNAME -w $LOCAL_MYSQL_PASSWD $targetFile $SCREEN_NAME_POS
+else
+    $currScriptsDir/addAnonToUserGradeTable.py -u $LOCAL_USERNAME $targetFile $SCREEN_NAME_POS
+fi
 
-    # Create table 'UserGrades' in EdxPrivate, if it doesn't exist:
+
+# ------------------ Load CSV Into Local MySQL -------------------
+
+# Construct the CSV load command for
+# use below:
+MYSQL_LOAD_CMD="LOAD DATA LOCAL INFILE '$targetFile' IGNORE INTO TABLE UserGrade FIELDS TERMINATED BY '\t' IGNORE 1 LINES;"
+
+# Distinguish between MySQL pwd known, vs. unspecified.
+# If $LOCAL_MYSQL_PASSWD is empty, then don't provide
+# the -p option to MySQL, otherwise the two branches
+# below are identical:
+
+if [ ! -z $LOCAL_MYSQL_PASSWD ]
+then
+    # Drop UserGrade table if it exists:
+    mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE EdxPrivate; DROP TABLE IF EXISTS UserGrade;\n"
+
+    # Create table 'UserGrade' in EdxPrivate, if it doesn't exist:
     mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD < $currScriptsDir/cronRefreshGradesCrTable.sql
 
     # Do the load:
@@ -228,19 +244,21 @@ then
     mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD < $currScriptsDir/cronRefreshGradesMkIndexes.sql
 else
     # Drop existing table:
-    mysql -u $LOCAL_USERNAME -e "USE EdxPrivate; DROP TABLE IF EXISTS UserGrades;"
+    mysql -u $LOCAL_USERNAME -e "USE EdxPrivate; DROP TABLE IF EXISTS UserGrade;"
 
-    # Create table 'UserGrades' in EdxPrivate, if it doesn't exist:
+    # Create table 'UserGrade' in EdxPrivate, if it doesn't exist:
     mysql -u $LOCAL_USERNAME < $currScriptsDir/cronRefreshGradesCrTable.sql
 
     # Do the load:
     mysql -u $LOCAL_USERNAME -e "USE EdxPrivate; $MYSQL_LOAD_CMD"
 
-    # Build the indexes:
+    # Build the indexes (all but anon_screen_name, which is empty now, and
+    # will be filled and indexed below):
     mysql -u $LOCAL_USERNAME < $currScriptsDir/cronRefreshGradesMkIndexes.sql
 fi
 
 # ------------------ Cleanup -------------------
 
-rm $targetFile
+#*********rm $targetFile
 
+   

@@ -199,7 +199,8 @@ END//
 # most recent tracking log that has been loaded 
 # into Edx.
 #
-# Returns (load date, date when log was collected)
+# Returns the load date and the date when the 
+# log was collected.
 #
 # Uses the load_file name field of the LoadInfo table.
 # Entries there look like this:

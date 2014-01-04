@@ -104,6 +104,32 @@ class MySQLDB(object):
         finally:
             cursor.close()
         
+    def update(self, tblName, colName, newVal, fromCondition=None):
+        '''
+        Update one column with a new value.
+        @param tblName: name of table in which update is to occur
+        @type tblName: String
+        @param colName: column whose value is to be changed
+        @type colName: String
+        @param newVal: value acceptable to MySQL for the given column 
+        @type newVal: type acceptable to MySQL for the given column 
+        @param fromCondition: optionally condition that selects which rows to update.
+                      if None, the named column in all rows are updated to
+                      the given value. Syntax must conform to what may be in
+                      a MySQL FROM clause (don't include the 'FROM' keyword)
+        @type fromCondition: String
+        '''
+        cursor = self.connection.cursor()
+        try:
+            if fromCondition is None:
+                cmd = "UPDATE %s SET %s = '%s';" % (tblName,colName,newVal)
+            else:
+                cmd = "UPDATE %s SET %s = '%s' WHERE %s;" % (tblName,colName,newVal,fromCondition)
+            cursor.execute(cmd)
+            self.connection.commit()
+        finally:
+            cursor.close()
+        
     def ensureSQLTyping(self, colVals):
         '''
         Given a list of items, return a string that preserves
