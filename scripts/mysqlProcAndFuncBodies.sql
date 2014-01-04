@@ -272,6 +272,48 @@ BEGIN
 		  @collectDate);
 END//
 
+#--------------------------
+# idAnon2Int
+#-----------
+
+# Given user ID hash as used in Edx, return 
+# the corresponding row number that is used
+# in some edxprod tables.
+
+DROP FUNCTION IF EXISTS idAnon2Int//
+
+CREATE FUNCTION idAnon2Int(anonId varchar(40))
+RETURNS int(11)
+BEGIN
+    SELECT user_int_id 
+    FROM EdxPrivate.UserGrade
+    WHERE anon_screen_name = anonId
+    INTO @intId;
+    return @intId;
+END//
+
+
+#--------------------------
+# idInt2Anon
+#-----------
+
+# Given an integer user ID as used in 
+# some edxprod tables, return 
+# the corresponding hash-type user ID
+# that is used in Edx and EdxPrivate
+
+DROP FUNCTION IF EXISTS idInt2Anon//
+
+CREATE FUNCTION idInt2Anon(intId int(11))
+RETURNS varchar(40)
+BEGIN
+    SELECT anon_screen_name
+    FROM EdxPrivate.UserGrade
+    WHERE user_int_id  = intId
+    INTO @anonId;
+    return @anonId;
+END//
+
 
 # Restore standard delimiter:
 delimiter ;
