@@ -172,15 +172,11 @@ mkdir -p $(dirname ${targetFile})
 # there, do the query, and redirect the result
 # into a *local* file.
 
-
-# NOTE: script addAnonToAssignmentGradesTable.py relies on
-#       courseware_studentmodule.student_id, i.e. the 
-#       int-typed student ID being in a known place, origin 0.
-#       Same with the module_id. If you change the positions 
-#       in the SELECT below, then change the following constant:
-STUDENT_ID_POS=1
-MODULE_ID_POS=6
-
+# NOTE: two places rely on the sequence of column names
+#       in the following SELECT to be constant:
+#     o cronRefreshActivityGradeCrTable.sql and
+#     o addAnonToActivityGradeTable.py
+      
 ssh goldengate.class.stanford.edu "mysql --host=edx-prod-ro.cn2cujs3bplc.us-west-1.rds.amazonaws.com \
                                          -u "$REMOTE_USERNAME" \
                                           -p"$REMOTE_MYSQL_PASSWD" \
@@ -202,9 +198,9 @@ currScriptsDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 if [ ! -z $LOCAL_MYSQL_PASSWD ]
 then
-    $currScriptsDir/addAnonToActivityGradeTable.py -u $LOCAL_USERNAME -w $LOCAL_MYSQL_PASSWD $targetFile $STUDENT_ID_POS $MODULE_ID_POS
+    $currScriptsDir/addAnonToActivityGradeTable.py -u $LOCAL_USERNAME -w $LOCAL_MYSQL_PASSWD $targetFile
 else
-    $currScriptsDir/addAnonToActivityGradeTable.py -u $LOCAL_USERNAME $targetFile $STUDENT_ID_POS $MODULE_ID_POS
+    $currScriptsDir/addAnonToActivityGradeTable.py -u $LOCAL_USERNAME $targetFile
 fi
 
 # ------------------ Load CSV Into Local MySQL -------------------
@@ -249,4 +245,5 @@ fi
 
 #*********rm $targetFile
 
-   
+# ------------------ Signout -------------------
+echo date": Finished updating table ActivityGrade."

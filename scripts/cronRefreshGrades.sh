@@ -252,4 +252,6 @@ fi
 
 rm $targetFile
 
+# ------------------ Signout -------------------
+echo date": Finished updating table UserGrade."
    
