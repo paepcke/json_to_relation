@@ -43,6 +43,8 @@ USAGE="Usage: "`basename $0`" [-p] targetDir"
 PASSWD=''
 needPasswd=false
 
+# --------------------- Process Input Args -------------
+
 # Keep track of number of optional args the user provided:
 NEXT_ARG=0
 
@@ -84,6 +86,11 @@ fi
 
 targetFile=$TARGET_DIR/modulestore_`date +"%m_%d_%Y_%H_%M_%S"`.json
 
+# ------------------ Signin -------------------
+echo date": Start refreshing modulestore extract..."
+
+# ------------------ Pull Excerpt of Modulestore from S3 -------------------
+
 # For testing can limit number of returned records by replacing
 # the --eval line below like this (adds the .limit(10) clause):
 #   --eval "\"printjson(db.modulestore.find({}, {'_id' : 1, 'metadata.display_name' : 1}).limit(10).toArray())\"" \
@@ -95,6 +102,8 @@ ssh goldengate.class.stanford.edu \
                 --quiet \
 	    	--eval "\"printjson(db.modulestore.find({}, {'_id' : 1, 'metadata.display_name' : 1}).toArray())\"" \
                 > $targetFile
+
+# ------------------ Make Available in Well Known Location -------------------
 
 # Remove the linked-to 'modulestore_latest.json'
 # if it exists; we'll make a new link below:
@@ -114,3 +123,6 @@ else
     exit 1
 fi
 
+# ------------------ Signout -------------------
+echo date": Finished updating table modulestore extract."
+echo "----------"

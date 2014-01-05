@@ -162,6 +162,9 @@ fi
 # exit 0
 #**********
 
+# ------------------ Signin -------------------
+echo date": Start updating table UserGrade..."
+
 # ------------------ Retrieve certificates_generatedcertificate Excerpt from S3 as TSV -------------------
 
 # Ensure all directories to the target
@@ -254,4 +257,4 @@ rm $targetFile
 
 # ------------------ Signout -------------------
 echo date": Finished updating table UserGrade."
-   
+echo "----------"   

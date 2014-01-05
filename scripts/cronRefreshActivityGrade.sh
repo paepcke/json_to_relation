@@ -162,6 +162,10 @@ fi
 # exit 0
 #**********
 
+# ------------------ Signin -------------------
+echo date": Start updating table ActivityGrade..."
+
+
 # ------------------ Retrieve courseware_studentmodule Excerpt from S3 as CSV -------------------
 
 # Ensure all directories to the target
@@ -247,3 +251,5 @@ fi
 
 # ------------------ Signout -------------------
 echo date": Finished updating table ActivityGrade."
+echo "----------"
+
