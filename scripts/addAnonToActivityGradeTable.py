@@ -10,7 +10,7 @@ file was previously extracted from the courseware_studentmodule at S3 by the
 calling script cronRefreshActivityGrade.sh.
 
 This class appends 'anon_sceen_name' to the header line in
-the TSV file, and inserts 'perc_grade' after the 'max_grade'
+the TSV file, and inserts 'percent_grade' after the 'max_grade'
 column name.
 
 For each row in the TSV file, the class then extracts the 
@@ -59,7 +59,7 @@ class AnonAndModIDAdder(object):
     
     # Position before which the newly computed
     # percentage grade will be inserted:
-    NEW_PERC_GRADE_COL_POS = 5
+    NEW_PERCENT_GRADE_COL_POS = 5
     
     def __init__(self, uid, pwd, tsvFileName):
         '''
@@ -152,15 +152,15 @@ class AnonAndModIDAdder(object):
             
             # Pick grade and max_grade out of the row,
             # compute the percentage, and *insert* that 
-            # into the array at NEW_PERC_GRADE_COL_POS:
+            # into the array at NEW_Percent_grade_COL_POS:
             grade = colVals[AnonAndModIDAdder.GRADE_COL_POS]
             max_grade = colVals[AnonAndModIDAdder.MAX_GRADE_COL_POS]
-            perc_grade = 'NULL'
+            percent_grade = 'NULL'
             try:
-                perc_grade = grade * 100.0/ max_grade
+                percent_grade = grade * 100.0/ max_grade
             except:
                 pass
-            colVals.insert(AnonAndModIDAdder.NEW_PERC_GRADE_COL_POS, perc_grade) 
+            colVals.insert(AnonAndModIDAdder.NEW_PERCENT_GRADE_COL_POS, percent_grade) 
             
             # Append the anon name
             # to the end of the .tsv row, where it will end up 
