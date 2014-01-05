@@ -23,7 +23,7 @@ USAGE='Usage: '`basename $0`' [-u localMySQLUser][-s remoteMySQLUser][-p][-pLoca
 
 REMOTE_MYSQL_PASSWD=''
 LOCAL_MYSQL_PASSWD=''
-targetFile=$HOME/MySQLTmp/userTable.tsv
+targetFile=$HOME/MySQLTmp/studModTable.tsv
 LOCAL_USERNAME=`whoami`
 REMOTE_USERNAME='readonly'
 needLocalPasswd=false
@@ -162,7 +162,7 @@ fi
 # exit 0
 #**********
 
-# ------------------ Retrieve certificates_generatedcertificate Excerpt from S3 as TSV -------------------
+# ------------------ Retrieve courseware_studentmodule Excerpt from S3 as CSV -------------------
 
 # Ensure all directories to the target
 # file exist:
@@ -172,49 +172,46 @@ mkdir -p $(dirname ${targetFile})
 # there, do the query, and redirect the result
 # into a *local* file.
 
-# NOTE: script addAnonToUserGrade.py relies on
-#       auth_user.username, i.e. the screen_name
-#       being in a known place, origin 0. If
-#       you change the position in the SELECT
-#       below, then change the following constant:
-SCREEN_NAME_POS=1
+
+# NOTE: script addAnonToAssignmentGradesTable.py relies on
+#       courseware_studentmodule.student_id, i.e. the 
+#       int-typed student ID being in a known place, origin 0.
+#       Same with the module_id. If you change the positions 
+#       in the SELECT below, then change the following constant:
+STUDENT_ID_POS=1
+MODULE_ID_POS=6
 
 ssh goldengate.class.stanford.edu "mysql --host=edx-prod-ro.cn2cujs3bplc.us-west-1.rds.amazonaws.com \
                                          -u "$REMOTE_USERNAME" \
                                           -p"$REMOTE_MYSQL_PASSWD" \
                                           -e \"USE edxprod; \
-                                             SELECT name, auth_user.username as screen_name, grade, \
-                                                    course_id, distinction, status, \
-                                                    auth_user.id as user_int_id \
-                                             FROM certificates_generatedcertificate RIGHT OUTER JOIN auth_user \
-                                             ON certificates_generatedcertificate.user_id = auth_user.id;\" \
+                                             SELECT id as activity_grade_id,student_id,course_id,grade,max_grade,module_type,module_id as resource_display_name
+                                             FROM courseware_studentmodule; \"
                                   " > $targetFile
 
-
-
-# ----------------- Fill in the Screen Name Hash Column anon_screen_name ----------
+# ----------------- Fill in the Module IDs' Human Readable Names and  anon_screen_name  Columns ----------
 
 # Get directory in which this script is running,
 # and where its support scripts therefore live:
 currScriptsDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# The TSV file does not yet have values for the
-# anon_screen_name column. The following adds
-# those values to the end of each TSV row:
+# The CSV file does not yet have values for the
+# resource_display_name anon_screen_name column. 
+# The following adds those values to the end of 
+# each TSV row:
 
 if [ ! -z $LOCAL_MYSQL_PASSWD ]
 then
-    $currScriptsDir/addAnonToUserGradeTable.py -u $LOCAL_USERNAME -w $LOCAL_MYSQL_PASSWD $targetFile $SCREEN_NAME_POS
+    $currScriptsDir/addAnonToActivityGradeTable.py -u $LOCAL_USERNAME -w $LOCAL_MYSQL_PASSWD $targetFile $STUDENT_ID_POS $MODULE_ID_POS
 else
-    $currScriptsDir/addAnonToUserGradeTable.py -u $LOCAL_USERNAME $targetFile $SCREEN_NAME_POS
+    $currScriptsDir/addAnonToActivityGradeTable.py -u $LOCAL_USERNAME $targetFile $STUDENT_ID_POS $MODULE_ID_POS
 fi
 
+# ------------------ Load CSV Into Local MySQL -------------------
 
-# ------------------ Load TSV Into Local MySQL -------------------
-
-# Construct the TSV load command for
+# Construct the CSV load command for
 # use below:
-MYSQL_LOAD_CMD="LOAD DATA LOCAL INFILE '$targetFile' IGNORE INTO TABLE UserGrade FIELDS TERMINATED BY '\t' IGNORE 1 LINES;"
+MYSQL_LOAD_CMD="LOAD DATA LOCAL INFILE '$targetFile' IGNORE INTO TABLE ActivityGrade FIELDS TERMINATED BY '\t' IGNORE 1 LINES;"
 
 # Distinguish between MySQL pwd known, vs. unspecified.
 # If $LOCAL_MYSQL_PASSWD is empty, then don't provide
@@ -223,33 +220,33 @@ MYSQL_LOAD_CMD="LOAD DATA LOCAL INFILE '$targetFile' IGNORE INTO TABLE UserGrade
 
 if [ ! -z $LOCAL_MYSQL_PASSWD ]
 then
-    # Drop UserGrade table if it exists:
-    mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE EdxPrivate; DROP TABLE IF EXISTS UserGrade;\n"
+    # Drop table ActivityGrade if it exists:
+    mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE Edx; DROP TABLE IF EXISTS ActivityGrade;\n"
 
-    # Create table 'UserGrade' in EdxPrivate, if it doesn't exist:
-    mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD < $currScriptsDir/cronRefreshGradesCrTable.sql
+    # Create table 'ActivityGrade' in Edx, if it doesn't exist:
+    mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD < $currScriptsDir/cronRefreshActivityGradeCrTable.sql
 
     # Do the load:
-    mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE EdxPrivate; $MYSQL_LOAD_CMD"
+    mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE Edx; $MYSQL_LOAD_CMD"
 
     # Build the indexes:
-    mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD < $currScriptsDir/cronRefreshGradesMkIndexes.sql
+    mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD < $currScriptsDir/cronRefreshActivityGradeMkIndexes.sql
 else
     # Drop existing table:
-    mysql -u $LOCAL_USERNAME -e "USE EdxPrivate; DROP TABLE IF EXISTS UserGrade;"
+    mysql -u $LOCAL_USERNAME -e "USE Edx; DROP TABLE IF EXISTS ActivityGrade;"
 
-    # Create table 'UserGrade' in EdxPrivate, if it doesn't exist:
-    mysql -u $LOCAL_USERNAME < $currScriptsDir/cronRefreshGradesCrTable.sql
+    # Create table 'ActivityGrade' in Edx, if it doesn't exist:
+    mysql -u $LOCAL_USERNAME < $currScriptsDir/cronRefreshActivityGradeCrTable.sql
 
     # Do the load:
-    mysql -u $LOCAL_USERNAME -e "USE EdxPrivate; $MYSQL_LOAD_CMD"
+    mysql -u $LOCAL_USERNAME -e "USE Edx; $MYSQL_LOAD_CMD"
 
     # Build the indexes:
-    mysql -u $LOCAL_USERNAME < $currScriptsDir/cronRefreshGradesMkIndexes.sql
+    mysql -u $LOCAL_USERNAME < $currScriptsDir/cronRefreshActivityGradeMkIndexes.sql
 fi
 
 # ------------------ Cleanup -------------------
 
-rm $targetFile
+#*********rm $targetFile
 
    

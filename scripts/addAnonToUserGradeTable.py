@@ -4,12 +4,11 @@ Created on Jan 3, 2014
 
 @author: paepcke
 
-Accesses the EdxPrivate UserGrade table. Extracts the screen_name 
-column for each row in turn. Computes the corresponding anonymization 
+Used by cronRefreshGrade.sh.
+Accesses a TSV file of the UserGrade table being built. Extracts the screen_name 
+column for each TSV row in turn. Computes the corresponding anonymization 
 hash, and updates table EdxPrivate.UserGrade's anon_sceen_name column 
-with that hash. 
-
-Caller must have permission to ALTER table EdxPrivate.UserGrades
+in the TSV file with that hash. 
 '''
 import argparse
 import getpass
@@ -28,25 +27,25 @@ from mysqldb import MySQLDB
 
 class AnonAdder(object):
     
-    def __init__(self, uid, pwd, csvFileName, screenNamePos):
+    def __init__(self, uid, pwd, tsvFileName, screenNamePos):
         '''
         Make connection to MySQL wrapper.
         @param uid: MySQL user under which to log in. Assumed to be other than None
         @type uid: String
         @param pwd: MySQL password for user uid. May be None.
         @type pwd: {String | None}
-        @param csvFileName: name of CSV file where rows of edxprod's
+        @param tsvFileName: name of TSV file where rows of edxprod's
                certificates_generatedcertificate table are located.
                It is assumed that the caller verified existence and
                readability of this file.
         @type String
         @param screenNamePos: Zero-origin position of the screen name column
-               in the CSV file from certificates_generatedcertificate
+               in the TSV file from certificates_generatedcertificate
         @type screenNamePos: int
         '''
         self.uid = uid
         self.pwd = pwd
-        self.csvFileName = csvFileName
+        self.tsvFileName = tsvFileName
         self.screenNamePos = screenNamePos
         
         if pwd is None:
@@ -57,18 +56,16 @@ class AnonAdder(object):
         
     def computeAndAdd(self):
         '''
-        The heavy lifting: reads all CSV rows from the certificates_generatedcertificate
-        table into memory. Relies on the integer user id being the last column. Grabs
-        Each integer id, and computes
+        The heavy lifting: reads all TSV rows from the certificates_generatedcertificate
+        table into memory. the screenNamePos passed into the __init__() method
+        is used to find the row's user screen name. That name is hashed
+        and appended to the row as a new anon_screen_name column.
         '''
-        with open(self.csvFileName, 'r') as csvFd:
-            allRows = csvFd.readlines()
+        with open(self.tsvFileName, 'r') as tsvFd:
+            allRows = tsvFd.readlines()
         for (i, row) in enumerate(allRows[1:]):
-            # Grab the last element of the CSV row,
-            # which is the integer used for Stanford's
-            # UIDs
             colVals = row.split('\t')
-            # Each line's last CSV value element has
+            # Each line's last TSV value element has
             # a \n glued to it. Get rid of that:
             colVals[-1] = colVals[-1].strip()
             # Pick the screen name out of the row:
@@ -91,9 +88,9 @@ class AnonAdder(object):
         colNames[-1] = colNames[-1].strip()
         colNames.append('anon_screen_name\n') 
         allRows[0] = string.join(colNames, '\t')
-        # Write the new CSV back into the file:
-        with open(self.csvFileName, 'w') as csvFd:
-            csvFd.writelines(allRows)
+        # Write the new TSV back into the file:
+        with open(self.tsvFileName, 'w') as tsvFd:
+            tsvFd.writelines(allRows)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]), formatter_class=argparse.RawTextHelpFormatter)
@@ -109,24 +106,24 @@ if __name__ == '__main__':
                         dest='givenPass',
                         help='Mysql password. Default: see --password. If both -p and -w are provided, -w is used.'
                         )
-    parser.add_argument('csvFileName',
-                        help='File containing the CSV of the certificates_generatedcertificate table obtained from edxprod'
+    parser.add_argument('tsvFileName',
+                        help='File containing the TSV of the certificates_generatedcertificate table obtained from edxprod'
                         )  
     parser.add_argument('screenNameColPos',
                         type=int,
-                        help='Zero-origin position of the screen_name column in the CSV of the certificates_generatedcertificate table obtained from edxprod'
+                        help='Zero-origin position of the screen_name column in the TSV of the certificates_generatedcertificate table obtained from edxprod'
                         )  
     args = parser.parse_args();
 
-    if not os.access(args.csvFileName, os.R_OK):
-        print("File %s is not readable or does not exist." % args.csvFileName)
+    if not os.access(args.tsvFileName, os.R_OK):
+        print("File %s is not readable or does not exist." % args.tsvFileName)
         parser.print_usage()
         sys.exit()
         
-    csvFileName = args.csvFileName
+    tsvFileName = args.tsvFileName
 
     if args.screenNameColPos < 0:
-        print("Screen name position must be the zero-origin column index of the screen name in the CSV file; was %s" % str(args.screenNameColPos))
+        print("Screen name position must be the zero-origin column index of the screen name in the TSV file; was %s" % str(args.screenNameColPos))
         parser.print_usage()
         sys.exit()
     
@@ -168,6 +165,6 @@ if __name__ == '__main__':
     #sys.exit()
     #************
                     
-    anonAdder = AnonAdder(user, pwd, csvFileName, screenNameColPos)
+    anonAdder = AnonAdder(user, pwd, tsvFileName, screenNameColPos)
     anonAdder.computeAndAdd()
     

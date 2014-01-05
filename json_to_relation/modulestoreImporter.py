@@ -50,8 +50,8 @@ class ModulestoreImporter(DictMixin):
         Prepares instance for subsequent calls to getDisplayName() or
         export(). Preparations include looking for either the given file
         name, if useCache is False, or the cache file, which is a pickled
-        Python dict containing OpenEdx hash codes to display_names as 
-        extracted from modulestore.
+        Python dict containing OpenEdx hash codes to display_name mappings
+        is missing, then the modulestore is refreshed from S3.
 
         @param jsonFileName: file path to JSON file that contains an excerpt
                     of modulestore, the OpenEdx course db. This file is
@@ -62,6 +62,9 @@ class ModulestoreImporter(DictMixin):
                         pickled dict that maps OpenEdx hashes to display
                         names. That file would have been created by an
                         earlier instantiation of this class. 
+                        If False, or the pickle file is missing, then
+                        the cache is created by accessing the modulestore
+                        MongoDB on S3.
         @type useCache: Bool
         @param pickleCachePath: destination for cache of the hash-->info dict.
                                 Default is data/hashLookup.pkl 
@@ -89,6 +92,10 @@ class ModulestoreImporter(DictMixin):
             self.pickleCachePath = os.path.join(os.path.dirname(__file__), 'data/hashLookup.pkl')
         else:
             self.pickleCachePath = pickleCachePath
+            
+        # Ensure the target directory exists:
+        if not os.path.exists(os.path.dirname(self.pickleCachePath)):
+            os.makedirs(os.path.dirname(self.pickleCachePath))
         
         if not useCache and not os.path.exists(str(jsonFileName)):
             self.importModstore(jsonFileName)
@@ -107,23 +114,28 @@ class ModulestoreImporter(DictMixin):
         # that start with '#':
         self.legalJSONStartPattern = re.compile('^([\s]*[#][^\n]*\n)*[\s]*[{]')
         
+        cacheAccessSucceeded = True
         # Get dict {"all" : [{...}, {...},...]}
         if useCache:
             if ModulestoreImporter.hashLookupCache is not None:
                 self.hashLookup = ModulestoreImporter.hashLookupCache
             else:
-                with open(self.pickleCachePath, 'r') as pickleFd:
-                    self.hashLookup = pickle.load(pickleFd)
-                    ModulestoreImporter.hashLookupCache = self.hashLookup
-            # Build lookup for short course name to three-part standard name:
-            self.buildCourseShortNameToCourseName()            
-            return
+                try:
+                    with open(self.pickleCachePath, 'r') as pickleFd:
+                        self.hashLookup = pickle.load(pickleFd)
+                        ModulestoreImporter.hashLookupCache = self.hashLookup
+                except IOError:
+                    cacheAccessSucceeded = False
+            if cacheAccessSucceeded:
+                # Build lookup for short course name to three-part standard name:
+                self.buildCourseShortNameToCourseName()            
+                return
     
-        # No use of cache, or cache unavailble:
+        # No use of cache, or cache unavailable:
         self.loadModstoreFromJSON()
         
         # Save the lookup in a quick-to-load Python pickle file for future use
-        # when option useCache is true:
+        # when option useCache is true.
         with open(self.pickleCachePath, 'w') as pickleFd:
             pickle.dump(self.hashLookup, pickleFd)
         # Also save it in a class var to share with other instances:

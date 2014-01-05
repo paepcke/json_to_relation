@@ -66,6 +66,11 @@ To use the script in other installations, modify the following constants:
                     subtree is /home/dataman/Data/EdX. An example tracking log file path
                     is thus: /home/dataman/Data/EdX/tracking/app10/tracking.log-20130610.gz
 @author: paepcke
+
+Modifications:
+    Jan 4, 20914: stopped using MD5 for comparing remote and local files, b/c 
+                  S3 uses a non-standard MD5 computation for files > 5GB
+
 '''
 
 import argparse
@@ -178,7 +183,7 @@ class TrackLogPuller(object):
           ['tracking/app10/tracking.log-20130609.gz', 'tracking/app10/tracking.log-20130610.gz']
         
         When a local file of the same name as the a remote file is found, the
-        remote and local MD5 hashes are compared to ensure that they are indeed
+        remote and local sizes are compared to ensure that they are indeed
         the same files.
         
         @param localTrackingLogFileRoot: root of subtree that matches the subtree received from
@@ -234,24 +239,14 @@ class TrackLogPuller(object):
             localEquivPath = os.path.join(localTrackingLogFileRoot, rLogPath)
             self.logDebug("Check against local path: %s" % localEquivPath)
             if os.path.exists(localEquivPath):
-                self.logDebug("Local path: %s does exist; checking MD5 of remote & local." % localEquivPath)
-                try:
-                    # Ensure that the local file is the same as the remote one, 
-                    # i.e. that we already copied it over. The following call
-                    # returns '<md5> <filename>':
-                    md5PlusFileName = subprocess.check_output(['md5sum',localEquivPath])
-                    localMD5 = md5PlusFileName.split()[0]
-                    # The etag property of an S3 key obj contains
-                    # the remote file's MD5, surrounded by double-quotes:
-                    remoteMD5 = string.strip(rlogFileKeyObj.etag, '"')
-                    if localMD5 == remoteMD5:
-                        self.logDebug("File MD5s match; will not pull remote file.")
-                        continue
-                    else:
-                        self.logDebug("File MD5s do not match; pull remote file.")
-                except Exception as e:
-                    self.logErr("Could not compare remote file %s's MD5 with that of the local equivalent %s: %s" % (rLogPath, localEquivPath, `e`))
+                self.logDebug("Local path: %s does exist; compare lengths of remote & local." % localEquivPath)
+                # Ensure that the local file is the same as the remote one, 
+                # i.e. that we already copied it over.
+                if self.checkFilesEqualSize(rlogFileKeyObj, localEquivPath):
+                    self.logDebug("File lengths match; will not pull remote file.")
                     continue
+                else:
+                    self.logDebug("File MD5s do not match; pull remote file.")
             else:
                 self.logDebug("Local path: %s does not exist." % localEquivPath)
             
@@ -794,6 +789,56 @@ class TrackLogPuller(object):
     def isGzippedFile(self, filename):
         return filename.endswith('.gz')
     
+    def checkFilesIdentical(self, s3FileKeyObj, localFilePath):
+        '''
+        DON'T USE.
+        Compares the MD5 of a local file with that of an S3-resident
+        remote file for which a Boto file key object is being passed in.
+        Unfortunately, this method only works up to files of 5GB.
+        Beyond that S3 computes MD5s from file fragments, and then
+        combines those MD5s into a new one. So it's useless. Method
+        is retained here in case S3 changes.
+        @param s3FileKeyObj:
+        @type s3FileKeyObj:
+        @param localFilePath:
+        @type localFilePath:
+        '''
+        try:
+            # Ensure that the local file is the same as the remote one, 
+            # i.e. that we already copied it over. The following call
+            # returns '<md5> <filename>':
+            md5PlusFileName = subprocess.check_output(['md5sum',localFilePath])
+            localMD5 = md5PlusFileName.split()[0]
+            # The etag property of an S3 key obj contains
+            # the remote file's MD5, surrounded by double-quotes:
+            remoteMD5 = string.strip(s3FileKeyObj.etag, '"')
+            return localMD5 == remoteMD5
+        except Exception as e:
+            self.logErr("Could not compare remote file %s's MD5 with that of the local equivalent %s: %s" % (s3FileKeyObj.name, localFilePath, `e`))
+            return False
+
+
+    def checkFilesEqualSize(self, s3FileKeyObj, localFilePath):
+        '''
+        Compares the length of a local file with that of an S3-resident
+        remote file for which a Boto file key object is being passed in.
+        The remote file size is obtained from the key object's metadata.
+        The file is not downloaded.
+        @param s3FileKeyObj: Boto file key object that represents the remote file
+        @type s3FileKeyObj: Boto Key instance
+        @param localFilePath: absolute path to local file whose length is to be compared.
+        @type localFilePath: String
+        @return: True/False depending on whether file lengths are equal.
+        @rtype: Bool
+        '''
+        try:
+            localFileSize = os.path.getsize(localFilePath)
+            return localFileSize == s3FileKeyObj.size
+        except Exception as e:
+            self.logErr("Could not compare sizes of remote file %s and local file %s: %s" % (s3FileKeyObj.name, localFilePath, `e`))
+            return False
+
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]), formatter_class=argparse.RawTextHelpFormatter)

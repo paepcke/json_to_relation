@@ -1,0 +1,16 @@
+-- Note: cols resource_display_name and anon_screen_name
+--       need to stay at their positions at the end
+--       for addAnonToActivityGrade.py to do the right
+--       thing:
+CREATE DATABASE IF NOT EXISTS Edx;
+USE Edx;
+CREATE TABLE IF NOT EXISTS Edx.ActivityGrade (
+    activity_grade_id int(11) PRIMARY KEY,
+    student_id int(11) NOT NULL,
+    course_id varchar(255) NOT NULL,
+    grade double,
+    max_grade double,
+    module_type varchar(32) NOT NULL,
+    resource_display_name varchar(255) NOT NULL DEFAULT '',
+    anon_screen_name varchar(40) NOT NULL DEFAULT ''
+    );
