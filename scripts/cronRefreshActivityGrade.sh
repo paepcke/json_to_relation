@@ -240,7 +240,7 @@ then
 
     # Do the load:
     echo `date`": About to load TSV into ActivityGrade table..."
-    mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE Edx; $MYSQL_LOAD_CMD"
+    mysql --local-infile -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE Edx; $MYSQL_LOAD_CMD"
     echo `date`": Done loading TSV into ActivityGrade table..."
 
     # Build the indexes:
@@ -261,7 +261,7 @@ else
 
     # Do the load:
     echo `date`": About to load TSV into ActivityGrade table..."
-    mysql -u $LOCAL_USERNAME -e "USE Edx; $MYSQL_LOAD_CMD"
+    mysql --local-infile -u $LOCAL_USERNAME -e "USE Edx; $MYSQL_LOAD_CMD"
     echo `date`": Done loading TSV into ActivityGrade table..."
 
     # Build the indexes:

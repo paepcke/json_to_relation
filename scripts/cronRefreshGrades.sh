@@ -243,7 +243,7 @@ then
 
     echo `date`": About to load TSV into UserGrade table..."
     # Do the load:
-    mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE EdxPrivate; $MYSQL_LOAD_CMD"
+    mysql --local-infile -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE EdxPrivate; $MYSQL_LOAD_CMD"
     echo `date`": Done loading TSV into UserGrade table..."
 
     # Build the indexes:
@@ -262,7 +262,7 @@ else
 
     # Do the load:
     echo `date`": About to load TSV into UserGrade table..."
-    mysql -u $LOCAL_USERNAME -e "USE EdxPrivate; $MYSQL_LOAD_CMD"
+    mysql --local-infile -u $LOCAL_USERNAME -e "USE EdxPrivate; $MYSQL_LOAD_CMD"
     echo `date`": Done loading TSV into UserGrade table..."
 
     # Build the indexes:

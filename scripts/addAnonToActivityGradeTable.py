@@ -161,10 +161,10 @@ class AnonAndModIDAdder(object):
             max_grade = colVals[AnonAndModIDAdder.MAX_GRADE_COL_POS]
             percent_grade = 'NULL'
             try:
-                percent_grade = grade * 100.0/ max_grade
+                percent_grade = int(grade) * 100.0/ int(max_grade)
             except:
                 pass
-            colVals.insert(AnonAndModIDAdder.NEW_PERCENT_GRADE_COL_POS, percent_grade) 
+            colVals.insert(AnonAndModIDAdder.NEW_PERCENT_GRADE_COL_POS, str(percent_grade)) 
             
             # Append the anon name
             # to the end of the .tsv row, where it will end up 
