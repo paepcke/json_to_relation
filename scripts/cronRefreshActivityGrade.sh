@@ -163,7 +163,7 @@ fi
 #**********
 
 # ------------------ Signin -------------------
-echo date": Start updating table ActivityGrade..."
+echo `date`": Start updating table ActivityGrade..."
 
 
 # ------------------ Retrieve courseware_studentmodule Excerpt from S3 as CSV -------------------
@@ -181,6 +181,8 @@ mkdir -p $(dirname ${targetFile})
 #     o cronRefreshActivityGradeCrTable.sql and
 #     o addAnonToActivityGradeTable.py
       
+echo `date`": About to pull courseware_studentmodule excerpt from S3"
+
 ssh goldengate.class.stanford.edu "mysql --host=edx-prod-ro.cn2cujs3bplc.us-west-1.rds.amazonaws.com \
                                          -u "$REMOTE_USERNAME" \
                                           -p"$REMOTE_MYSQL_PASSWD" \
@@ -188,6 +190,8 @@ ssh goldengate.class.stanford.edu "mysql --host=edx-prod-ro.cn2cujs3bplc.us-west
                                              SELECT id as activity_grade_id,student_id,course_id,grade,max_grade,module_type,module_id as resource_display_name
                                              FROM courseware_studentmodule; \"
                                   " > $targetFile
+
+echo `date`": Done pulling courseware_studentmodule excerpt from S3"
 
 # ----------------- Fill in the Module IDs' Human Readable Names and  anon_screen_name  Columns ----------
 
@@ -200,12 +204,16 @@ currScriptsDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # The following adds those values to the end of 
 # each TSV row:
 
+echo `date`": About to add percent_grade, resolve resource id, and add anon_screen_name..."
+
 if [ ! -z $LOCAL_MYSQL_PASSWD ]
 then
     $currScriptsDir/addAnonToActivityGradeTable.py -u $LOCAL_USERNAME -w $LOCAL_MYSQL_PASSWD $targetFile
 else
     $currScriptsDir/addAnonToActivityGradeTable.py -u $LOCAL_USERNAME $targetFile
 fi
+
+echo `date`": Done adding percent_grade, ..."
 
 # ------------------ Load CSV Into Local MySQL -------------------
 
@@ -221,27 +229,43 @@ MYSQL_LOAD_CMD="LOAD DATA LOCAL INFILE '$targetFile' IGNORE INTO TABLE ActivityG
 if [ ! -z $LOCAL_MYSQL_PASSWD ]
 then
     # Drop table ActivityGrade if it exists:
+    echo `date`": About to drop ActivityGrade table..."
     mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE Edx; DROP TABLE IF EXISTS ActivityGrade;\n"
+    echo `date`": Done dropping ActivityGrade table..."
 
     # Create table 'ActivityGrade' in Edx, if it doesn't exist:
+    echo `date`": About to create ActivityGrade table..."
     mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD < $currScriptsDir/cronRefreshActivityGradeCrTable.sql
+    echo `date`": Done creating ActivityGrade table..."
 
     # Do the load:
+    echo `date`": About to load TSV into ActivityGrade table..."
     mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE Edx; $MYSQL_LOAD_CMD"
+    echo `date`": Done loading TSV into ActivityGrade table..."
 
     # Build the indexes:
+    echo `date`": About to build ActivityGrade indexes..."
     mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD < $currScriptsDir/cronRefreshActivityGradeMkIndexes.sql
+
+    echo `date`": Done building ActivityGrade indexes..."
 else
     # Drop existing table:
+    echo `date`": About to drop ActivityGrade table..."
     mysql -u $LOCAL_USERNAME -e "USE Edx; DROP TABLE IF EXISTS ActivityGrade;"
+    echo `date`": Done dropping ActivityGrade table..."
 
     # Create table 'ActivityGrade' in Edx, if it doesn't exist:
+    echo `date`": About to create ActivityGrade table..."
     mysql -u $LOCAL_USERNAME < $currScriptsDir/cronRefreshActivityGradeCrTable.sql
+    echo `date`": Done creating ActivityGrade table..."
 
     # Do the load:
+    echo `date`": About to load TSV into ActivityGrade table..."
     mysql -u $LOCAL_USERNAME -e "USE Edx; $MYSQL_LOAD_CMD"
+    echo `date`": Done loading TSV into ActivityGrade table..."
 
     # Build the indexes:
+    echo `date`": About to build ActivityGrade indexes..."
     mysql -u $LOCAL_USERNAME < $currScriptsDir/cronRefreshActivityGradeMkIndexes.sql
 fi
 
@@ -250,6 +274,6 @@ fi
 #*********rm $targetFile
 
 # ------------------ Signout -------------------
-echo date": Finished updating table ActivityGrade."
+echo `date`": Finished updating table ActivityGrade."
 echo "----------"
 

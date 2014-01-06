@@ -163,7 +163,7 @@ fi
 #**********
 
 # ------------------ Signin -------------------
-echo date": Start updating table UserGrade..."
+echo `date`": Start updating table UserGrade..."
 
 # ------------------ Retrieve certificates_generatedcertificate Excerpt from S3 as TSV -------------------
 
@@ -182,6 +182,8 @@ mkdir -p $(dirname ${targetFile})
 #       below, then change the following constant:
 SCREEN_NAME_POS=1
 
+echo `date`": About to pull excerpt from S3 certificates_generatedcertificate and auth_user..."
+
 ssh goldengate.class.stanford.edu "mysql --host=edx-prod-ro.cn2cujs3bplc.us-west-1.rds.amazonaws.com \
                                          -u "$REMOTE_USERNAME" \
                                           -p"$REMOTE_MYSQL_PASSWD" \
@@ -193,7 +195,7 @@ ssh goldengate.class.stanford.edu "mysql --host=edx-prod-ro.cn2cujs3bplc.us-west
                                              ON certificates_generatedcertificate.user_id = auth_user.id;\" \
                                   " > $targetFile
 
-
+echo `date`": Done pulling excerpt from S3 certificates_generatedcertificate and auth_user."
 
 # ----------------- Fill in the Screen Name Hash Column anon_screen_name ----------
 
@@ -205,6 +207,8 @@ currScriptsDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # anon_screen_name column. The following adds
 # those values to the end of each TSV row:
 
+echo `date`": About to add anon_screen_name to UserGrade TSV..."
+
 if [ ! -z $LOCAL_MYSQL_PASSWD ]
 then
     $currScriptsDir/addAnonToUserGradeTable.py -u $LOCAL_USERNAME -w $LOCAL_MYSQL_PASSWD $targetFile $SCREEN_NAME_POS
@@ -212,6 +216,7 @@ else
     $currScriptsDir/addAnonToUserGradeTable.py -u $LOCAL_USERNAME $targetFile $SCREEN_NAME_POS
 fi
 
+echo `date`": Done adding anon_screen_name to UserGrade TSV..."
 
 # ------------------ Load TSV Into Local MySQL -------------------
 
@@ -226,28 +231,42 @@ MYSQL_LOAD_CMD="LOAD DATA LOCAL INFILE '$targetFile' IGNORE INTO TABLE UserGrade
 
 if [ ! -z $LOCAL_MYSQL_PASSWD ]
 then
+    echo `date`": About to drop UserGrade table..."
     # Drop UserGrade table if it exists:
     mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE EdxPrivate; DROP TABLE IF EXISTS UserGrade;\n"
-
+    echo `date`": Done dropping UserGrade table..."
+    
+    echo `date`": About to create UserGrade table..."
     # Create table 'UserGrade' in EdxPrivate, if it doesn't exist:
     mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD < $currScriptsDir/cronRefreshGradesCrTable.sql
+    echo `date`": Done creating UserGrade table..."
 
+    echo `date`": About to load TSV into UserGrade table..."
     # Do the load:
     mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE EdxPrivate; $MYSQL_LOAD_CMD"
+    echo `date`": Done loading TSV into UserGrade table..."
 
     # Build the indexes:
+    echo `date`": About to build UserGrade indexes..."
     mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD < $currScriptsDir/cronRefreshGradesMkIndexes.sql
 else
     # Drop existing table:
+    echo `date`": About to drop UserGrade table..."
     mysql -u $LOCAL_USERNAME -e "USE EdxPrivate; DROP TABLE IF EXISTS UserGrade;"
+    echo `date`": Done dropping UserGrade table..."
 
     # Create table 'UserGrade' in EdxPrivate, if it doesn't exist:
+    echo `date`": About to create UserGrade table..."
     mysql -u $LOCAL_USERNAME < $currScriptsDir/cronRefreshGradesCrTable.sql
+    echo `date`": Done creating UserGrade table..."
 
     # Do the load:
+    echo `date`": About to load TSV into UserGrade table..."
     mysql -u $LOCAL_USERNAME -e "USE EdxPrivate; $MYSQL_LOAD_CMD"
+    echo `date`": Done loading TSV into UserGrade table..."
 
     # Build the indexes:
+    echo `date`": About to build UserGrade indexes..."
     mysql -u $LOCAL_USERNAME < $currScriptsDir/cronRefreshGradesMkIndexes.sql
 fi
 
@@ -256,5 +275,5 @@ fi
 rm $targetFile
 
 # ------------------ Signout -------------------
-echo date": Finished updating table UserGrade."
+echo `date`": Finished updating table UserGrade."
 echo "----------"   

@@ -115,7 +115,11 @@ class AnonAndModIDAdder(object):
         with open(self.tsvFileName, 'r') as tsvFd:
             headerRow = tsvFd.readline()
         colNames = headerRow.split('\t')
+        # Take off the \n after the last col,
+        # because we'll append the anon_screen_name header
+        # col name:
         colNames[-1] = colNames[-1].strip()
+        colNames.insert(AnonAndModIDAdder.NEW_PERCENT_GRADE_COL_POS, 'percent_grade')
         colNames.append('anon_screen_name\n') 
         self.tmpFd.write(string.join(colNames, '\t'))
 
