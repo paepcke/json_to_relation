@@ -163,6 +163,7 @@ class AnonAndModIDAdder(object):
                     'course_id', 
                     'grade', 
                     'max_grade', 
+                    'percent_grade',
                     'parts_correctness', 
                     'wrong_answers', 
                     'numAttempts',
