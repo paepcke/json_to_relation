@@ -187,8 +187,17 @@ ssh goldengate.class.stanford.edu "mysql --host=edx-prod-ro.cn2cujs3bplc.us-west
                                          -u "$REMOTE_USERNAME" \
                                           -p"$REMOTE_MYSQL_PASSWD" \
                                           -e \"USE edxprod; \
-                                             SELECT id as activity_grade_id,student_id,course_id,grade,max_grade,module_type,module_id as resource_display_name
-                                             FROM courseware_studentmodule; \"
+                                             SELECT id as activity_grade_id, \
+                                                    student_id, \
+                                                    course_id, \
+                                                    grade, \
+                                                    max_grade, \
+                                                    state as parts_correctness, \
+                                                    created as first_submit \
+                                                    modified as last_submit \
+                                                    module_type, \
+                                                    module_id as resource_display_name \
+                                             FROM courseware_studentmodule LIMIT 300; \"
                                   " > $targetFile
 
 echo `date`": Done pulling courseware_studentmodule excerpt from S3"

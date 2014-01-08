@@ -26,9 +26,9 @@ grade and max_grade columns, and inserts the result after the
 max_grade column value
 
 Assumptions:
-   o The TSV file has the following schema:
+   o The TSV file has the following schema::
    
-        activity_grade_id, student_id, course_id, grade, max_grade, module_type, resource_display_name
+        activity_grade_id, student_id, course_id, grade, max_grade, parts_correctness, module_type, resource_display_name
         
      in that order.
      The activity_grade_id is renamed from the original 'id' in courseware_studentmodule
@@ -38,6 +38,10 @@ Assumptions:
          i4x://Medicine/HRP258/sequential/d62f01652c82413395189f660fa0fe8a
    o The TSV file's anon_screen_name column is empty. 
 
+When we are done with a row, its schema will be::
+
+        activity_grade_id, student_id, course_id, grade, max_grade, parts_correctness, wrong_answers, numAttempts, module_type, resource_display_name
+
 '''
 import argparse
 import getpass
@@ -45,17 +49,38 @@ import os
 import string
 import sys
 import tempfile
+import json
+import collections
+import re
+import itertools
 
 from mysqldb import MySQLDB
 from utils import Utils
 
+
 class AnonAndModIDAdder(object):
+    
+    # For explanation of the following regex patterns,
+    # see header comment of parseStateJSON:
+    SOLUTION_RESULT_PATTERN  = re.compile(r'[^"]*correctness": "([^"]*)')
+    SOLUTION_ANSWERS_PATTERN = re.compile(r'[^:]*: "([^"]*)"')
     
     # Zero-origin column positions in TSV file:
     STUDENT_ID_COL_POS = 1
     GRADE_COL_POS = 3
-    MAX_GRADE_COL_POS = 4
-    MODULE_ID_COL_POS = 6
+    MAX_GRADE_COL_POS = 4    
+    
+    # In TSV the following contains the JSON 
+    # content of the 'state' col, but we will
+    # replace that with the plus/minus signs;
+    # therefore the col name 'parts_correctness':
+    PARTS_CORRECTNESS_COL_POS = 5
+    
+    # In TSV the following contains the 
+    # content of column module_id, but below
+    # we convert that id to a human-readable
+    # string, therefore the col name resource_display_name:
+    RESOURCE_DISPLAY_NAME_COL_POS = 7
     
     # Position before which the newly computed
     # percentage grade will be inserted:
@@ -110,17 +135,22 @@ class AnonAndModIDAdder(object):
         self.tmpFd = tempfile.NamedTemporaryFile(dir=os.path.dirname(self.tsvFileName), 
                                             suffix='studMod',
                                             delete=False)
-        # Modify the first line, the column names by adding the
-        # new column-to-be: anon_screen_name:
+        # Modify the first line, the column names,
+        # to conform to what we'll do to the rest
+        # of the TSV file's data:
         with open(self.tsvFileName, 'r') as tsvFd:
             headerRow = tsvFd.readline()
-        colNames = headerRow.split('\t')
-        # Take off the \n after the last col,
-        # because we'll append the anon_screen_name header
-        # col name:
-        colNames[-1] = colNames[-1].strip()
-        colNames.insert(AnonAndModIDAdder.NEW_PERCENT_GRADE_COL_POS, 'percent_grade')
-        colNames.append('anon_screen_name\n') 
+        
+        colNames = ['activity_grade_id', 
+                    'student_id', 
+                    'course_id', 
+                    'grade', 
+                    'max_grade', 
+                    'parts_correctness', 
+                    'wrong_answers', 
+                    'numAttempts', 
+                    'module_type', 
+                    'resource_display_name']
         self.tmpFd.write(string.join(colNames, '\t'))
 
         # We tested for self.tsvFileName being readable
@@ -145,14 +175,14 @@ class AnonAndModIDAdder(object):
                 theAnonName = ''
             
             # Get the module_id:
-            moduleID = colVals[AnonAndModIDAdder.MODULE_ID_COL_POS]
+            moduleID = colVals[AnonAndModIDAdder.RESOURCE_DISPLAY_NAME_COL_POS]
             moduleName = Utils.getModuleNameFromID(moduleID)
             
             # Replace the existing module_id col with the human-readable 
             # moduleName; the column was already called
             # resource_display_name when cronRefreshActivityGradeCrTable.sql
             # was sourced into MySQL by cronRefreshActivityGrade.sh.
-            colVals[AnonAndModIDAdder.MODULE_ID_COL_POS] = moduleName
+            colVals[AnonAndModIDAdder.RESOURCE_DISPLAY_NAME_COL_POS] = moduleName
             
             # Pick grade and max_grade out of the row,
             # compute the percentage, and *insert* that 
@@ -161,10 +191,23 @@ class AnonAndModIDAdder(object):
             max_grade = colVals[AnonAndModIDAdder.MAX_GRADE_COL_POS]
             percent_grade = 'NULL'
             try:
-                percent_grade = int(grade) * 100.0/ int(max_grade)
+                percent_grade = round((int(grade) * 100.0/ int(max_grade)), 2)
             except:
                 pass
-            colVals.insert(AnonAndModIDAdder.NEW_PERCENT_GRADE_COL_POS, str(percent_grade)) 
+            colVals.insert(AnonAndModIDAdder.NEW_PERCENT_GRADE_COL_POS, str(percent_grade))
+
+            # Pick the JSON of the courseware_studentmodule's
+            # 'state' col from the TSV row, and replace it
+            # with the plusses and minusses. The '+1' accounts
+            # for the percent_grade we just inserted above: 
+            (partsCorrectness, wrongAnswers, numAttempts) = \
+                self.parseStateJSON(colVals[AnonAndModIDAdder.PARTS_CORRECTNESS_COL_POS + 1])
+            colVals[AnonAndModIDAdder.PARTS_CORRECTNESS_COL_POS + 1] = partsCorrectness
+            # Next *insert* the wrongAnswers and numAttempts as
+            # new columns in front of the RESOURCE_DISPLAY_NAME_COL_POS:
+            colVals.insert(AnonAndModIDAdder.RESOURCE_DISPLAY_NAME_COL_POS, ','.join(wrongAnswers))
+            # The +1 below accounts for the wrongAnswers we just inserted:
+            colVals.insert(AnonAndModIDAdder.RESOURCE_DISPLAY_NAME_COL_POS + 1, str(numAttempts))
             
             # Append the anon name
             # to the end of the .tsv row, where it will end up 
@@ -183,6 +226,144 @@ class AnonAndModIDAdder(object):
         self.tmpFd.close()        
         # Now mv the temp file into the tsv file, replacing it:
         os.rename(self.tmpFd.name, self.tsvFileName)
+
+    def parseStateJSON(self, jsonStateStr, srcTableName='courseware_studentmodule'):
+        '''
+        Given the 'state' column from a courseware_studentmodule
+        column, return a 3-tuple: (plusMinusStr, answersArray, numAttempts)
+        The plusMinusStr will be a string of '+' and '-'. A
+        plus means that the problem solution part of an assignment
+        submission was correct; a '-' means it was incorrect. The
+        plus/minus indicators are arranged in the order of the problem
+        subparts; like '++-' for a three-part problem in which the student
+        got the first two correct, the last one incorrect.
+        
+        The answersArray will be an array of answers to the corresponding
+        problems, like ['choice_0', 'choice_1'].
+        
+        Input for a problem solution with two parts looks like this::
+            {   		           
+    		 "correct_map": {
+    		   "i4x-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_2_1": {
+    		     "hint": "",
+    		     "hintmode": null,
+    		     "correctness": "correct",
+    		     "npoints": null,
+    		     "msg": "",
+    		     "queuestate": null
+    		   },
+    		   "i4x-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_3_1": {
+    		     "hint": "",
+    		     "hintmode": null,
+    		     "correctness": "correct",
+    		     "npoints": null,
+    		     "msg": "",
+    		     "queuestate": null
+    		   }
+    		 },
+    		 "input_state": {
+    		   "i4x-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_2_1": {
+    		     
+    		   },
+    		   "i4x-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_3_1": {
+    		     
+    		   }
+    		 },
+    		 "attempts": 3,
+    		 "seed": 1,
+    		 "done": true,
+    		 "student_answers": {
+    		   "i4x-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_2_1": "choice_3",
+    		   "i4x-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_3_1": "choice_0"
+    		 }
+        }   		        
+        
+        This structure is ugly enough even when imported into a dict
+        via json.loads() that a regular expression solution is faster.
+        Three regexp are used:
+          - SOLUTION_RESULT_PATTERN  = re.compile(r'[^"]*correctness": "([^"]*)')
+              looks for the correctness entries: 'correct', 'incorrect'.
+              First the regex throws away front parts the JSON that do not consist
+              of 'correctness": '. That's the '"[^"]*correctness": "' par
+              of the regex
+              Next, a capture group grabs all letters that are not a double
+              quote. That's the '([^"]*)' part of the regex. Those capture
+              groups will contain the words 'correct' or 'incorrect'.
+               
+          - SOLUTION_ANSWERS_PATTERN = re.compile(r'[^:]*: "([^"]*)"')
+              looks for the answers themselves: 'choice_0', etc. This pattern
+              assumes that we first cut off from the JSON all the front part up
+              to 'student_answers":'. The regex operates over the rest:
+              The '[^:]*: "' skips over all text up to the next colon, followed
+              by a space and opening double quote. The capture group grabs the 
+              answer, as in 'choice_0'. 
+        
+        @param jsonStateStr:
+        @type jsonStateStr:
+        @param srcTableName:
+        @type srcTableName:
+        '''
+        successResults = ''
+        badAnswers = []
+        numAttempts = -1
+        
+        # Many state entries are not student problem result 
+        # submissions, but of the form "{'postion': 4}".
+        # Weed those out:
+        if jsonStateStr.find('correct_map') == -1:
+            return (successResults, badAnswers, numAttempts)
+        
+        # Get the ['correct','incorrect',...] array;
+        # we'll use it later on:
+        allSolutionResults = AnonAndModIDAdder.SOLUTION_RESULT_PATTERN.findall(jsonStateStr)
+        
+        
+        # Next, get all the answers themselves.
+        # Chop off all the JSON up to 'student_answers":':
+        chopTxtMarker = 'student_answers":'
+        chopPos = jsonStateStr.find(chopTxtMarker)
+        if chopPos == -1:
+            # Couldn't find the student answers; fine;
+            return (successResults, badAnswers, numAttempts)
+        else:
+            # Get left with str starting at '{' in
+            # "student_answers": {
+    		#   "i4x-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_2_1": "choice_3",
+    		#   "i4x-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_3_1": "choice_0"
+            restJSON = jsonStateStr[chopPos+len(chopTxtMarker):]
+            # ... and put the regex to work:
+            answers = AnonAndModIDAdder.SOLUTION_ANSWERS_PATTERN.findall(restJSON)
+        
+        # Find number of attempts:
+        # Find '"attempts": 3,...':
+        chopTxtMarker = '"attempts": '
+        chopPos = jsonStateStr.find(chopTxtMarker)
+        if chopPos > 0:
+           upToNum = jsonStateStr[chopPos+len(chopTxtMarker):]
+           try:
+               numAttempts = int("".join(itertools.takewhile(str.isdigit, upToNum)))
+           except ValueError:
+                # Couldn't find the number of attempts.
+                # Just punt.
+                pass
+                
+        # Go through the ['correct','incorrect',...] array,
+        # and take two actions: if correct, add a '+' to
+        # the successResults str; if 'incorrect' then add
+        # a '-' to successResults, and transfer the 'bad'
+        # answer to the badAnswers array:
+        
+        for (i, correctness) in enumerate(allSolutionResults):
+            if  correctness == 'correct':
+                successResults += '+'
+            else:
+                successResults += '-'
+                try:
+                    badAnswers.append(answers[i])
+                except IndexError:
+                    badAnswers.append('<unknown>')
+
+        return (successResults, badAnswers, numAttempts)
         
     def getAnonFromIntID(self, intStudentId):
         theAnonName = ''

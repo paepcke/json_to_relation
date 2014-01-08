@@ -87,7 +87,7 @@ fi
 targetFile=$TARGET_DIR/modulestore_`date +"%m_%d_%Y_%H_%M_%S"`.json
 
 # ------------------ Signin -------------------
-echo date": Start refreshing modulestore extract..."
+echo `date`": Start refreshing modulestore extract..."
 
 # ------------------ Pull Excerpt of Modulestore from S3 -------------------
 
@@ -124,5 +124,5 @@ else
 fi
 
 # ------------------ Signout -------------------
-echo date": Finished updating table modulestore extract."
+echo `date`": Finished updating table modulestore extract."
 echo "----------"
