@@ -170,7 +170,7 @@ class AnonAndModIDAdder(object):
                     'first_submit',
                     'last_submit',
                     'module_type', 
-                    'resource_display_name']
+                    'resource_display_name\n']
         self.tmpFd.write(string.join(colNames, '\t'))
 
         # We tested for self.tsvFileName being readable
