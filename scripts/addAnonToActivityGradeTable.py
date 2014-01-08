@@ -28,7 +28,16 @@ max_grade column value
 Assumptions:
    o The TSV file has the following schema::
    
-        activity_grade_id, student_id, course_id, grade, max_grade, parts_correctness, module_type, resource_display_name
+        activity_grade_id, 
+        student_id, 
+        course_id, 
+        grade, 
+        max_grade, 
+        parts_correctness, 
+        first_submit, 
+        last_submit, 
+        module_type, 
+        resource_display_name
         
      in that order.
      The activity_grade_id is renamed from the original 'id' in courseware_studentmodule
@@ -91,6 +100,8 @@ class AnonAndModIDAdder(object):
     # Position before which the newly computed
     # percentage grade will be inserted:
     NEW_PERCENT_GRADE_COL_POS = 5
+    
+    FIRST_SUBMIT_COL_POS = 6
     
     def __init__(self, uid, pwd, tsvFileName):
         '''
@@ -212,10 +223,10 @@ class AnonAndModIDAdder(object):
                 self.parseStateJSON(colVals[AnonAndModIDAdder.PARTS_CORRECTNESS_COL_POS + 1])
             colVals[AnonAndModIDAdder.PARTS_CORRECTNESS_COL_POS + 1] = partsCorrectness
             # Next *insert* the wrongAnswers and numAttempts as
-            # new columns in front of the RESOURCE_DISPLAY_NAME_COL_POS:
-            colVals.insert(AnonAndModIDAdder.RESOURCE_DISPLAY_NAME_COL_POS, ','.join(wrongAnswers))
+            # new columns in front of the FIRST_SUBMIT_COL_POS:
+            colVals.insert(AnonAndModIDAdder.FIRST_SUBMIT_COL_POS + 1, ','.join(wrongAnswers))
             # The +1 below accounts for the wrongAnswers we just inserted:
-            colVals.insert(AnonAndModIDAdder.RESOURCE_DISPLAY_NAME_COL_POS + 1, str(numAttempts))
+            colVals.insert(AnonAndModIDAdder.FIRST_SUBMIT_COL_POS + 2, str(numAttempts))
             
             # Append the anon name
             # to the end of the .tsv row, where it will end up 
