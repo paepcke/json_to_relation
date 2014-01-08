@@ -54,6 +54,12 @@ import collections
 import re
 import itertools
 
+# Add json_to_relation source dir to $PATH
+# for duration of this execution:
+source_dir = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "../json_to_relation/")]
+source_dir.extend(sys.path)
+sys.path = source_dir
+
 from mysqldb import MySQLDB
 from utils import Utils
 
@@ -80,7 +86,7 @@ class AnonAndModIDAdder(object):
     # content of column module_id, but below
     # we convert that id to a human-readable
     # string, therefore the col name resource_display_name:
-    RESOURCE_DISPLAY_NAME_COL_POS = 7
+    RESOURCE_DISPLAY_NAME_COL_POS = 9
     
     # Position before which the newly computed
     # percentage grade will be inserted:
@@ -148,7 +154,9 @@ class AnonAndModIDAdder(object):
                     'max_grade', 
                     'parts_correctness', 
                     'wrong_answers', 
-                    'numAttempts', 
+                    'numAttempts',
+                    'first_submit',
+                    'last_submit',
                     'module_type', 
                     'resource_display_name']
         self.tmpFd.write(string.join(colNames, '\t'))

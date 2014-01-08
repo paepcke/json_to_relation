@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS Edx.ActivityGrade (
     parts_correctness varchar(50),
     wrong_answers varchar(255),
     numAttempts int,
+    first_submit datetime,
+    last_submit datetime,
     module_type varchar(32) NOT NULL,
     resource_display_name varchar(255) NOT NULL DEFAULT '',
     anon_screen_name varchar(40) NOT NULL DEFAULT ''

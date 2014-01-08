@@ -193,8 +193,8 @@ ssh goldengate.class.stanford.edu "mysql --host=edx-prod-ro.cn2cujs3bplc.us-west
                                                     grade, \
                                                     max_grade, \
                                                     state as parts_correctness, \
-                                                    created as first_submit \
-                                                    modified as last_submit \
+                                                    created as first_submit, \
+                                                    modified as last_submit, \
                                                     module_type, \
                                                     module_id as resource_display_name \
                                              FROM courseware_studentmodule LIMIT 300; \"
