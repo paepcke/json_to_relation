@@ -197,7 +197,7 @@ ssh goldengate.class.stanford.edu "mysql --host=edx-prod-ro.cn2cujs3bplc.us-west
                                                     modified as last_submit, \
                                                     module_type, \
                                                     module_id as resource_display_name \
-                                             FROM courseware_studentmodule LIMIT 300; \"
+                                             FROM courseware_studentmodule; \"
                                   " > $targetFile
 
 echo `date`": Done pulling courseware_studentmodule excerpt from S3"
