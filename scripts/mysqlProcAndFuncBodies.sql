@@ -314,6 +314,57 @@ BEGIN
     return @anonId;
 END//
 
-
 # Restore standard delimiter:
 delimiter ;
+
+# -----------------------------------------  Views -------------------------------
+
+#--------------------------
+# EventXtract
+#-------------
+
+DROP VIEW IF EXiSTS EventXtract;
+CREATE VIEW EventXtract AS
+   SELECT _id,
+	  anon_screen_name,
+	  event_type,
+	  ip,
+	  time,
+	  course_display_name,
+	  resource_display_name,
+	  goto_from,
+	  goto_dest,
+	  video_code,
+	  video_current_time,
+	  video_speed,
+	  video_old_time,
+	  video_new_time,
+	  video_seek_type,
+	  video_new_speed,
+	  video_old_speed,
+	  success
+  FROM EdxTrackEvent;
+
+#--------------------------
+# Performance
+#------------
+
+DROP VIEW IF EXiSTS Performance;
+CREATE VIEW Performance AS
+SELECT anon_screen_name, 
+       course_id,
+       SUM(percent_grade)/COUNT(percent_grade) AS avg_grade
+FROM Edx.ActivityGrade
+GROUP BY anon_screen_name, course_id;
+
+#--------------------------
+# FinalGrade 
+#-----------
+
+DROP VIEW IF EXiSTS FinalGrade;
+CREATE VIEW FinalGrade AS
+SELECT anon_screen_name,
+       course_id,
+       grade,
+       distinction
+FROM EdxPrivate.UserGrade;
