@@ -325,15 +325,13 @@ delimiter ;
 
 DROP VIEW IF EXiSTS EventXtract;
 CREATE VIEW EventXtract AS
-   SELECT _id,
-	  anon_screen_name,
+   SELECT anon_screen_name,
 	  event_type,
 	  ip,
 	  time,
 	  course_display_name,
 	  resource_display_name,
-	  goto_from,
-	  goto_dest,
+	  success,
 	  video_code,
 	  video_current_time,
 	  video_speed,
@@ -342,7 +340,8 @@ CREATE VIEW EventXtract AS
 	  video_seek_type,
 	  video_new_speed,
 	  video_old_speed,
-	  success
+	  goto_from,
+	  goto_dest
   FROM Edx.EdxTrackEvent;
 
 #--------------------------
