@@ -343,7 +343,7 @@ CREATE VIEW EventXtract AS
 	  video_new_speed,
 	  video_old_speed,
 	  success
-  FROM EdxTrackEvent;
+  FROM Edx.EdxTrackEvent;
 
 #--------------------------
 # Performance
