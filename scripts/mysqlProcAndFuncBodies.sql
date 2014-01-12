@@ -367,3 +367,32 @@ SELECT anon_screen_name,
        grade,
        distinction
 FROM EdxPrivate.UserGrade;
+
+#--------------------------
+# VideoInteraction
+#-----------------
+
+DROP VIEW IF EXISTS VideoInteraction;
+CREATE VIEW VideoInteraction AS
+SELECT event_type,
+       resource_display_name,
+       video_current_time,
+       video_speed,
+       video_new_speed,
+       video_old_speed,
+       video_new_time,
+       video_old_time,
+       video_seek_type,
+       video_code,
+       time,
+       course_display_name,
+       anon_screen_name
+FROM EdxTrackEvent
+WHERE  CHAR_LENGTH(video_code) > 0 OR
+       CHAR_LENGTH(video_current_time) > 0 OR
+       CHAR_LENGTH(video_speed) > 0 OR
+       CHAR_LENGTH(video_old_time) > 0 OR
+       CHAR_LENGTH(video_new_time) > 0 OR
+       CHAR_LENGTH(video_seek_type) > 0 OR
+       CHAR_LENGTH(video_new_speed) > 0 OR
+       CHAR_LENGTH(video_old_speed) > 0;
