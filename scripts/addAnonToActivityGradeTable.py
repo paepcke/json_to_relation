@@ -30,7 +30,7 @@ Assumptions:
    
         activity_grade_id, 
         student_id, 
-        course_id, 
+        course_display_name, 
         grade, 
         max_grade, 
         parts_correctness, 
@@ -49,7 +49,7 @@ Assumptions:
 
 When we are done with a row, its schema will be::
 
-        activity_grade_id, student_id, course_id, grade, max_grade, parts_correctness, wrong_answers, numAttempts, module_type, resource_display_name
+        activity_grade_id, student_id, course_display_name, grade, max_grade, parts_correctness, wrong_answers, numAttempts, module_type, resource_display_name
 
 '''
 import argparse
@@ -58,8 +58,6 @@ import os
 import string
 import sys
 import tempfile
-import json
-import collections
 import re
 import itertools
 
@@ -152,15 +150,9 @@ class AnonAndModIDAdder(object):
         self.tmpFd = tempfile.NamedTemporaryFile(dir=os.path.dirname(self.tsvFileName), 
                                             suffix='studMod',
                                             delete=False)
-        # Modify the first line, the column names,
-        # to conform to what we'll do to the rest
-        # of the TSV file's data:
-        with open(self.tsvFileName, 'r') as tsvFd:
-            headerRow = tsvFd.readline()
-        
         colNames = ['activity_grade_id', 
                     'student_id', 
-                    'course_id', 
+                    'course_display_name', 
                     'grade', 
                     'max_grade', 
                     'percent_grade',

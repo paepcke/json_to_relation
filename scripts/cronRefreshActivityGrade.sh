@@ -189,7 +189,7 @@ ssh goldengate.class.stanford.edu "mysql --host=edx-prod-ro.cn2cujs3bplc.us-west
                                           -e \"USE edxprod; \
                                              SELECT id as activity_grade_id, \
                                                     student_id, \
-                                                    course_id, \
+                                                    course_display_name, \
                                                     grade, \
                                                     max_grade, \
                                                     state as parts_correctness, \

@@ -48,6 +48,7 @@
 #    o video_new_speed
 #    o video_old_speed
 #    o video_seek_type
+#    o Answer.answer
 
 USAGE="Usage: "`basename $0`" [-u uid][-p][-d dbName][-t tableName][-a] courseNamePattern"
 
