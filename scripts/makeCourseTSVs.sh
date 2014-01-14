@@ -1,0 +1,255 @@
+#!/bin/bash
+
+#******
+# Takes a course name substring from the command line. 
+# table in db 'Extracts' that contains rows from EdxTrackEvents whose
+# course_display_name contains the command line argument as a
+# substring. Use MySQL type wildcards.
+#
+# Example: makeCourseExtract.sh -p -t HRP258StatsInMed "Medicine/HRP258/Statistics_in_Medicine"
+#
+# The destination database (default 'Extracts') can be controlled via
+# the -d option. The database is created if it does not exist.
+#
+# The new table is called <Database>.<commandLineArgWithoutWildcard>,
+# unless the -t option specifies a specific table name.  The new table
+# is indexed on the same columns as EdxTrackEvent. If the table
+# already exists, an error is indicated, and the script exists without
+# having changed anything.  
+#
+# The default user under which the necessary mysql calls are made is
+# the current user as returned by 'whoami'. If the -p option is given,
+# that option's value is used as the MySQL uid. 
+#
+# If no password is provided, the script examines the current user's
+# $HOME/.ssh directory for a file named 'mysql'. If that file exists, 
+# its content is used as a MySQL password, else no password is used 
+# for running MySQL.
+#
+# If the -p option is provided, the scripts requests a MySQL pwd on
+# the command line.
+#
+# If the -a (--all-columns) option is provided, extracted table wil contain 
+# all EdxTrackEvent columns plus any 'answer' field in the Answer table
+# (left join EdxTrackEvent with Answer on EdxTrackEvent.answer_fk=Answer.answer_id)
+# 
+# Without the -a option, the new table will contain:
+#    o anon_screen_name
+#    o event_type
+#    o ip
+#    o time
+#    o course_display_name
+#    o resource_display_name
+#    o success
+#    o goto_from
+#    o goto_dest
+#    o attempts
+#    o video_code
+#    o video_current_time
+#    o video_new_speed
+#    o video_old_speed
+#    o video_seek_type
+#    o Answer.answer
+
+USAGE="Usage: "`basename $0`" [-u uid][-p][-d destDirPath] courseNamePattern"
+
+if [ $# -lt 1 ]
+then
+    echo $USAGE
+    exit 1
+fi
+
+USERNAME=`whoami`
+PASSWD=''
+COURSE_SUBSTR=''
+needPasswd=false
+destDirGiven=false
+DEST_DIR='/home/dataman/Data/CustomExcerpts'
+
+# Execute getopt
+ARGS=`getopt -o "u:pd:" -l "user:,password,destDir:" \
+      -n "getopt.sh" -- "$@"`
+ 
+#Bad arguments
+if [ $? -ne 0 ];
+then
+  exit 1
+fi
+ 
+# A little magic
+eval set -- "$ARGS"
+ 
+# Now go through all the options
+while true;
+do
+  case "$1" in
+    -u|--user)
+      shift
+      # Grab the option value
+      # unless it's null:
+      if [ -n "$1" ]
+      then
+        USERNAME=$1
+        shift
+      else
+	echo $USAGE
+	exit 1
+      fi;;
+ 
+    -p|--password)
+      needPasswd=true
+      shift;;
+ 
+    -d|--destDir)
+      shift
+      # Grab the option value:
+      if [ -n "$1" ]
+      then
+        DEST_DIR=$1
+	destDirGiven=true
+        shift
+      else
+	echo $USAGE
+	exit 1
+      fi;;
+ 
+    --)
+      shift
+      break;;
+  esac
+done
+
+# Make sure one arg is left after
+# all the shifting above: the search
+# pattern for the course name:
+
+if [ -z $1 ]
+then
+  echo $USAGE
+  exit 1
+fi
+COURSE_SUBSTR=$1
+
+# Create a prefix for the table file names
+# by replacing all '/' by '_' in the course
+# name:
+DIR_LEAF=`echo "$COURSE_SUBSTR" | sed "s/[_%]//g"`
+
+# If destination directory was not explicitly 
+# provided, add a leaf directory to the
+# standard directory to hold the three .tsv
+# files we'll put there as siblings to the
+# ones we put there in the past:
+if ! $destDirGiven
+then
+    DEST_DIR=$DEST_DIR/$DIR_LEAF
+fi
+
+# Make sure the directory path exists all the way:
+mkdir -p $DEST_DIR
+
+if $needPasswd
+then
+    # The -s option suppresses echo:
+    read -s -p "Password for user '$USERNAME' on `hostname`'s MySQL server: " PASSWD
+    echo
+else
+    # Get home directory of whichever user will
+    # log into MySQL:
+    HOME_DIR=$(getent passwd $USERNAME | cut -d: -f6)
+    # If the home dir has a readable file called mysql in its .ssh
+    # subdir, then pull the pwd from there:
+    if test -f $HOME_DIR/.ssh/mysql && test -r $HOME_DIR/.ssh/mysql
+    then
+	PASSWD=`cat $HOME_DIR/.ssh/mysql`
+    fi
+fi
+
+#*************
+echo "Course substr: '$COURSE_SUBSTR'"
+echo "User: $USERNAME"
+echo "PWD: '$PASSWD'"
+if [ -z $PASSWD ]
+then
+    echo "PWD empty"
+else
+    echo "PWD full"
+fi
+echo "DEST_DIR: '$DEST_DIR'"
+echo "COURSE_SUBSTR: $COURSE_SUBSTR"
+echo "DIR_LEAF: $DIR_LEAF"
+exit 0
+#*************
+
+EVENT_EXTRACT_FNAME=$DEST_DIR/$DIR_LEAF_EventXtract.tsv
+ACTIVITY_GRADE_FNAME=$DEST_DIR/`basename $DEST_DIR`_ActivityGrade.tsv
+VIDEO_FNAME=$DEST_DIR/`basename $DEST_DIR`_VideoInteraction.tsv
+
+if [ -e $EVENT_EXTRACT_FNAME ]
+then
+    echo "File $EVENT_EXTRACT_FNAME already exists; aborting."
+    exit 1
+fi
+
+if [ -e $ACTIVITY_GRADE_FNAME ]
+then
+    echo "File $ACTIVITY_GRADE_FNAME already exists; aborting."
+    exit 1
+fi
+
+if [ -e $VIDEO_FNAME ]
+then
+    echo "File $VIDEO_FNAME already exists; aborting."
+    exit 1
+fi
+
+EXPORT_EventXtract_CMD=" \
+  SELECT * FROM Edx.EventXtract \
+  INTO OUTFILE '"$EVENT_EXTRACT_FNAME"' \
+    FIELDS TERMINATED BY '\t' OPTIONALLY ENCLOSED BY '\"' \
+    LINES TERMINATED BY '\r\n' \
+  WHERE Edx.EventXtract.course_display_name LIKE '"$COURSE_SUBSTR"';"
+
+EXPORT_ActivityGrade_CMD=" \
+  SELECT * FROM Edx.ActivityGrade \
+  INTO OUTFILE '"$ACTIVITY_GRADE_FNAME"' \
+    FIELDS TERMINATED BY '\t' OPTIONALLY ENCLOSED BY '\"' \
+    LINES TERMINATED BY '\r\n' \
+  WHERE Edx.ActivityGrade.course_display_name LIKE '"$COURSE_SUBSTR"';"
+
+EXPORT_VideoInteraction_CMD=" \
+  SELECT * FROM Edx.VideoInteraction \
+  INTO OUTFILE '"$VIDEO_FNAME"' \
+    FIELDS TERMINATED BY '\t' OPTIONALLY ENCLOSED BY '\"' \
+    LINES TERMINATED BY '\r\n' \
+  WHERE Edx.ActivityGrade.course_display_name LIKE '"$COURSE_SUBSTR"';"
+
+#********************
+echo "EXPORT_EventXtract_CMD: $EXPORT_EventXtract_CMD"
+echo "EXPORT_ActivityGrade_CMD: $EXPORT_ActivityGrade_CMD"
+echo "EXPORT_VideoInteraction_CMD: $EXPORT_VideoInteraction_CMD"
+exit 0
+#********************
+
+# If the pwd is empty, don't issue -p to mysql:
+if [ -z $PASSWD ]
+then
+    # Password empty...
+    echo "Creating extract EventXtract ..."
+    echo "$EXPORT_EventXtract_CMD" | mysql -u $USERNAME
+    echo "Creating extract ActivityGrade ..."
+    echo "$EXPORT_ActivityGrade_CMD" | mysql -u $USERNAME
+    echo "Creating extract VideoInteraction ..."
+    echo "$EXPORT_VideoInteraction_CMD" | mysql -u $USERNAME
+
+else
+    # Password not empty ...
+    echo "Creating extract EventXtract ..."
+    echo "$EXPORT_EventXtract_CMD" | mysql -u $USERNAME -p$PASSWD
+    echo "Creating extract ActivityGrade ..."
+    echo "$EXPORT_ActivityGrade_CMD" | mysql -u $USERNAME -p$PASSWD
+    echo "Creating extract VideoInteraction ..."
+    echo "$EXPORT_VideoInteraction_CMD" | mysql -u $USERNAME -p$PASSWD
+fi
+
+echo "Done exporting class to tsv"
