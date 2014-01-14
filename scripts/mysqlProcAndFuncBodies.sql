@@ -351,10 +351,10 @@ CREATE VIEW EventXtract AS
 DROP VIEW IF EXiSTS Performance;
 CREATE VIEW Performance AS
 SELECT anon_screen_name, 
-       course_id,
+       course_display_name,
        SUM(percent_grade)/COUNT(percent_grade) AS avg_grade
 FROM Edx.ActivityGrade
-GROUP BY anon_screen_name, course_id;
+GROUP BY anon_screen_name, course_display_name;
 
 #--------------------------
 # FinalGrade 
@@ -387,7 +387,7 @@ SELECT event_type,
        time,
        course_display_name,
        anon_screen_name
-FROM EdxTrackEvent
+FROM Edx.EdxTrackEvent
 WHERE  CHAR_LENGTH(video_code) > 0 OR
        CHAR_LENGTH(video_current_time) > 0 OR
        CHAR_LENGTH(video_speed) > 0 OR
