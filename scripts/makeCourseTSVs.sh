@@ -130,10 +130,44 @@ then
 fi
 COURSE_SUBSTR=$1
 
-# Create a prefix for the table file names
-# by replacing all '/' by '_' in the course
-# name:
-DIR_LEAF=`echo "$COURSE_SUBSTR" | sed "s/[_%]//g"`
+# Create a prefix for the table file name
+# names. The same name will also be used as
+# the directory subname under ~dataman/Data/CustomExcerpts.
+# Strategy: if the COURSE_SUBSTR is a full, clean
+#   course triplet part1/part2/part3, we use part2_part3,
+#   b/c the course number (part 2) is supposed to be unique.
+#   If we cannot create this part2_part3 name, b/c
+#   $COURSE_SUBSTR is of a non-standard form, then 
+#   we use all of $COURSE_SUBSTR.
+#   Finally, in either case, All MySQL regex '%' chars
+#   are replaced by '_ALL'.
+# Ex:
+#   Engineering/CS106A/Fall2013 => CS106A_Fall2013
+#   Chemistry/CH%/Summer => CH_ALL_Summer
+
+# The following SED expression has three repetitions
+# of \([^/]*\)\/, which means all letters that are
+# not forward slashes (the '[^/]*), followed by a 
+# forward slash (the '\/'). The forward slash must
+# be escaped b/c it's special in SED. 
+# The escaped parentheses pairs form a group,
+# which we then recall later, in the substitution
+# part with \2 and \3 (the '/\2_\3/' part):
+
+DIR_LEAF=`echo $COURSE_SUBSTR | sed -n "s/\([^/]*\)\/\([^/]*\)\/\(.*\)/\2_\3/p"`
+
+if [ -z $DIR_LEAF ]
+then
+    DIR_LEAF=`echo $COURSE_SUBSTR | sed s/[%]/_ALL/g`
+else
+    # Len of DIR_LEAF > 0.
+    # Replace any '%' MySQL wildcards with
+    # '_All':
+    DIR_LEAF=`echo $DIR_LEAF | sed s/[%]/_ALL/g`
+fi
+
+# Last step: remove all remaining '/' chars:
+DIR_LEAF=`echo $DIR_LEAF | sed s/[/]//g`
 
 # If destination directory was not explicitly 
 # provided, add a leaf directory to the
@@ -166,25 +200,29 @@ else
 fi
 
 #*************
-echo "Course substr: '$COURSE_SUBSTR'"
-echo "User: $USERNAME"
-echo "PWD: '$PASSWD'"
-if [ -z $PASSWD ]
-then
-    echo "PWD empty"
-else
-    echo "PWD full"
-fi
-echo "DEST_DIR: '$DEST_DIR'"
-echo "COURSE_SUBSTR: $COURSE_SUBSTR"
-echo "DIR_LEAF: $DIR_LEAF"
-exit 0
+# echo "Course substr: '$COURSE_SUBSTR'"
+# echo "User: $USERNAME"
+# echo "PWD: '$PASSWD'"
+# if [ -z $PASSWD ]
+# then
+#     echo "PWD empty"
+# else
+#     echo "PWD full"
+# fi
+# echo "DEST_DIR: '$DEST_DIR'"
+# echo "COURSE_SUBSTR: $COURSE_SUBSTR"
+# echo "DIR_LEAF: $DIR_LEAF"
+# exit 0
 #*************
 
-EVENT_EXTRACT_FNAME=$DEST_DIR/$DIR_LEAF_EventXtract.tsv
-ACTIVITY_GRADE_FNAME=$DEST_DIR/`basename $DEST_DIR`_ActivityGrade.tsv
-VIDEO_FNAME=$DEST_DIR/`basename $DEST_DIR`_VideoInteraction.tsv
+# Create a full path for each of the tables'
+# .tsv:
 
+EVENT_EXTRACT_FNAME=$DEST_DIR/${DIR_LEAF}_EventXtract.tsv
+ACTIVITY_GRADE_FNAME=$DEST_DIR/${DIR_LEAF}_ActivityGrade.tsv
+VIDEO_FNAME=$DEST_DIR/${DIR_LEAF}_VideoInteraction.tsv
+
+# Refuse to overwrite existing files:
 if [ -e $EVENT_EXTRACT_FNAME ]
 then
     echo "File $EVENT_EXTRACT_FNAME already exists; aborting."
@@ -203,26 +241,30 @@ then
     exit 1
 fi
 
+# Create the three MySQL export commands:
 EXPORT_EventXtract_CMD=" \
-  SELECT * FROM Edx.EventXtract \
+  SELECT * \
   INTO OUTFILE '"$EVENT_EXTRACT_FNAME"' \
     FIELDS TERMINATED BY '\t' OPTIONALLY ENCLOSED BY '\"' \
     LINES TERMINATED BY '\r\n' \
-  WHERE Edx.EventXtract.course_display_name LIKE '"$COURSE_SUBSTR"';"
+  FROM Edx.EventXtract \
+  WHERE course_display_name LIKE '"$COURSE_SUBSTR"';"
 
 EXPORT_ActivityGrade_CMD=" \
-  SELECT * FROM Edx.ActivityGrade \
+  SELECT * \
   INTO OUTFILE '"$ACTIVITY_GRADE_FNAME"' \
     FIELDS TERMINATED BY '\t' OPTIONALLY ENCLOSED BY '\"' \
     LINES TERMINATED BY '\r\n' \
-  WHERE Edx.ActivityGrade.course_display_name LIKE '"$COURSE_SUBSTR"';"
+  FROM Edx.ActivityGrade \
+  WHERE course_display_name LIKE '"$COURSE_SUBSTR"';"
 
 EXPORT_VideoInteraction_CMD=" \
-  SELECT * FROM Edx.VideoInteraction \
+  SELECT * \
   INTO OUTFILE '"$VIDEO_FNAME"' \
     FIELDS TERMINATED BY '\t' OPTIONALLY ENCLOSED BY '\"' \
     LINES TERMINATED BY '\r\n' \
-  WHERE Edx.ActivityGrade.course_display_name LIKE '"$COURSE_SUBSTR"';"
+  FROM Edx.VideoInteraction \
+  WHERE course_display_name LIKE '"$COURSE_SUBSTR"';"
 
 #********************
 echo "EXPORT_EventXtract_CMD: $EXPORT_EventXtract_CMD"
