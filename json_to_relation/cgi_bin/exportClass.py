@@ -1,3 +1,6 @@
+#!/usr/bin/python
+
+
 #!/usr/bin/env python
 '''
 Created on Jan 14, 2014
@@ -8,19 +11,36 @@ import cgi
 import cgitb
 import os
 import subprocess
+import sys
 
 
 cgitb.enable()
 
-class CourseTSVServer:
+class MockCGI:
     
     def __init__(self):
-        self.parms = cgi.FieldStorage()
+        self.parms = {'courseId' : "Engineering/CS106A/Fall2013"}
+        
+    def getvalue(self, parmName, default=None):
+        try:
+            return self.parms[parmName]
+        except KeyError:
+            return default
+
+class CourseTSVServer:
+    
+    def __init__(self, testing=False):
+        if testing:
+            self.parms = MockCGI()
+        else:
+            self.parms = cgi.FieldStorage()
+        # Locate the makeCourseTSV.sh script:
+        thisScriptDir = os.path.dirname(__file__)
+        self.exportTSVScript = os.path.join(thisScriptDir, '../../scripts/makeCourseTSVs.sh')
     
     def exportClass(self):
-        thisScriptDir = os.path.dirname(__file__)
-        exportTSVScript = os.path.join(thisScriptDir, '../../scripts/makeCourseTSV.sh')
-        subprocess.call([exportTSVScript, '-u', 'www-data', self.parms.getvalue('courseId', '')])
+        subprocess.call([self.exportTSVScript, '-u', 'www-data', self.parms.getvalue('courseId', '')],
+                        stdout=sys.stdout, stderr=sys.stderr)
         
     
     def echoParms(self):
@@ -29,7 +49,13 @@ class CourseTSVServer:
 
 
 if __name__ == '__main__':
-    print("Content-type: text/html\n\n")
+    print("Content-type: text/html\n")
     
-    server = CourseTSVServer()
-  
+    print("<html>")
+    print("<head></head>")
+    print("<body>")
+    
+    server = CourseTSVServer(testing=True)
+    server.exportClass()
+
+    print("</body>")
