@@ -181,6 +181,7 @@ fi
 
 # Make sure the directory path exists all the way:
 mkdir -p $DEST_DIR
+chmod a+w $DEST_DIR
 
 if $needPasswd
 then
@@ -201,6 +202,7 @@ fi
 
 #*************
 # echo "Course substr: '$COURSE_SUBSTR'"
+# echo "HOME_DIR: $HOME_DIR"
 # echo "User: $USERNAME"
 # echo "PWD: '$PASSWD'"
 # if [ -z $PASSWD ]
@@ -267,10 +269,10 @@ EXPORT_VideoInteraction_CMD=" \
   WHERE course_display_name LIKE '"$COURSE_SUBSTR"';"
 
 #********************
-echo "EXPORT_EventXtract_CMD: $EXPORT_EventXtract_CMD"
-echo "EXPORT_ActivityGrade_CMD: $EXPORT_ActivityGrade_CMD"
-echo "EXPORT_VideoInteraction_CMD: $EXPORT_VideoInteraction_CMD"
-exit 0
+# echo "EXPORT_EventXtract_CMD: $EXPORT_EventXtract_CMD"
+# echo "EXPORT_ActivityGrade_CMD: $EXPORT_ActivityGrade_CMD"
+# echo "EXPORT_VideoInteraction_CMD: $EXPORT_VideoInteraction_CMD"
+# exit 0
 #********************
 
 # If the pwd is empty, don't issue -p to mysql:
