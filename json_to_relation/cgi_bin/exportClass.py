@@ -29,6 +29,11 @@ class MockCGI:
 
 class CourseTSVServer:
     
+    # Max number of lines from each csv table to output
+    # as samples to the calling browser for human sanity 
+    # checking:
+    NUM_OF_TABLE_SAMPLE_LINES = 5
+    
     def __init__(self, testing=False):
         if testing:
             self.parms = MockCGI()
@@ -50,13 +55,16 @@ class CourseTSVServer:
     
     def printClassTableInfo(self):
         for csvFilePath in self.infoTmpFile:
-            sys.stdout.write("Table file %s size: %d" % (csvFilePath, os.path.getsize(csvFilePath)))
-            lineCounter = 0
-            with open(csvFilePath) as infoFd:
-                while lineCounter < 5:
-                    sys.stdout.write(infoFd.readline() + '<br>')
-                    lineCounter += 1
-            sys.stdout.write('<br>')
+            csvFilePath = csvFilePath.strip()
+            tblFileSize = os.path.getsize(csvFilePath)
+            sys.stdout.write("<br>Table file %s size: %d<br>" % (csvFilePath, tblFileSize))
+            if tblFileSize > 0:
+                lineCounter = 0
+                with open(csvFilePath) as infoFd:
+                    while lineCounter < CourseTSVServer.NUM_OF_TABLE_SAMPLE_LINES:
+                        sys.stdout.write(infoFd.readline() + '<br>')
+                        lineCounter += 1
+                sys.stdout.write('<br>')
             sys.stdout.flush()
                 
     def echoParms(self):
@@ -68,9 +76,9 @@ if __name__ == '__main__':
     sys.stdout.write("Content-type: text/html\n\n")
     sys.stdout.flush()
 
-    sys.stdout.write("<html>")
-    sys.stdout.write("<head></head>")
-    sys.stdout.write("<body>")
+    sys.stdout.write("<html>\n")
+    sys.stdout.write("<head></head>\n")
+    sys.stdout.write("<body>\n")
     sys.stdout.flush()
     
     #server = CourseTSVServer(testing=True)
