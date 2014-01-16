@@ -43,6 +43,9 @@ class CourseTSVServer:
                         stdout=sys.stdout, stderr=sys.stderr)
         
     
+    def checkClassTables(self):
+        pass
+    
     def echoParms(self):
         for parmName in self.parms.keys():
             print("Parm: '%s': '%s'" % (self.parms.getvalue(parmName, '')))
@@ -55,7 +58,8 @@ if __name__ == '__main__':
     print("<head></head>")
     print("<body>")
     
-    server = CourseTSVServer(testing=True)
+    #server = CourseTSVServer(testing=True)
+    server = CourseTSVServer(testing=False)
     server.exportClass()
 
     print("</body>")

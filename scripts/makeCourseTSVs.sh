@@ -1,55 +1,30 @@
 #!/bin/bash
 
 #******
-# Takes a course name substring from the command line. 
-# table in db 'Extracts' that contains rows from EdxTrackEvents whose
-# course_display_name contains the command line argument as a
-# substring. Use MySQL type wildcards.
+# Takes a course name substring from the command line. Creates
+# a subdirectory in ~dataman/Data/CustomExctracts, and places
+# three tables into that subdirectory, each with course-relevant
+# rows from EventXtract, VideoInteraction, and ActivityGrade.
 #
-# Example: makeCourseExtract.sh -p -t HRP258StatsInMed "Medicine/HRP258/Statistics_in_Medicine"
+# The given course triplet may be complete, or contain MySQL regex chars.
 #
-# The destination database (default 'Extracts') can be controlled via
-# the -d option. The database is created if it does not exist.
+# Example: makeCourseTSVs.sh -p Medicine/HRP258/Statistics_in_Medicine
 #
-# The new table is called <Database>.<commandLineArgWithoutWildcard>,
-# unless the -t option specifies a specific table name.  The new table
-# is indexed on the same columns as EdxTrackEvent. If the table
-# already exists, an error is indicated, and the script exists without
-# having changed anything.  
-#
+# The destination directory in which the tables directory will be placed
+# may be controlled by the -d option.
+# 
 # The default user under which the necessary mysql calls are made is
-# the current user as returned by 'whoami'. If the -p option is given,
-# that option's value is used as the MySQL uid. 
+# the current user as returned by 'whoami'. Else the user provided
+# in the commandline -u option is the effective user.
+
+# If the -p option is given, a password is requested on the commandline.
 #
-# If no password is provided, the script examines the current user's
+# If no password is provided, the script examines the effective user's
 # $HOME/.ssh directory for a file named 'mysql'. If that file exists, 
 # its content is used as a MySQL password, else no password is used 
 # for running MySQL.
 #
-# If the -p option is provided, the scripts requests a MySQL pwd on
-# the command line.
-#
-# If the -a (--all-columns) option is provided, extracted table wil contain 
-# all EdxTrackEvent columns plus any 'answer' field in the Answer table
-# (left join EdxTrackEvent with Answer on EdxTrackEvent.answer_fk=Answer.answer_id)
-# 
-# Without the -a option, the new table will contain:
-#    o anon_screen_name
-#    o event_type
-#    o ip
-#    o time
-#    o course_display_name
-#    o resource_display_name
-#    o success
-#    o goto_from
-#    o goto_dest
-#    o attempts
-#    o video_code
-#    o video_current_time
-#    o video_new_speed
-#    o video_old_speed
-#    o video_seek_type
-#    o Answer.answer
+# ***** What happens if target files exist?
 
 USAGE="Usage: "`basename $0`" [-u uid][-p][-d destDirPath] courseNamePattern"
 
@@ -280,7 +255,10 @@ if [ -z $PASSWD ]
 then
     # Password empty...
     echo "Creating extract EventXtract ..."
-    echo "$EXPORT_EventXtract_CMD" | mysql -u $USERNAME
+#**************
+    echo "$EXPORT_EventXtract_CMD" | mysql --debug=d:t:O,/tmp/client.trace -u $USERNAME
+    #echo "$EXPORT_EventXtract_CMD" | mysql -u $USERNAME
+#**************
     echo "Creating extract ActivityGrade ..."
     echo "$EXPORT_ActivityGrade_CMD" | mysql -u $USERNAME
     echo "Creating extract VideoInteraction ..."
