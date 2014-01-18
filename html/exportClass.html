@@ -1,21 +1,50 @@
+<!DOCTYPE html>
 <html>
 <head>
-<title>Datastage Class Data Export</title>
+  <title>Datastage Class Data Export</title>
+  <meta charset="UTF-8">
+  <style type="text/css">
+    body {background-color:#FFF8E8;}
+    H1 { text-align: center }
+  </style>
+  <script type="text/javascript">
+
+    function startProgressStream() {
+      var xmlHttp = null;
+      var courseID   = document.getElementById("courseID").value;
+      var fileAction = document.getElementById("fileAction").checked;
+      var theURL     = "http://mono.stanford.edu/code/exportClass.py";
+
+      console.log("StartProgressStream() called.") //*******
+
+      theURL += "?courseID="+courseID+"&fileAction="+fileAction;
+
+      if(typeof(EventSource)!=="undefined") {
+        var source=new EventSource(theURL);
+        source.onmessage=function(event) {
+          console.log("Event caught.") //*******
+          document.getElementById("progress").innerHTML+=event.data + "<br>";
+        }
+      }
+      else {
+        document.getElementById("progress").innerHTML="Browser does not support server-sent events...";
+      }
+   }
+  </script>
+
 </head>
-<body bgcolor="#FFF8E8" link="#0000FF" vlink="#007090" alink="#00A0FF">
+<body>
 
-<center><h1>Export One Class to CSV</h1></center>
+  <h1>Export One Class to CSV</h1>
 
-<form action="/code/exportClass.py" name=courseExport method="get">
+    Course to export (may use MySQL regex): <input type="text"
+						   id="courseID">
+    <input type="checkbox" id="fileAction" value="xpunge">Remove 
+    any previous exports of same class<br>
 
-Course to export (may use MySQL regex): <input type="text"
-					      name="courseID">
-<input type="checkbox" name="fileAction" value="xpunge">Remove 
-any previous exports of same class<br>
+    <input type="button" value="Export Class" onclick="startProgressStream()">
 
-<input type="Submit" value="Export Class">
-
-</form>
+  <div id="progress"></div>
 
 </body>
-
+</html>

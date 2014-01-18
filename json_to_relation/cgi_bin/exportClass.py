@@ -117,18 +117,17 @@ if __name__ == '__main__':
     TESTING = False
     #TESTING = True
     
-    sys.stdout.write("Content-type: text/html\n\n")
+    #sys.stdout.write("Content-type: text/html\n\n")
+    sys.stdout.write("Content-type: text/event-stream\n")
+    sys.stdout.write("Cache-Control: no-cache\n\n")
     sys.stdout.flush()
 
-    sys.stdout.write("<html>\n")
-    sys.stdout.write("<head></head>\n")
-    sys.stdout.write('<body bgcolor="#FFF8E8" link="#0000FF" vlink="#007090" alink="#00A0FF">\n')
-    sys.stdout.write('<center><h1>Data Export Process</h1></center>')
+#     sys.stdout.write("<html>\n")
+#     sys.stdout.write("<head></head>\n")
+#     sys.stdout.write('<body bgcolor="#FFF8E8" link="#0000FF" vlink="#007090" alink="#00A0FF">\n')
+    sys.stdout.write('data: <center><h1>Data Export Process</h1></center>\n\n')
     sys.stdout.flush()
-    
-
     server = CourseTSVServer(testing=TESTING)
-    #server = CourseTSVServer(testing=False)
     if TESTING:
         server.addClientInstructions()
     else:
