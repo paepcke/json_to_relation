@@ -1,12 +1,19 @@
 <html>
-<head></head>
-<body>
+<head>
+<title>Datastage Class Data Export</title>
+</head>
+<body bgcolor="#FFF8E8" link="#0000FF" vlink="#007090" alink="#00A0FF">
+
+<center><h1>Export One Class to CSV</h1></center>
 
 <form action="/code/exportClass.py" name=courseExport method="get">
 
-Course to export (my use MySQL regex): <input type="text" name="courseID">
+Course to export (may use MySQL regex): <input type="text"
+					      name="courseID">
+<input type="checkbox" name="fileAction" value="xpunge">Remove 
+any previous exports of same class<br>
 
-<input type="Submit" value="goExportClass">
+<input type="Submit" value="Export Class">
 
 </form>
 

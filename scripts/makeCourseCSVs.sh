@@ -183,7 +183,10 @@ fi
 
 # Make sure the directory path exists all the way:
 mkdir -p $DEST_DIR
-chmod a+w $DEST_DIR
+
+# Unfortunately, we cannot chmod when called
+# from the Web, so this is commented out:
+#chmod a+w $DEST_DIR
 
 # ----------------------------- Process or Lookup the Password -------------
 
@@ -245,7 +248,7 @@ VideoInteraction_HEADER_FILE=`mktemp -p /tmp`
 ActivityGrade_HEADER_FILE=`mktemp -p /tmp`
 
 # Ensure the files are cleaned up:
-trap "rm -f $EventXtract_HEADER_FILE; rm VideoInteraction_HEADER_FILE; rm ActivityGrade_HEADER_FILE" EXIT
+trap "rm -f $EventXtract_HEADER_FILE VideoInteraction_HEADER_FILE ActivityGrade_HEADER_FILE" EXIT
 
 # A tmp file for one table's csv data:
 # Must be unlinked (the -u option), b/c
@@ -313,10 +316,10 @@ if [ -e $EVENT_EXTRACT_FNAME ]
 then
     if $xpungeFiles
     then
-	echo "Removing existing csv file $EVENT_EXTRACT_FNAME"
+	echo "Removing existing csv file $EVENT_EXTRACT_FNAME<br>"
 	rm $EVENT_EXTRACT_FNAME
     else
-	echo "File $EVENT_EXTRACT_FNAME already exists; aborting."
+	echo "File $EVENT_EXTRACT_FNAME already exists; aborting.<br>"
 	exit 1
     fi
 fi
@@ -325,10 +328,10 @@ if [ -e $ACTIVITY_GRADE_FNAME ]
 then
     if $xpungeFiles
     then
-	echo "Removing existing csv file $ACTIVITY_GRADE_FNAME"
+	echo "Removing existing csv file $ACTIVITY_GRADE_FNAME<br>"
 	rm $ACTIVITY_GRADE_FNAME
     else
-	echo "File $ACTIVITY_GRADE_FNAME already exists; aborting."
+	echo "File $ACTIVITY_GRADE_FNAME already exists; aborting.<br>"
 	exit 1
     fi
 fi
@@ -337,10 +340,10 @@ if [ -e $VIDEO_FNAME ]
 then
     if $xpungeFiles
     then
-	echo "Removing existing csv file $VIDEO_FNAME"
+	echo "Removing existing csv file $VIDEO_FNAME<br>"
 	rm $VIDEO_FNAME
     else
-	echo "File $VIDEO_FNAME already exists; aborting."
+	echo "File $VIDEO_FNAME already exists; aborting.<br>"
 	exit 1
     fi
 fi
