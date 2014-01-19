@@ -68,12 +68,24 @@ class CourseTSVServer:
         # Check whether we are to delete any already existing
         # csv files for this class:
         xpungeExisting = self.parms.getvalue("fileAction", None)
-        if xpungeExisting == 'true':
-            subprocess.call([self.exportTSVScript, '-u', 'www-data', '-x', '-i', self.infoTmpFile.name, theCourseID],
-                            stdout=sys.stdout, stderr=sys.stdout)
-        else:
-            subprocess.call([self.exportTSVScript, '-u', 'www-data', '-i', self.infoTmpFile.name, theCourseID],
-                            stdout=sys.stdout, stderr=sys.stdout)
+#         if xpungeExisting == 'true':
+#             subprocess.call([self.exportTSVScript, '-u', 'www-data', '-x', '-i', self.infoTmpFile.name, theCourseID],
+#                             stdout=sys.stdout, stderr=sys.stdout)
+#         else:
+#             subprocess.call([self.exportTSVScript, '-u', 'www-data', '-i', self.infoTmpFile.name, theCourseID],
+#                             stdout=sys.stdout, stderr=sys.stdout)
+        try:
+            if xpungeExisting == 'true':
+                for line in subprocess.Popen([self.exportTSVScript, '-u', 'www-data', '-x', '-i', self.infoTmpFile.name, theCourseID],
+                                             stdout=sys.stdout, stderr=sys.stdout, bufsize=0).communicate():
+                    self.send(line)
+            else:
+                for line in subprocess.Popen([self.exportTSVScript, '-u', 'www-data', '-i', self.infoTmpFile.name, theCourseID],
+                                             stdout=sys.stdout, stderr=sys.stdout, bufsize=0):
+                    self.send(line)
+        except Exception as e:
+            self.send(`e`)
+
         # Make an array of csv file paths:
         self.csvFilePaths = []
         for csvFilePath in server.infoTmpFile:
@@ -156,7 +168,7 @@ if __name__ == '__main__':
     TESTING = False
     #TESTING = True
     
-    sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+    #***sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
     startTime = datetime.datetime.now()
     
     #sys.stdout.write("Content-type: text/html\n\n")
