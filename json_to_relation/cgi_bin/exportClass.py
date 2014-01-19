@@ -156,6 +156,7 @@ if __name__ == '__main__':
     TESTING = False
     #TESTING = True
     
+    sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
     startTime = datetime.datetime.now()
     
     #sys.stdout.write("Content-type: text/html\n\n")
