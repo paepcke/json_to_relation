@@ -166,6 +166,7 @@ if __name__ == '__main__':
     sys.stdout.write('data: <h2>Data Export Progress</h2>\n\n')
     sys.stdout.flush()
     server = CourseTSVServer(testing=TESTING)
+    server.reportProgress()
     if TESTING:
         server.addClientInstructions()
     else:
