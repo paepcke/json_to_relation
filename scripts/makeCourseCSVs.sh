@@ -391,7 +391,7 @@ if [ -z $PASSWD ]
 then
     # Password empty...
     #*******echo "data: Creating extract EventXtract ...<br>\n\n"
-    printUnbuffered.py "data: Creating extract EventXtract ...<br>\n\n"
+    ./printUnbuffered.py "data: Creating extract EventXtract ...<br>\n\n"
 
     echo "$EXPORT_EventXtract_CMD" | mysql -u $USERNAME
     # Concatenate the col name header and the table:
@@ -408,7 +408,7 @@ then
 else
     # Password not empty ...
     #*********echo "data: Creating extract EventXtract ...<br>\n\n"
-    printUnbuffered.py "data: Creating extract EventXtract ...<br>\n\n"
+    ./printUnbuffered.py "data: Creating extract EventXtract ...<br>\n\n"
 
     echo "$EXPORT_EventXtract_CMD" | mysql -u $USERNAME -p$PASSWD
     # Concatenate the col name header and the table:
