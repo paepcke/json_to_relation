@@ -8,11 +8,15 @@ Created on Jan 14, 2014
 
 import cgi
 import cgitb
+import datetime
 import os
 import socket
+import string
 import subprocess
 import sys
 import tempfile
+from threading import Timer
+from subprocess import CalledProcessError
 
 
 cgitb.enable()
@@ -29,6 +33,10 @@ class MockCGI:
             return default
 
 class CourseTSVServer:
+    
+    # Time interval after which a 'dot' or other progress
+    # indicator is sent to the calling browser:
+    PROGRESS_INTERVAL = 3 # seconds
     
     # Max number of lines from each csv table to output
     # as samples to the calling browser for human sanity 
@@ -49,16 +57,18 @@ class CourseTSVServer:
         # That script will place file paths to all created 
         # tables into that file:
         self.infoTmpFile = tempfile.NamedTemporaryFile()
+        
+        self.currTimer = None
     
     def exportClass(self):
         theCourseID = self.parms.getvalue('courseID', '')
         if len(theCourseID) == 0:
-            sys.stdout.write("Please fill in the course ID field.")
+            self.send("Please fill in the course ID field.")
             return False
         # Check whether we are to delete any already existing
         # csv files for this class:
         xpungeExisting = self.parms.getvalue("fileAction", None)
-        if xpungeExisting == 'xpunge':
+        if xpungeExisting == 'true':
             subprocess.call([self.exportTSVScript, '-u', 'www-data', '-x', '-i', self.infoTmpFile.name, theCourseID],
                             stdout=sys.stdout, stderr=sys.stdout)
         else:
@@ -73,24 +83,32 @@ class CourseTSVServer:
     def printClassTableInfo(self):
         for csvFilePath in self.csvFilePaths:
             tblFileSize = os.path.getsize(csvFilePath)
-            sys.stdout.write("<br><b>Table file</b> %s size: %d byes<br><b>Sample rows:</b><br>" % (csvFilePath, tblFileSize))
+            # Get the line count:
+            lineCnt = 'unknown'
+            try:
+                # Get a string: '23 fileName\n', where 23 is an ex. for the line count:
+                lineCntAndFilename = subprocess.check_output(['wc', '-l', csvFilePath])
+                # Isolate the line count:
+                lineCnt = lineCntAndFilename.split(' ')[0]
+            except (CalledProcessError, IndexError):
+                pass
+            self.send("<br><b>Table file</b> %s size: %d bytes, %s line(s)<br><b>Sample rows:</b><br>" % (csvFilePath, tblFileSize, lineCnt))
             if tblFileSize > 0:
                 lineCounter = 0
                 with open(csvFilePath) as infoFd:
                     while lineCounter < CourseTSVServer.NUM_OF_TABLE_SAMPLE_LINES:
                         tableRow = infoFd.readline()
                         if len(tableRow) > 0:
-                            sys.stdout.write(tableRow + '<br>')
+                            self.send(tableRow + '<br>')
                         lineCounter += 1
-                sys.stdout.write('<br>')
-            sys.stdout.flush()
+        self.send('<br>')
      
     def addClientInstructions(self):
         # Get just the first table path, we just
         # need its subdirectory name to build the
         # URL:
         if len(self.csvFilePaths) == 0:
-            sys.stdout.write("Cannot create client instructions: file %s did not contain table paths.<br>" % self.infoTmpFile.name)
+            #self.send("Cannot create client instructions: file %s did not contain table paths.<br>" % self.infoTmpFile.name)
             return
         # Get the last part of the directory,
         # which is the 'CourseSubdir' in
@@ -98,14 +116,35 @@ class CourseTSVServer:
         tableDir = os.path.basename(os.path.dirname(self.csvFilePaths[0]))
         thisFullyQualDomainName = socket.getfqdn()
         url = "http://%s/instructor/%s" % (thisFullyQualDomainName, tableDir)
-        sys.stdout.write("<b>Email draft for client; copy-paste into email program:</b><br>")
-        msgStart = 'Hi,<br>your data is ready for pickup. Please visit our <a href="%s">pickup page</a>, <br>' % url
-        sys.stdout.write(msgStart)
+        self.send("<b>Email draft for client; copy-paste into email program:</b><br>")
+        msgStart = 'Hi,<br>your data is ready for pickup. Please visit our <a href="%s">pickup page</a>.<br>' % url
+        self.send(msgStart)
         # The rest of the msg is in a file:
         with open('clientInstructions.html', 'r') as txtFd:
-            for line in txtFd:
-                sys.stdout.write(line)
+            lines = txtFd.readlines()
+        txt = '<br>'.join(lines)
+        # Remove \n everywhere:
+        txt = string.replace(txt, '\n', '')
+        self.send(txt)
+                
+    def reportProgress(self):
+        self.send('.')
+        self.setTimer(CourseTSVServer.PROGRESS_INTERVAL)
+                
+    def setTimer(self, time=None):
+        if time is None:
+            time = CourseTSVServer.PROGRESS_INTERVAL
+        self.currTimer = Timer(time, self.reportProgress)
+
+    def cancelTimer(self):
+        if self.currTimer is not None:
+            self.currTimer.cancel()
+            
+    def send(self, msg):
+        sys.stdout.write('data: %s\n\n' % msg.strip())
         sys.stdout.flush()
+
+    # -------------------------------------------  Testing  ------------------
                 
     def echoParms(self):
         for parmName in self.parms.keys():
@@ -117,24 +156,32 @@ if __name__ == '__main__':
     TESTING = False
     #TESTING = True
     
+    startTime = datetime.datetime.now()
+    
     #sys.stdout.write("Content-type: text/html\n\n")
     sys.stdout.write("Content-type: text/event-stream\n")
     sys.stdout.write("Cache-Control: no-cache\n\n")
     sys.stdout.flush()
 
-#     sys.stdout.write("<html>\n")
-#     sys.stdout.write("<head></head>\n")
-#     sys.stdout.write('<body bgcolor="#FFF8E8" link="#0000FF" vlink="#007090" alink="#00A0FF">\n')
-    sys.stdout.write('data: <center><h1>Data Export Process</h1></center>\n\n')
+    sys.stdout.write('data: <h2>Data Export Progress</h2>\n\n')
     sys.stdout.flush()
     server = CourseTSVServer(testing=TESTING)
     if TESTING:
         server.addClientInstructions()
     else:
         exportSuccess = server.exportClass()
+        server.cancelTimer()
+        endTime = datetime.datetime.now() - startTime
+        # Get a timedelta object with the microsecond
+        # component subtracted to be 0, so that the
+        # microseconds won't get printed:        
+        duration = endTime - datetime.timedelta(microseconds=endTime.microseconds)
+        server.send("Runtime: %s" % str(duration))
         if exportSuccess:
             server.printClassTableInfo()
             server.addClientInstructions()
-        
-    sys.stdout.write("</body>")
+         
+    
+    sys.stdout.write("event: allDone\n")
+    sys.stdout.write("data: Done in %s.\n\n" % str(duration))
     sys.stdout.flush()

@@ -4,8 +4,9 @@
   <title>Datastage Class Data Export</title>
   <meta charset="UTF-8">
   <style type="text/css">
-    body {background-color:#FFF8E8;}
-    H1 { text-align: center }
+    body { background-color:#FFF8E8;}
+    H1   { text-align: center;}
+    p + p { margin-top: 0.5em; } 
   </style>
   <script type="text/javascript">
 
@@ -13,23 +14,62 @@
       var xmlHttp = null;
       var courseID   = document.getElementById("courseID").value;
       var fileAction = document.getElementById("fileAction").checked;
-      var theURL     = "http://mono.stanford.edu/code/exportClass.py";
+      //var theURL     = "http://mono.stanford.edu/code/exportClass.py";
+      var theURL = window.location.origin + "/code/exportClass.py";
 
+      console.log("theURL: " + theURL) //*******
       console.log("StartProgressStream() called.") //*******
 
       theURL += "?courseID="+courseID+"&fileAction="+fileAction;
 
-      if(typeof(EventSource)!=="undefined") {
-        var source=new EventSource(theURL);
-        source.onmessage=function(event) {
-          console.log("Event caught.") //*******
-          document.getElementById("progress").innerHTML+=event.data + "<br>";
-        }
+      if(typeof(EventSource) == "undefined") {
+         // Browser doesn't support server-send events.
+         // Just start the export without giving on-the-fly
+         // feedback:
+         window.location = theURL
+         return;
       }
-      else {
-        document.getElementById("progress").innerHTML="Browser does not support server-sent events...";
-      }
-   }
+
+      // Start exportClass.py at the server, listening
+      // for an event stream from that program:
+      var source = new EventSource(theURL);
+
+      // Listener for all strings from server that start with 'data: ':
+      source.addEventListener('message', function(event) {
+         // Add the string to the bottom of the screen:
+         document.getElementById("progress").innerHTML += event.data + "<br>";
+         // If 'clear progress info' button is not visible, make it
+         // visible:
+         if (!clrProgressButtonVisible()) {
+             exposeClearProgressButton()
+         }
+
+      }, false);
+
+      // Listener for exportClass.py saying that it's done:
+      source.addEventListener('allDone', function(event) {
+         console.log("Got 'allDone'") //********8
+         source.close()
+         }, false);
+    }
+
+    function clrProgressDiv() {
+        document.getElementById("progress").innerHTML = "";
+        hideClearProgressButton()
+    }
+
+    function exposeClearProgressButton() {
+        document.getElementById("clrProgBtn").style.visibility="visible";
+    }
+
+    function hideClearProgressButton() {
+        document.getElementById("clrProgBtn").style.visibility="hidden";
+    }
+
+    function clrProgressButtonVisible() {
+        return document.getElementById("clrProgBtn").style.visibility == "visible";
+    }
+
   </script>
 
 </head>
@@ -44,6 +84,15 @@
 
     <input type="button" value="Export Class" onclick="startProgressStream()">
 
+  <br>
+  <hr>
+  <div id="tmpButtons">
+    <input type="button" 
+	   id="clrProgBtn"
+	   value="Clear Progress Info"
+           onclick="clrProgressDiv()" 
+	   style="visibility: hidden">
+  </div>
   <div id="progress"></div>
 
 </body>
