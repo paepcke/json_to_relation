@@ -390,7 +390,9 @@ EXPORT_VideoInteraction_CMD=" \
 if [ -z $PASSWD ]
 then
     # Password empty...
-    echo "data: Creating extract EventXtract ...<br>\n\n"
+    #*******echo "data: Creating extract EventXtract ...<br>\n\n"
+    echo "data: Creating extract EventXtract ...<br>\n\n" > /dev/tty
+
     echo "$EXPORT_EventXtract_CMD" | mysql -u $USERNAME
     # Concatenate the col name header and the table:
     cat $EventXtract_HEADER_FILE $EventXtract_VALUES > $EVENT_EXTRACT_FNAME
@@ -405,7 +407,9 @@ then
 
 else
     # Password not empty ...
-    echo "data: Creating extract EventXtract ...<br>\n\n"
+    #*********echo "data: Creating extract EventXtract ...<br>\n\n"
+    echo "data: Creating extract EventXtract ...<br>\n\n" > /dev/tty
+
     echo "$EXPORT_EventXtract_CMD" | mysql -u $USERNAME -p$PASSWD
     # Concatenate the col name header and the table:
     cat $EventXtract_HEADER_FILE $EventXtract_VALUES > $EVENT_EXTRACT_FNAME
