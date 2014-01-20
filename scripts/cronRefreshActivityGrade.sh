@@ -165,6 +165,21 @@ fi
 # ------------------ Signin -------------------
 echo `date`": Start updating table ActivityGrade..."
 
+# ----------------- Find Newest Entry in Local ActivityGrade Table ------------------
+
+if [ ! -z $LOCAL_MYSQL_PASSWD ]
+then
+    LATEST_DATE=`mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD --silent --skip-column-names Edx -e \
+	  "SELECT MAX(last_submit) FROM ActivityGrade;"`
+else
+    LATEST_DATE=`mysql -u $LOCAL_USERNAME --silent --skip-column-names Edx -e \
+	  "SELECT MAX(last_submit) FROM ActivityGrade;"`
+fi
+
+#****************
+#echo "LATEST_DATE: $LATEST_DATE"
+#exit 0
+#****************
 
 # ------------------ Retrieve courseware_studentmodule Excerpt from S3 as CSV -------------------
 
@@ -187,17 +202,19 @@ ssh goldengate.class.stanford.edu "mysql --host=edx-prod-ro.cn2cujs3bplc.us-west
                                          -u "$REMOTE_USERNAME" \
                                           -p"$REMOTE_MYSQL_PASSWD" \
                                           -e \"USE edxprod; \
-                                             SELECT id as activity_grade_id, \
+                                             SELECT id AS activity_grade_id, \
                                                     student_id, \
-                                                    course_display_name, \
+                                                    course_id AS course_display_name, \
                                                     grade, \
                                                     max_grade, \
-                                                    state as parts_correctness, \
-                                                    created as first_submit, \
-                                                    modified as last_submit, \
+                                                    state AS parts_correctness, \
+                                                    created AS first_submit, \
+                                                    modified AS last_submit, \
                                                     module_type, \
-                                                    module_id as resource_display_name \
-                                             FROM courseware_studentmodule; \"
+                                                    module_id AS resource_display_name \
+                                             FROM courseware_studentmodule \
+                                             WHERE modified > '"$LATEST_DATE"'; \" \
+                                             
                                   " > $targetFile
 
 echo `date`": Done pulling courseware_studentmodule excerpt from S3"
@@ -237,45 +254,69 @@ MYSQL_LOAD_CMD="LOAD DATA LOCAL INFILE '$targetFile' IGNORE INTO TABLE ActivityG
 
 if [ ! -z $LOCAL_MYSQL_PASSWD ]
 then
-    # Drop table ActivityGrade if it exists:
-    echo `date`": About to drop ActivityGrade table..."
-    mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE Edx; DROP TABLE IF EXISTS ActivityGrade;\n"
-    echo `date`": Done dropping ActivityGrade table..."
+    # This commented block used to delete ActivityGrade, and
+    # recreate it. But the db on goldengate isn't able to 
+    # transfer the entire courseware_studentmodule extract.
+    # So we now pull only what we don't have locally yet:
 
-    # Create table 'ActivityGrade' in Edx, if it doesn't exist:
-    echo `date`": About to create ActivityGrade table..."
-    mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD < $currScriptsDir/cronRefreshActivityGradeCrTable.sql
-    echo `date`": Done creating ActivityGrade table..."
+    # # Drop table ActivityGrade if it exists:
+    # echo `date`": About to drop ActivityGrade table..."
+    # mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE Edx; DROP TABLE IF EXISTS ActivityGrade;\n"
+    # echo `date`": Done dropping ActivityGrade table..."
+
+    # # Create table 'ActivityGrade' in Edx, if it doesn't exist:
+    # echo `date`": About to create ActivityGrade table..."
+    # mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD < $currScriptsDir/cronRefreshActivityGradeCrTable.sql
+    # echo `date`": Done creating ActivityGrade table..."
 
     # Do the load:
     echo `date`": About to load TSV into ActivityGrade table..."
+    # Turn off indexing update during load:
+    mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE Edx; ALTER TABLE ActivityGrade DISABLE KEYS;"
     mysql --local-infile -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE Edx; $MYSQL_LOAD_CMD"
+    # Rebuild the indexex:
+    mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE Edx; ALTER TABLE ActivityGrade ENABLE KEYS;"
     echo `date`": Done loading TSV into ActivityGrade table..."
 
-    # Build the indexes:
-    echo `date`": About to build ActivityGrade indexes..."
-    mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD < $currScriptsDir/cronRefreshActivityGradeMkIndexes.sql
+    # Indexes are updated during the insert now, so no need to
+    # build them:
+
+    # # Build the indexes:
+    # echo `date`": About to build ActivityGrade indexes..."
+    # mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD < $currScriptsDir/cronRefreshActivityGradeMkIndexes.sql
 
     echo `date`": Done building ActivityGrade indexes..."
 else
-    # Drop existing table:
-    echo `date`": About to drop ActivityGrade table..."
-    mysql -u $LOCAL_USERNAME -e "USE Edx; DROP TABLE IF EXISTS ActivityGrade;"
-    echo `date`": Done dropping ActivityGrade table..."
+    # This commented block used to delete ActivityGrade, and
+    # recreate it. But the db on goldengate isn't able to 
+    # transfer the entire courseware_studentmodule extract.
+    # So we now pull only what we don't have locally yet:
 
-    # Create table 'ActivityGrade' in Edx, if it doesn't exist:
-    echo `date`": About to create ActivityGrade table..."
-    mysql -u $LOCAL_USERNAME < $currScriptsDir/cronRefreshActivityGradeCrTable.sql
-    echo `date`": Done creating ActivityGrade table..."
+    # # Drop existing table:
+    # echo `date`": About to drop ActivityGrade table..."
+    # mysql -u $LOCAL_USERNAME -e "USE Edx; DROP TABLE IF EXISTS ActivityGrade;"
+    # echo `date`": Done dropping ActivityGrade table..."
+
+    # # Create table 'ActivityGrade' in Edx, if it doesn't exist:
+    # echo `date`": About to create ActivityGrade table..."
+    # mysql -u $LOCAL_USERNAME < $currScriptsDir/cronRefreshActivityGradeCrTable.sql
+    # echo `date`": Done creating ActivityGrade table..."
 
     # Do the load:
     echo `date`": About to load TSV into ActivityGrade table..."
+    # Turn off indexing update during load:
+    mysql -u $LOCAL_USERNAME -e "USE Edx; ALTER TABLE ActivityGrade DISABLE KEYS;"
     mysql --local-infile -u $LOCAL_USERNAME -e "USE Edx; $MYSQL_LOAD_CMD"
     echo `date`": Done loading TSV into ActivityGrade table..."
+    # Rebuild the indexex:
+    mysql -u $LOCAL_USERNAME -e "USE Edx; ALTER TABLE ActivityGrade ENABLE KEYS;"
 
-    # Build the indexes:
-    echo `date`": About to build ActivityGrade indexes..."
-    mysql -u $LOCAL_USERNAME < $currScriptsDir/cronRefreshActivityGradeMkIndexes.sql
+    # Indexes are updated during the insert now, so no need to
+    # build them:
+
+    # # Build the indexes:
+    # echo `date`": About to build ActivityGrade indexes..."
+    # mysql -u $LOCAL_USERNAME < $currScriptsDir/cronRefreshActivityGradeMkIndexes.sql
 fi
 
 # ------------------ Cleanup -------------------
