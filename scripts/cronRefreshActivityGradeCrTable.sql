@@ -7,7 +7,7 @@ USE Edx;
 CREATE TABLE IF NOT EXISTS Edx.ActivityGrade (
     activity_grade_id int(11) PRIMARY KEY,
     student_id int(11) NOT NULL,
-    course_id varchar(255) NOT NULL,
+    course_display_name varchar(255) NOT NULL,
     grade double,
     max_grade double,
     percent_grade double,
