@@ -12,11 +12,12 @@ import datetime
 import os
 import socket
 import string
+from subprocess import CalledProcessError
 import subprocess
 import sys
 import tempfile
 from threading import Timer
-from subprocess import CalledProcessError
+import time
 
 
 cgitb.enable()
@@ -68,26 +69,33 @@ class CourseTSVServer:
         # Check whether we are to delete any already existing
         # csv files for this class:
         xpungeExisting = self.parms.getvalue("fileAction", None)
-#         try:
-#             if xpungeExisting == 'true':
-#                 subprocess.call([self.exportTSVScript, '-u', 'www-data', '-x', '-i', self.infoTmpFile.name, theCourseID],
-#                                 stdout=sys.stdout, stderr=sys.stdout)
-#             else:
-#                 subprocess.call([self.exportTSVScript, '-u', 'www-data', '-i', self.infoTmpFile.name, theCourseID],
-#                                 stdout=sys.stdout, stderr=sys.stdout)
-#         except Exception as e:
-#             self.send(`e`)
         try:
             if xpungeExisting == 'true':
-                for line in subprocess.Popen([self.exportTSVScript, '-u', 'www-data', '-x', '-i', self.infoTmpFile.name, theCourseID],
-                                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0).communicate():
-                    self.send(line)
+                subprocess.call([self.exportTSVScript, '-u', 'www-data', '-x', '-i', self.infoTmpFile.name, theCourseID],
+                                stdout=sys.stdout, stderr=sys.stdout)
             else:
-                for line in subprocess.Popen([self.exportTSVScript, '-u', 'www-data', '-i', self.infoTmpFile.name, theCourseID],
-                                             stdout=sys.stdout, stderr=sys.stdout, bufsize=0):
-                    self.send(line)
+                subprocess.call([self.exportTSVScript, '-u', 'www-data', '-i', self.infoTmpFile.name, theCourseID],
+                                stdout=sys.stdout, stderr=sys.stdout)
         except Exception as e:
             self.send(`e`)
+            
+        #*****************
+        time.sleep(6)
+        #*****************
+            
+        # The following commented region was one of many attempts at
+        # sending progress realitime. No luck:
+#         try:
+#             if xpungeExisting == 'true':
+#                 for line in subprocess.Popen([self.exportTSVScript, '-u', 'www-data', '-x', '-i', self.infoTmpFile.name, theCourseID],
+#                                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0).communicate():
+#                     self.send(line)
+#             else:
+#                 for line in subprocess.Popen([self.exportTSVScript, '-u', 'www-data', '-i', self.infoTmpFile.name, theCourseID],
+#                                              stdout=sys.stdout, stderr=sys.stdout, bufsize=0).communicate():
+#                     self.send(line)
+#         except Exception as e:
+#             self.send(`e`)
 
 
         # Make an array of csv file paths:
@@ -150,15 +158,16 @@ class CourseTSVServer:
     def setTimer(self, time=None):
         if time is None:
             time = CourseTSVServer.PROGRESS_INTERVAL
-        self.currTimer = Timer(time, self.reportProgress)
+        self.currTimer = Timer(time, self.reportProgress).start()
 
     def cancelTimer(self):
         if self.currTimer is not None:
             self.currTimer.cancel()
             
     def send(self, msg):
-        sys.stdout.write('data: %s\n\n' % msg.strip())
-        sys.stdout.flush()
+        if msg is not None:
+            sys.stdout.write('data: %s\n\n' % msg.strip())
+            sys.stdout.flush()
 
     # -------------------------------------------  Testing  ------------------
                 
@@ -172,7 +181,6 @@ if __name__ == '__main__':
     TESTING = False
     #TESTING = True
     
-    #***sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
     startTime = datetime.datetime.now()
     
     #sys.stdout.write("Content-type: text/html\n\n")
@@ -183,12 +191,14 @@ if __name__ == '__main__':
     sys.stdout.write('data: <h2>Data Export Progress</h2>\n\n')
     sys.stdout.flush()
     server = CourseTSVServer(testing=TESTING)
-    server.reportProgress()
     if TESTING:
         server.addClientInstructions()
     else:
+        # Timer sending dots for progress not working b/c of
+        # buffering:
+        #*****server.setTimer()
         exportSuccess = server.exportClass()
-        server.cancelTimer()
+        #*****server.cancelTimer()
         endTime = datetime.datetime.now() - startTime
         # Get a timedelta object with the microsecond
         # component subtracted to be 0, so that the

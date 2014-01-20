@@ -316,10 +316,10 @@ if [ -e $EVENT_EXTRACT_FNAME ]
 then
     if $xpungeFiles
     then
-	echo "data: Removing existing csv file $EVENT_EXTRACT_FNAME<br>\n\n"
+	echo "data: Removing existing csv file $EVENT_EXTRACT_FNAME<br>"
 	rm $EVENT_EXTRACT_FNAME
     else
-	echo "data: File $EVENT_EXTRACT_FNAME already exists; aborting.<br>\n\n"
+	echo "data: File $EVENT_EXTRACT_FNAME already exists; aborting.<br>"
 	exit 1
     fi
 fi
@@ -328,10 +328,10 @@ if [ -e $ACTIVITY_GRADE_FNAME ]
 then
     if $xpungeFiles
     then
-	echo "data: Removing existing csv file $ACTIVITY_GRADE_FNAME<br>\n\n"
+	echo "data: Removing existing csv file $ACTIVITY_GRADE_FNAME<br>"
 	rm $ACTIVITY_GRADE_FNAME
     else
-	echo "data: File $ACTIVITY_GRADE_FNAME already exists; aborting.<br>\n\n"
+	echo "data: File $ACTIVITY_GRADE_FNAME already exists; aborting.<br>"
 	exit 1
     fi
 fi
@@ -340,10 +340,10 @@ if [ -e $VIDEO_FNAME ]
 then
     if $xpungeFiles
     then
-	echo "data: Removing existing csv file $VIDEO_FNAME<br>\n\n"
+	echo "data: Removing existing csv file $VIDEO_FNAME<br>"
 	rm $VIDEO_FNAME
     else
-	echo "data: File $VIDEO_FNAME already exists; aborting.<br>\n\n"
+	echo "data: File $VIDEO_FNAME already exists; aborting.<br>"
 	exit 1
     fi
 fi
@@ -390,41 +390,37 @@ EXPORT_VideoInteraction_CMD=" \
 if [ -z $PASSWD ]
 then
     # Password empty...
-    #*******echo "data: Creating extract EventXtract ...<br>\n\n"
-    ./printUnbuffered.py "data: Creating extract EventXtract ...<br>\n\n"
-
+    echo "data: Creating extract EventXtract ...<br>"
     echo "$EXPORT_EventXtract_CMD" | mysql -u $USERNAME
     # Concatenate the col name header and the table:
     cat $EventXtract_HEADER_FILE $EventXtract_VALUES > $EVENT_EXTRACT_FNAME
 
-    echo "data: Creating extract ActivityGrade ...<br>\n\n"
+    echo "data: Creating extract ActivityGrade ...<br>"
     echo "$EXPORT_ActivityGrade_CMD" | mysql -u $USERNAME
     cat $ActivityGrade_HEADER_FILE $ActivityGrade_VALUES > $ACTIVITY_GRADE_FNAME
 
-    echo "data: Creating extract VideoInteraction ...<br>\n\n"
+    echo "data: Creating extract VideoInteraction ...<br>"
     echo "$EXPORT_VideoInteraction_CMD" | mysql -u $USERNAME
     cat $VideoInteraction_HEADER_FILE $VideoInteraction_VALUES > $VIDEO_FNAME
 
 else
     # Password not empty ...
-    #*********echo "data: Creating extract EventXtract ...<br>\n\n"
-    ./printUnbuffered.py "data: Creating extract EventXtract ...<br>\n\n"
-
+    echo "data: Creating extract EventXtract ...<br>"
     echo "$EXPORT_EventXtract_CMD" | mysql -u $USERNAME -p$PASSWD
     # Concatenate the col name header and the table:
     cat $EventXtract_HEADER_FILE $EventXtract_VALUES > $EVENT_EXTRACT_FNAME
 
-    echo "data: Creating extract ActivityGrade ...<br>\n\n"
+    echo "data: Creating extract ActivityGrade ...<br>"
     echo "$EXPORT_ActivityGrade_CMD" | mysql -u $USERNAME -p$PASSWD
     cat $ActivityGrade_HEADER_FILE $ActivityGrade_VALUES > $ACTIVITY_GRADE_FNAME
 
-    echo "data: Creating extract VideoInteraction ...<br>\n\n"
+    echo "data: Creating extract VideoInteraction ...<br>"
     echo "$EXPORT_VideoInteraction_CMD" | mysql -u $USERNAME -p$PASSWD
     cat $VideoInteraction_HEADER_FILE $VideoInteraction_VALUES > $VIDEO_FNAME
 
 fi
 
-echo "data: Done exporting class $COURSE_SUBSTR to CSV<br>\n\n"
+echo "data: Done exporting class $COURSE_SUBSTR to CSV<br>"
 
 # ----------------------- Write table paths to a file -------------
 
