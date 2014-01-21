@@ -3,7 +3,7 @@
 # is defined in mysqlProcAndFuncBodies.sql:
 
 USE Edx; 
-CALL createIndexIfNotExists('ActivityGradeCrsIDIdx', 'ActivityGrade', 'course_id', 255);
+CALL createIndexIfNotExists('ActivityGradeCrsIDIdx', 'ActivityGrade', 'course_display_name', 255);
 CALL createIndexIfNotExists('ActivityGradeGradeIdx', 'ActivityGrade', 'grade', NULL);
 CALL createIndexIfNotExists('ActivityGradeMaxGrdIdx', 'ActivityGrade', 'max_grade', NULL);
 CALL createIndexIfNotExists('ActivityGradePercGrdIdx', 'ActivityGrade', 'percent_grade', NULL);
