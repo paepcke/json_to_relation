@@ -17,8 +17,8 @@ import subprocess
 import sys
 import tempfile
 from threading import Timer
-import time
-
+import time  # @UnusedImport
+from mysqldb import MySQLDB 
 
 cgitb.enable()
 
@@ -58,7 +58,14 @@ class CourseTSVServer(object):
         # That script will place file paths to all created 
         # tables into that file:
         self.infoTmpFile = tempfile.NamedTemporaryFile()
-        
+
+        try:
+            with open('/home/dbadmin/.ssh/mysql', 'r') as fd:
+                dbadminPwd = fd.readline()
+                self.mysqlDb = MySQLDB(user='dbadmin', passwd=dbadminPwd, db='Edx')
+        except Exception:
+            self.mysqlDb = None
+            
         self.currTimer = None
     
     def exportClass(self):
@@ -79,7 +86,7 @@ class CourseTSVServer(object):
         except Exception as e:
             self.send(`e`)
         #***************
-        time.sleep(10)   
+        #time.sleep(10)   
         #***************           
         # The following commented region was one of many attempts at
         # sending progress realitime. No luck:
@@ -148,6 +155,19 @@ class CourseTSVServer(object):
         # Remove \n everywhere:
         txt = string.replace(txt, '\n', '')
         self.send(txt)
+      
+    def queryCourseNameList(self, courseID):
+        courseNames = []
+        if self.mysqlDb is not None:
+            for courseName in self.mysqlDb.query('SELECT DISTINCT course_display_name FROM EdxXtract WHERE course_display_name LIKE "%s";'):
+                courseNames.append(courseName)
+        return courseNames
+      
+    def sendCourseCheckboxes(self, courseNmList):
+        self.send("<form action=''>");
+        for name in courseNmList:
+            self.send('<input type="radio" name="crsChoice" value="%s">%s<br>' % (name,name))
+        self.send("</form>")
                 
     def reportProgress(self):
         self.send('.')
