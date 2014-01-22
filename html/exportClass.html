@@ -6,8 +6,23 @@
   <meta charset="UTF-8">
   <style type="text/css">
     body { background-color:#FFF8E8;}
-    H1   { text-align: center;}
+    H1 { 
+         text-align: center;
+         margin-bottom: 0cm;
+    }
     p + p { margin-top: 0.5em; } 
+    #subtitle {
+       text-align: center;
+       margin-top: 0cm;
+       font-size: 1.5em;
+       font-style: italic;
+    }
+    #spanTab {
+       margin-right: 1cm;
+    }
+    #widgetCol {
+       margin-left: 2cm;
+    }
   </style>
   
   <script src="exportClass.js"></script>
@@ -16,12 +31,17 @@
 <body>
 
   <h1>Export One Class to CSV</h1>
+  <p id="subtitle">Log in as dbadmin</p>
 
-    Course to export (may use MySQL regex): <input type="text"
-						   id="courseID">
-    <input type="checkbox" id="fileAction" value="xpunge">Remove 
-    any previous exports of same class<br>
-
+    <span id="spanTab">Course to export; may use MySQL regex;<br>
+      example: Education/EDUC-FACT%:
+    </span>
+    <div id=widgetCol><input type="text" id="courseID"><br>
+          <input type="checkbox" id="fileAction" value="xpunge">
+	  Remove any previous exports of same class
+    </div>
+	     
+    <p>
     <input type="button" value="Export Class" onclick="startProgressStream()">
 
   <br>

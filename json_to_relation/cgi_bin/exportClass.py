@@ -78,11 +78,9 @@ class CourseTSVServer:
                                 stdout=sys.stdout, stderr=sys.stdout)
         except Exception as e:
             self.send(`e`)
-            
-        #*****************
-        time.sleep(6)
-        #*****************
-            
+        #***************
+        time.sleep(10)   
+        #***************           
         # The following commented region was one of many attempts at
         # sending progress realitime. No luck:
 #         try:
@@ -188,8 +186,10 @@ if __name__ == '__main__':
     sys.stdout.write("Cache-Control: no-cache\n\n")
     sys.stdout.flush()
 
-    sys.stdout.write('data: <h2>Data Export Progress</h2>\n\n')
-    sys.stdout.flush()
+    # JavaScript exportClass.js writes the following
+    # now; --> commented out:
+    #sys.stdout.write('data: <h2>Data Export Progress</h2>\n\n')
+    #sys.stdout.flush()
     server = CourseTSVServer(testing=TESTING)
     if TESTING:
         server.addClientInstructions()

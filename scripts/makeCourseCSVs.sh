@@ -142,10 +142,10 @@ COURSE_SUBSTR=$1
 #   $COURSE_SUBSTR is of a non-standard form, then 
 #   we use all of $COURSE_SUBSTR.
 #   Finally, in either case, All MySQL regex '%' chars
-#   are replaced by '_ALL'.
+#   are replaced by '_any'.
 # Ex:
 #   Engineering/CS106A/Fall2013 => CS106A_Fall2013
-#   Chemistry/CH%/Summer => CH_ALL_Summer
+#   Chemistry/CH%/Summer => CH_any_Summer
 
 # The following SED expression has three repetitions
 # of \([^/]*\)\/, which means all letters that are
@@ -158,18 +158,35 @@ COURSE_SUBSTR=$1
 
 DIR_LEAF=`echo $COURSE_SUBSTR | sed -n "s/\([^/]*\)\/\([^/]*\)\/\(.*\)/\2_\3/p"`
 
+#******************
+#echo "data: DEST_LEAF after first xform: '$DIR_LEAF'<br>"
+#echo "data: COURSE_SUBSTR after first xform: '$COURSE_SUBSTR'<br>"
+#******************
+
 if [ -z $DIR_LEAF ]
 then
-    DIR_LEAF=`echo $COURSE_SUBSTR | sed s/[%]/_ALL/g`
+    DIR_LEAF=`echo $COURSE_SUBSTR | sed s/[%]/_any/g`
 else
     # Len of DIR_LEAF > 0.
     # Replace any '%' MySQL wildcards with
     # '_All':
-    DIR_LEAF=`echo $DIR_LEAF | sed s/[%]/_ALL/g`
+    DIR_LEAF=`echo $DIR_LEAF | sed s/[%]/_any/g`
 fi
 
-# Last step: remove all remaining '/' chars:
-DIR_LEAF=`echo $DIR_LEAF | sed s/[/]//g`
+#******************
+#echo "data: DEST_LEAF after second xform: '$DIR_LEAF'<br>"
+#echo "DEST_LEAF after second xform: '$DIR_LEAF'" > /tmp/trash.log
+#******************
+
+# Last step: remove all remaining '/' chars,
+# and any leading underscore(s), if present; the
+# -E option enables extended regexp, which seems
+# needed for the OR option: \|
+DIR_LEAF=`echo $DIR_LEAF | sed -E s/^[_]*\|[/]//g`
+
+#******************
+#echo "data: DEST_LEAF after third xform: '$DIR_LEAF'<br>"
+#******************
 
 # If destination directory was not explicitly 
 # provided, add a leaf directory to the
@@ -180,6 +197,10 @@ if ! $destDirGiven
 then
     DEST_DIR=$DEST_DIR/$DIR_LEAF
 fi
+
+#******************
+#echo "data: DEST_DIR: $DEST_DIR\n\n"
+#******************
 
 # Make sure the directory path exists all the way:
 mkdir -p $DEST_DIR
