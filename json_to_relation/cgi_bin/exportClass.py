@@ -22,7 +22,7 @@ import time
 
 cgitb.enable()
 
-class MockCGI:
+class MockCGI(object):
     
     def __init__(self):
         self.parms = {'courseID' : "Engineering/CS106A/Fall2013"}
@@ -33,7 +33,7 @@ class MockCGI:
         except KeyError:
             return default
 
-class CourseTSVServer:
+class CourseTSVServer(object):
     
     # Time interval after which a 'dot' or other progress
     # indicator is sent to the calling browser:

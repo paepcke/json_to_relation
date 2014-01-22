@@ -9,6 +9,7 @@ can be displayed on the browser below the export class form.
 */
 
 var screenContent = "";
+var source = null;
 
 function progressUpdate() {
     // One-second timer showing date/time on screen while
@@ -49,7 +50,7 @@ function startProgressStream() {
 
     // Start exportClass.py at the server, listening
     // for an event stream from that program:
-    var source = new EventSource(theURL);
+    source = new EventSource(theURL);
 
     // Listener for all strings from server that start with 'data: ':
     source.addEventListener('message', function(event) {
@@ -96,4 +97,10 @@ function hideClearProgressButton() {
 function clrProgressButtonVisible() {
     /* Return true if the Clear Progress Info button is visible, else false*/
     return document.getElementById("clrProgBtn").style.visibility == "visible";
+}
+
+function cancelProcess() {
+    source.close();
+    clearInterval(timer);
+    clrProgressDiv();
 }
