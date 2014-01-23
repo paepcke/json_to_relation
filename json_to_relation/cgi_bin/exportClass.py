@@ -20,20 +20,14 @@ from threading import Timer
 import time  # @UnusedImport
 from mysqldb import MySQLDB 
 
+import tornado;
+from tornado.ioloop import IOLoop;
+from tornado.websocket import WebSocketHandler;
+from tornado.httpserver import HTTPServer;
+
 cgitb.enable()
 
-class MockCGI(object):
-    
-    def __init__(self):
-        self.parms = {'courseID' : "Engineering/CS106A/Fall2013"}
-        
-    def getvalue(self, parmName, default=None):
-        try:
-            return self.parms[parmName]
-        except KeyError:
-            return default
-
-class CourseTSVServer(object):
+class CourseCSVServer(WebSocketHandler):
     
     # Time interval after which a 'dot' or other progress
     # indicator is sent to the calling browser:
@@ -44,12 +38,21 @@ class CourseTSVServer(object):
     # checking:
     NUM_OF_TABLE_SAMPLE_LINES = 5
     
-    def __init__(self, testing=False):
-        if testing:
-            self.parms = MockCGI()
-        else:
-            self.parms = cgi.FieldStorage()
-        # Locate the makeCourseTSV.sh script:
+    def __init__(self, application, request, **kwargs ):
+        '''
+        Invoked when browser accesses this server via ws://...
+        Register this handler instance in the handler list.
+        @param application: Application object that defines the collection of handlers.
+        @type application: tornado.web.Application
+        @param request: a request object holding details of the incoming request
+        @type request:HTTPRequest.HTTPRequest
+        @param kwargs: dict of additional parameters for operating this service.
+        @type kwargs: dict
+        '''
+        super(CourseCSVServer, self).__init__(application, request, **kwargs);
+        self.request = request;        
+
+        # Locate the makeCourseCSV.sh script:
         thisScriptDir = os.path.dirname(__file__)
         self.exportTSVScript = os.path.join(thisScriptDir, '../../scripts/makeCourseCSVs.sh')
         self.csvFilePaths = []
@@ -68,9 +71,46 @@ class CourseTSVServer(object):
             
         self.currTimer = None
     
+    def allow_draft76(self):
+        '''
+        Allow WebSocket connections via the old Draft-76 protocol. It has some
+        security issues, and was replaced. However, Safari (i.e. e.g. iPad)
+        don't implement the new protocols yet. Overriding this method, and
+        returning True will allow those connections.
+        '''
+        return True    
+    
+    def open(self): #@ReservedAssignment
+        '''
+        Called by WebSocket/tornado when a client connects. Method must
+        be named 'open'
+        '''
+        print("Open called")
+    
+    def on_message(self, message):
+        '''
+        Connected browser requests action: "<actionType>:<actionArg(s)>,
+        where actionArgs is a single string or an array of items.
+        @param message: message arriving from the browser
+        @type message: string
+        '''
+        print message
+        try:
+            (action, args) = string.split(message, ':')
+        except Exception as e:
+            pass
+        if action == 'courseNameQ':
+            try:
+                courseName = args
+                matchingCourseNames = self.queryCourseNameList(courseName)
+            except Exception as e:
+                self.write_message("error:%s" % `e`)
+            #************self.write_message('courseList:' + str(matchingCourseNames))
+            self.write_message('courseList:' + str(['foo','bar']))
+        
     def exportClass(self):
         theCourseID = self.parms.getvalue('courseID', '')
-        if len(theCourseID) == 0:
+        if len(theCourseID) == 0:           
             self.send("Please fill in the course ID field.")
             return False
         # Check whether we are to delete any already existing
@@ -85,27 +125,10 @@ class CourseTSVServer(object):
                                 stdout=sys.stdout, stderr=sys.stdout)
         except Exception as e:
             self.send(`e`)
-        #***************
-        #time.sleep(10)   
-        #***************           
-        # The following commented region was one of many attempts at
-        # sending progress realitime. No luck:
-#         try:
-#             if xpungeExisting == 'true':
-#                 for line in subprocess.Popen([self.exportTSVScript, '-u', 'www-data', '-x', '-i', self.infoTmpFile.name, theCourseID],
-#                                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0).communicate():
-#                     self.send(line)
-#             else:
-#                 for line in subprocess.Popen([self.exportTSVScript, '-u', 'www-data', '-i', self.infoTmpFile.name, theCourseID],
-#                                              stdout=sys.stdout, stderr=sys.stdout, bufsize=0).communicate():
-#                     self.send(line)
-#         except Exception as e:
-#             self.send(`e`)
-
 
         # Make an array of csv file paths:
         self.csvFilePaths = []
-        for csvFilePath in server.infoTmpFile:
+        for csvFilePath in self.infoTmpFile:
             self.csvFilePaths.append(csvFilePath.strip())        
         return True
     
@@ -125,7 +148,7 @@ class CourseTSVServer(object):
             if tblFileSize > 0:
                 lineCounter = 0
                 with open(csvFilePath) as infoFd:
-                    while lineCounter < CourseTSVServer.NUM_OF_TABLE_SAMPLE_LINES:
+                    while lineCounter < CourseCSVServer.NUM_OF_TABLE_SAMPLE_LINES:
                         tableRow = infoFd.readline()
                         if len(tableRow) > 0:
                             self.send(tableRow + '<br>')
@@ -171,22 +194,17 @@ class CourseTSVServer(object):
                 
     def reportProgress(self):
         self.send('.')
-        self.setTimer(CourseTSVServer.PROGRESS_INTERVAL)
+        self.setTimer(CourseCSVServer.PROGRESS_INTERVAL)
                 
     def setTimer(self, time=None):
         if time is None:
-            time = CourseTSVServer.PROGRESS_INTERVAL
+            time = CourseCSVServer.PROGRESS_INTERVAL
         self.currTimer = Timer(time, self.reportProgress).start()
 
     def cancelTimer(self):
         if self.currTimer is not None:
             self.currTimer.cancel()
             
-    def send(self, msg):
-        if msg is not None:
-            sys.stdout.write('data: %s\n\n' % msg.strip())
-            sys.stdout.flush()
-
     # -------------------------------------------  Testing  ------------------
                 
     def echoParms(self):
@@ -196,40 +214,26 @@ class CourseTSVServer(object):
 
 if __name__ == '__main__':
     
-    TESTING = False
-    #TESTING = True
+    application = tornado.web.Application([(r"/exportClass", CourseCSVServer),])
+    application.listen(8080)
+    tornado.ioloop.IOLoop.instance().start()
     
-    startTime = datetime.datetime.now()
-    
-    #sys.stdout.write("Content-type: text/html\n\n")
-    sys.stdout.write("Content-type: text/event-stream\n")
-    sys.stdout.write("Cache-Control: no-cache\n\n")
-    sys.stdout.flush()
-
-    # JavaScript exportClass.js writes the following
-    # now; --> commented out:
-    #sys.stdout.write('data: <h2>Data Export Progress</h2>\n\n')
-    #sys.stdout.flush()
-    server = CourseTSVServer(testing=TESTING)
-    if TESTING:
-        server.addClientInstructions()
-    else:
-        # Timer sending dots for progress not working b/c of
-        # buffering:
-        #*****server.setTimer()
-        exportSuccess = server.exportClass()
-        #*****server.cancelTimer()
-        endTime = datetime.datetime.now() - startTime
-        # Get a timedelta object with the microsecond
-        # component subtracted to be 0, so that the
-        # microseconds won't get printed:        
-        duration = endTime - datetime.timedelta(microseconds=endTime.microseconds)
-        server.send("Runtime: %s" % str(duration))
-        if exportSuccess:
-            server.printClassTableInfo()
-            server.addClientInstructions()
-         
-    
-    sys.stdout.write("event: allDone\n")
-    sys.stdout.write("data: Done in %s.\n\n" % str(duration))
-    sys.stdout.flush()
+#          Timer sending dots for progress not working b/c of
+#          buffering:
+#         *****server.setTimer()
+#         exportSuccess = server.exportClass()
+#         *****server.cancelTimer()
+#         endTime = datetime.datetime.now() - startTime
+#          Get a timedelta object with the microsecond
+#          component subtracted to be 0, so that the
+#          microseconds won't get printed:        
+#         duration = endTime - datetime.timedelta(microseconds=endTime.microseconds)
+#         server.send("Runtime: %s" % str(duration))
+#         if exportSuccess:
+#             server.printClassTableInfo()
+#             server.addClientInstructions()
+#          
+#     
+#     sys.stdout.write("event: allDone\n")
+#     sys.stdout.write("data: Done in %s.\n\n" % str(duration))
+#     sys.stdout.flush()
