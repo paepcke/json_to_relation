@@ -25,8 +25,11 @@ function ExportClass() {
 		var attrVal = evt.data.split(":");
 		var action  = attrVal[0]; // e.g. 'courseList'
 		var args    = eval(attrVal)[1]; // e.g. JS str array
+		//************
+		alert(typeof JSON.parse(args));
+		//************
 	    } catch(err) {
-		alert('Bad action request from server: ' + evt.data);
+		alert('Bad action request from server (' + evt.data + '): ' + err );
 	    }
 	    handleActionRequest(action,args);
 	}
@@ -47,7 +50,13 @@ function ExportClass() {
 	clrProgressDiv();
 	var len = courseNameArr.length
 	for (var i=0; i<len; ++i) {
+	    //************
+	    alert(courseNameArr);
+	    //************
 	    var crsNm = courseNameArr[i];
+	    //************
+	    alert(crsNm);
+	    //************
 	    document.getElementById("progress").innerHTML += 
 	    '<input type="radio" id="courseID" value="' + crsNm + '">' + crsNm + '<br>';
 	}

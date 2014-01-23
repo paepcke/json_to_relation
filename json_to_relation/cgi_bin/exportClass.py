@@ -106,7 +106,7 @@ class CourseCSVServer(WebSocketHandler):
             except Exception as e:
                 self.write_message("error:%s" % `e`)
             #************self.write_message('courseList:' + str(matchingCourseNames))
-            self.write_message('courseList:' + str(['foo','bar']))
+            self.write_message('courseList:' + str(["foo","bar"]))
         
     def exportClass(self):
         theCourseID = self.parms.getvalue('courseID', '')
