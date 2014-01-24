@@ -13,91 +13,133 @@ function ExportClass() {
     var screenContent = "";
     var source = null;
     var ws = null;
+    var chosenCourseID = null;
+    var timer = null;
 
+    /*----------------------------  Constructor ---------------------*/
     this.construct = function() {
 	ws =  new WebSocket("ws://localhost:8080/exportClass");
 	ws.onopen = function() {};
 
 	ws.onmessage = function(evt) {
-	    // Separate "<action>:<args>":
-	    // e.g. "courseList:['course1','course2']"
+	    // Internalize the JSON
+	    // e.g. "{resp : "courseList", "args" : ['course1','course2']"
 	    try {
-		var attrVal = evt.data.split(":");
-		var action  = attrVal[0]; // e.g. 'courseList'
-		var args    = eval(attrVal)[1]; // e.g. JS str array
-		//************
-		alert(typeof JSON.parse(args));
-		//************
+		var argsObj = JSON.parse(evt.data);
+		var response  = argsObj.resp;
+		var args    = argsObj.args;
 	    } catch(err) {
-		alert('Bad action request from server (' + evt.data + '): ' + err );
+		//*************
+		console.log(evt.data);
+		//*************
+		alert('Bad response from server (' + evt.data + '): ' + err );
 	    }
-	    handleActionRequest(action,args);
+	    handleResponse(response, args);
 	}
     }();
 
-    var handleActionRequest = function(action,args) {
-	switch (action) {
+    /*----------------------------  Handlers for Msgs from Server ---------------------*/
+
+    var handleResponse = function(responseName, args) {
+	switch (responseName) {
 	case 'courseList':
 	    listCourseNames(args);
 	    break;
+	case 'error':
+	    alert('Error: ' + args);
+	    break;
 	default:
-	    alert('Unknown action request from server: ' + action);
+	    alert('Unknown response type from server: ' + responseName);
 	    break;
 	}
     }
 
     var listCourseNames = function(courseNameArr) {
+
+	if (courseNameArr.length == 0) {
+	    addToProgDiv("No matching course names found.");
+	    return;
+	}
+	if (courseNameArr.length == 1) {
+	    startProgressStream(courseNameArr[0]);
+	}
+
 	clrProgressDiv();
+	addToProgDiv('<h3>Matching class names; pick one:</h3>');
 	var len = courseNameArr.length
 	for (var i=0; i<len; ++i) {
-	    //************
-	    alert(courseNameArr);
-	    //************
 	    var crsNm = courseNameArr[i];
-	    //************
-	    alert(crsNm);
-	    //************
-	    document.getElementById("progress").innerHTML += 
-	    '<input type="radio" id="courseID" value="' + crsNm + '">' + crsNm + '<br>';
+	    addToProgDiv('<input type="radio" id="courseIDRadBtns" name="courseIDChoice" value="' + crsNm + '">' + crsNm + '<br>');
 	}
+	addToProgDiv('<input type="button" ' +
+                             'id="courseIDChoiceBtn"' +
+                             'value="Get Data"' +
+                             'onclick="classExporter.evtFinalCourseSelButton()">');
+	
     }
 
-    this.progressUpdate = function() {
+    /*----------------------------  Widget Event Handlers ---------------------*/
+
+    this.evtResolveCourseNames = function() {
+	/* Called when Export Class button is pushed. Request
+	   that server find all matching course names:
+	*/
+	clrProgressDiv();
+	queryCourseIDResolution(document.getElementById("courseID").value);
+    }
+
+    this.evtFinalCourseSelButton = function() {
+	startProgressStream(document.getElementById("courseID").value);
+    }
+
+    this.evtCancelProcess = function() {
+	try {
+	    source.close();
+	} catch(err) {}
+	window.clearInterval(timer);
+	clrProgressDiv();
+    }
+
+    /*----------------------------  Utility Functions ---------------------*/
+
+    var progressUpdate = function() {
 	// One-second timer showing date/time on screen while
 	// no output is coming from server, b/c some entity
 	// is buffering:
 	var currDate = new Date();
-	document.getElementById("progress").innerHTML = screenContent + 
+	clrProgressDiv();
+	addToProgDiv(screenContent + 
 	    currDate.toLocaleDateString() + 
 	    " " +
-	    currDate.toLocaleTimeString();
+	    currDate.toLocaleTimeString()
+		      );
     }
 
-    this.queryCourseIDResolution = function(courseQuery) {
-	ws.send("courseNameQ:" + courseQuery);
+    var queryCourseIDResolution = function(courseQuery) {
+	req = buildRequest("reqCourseNames", courseQuery);
+	ws.send(JSON.stringify(req));
     }
 
-    this.handleCourseListRes = function(courseListStr) {
+    var buildRequest = function(reqName, args) {
+	// Given the name of a request to the server,
+	// and its arguments, return a JSON string
+	// ready to send to server:
+	req = {"req" : reqName,
+	       "args": args};
+	return JSON.stringify(req);
     }
 
-    this.startProgressStream = function() {
-	//****************************
-	//this.getCourseIDResolution(encodeURI(document.getElementById("courseID").value));
-	this.queryCourseIDResolution(document.getElementById("courseID").value);
-	return;
-	//****************************
+
+    var startProgressStream = function(resolvedCourseID) {
 	/*Start the event stream, and install the required
 	  event listeners on the EventSource
 	*/
 	var xmlHttp = null;
-	// The 'encodeURI() is needed such that "%EE222%" is
-	// not read as 'ee' being a hex char Unicode:
-	var courseID   = encodeURI(document.getElementById("courseID").value);
 	var fileAction = document.getElementById("fileAction").checked;
 
 	var theURL = window.location.origin + "/code/exportClass.py";
 
-	theURL += "?courseID="+courseID+"&fileAction="+fileAction;
+	theURL += "?resolvedCourseID="+resolvedCourseID+"&fileAction="+fileAction;
 
 	if(typeof(EventSource) == "undefined") {
 	    // Browser doesn't support server-send events.
@@ -111,7 +153,8 @@ function ExportClass() {
 	// screen content in the 'progress' div so that
 	// the timer func can append to that:
 	
-	screenContent = document.getElementById("progress").innerHTML = "<h2>Data Export Progress</h2>\n\n"
+	screenContent = "<h2>Data Export Progress</h2>\n\n";
+	addToProgDiv(screenContent);
 	timer = window.setInterval(progressUpdate,1000);
 
 	// Start exportClass.py at the server, listening
@@ -144,10 +187,13 @@ function ExportClass() {
 	}, false);
     }
 
+    /*----------------------------  Managing Progress Div Area ---------------------*/
+
     var clrProgressDiv = function() {
 	/* Clear the progress information section on screen */
-	document.getElementById("progress").innerHTML = "";
+	document.getElementById("progress").innerHTML = '';
 	hideClearProgressButton();
+	hideCourseIdChoices()
     }
 
     var exposeClearProgressButton = function() {
@@ -165,10 +211,26 @@ function ExportClass() {
 	return document.getElementById("clrProgBtn").style.visibility == "visible";
     }
 
-    var cancelProcess = function() {
-	source.close();
-	clearInterval(timer);
-	clrProgressDiv();
+    var hideCourseIdChoices = function() {
+	// Hide course ID radio buttons and the 'go do the data pull'
+	// button if they have been inserted earlier:
+	try {
+	    document.getElementById("courseIDRadBtns").style.visibility="hidden";
+	} catch(err){}
+	try {
+	    document.getElementById("courseIDChoiceBtn").style.visibility="hidden";
+	} catch(err) {}
+    }
+
+    var exposeCourseIdChoices = function() {
+	// Show course ID radio buttons and the 'go do the data pull'
+	// button:
+	document.getElementById("courseIDRadBtns").style.visibility="visible";
+	document.getElementById("courseIDChoiceBtn").style.visibility="visible";
+    }
+
+    var addToProgDiv = function(msg) {
+	document.getElementById("progress").innerHTML += msg;
     }
 }
 var classExporter = new ExportClass();

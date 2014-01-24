@@ -1,4 +1,3 @@
-#!/usr/bin/python
 #!/usr/bin/env python
 '''
 Created on Jan 14, 2014
@@ -6,9 +5,6 @@ Created on Jan 14, 2014
 @author: paepcke
 '''
 
-import cgi
-import cgitb
-import datetime
 import os
 import socket
 import string
@@ -17,15 +13,22 @@ import subprocess
 import sys
 import tempfile
 from threading import Timer
-import time  # @UnusedImport
-from mysqldb import MySQLDB 
+import time # @UnusedImport
+import getpass
+import json
+
+# Add json_to_relation source dir to $PATH
+# for duration of this execution:
+source_dir = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")]
+source_dir.extend(sys.path)
+sys.path = source_dir
+
+from mysqldb import MySQLDB
 
 import tornado;
 from tornado.ioloop import IOLoop;
 from tornado.websocket import WebSocketHandler;
 from tornado.httpserver import HTTPServer;
-
-cgitb.enable()
 
 class CourseCSVServer(WebSocketHandler):
     
@@ -61,13 +64,20 @@ class CourseCSVServer(WebSocketHandler):
         # That script will place file paths to all created 
         # tables into that file:
         self.infoTmpFile = tempfile.NamedTemporaryFile()
-
+        self.dbError = 'no error'
+        currUser = getpass.getuser()
         try:
-            with open('/home/dbadmin/.ssh/mysql', 'r') as fd:
-                dbadminPwd = fd.readline()
-                self.mysqlDb = MySQLDB(user='dbadmin', passwd=dbadminPwd, db='Edx')
+            with open('/home/%s/.ssh/mysql' % currUser, 'r') as fd:
+                pwd = fd.readline()
+                self.mysqlDb = MySQLDB(user=currUser, passwd=pwd, db='Edx')
         except Exception:
-            self.mysqlDb = None
+            try:
+                # Try w/o a pwd:
+                self.mysqlDb = MySQLDB(user=currUser, db='Edx')
+            except Exception as e:
+                # Remember the error msg for later:
+                self.dbError = `e`;
+                self.mysqlDb = None
             
         self.currTimer = None
     
@@ -85,7 +95,7 @@ class CourseCSVServer(WebSocketHandler):
         Called by WebSocket/tornado when a client connects. Method must
         be named 'open'
         '''
-        print("Open called")
+        #print("Open called")
     
     def on_message(self, message):
         '''
@@ -94,19 +104,60 @@ class CourseCSVServer(WebSocketHandler):
         @param message: message arriving from the browser
         @type message: string
         '''
-        print message
+        #print message
         try:
-            (action, args) = string.split(message, ':')
+            requestDict = eval(json.loads(message))
         except Exception as e:
-            pass
-        if action == 'courseNameQ':
-            try:
-                courseName = args
-                matchingCourseNames = self.queryCourseNameList(courseName)
-            except Exception as e:
-                self.write_message("error:%s" % `e`)
-            #************self.write_message('courseList:' + str(matchingCourseNames))
-            self.write_message('courseList:' + str(["foo","bar"]))
+            self.writeError("Bad JSON in request received at server: %s" % `e`)
+
+        # Get the request name:
+        try:
+            requestName = requestDict['req']
+            args        = requestDict['args']
+            if requestName == 'reqCourseNames':
+                self.handleCourseNamesReq(requestName, args)
+    
+            else:
+                self.writeError("Unknown request name: %s" % requestName)
+        except Exception as e:
+            self.writeError("Server could not extract request name/args from (%s): " % (message, `e`))
+            
+    def handleCourseNamesReq(self, requestName, args):
+        try:
+            courseRegex = args
+            matchingCourseNames = self.queryCourseNameList(courseRegex)
+            # Check whether __init__() method was unable to log into 
+            # the db:
+            if matchingCourseNames is None:
+                self.writeError('Server could not log into database: %s' % self.dbError)
+                return
+        except Exception as e:
+            self.writeError(`e`)
+            return
+        self.writeResult('courseList', json.dumps(matchingCourseNames))
+        
+    def writeError(self, msg):
+        '''
+        Writes a response to the JS running in the browser
+        that indicates an error. Result action is "error",
+        and "args" is the error message string:
+        @param msg: error message to send to browser
+        @type msg: String
+        '''
+        self.writeResult('error', msg)
+
+    def writeResult(self, responseName, args):
+        '''
+        Write a JSON formatted result back to the browser.
+        Format will be {"action" : "<resAction>", "args" : "<jsonizedArgs>"},
+        That is, the args will be turned into JSON that is the
+        in the response's "args" value:
+        @param responseName: name of result that is recognized by the JS in the browser
+        @type responseName: String
+        @param args: any Python datastructure that can be turned into JSON
+        @type args: {int | String | [String] | ...}
+        '''
+        self.write_message('{"resp" : "%s", "args" : %s}' % (responseName, json.dumps(args)))
         
     def exportClass(self):
         theCourseID = self.parms.getvalue('courseID', '')
@@ -180,10 +231,26 @@ class CourseCSVServer(WebSocketHandler):
         self.send(txt)
       
     def queryCourseNameList(self, courseID):
+        '''
+        Given a MySQL regexp courseID string, return a list
+        of matchine course_display_name in the db. If self.mysql
+        is None, indicating that the __init__() method was unable
+        to log into the db, then return None.
+        @param courseID: Course name regular expression in MySQL syntax.
+        @type courseID: String
+        @return: An array of matching course_display_name, which may
+                 be empty. None if _init__() was unable to log into db.
+        @rtype: {[String] | None}
+        '''
         courseNames = []
         if self.mysqlDb is not None:
-            for courseName in self.mysqlDb.query('SELECT DISTINCT course_display_name FROM EdxXtract WHERE course_display_name LIKE "%s";'):
-                courseNames.append(courseName)
+            for courseName in self.mysqlDb.query('SELECT DISTINCT course_display_name FROM Edx.EventXtract WHERE course_display_name LIKE "%s";'):
+                if courseName is not None:
+                    # Results are singleton tuples, so
+                    # need to get 0th element:
+                    courseNames.append('"%s"' % courseName[0])
+        else:
+            return None
         return courseNames
       
     def sendCourseCheckboxes(self, courseNmList):
