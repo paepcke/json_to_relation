@@ -57,7 +57,7 @@ class CourseCSVServer(WebSocketHandler):
 
         # Locate the makeCourseCSV.sh script:
         thisScriptDir = os.path.dirname(__file__)
-        self.exportTSVScript = os.path.join(thisScriptDir, '../../scripts/makeCourseCSVs.sh')
+        self.exportCSVScript = os.path.join(thisScriptDir, '../../scripts/makeCourseCSVs.sh')
         self.csvFilePaths = []
         
         # A tempfile passed to the makeCourseCSVs.sh script.
@@ -116,11 +116,12 @@ class CourseCSVServer(WebSocketHandler):
             args        = requestDict['args']
             if requestName == 'reqCourseNames':
                 self.handleCourseNamesReq(requestName, args)
-    
+            elif requestName == 'getData':
+                self.exportClass(args)
             else:
                 self.writeError("Unknown request name: %s" % requestName)
         except Exception as e:
-            self.writeError("Server could not extract request name/args from (%s): " % (message, `e`))
+            self.writeError("Server could not extract request name/args from (%s): %s" % (message, `e`))
             
     def handleCourseNamesReq(self, requestName, args):
         try:
@@ -134,7 +135,7 @@ class CourseCSVServer(WebSocketHandler):
         except Exception as e:
             self.writeError(`e`)
             return
-        self.writeResult('courseList', json.dumps(matchingCourseNames))
+        self.writeResult('courseList', matchingCourseNames)
         
     def writeError(self, msg):
         '''
@@ -159,23 +160,42 @@ class CourseCSVServer(WebSocketHandler):
         '''
         self.write_message('{"resp" : "%s", "args" : %s}' % (responseName, json.dumps(args)))
         
-    def exportClass(self):
-        theCourseID = self.parms.getvalue('courseID', '')
+    def exportClass(self, detailDict):
+        '''
+        {courseId : <the courseID>, wipeExisting : <true/false wipe existing class tables files>}
+        @param detailDict:
+        @type detailDict:
+        '''
+        theCourseID = detailDict.getvalue('courseId', '')
         if len(theCourseID) == 0:           
             self.send("Please fill in the course ID field.")
             return False
         # Check whether we are to delete any already existing
         # csv files for this class:
-        xpungeExisting = self.parms.getvalue("fileAction", None)
+        xpungeExisting = detailDict.getvalue("wipeExisting", False)
+#         try:
+#             if xpungeExisting == 'true':
+#                 subprocess.call([self.exportCSVScript, '-u', 'www-data', '-x', '-i', self.infoTmpFile.name, theCourseID],
+#                                 stdout=sys.stdout, stderr=sys.stdout)
+#             else:
+#                 subprocess.call([self.exportCSVScript, '-u', 'www-data', '-i', self.infoTmpFile.name, theCourseID],
+#                                 stdout=sys.stdout, stderr=sys.stdout)
+#         except Exception as e:
+#             self.send(`e`)
+
         try:
             if xpungeExisting == 'true':
-                subprocess.call([self.exportTSVScript, '-u', 'www-data', '-x', '-i', self.infoTmpFile.name, theCourseID],
-                                stdout=sys.stdout, stderr=sys.stdout)
+                pipeFromScript = subprocess.Popen([self.exportCSVScript, '-u', 'www-data', '-x', '-i', self.infoTmpFile.name, theCourseID],
+                                                  stdout=subprocess.PIPE).stdout
             else:
-                subprocess.call([self.exportTSVScript, '-u', 'www-data', '-i', self.infoTmpFile.name, theCourseID],
-                                stdout=sys.stdout, stderr=sys.stdout)
+                pipeFromScript = subprocess.Popen([self.exportCSVScript, '-u', 'www-data', '-i', self.infoTmpFile.name, theCourseID],
+                                                  stdout=subprocess.PIPE).stdout
+            for msgFromScript in pipeFromScript:
+                self.send(msgFromScript)
+                                                  
         except Exception as e:
             self.send(`e`)
+
 
         # Make an array of csv file paths:
         self.csvFilePaths = []
@@ -244,7 +264,9 @@ class CourseCSVServer(WebSocketHandler):
         '''
         courseNames = []
         if self.mysqlDb is not None:
-            for courseName in self.mysqlDb.query('SELECT DISTINCT course_display_name FROM Edx.EventXtract WHERE course_display_name LIKE "%s";'):
+            for courseName in self.mysqlDb.query('SELECT DISTINCT course_display_name ' +\
+                                                 'FROM Edx.EventXtract ' +\
+                                                 'WHERE course_display_name LIKE "%s";' % courseID):
                 if courseName is not None:
                     # Results are singleton tuples, so
                     # need to get 0th element:
@@ -253,12 +275,6 @@ class CourseCSVServer(WebSocketHandler):
             return None
         return courseNames
       
-    def sendCourseCheckboxes(self, courseNmList):
-        self.send("<form action=''>");
-        for name in courseNmList:
-            self.send('<input type="radio" name="crsChoice" value="%s">%s<br>' % (name,name))
-        self.send("</form>")
-                
     def reportProgress(self):
         self.send('.')
         self.setTimer(CourseCSVServer.PROGRESS_INTERVAL)

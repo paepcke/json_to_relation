@@ -29,9 +29,6 @@ function ExportClass() {
 		var response  = argsObj.resp;
 		var args    = argsObj.args;
 	    } catch(err) {
-		//*************
-		console.log(evt.data);
-		//*************
 		alert('Bad response from server (' + evt.data + '): ' + err );
 	    }
 	    handleResponse(response, args);
@@ -56,26 +53,49 @@ function ExportClass() {
 
     var listCourseNames = function(courseNameArr) {
 
-	if (courseNameArr.length == 0) {
-	    addToProgDiv("No matching course names found.");
-	    return;
-	}
-	if (courseNameArr.length == 1) {
-	    startProgressStream(courseNameArr[0]);
-	}
+	try {
+	    if (courseNameArr.length == 0) {
+		addToProgDiv("No matching course names found.");
+		return;
+	    }
+	    //if (courseNameArr.length == 1) {
+	    //    startProgressStream(courseNameArr[0]);
+	    //}
 
-	clrProgressDiv();
-	addToProgDiv('<h3>Matching class names; pick one:</h3>');
-	var len = courseNameArr.length
-	for (var i=0; i<len; ++i) {
-	    var crsNm = courseNameArr[i];
-	    addToProgDiv('<input type="radio" id="courseIDRadBtns" name="courseIDChoice" value="' + crsNm + '">' + crsNm + '<br>');
+	    clrProgressDiv();
+	    addToProgDiv('<h3>Matching class names; pick one:</h3>');
+
+	    // JSON encode/decode adds an empty string at the
+	    // start of the course names array; eliminate that:
+	    if (courseNameArr[0] == '""') {
+		// Splice is a destructive op:
+		courseNameArr.splice(0,1);
+	    }
+
+	    var len = courseNameArr.length
+	    for (var i=0; i<len; ++i) {
+		var crsNm = courseNameArr[i];
+		// Remove surrounding double quotes from strings:
+		crsNm = crsNm.replace(/"/g, '');
+		theId = 'courseIDRadBtns' + i;
+		addToProgDiv('<input type="radio" id="' + theId + '" ' +
+			     'name="courseIDChoice" value="' + 
+			     crsNm + '">' +
+			     '<label for="' + theId + '">' + crsNm + '<br>');
+	    }
+
+	    // Add the Now Get the Data button below the radio buttons:
+	    addToProgDiv('<input type="button" ' +
+                         'id="courseIDChoiceBtn"' +
+                         'value="Get Data"' +
+                         'onclick="classExporter.evtFinalCourseSelButton()">');
+	    
+	    // Activate the first radiobutton (must do after the above 
+	    // statement, else radio button is unchecked again:
+	    document.getElementById('courseIDRadBtns0').checked = true;
+	} catch(err) {
+	    alert("Error trying to display course name list: " + err);
 	}
-	addToProgDiv('<input type="button" ' +
-                             'id="courseIDChoiceBtn"' +
-                             'value="Get Data"' +
-                             'onclick="classExporter.evtFinalCourseSelButton()">');
-	
     }
 
     /*----------------------------  Widget Event Handlers ---------------------*/
@@ -83,13 +103,22 @@ function ExportClass() {
     this.evtResolveCourseNames = function() {
 	/* Called when Export Class button is pushed. Request
 	   that server find all matching course names:
-	*/
+	*/	
+	courseIDRegExp = document.getElementById("courseID").value;
+	// Course id regexp fld empty? If so: MySQL wildcard:
+	if (courseIDRegExp.length == 0) {
+	    courseIDRegExp = '%';
+	}
 	clrProgressDiv();
-	queryCourseIDResolution(document.getElementById("courseID").value);
+	queryCourseIDResolution(courseIDRegExp);
     }
 
     this.evtFinalCourseSelButton = function() {
-	startProgressStream(document.getElementById("courseID").value);
+	// Get the full course name that is associated
+	// with the checked radio buttion in the course
+	// name list:
+	fullCourseName = document.querySelector('input[name="courseIDChoice"]:checked').value;
+	startProgressStream(fullCourseName);
     }
 
     this.evtCancelProcess = function() {
@@ -137,17 +166,8 @@ function ExportClass() {
 	var xmlHttp = null;
 	var fileAction = document.getElementById("fileAction").checked;
 
-	var theURL = window.location.origin + "/code/exportClass.py";
-
-	theURL += "?resolvedCourseID="+resolvedCourseID+"&fileAction="+fileAction;
-
-	if(typeof(EventSource) == "undefined") {
-	    // Browser doesn't support server-send events.
-	    // Just start the export without giving on-the-fly
-	    // feedback:
-	    window.location = theURL;
-	    return;
-	}
+	var argObj = {"courseId" : resolvedCourseID, "wipeExisting" : fileAction};
+	var req = buildRequest("getData", argObj);
 
 	// Start the progress timer; remember the existing
 	// screen content in the 'progress' div so that
@@ -155,36 +175,9 @@ function ExportClass() {
 	
 	screenContent = "<h2>Data Export Progress</h2>\n\n";
 	addToProgDiv(screenContent);
-	timer = window.setInterval(progressUpdate,1000);
+	//*********timer = window.setInterval(progressUpdate,1000);
 
-	// Start exportClass.py at the server, listening
-	// for an event stream from that program:
-	source = new EventSource(theURL);
-
-	// Listener for all strings from server that start with 'data: ':
-	source.addEventListener('message', function(event) {
-	    /*Called when server sends a string that starts with
-	      'data: '
-	    */
-	    // Add the string to the bottom of the screen:
-	    document.getElementById("progress").innerHTML += event.data + "<br>";
-	    // If 'clear progress info' button is not visible, make it
-	    // visible:
-	    if (!clrProgressButtonVisible()) {
-		exposeClearProgressButton();
-	    }
-
-	}, false);
-
-	// Listener for exportClass.py saying that it's done:
-	source.addEventListener('allDone', function(event) {
-	    /*Called when server sends a string that starts
-	      with 'event: allDone'
-	    */
-	    //console.log("Got 'allDone'") //********8
-	    source.close();
-	    clearInterval(timer);
-	}, false);
+	ws.send(req);
     }
 
     /*----------------------------  Managing Progress Div Area ---------------------*/
