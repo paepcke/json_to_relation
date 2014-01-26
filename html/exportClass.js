@@ -42,6 +42,12 @@ function ExportClass() {
 	case 'courseList':
 	    listCourseNames(args);
 	    break;
+	case 'progress':
+	    displayProgressInfo(args);
+	    break;
+	case 'printTblInfo':
+	    displayTableInfo(args);
+	    break;
 	case 'error':
 	    alert('Error: ' + args);
 	    break;
@@ -98,6 +104,14 @@ function ExportClass() {
 	}
     }
 
+    var displayProgressInfo = function(strToDisplay) {
+	addToProgDiv(strToDisplay);
+    }
+
+    var displayTableInfo = function(tblSamplesTxt) {
+	addToProgDiv('<div class="tblExtract">' + tblSamplesTxt + '</div>');
+    }
+
     /*----------------------------  Widget Event Handlers ---------------------*/
 
     this.evtResolveCourseNames = function() {
@@ -117,7 +131,11 @@ function ExportClass() {
 	// Get the full course name that is associated
 	// with the checked radio buttion in the course
 	// name list:
-	fullCourseName = document.querySelector('input[name="courseIDChoice"]:checked').value;
+	fullCourseName = getCourseNameChoice();
+	if fullCourseName == null {
+	    alert('Please (re-)select one of the classes');
+	    return;
+	}
 	startProgressStream(fullCourseName);
     }
 
@@ -125,11 +143,30 @@ function ExportClass() {
 	try {
 	    source.close();
 	} catch(err) {}
-	window.clearInterval(timer);
+	//*************window.clearInterval(timer);
 	clrProgressDiv();
     }
 
     /*----------------------------  Utility Functions ---------------------*/
+
+    var getCourseNameChoice = function() {
+	try {
+	    document.querySelector('input[name="courseIDChoice"]:checked').value;
+	} catch(err) {
+	    return null;
+	}
+    }
+
+    var setCourseNameChoice = function() {
+	***** Continue here; in func above: add remembering of the radio button
+	***** in add to progress div, re-check the current radio button
+	try {
+	    document.querySelector('input[name="courseIDChoice"]:checked').value;
+	} catch(err) {
+	    return null;
+	}
+    }
+
 
     var progressUpdate = function() {
 	// One-second timer showing date/time on screen while
@@ -146,7 +183,7 @@ function ExportClass() {
 
     var queryCourseIDResolution = function(courseQuery) {
 	req = buildRequest("reqCourseNames", courseQuery);
-	ws.send(JSON.stringify(req));
+	ws.send(req);
     }
 
     var buildRequest = function(reqName, args) {

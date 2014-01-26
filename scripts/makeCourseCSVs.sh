@@ -335,6 +335,9 @@ VIDEO_FNAME=$DEST_DIR/${DIR_LEAF}_VideoInteraction.csv
 # was present in the CL:
 if [ -e $EVENT_EXTRACT_FNAME ]
 then
+    #*****************
+    echo "xPungeFiles: $xpungeFiles"
+    #*****************
     if $xpungeFiles
     then
 	echo "data: Removing existing csv file $EVENT_EXTRACT_FNAME<br>"

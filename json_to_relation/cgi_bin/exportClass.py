@@ -106,7 +106,7 @@ class CourseCSVServer(WebSocketHandler):
         '''
         #print message
         try:
-            requestDict = eval(json.loads(message))
+            requestDict = json.loads(message)
         except Exception as e:
             self.writeError("Bad JSON in request received at server: %s" % `e`)
 
@@ -145,12 +145,12 @@ class CourseCSVServer(WebSocketHandler):
         @param msg: error message to send to browser
         @type msg: String
         '''
-        self.writeResult('error', msg)
+        self.writeError(msg)
 
     def writeResult(self, responseName, args):
         '''
         Write a JSON formatted result back to the browser.
-        Format will be {"action" : "<resAction>", "args" : "<jsonizedArgs>"},
+        Format will be {"resp" : "<respName>", "args" : "<jsonizedArgs>"},
         That is, the args will be turned into JSON that is the
         in the response's "args" value:
         @param responseName: name of result that is recognized by the JS in the browser
@@ -166,13 +166,14 @@ class CourseCSVServer(WebSocketHandler):
         @param detailDict:
         @type detailDict:
         '''
-        theCourseID = detailDict.getvalue('courseId', '')
+        theCourseID = detailDict.get('courseId', '')
         if len(theCourseID) == 0:           
-            self.send("Please fill in the course ID field.")
+
+            self.writeError('Please fill in the course ID field.')
             return False
         # Check whether we are to delete any already existing
         # csv files for this class:
-        xpungeExisting = detailDict.getvalue("wipeExisting", False)
+        xpungeExisting = detailDict.get("wipeExisting", False)
 #         try:
 #             if xpungeExisting == 'true':
 #                 subprocess.call([self.exportCSVScript, '-u', 'www-data', '-x', '-i', self.infoTmpFile.name, theCourseID],
@@ -181,26 +182,33 @@ class CourseCSVServer(WebSocketHandler):
 #                 subprocess.call([self.exportCSVScript, '-u', 'www-data', '-i', self.infoTmpFile.name, theCourseID],
 #                                 stdout=sys.stdout, stderr=sys.stdout)
 #         except Exception as e:
-#             self.send(`e`)
+#             self.writeError(`e`)
 
         try:
-            if xpungeExisting == 'true':
+            if xpungeExisting:
                 pipeFromScript = subprocess.Popen([self.exportCSVScript, '-u', 'www-data', '-x', '-i', self.infoTmpFile.name, theCourseID],
                                                   stdout=subprocess.PIPE).stdout
             else:
                 pipeFromScript = subprocess.Popen([self.exportCSVScript, '-u', 'www-data', '-i', self.infoTmpFile.name, theCourseID],
                                                   stdout=subprocess.PIPE).stdout
             for msgFromScript in pipeFromScript:
-                self.send(msgFromScript)
+                self.writeResult('progress', msgFromScript)
                                                   
         except Exception as e:
-            self.send(`e`)
+            self.writeError(`e`)
 
 
         # Make an array of csv file paths:
         self.csvFilePaths = []
+        self.infoTmpFile.seek(0)
         for csvFilePath in self.infoTmpFile:
             self.csvFilePaths.append(csvFilePath.strip())        
+            
+        # Send table row samples to browser:
+        self.printClassTableInfo()
+        
+        # Add an example client letter:
+        self.addClientInstructions()
         return True
     
     def printClassTableInfo(self):
@@ -215,23 +223,25 @@ class CourseCSVServer(WebSocketHandler):
                 lineCnt = lineCntAndFilename.split(' ')[0]
             except (CalledProcessError, IndexError):
                 pass
-            self.send("<br><b>Table file</b> %s size: %d bytes, %s line(s)<br><b>Sample rows:</b><br>" % (csvFilePath, tblFileSize, lineCnt))
+            self.writeResult('printTblInfo', 
+                             "<br><b>Table file</b> %s size: %d bytes, %s line(s)<br><b>Sample rows:</b><br>" % 
+                             (csvFilePath, tblFileSize, lineCnt))
             if tblFileSize > 0:
                 lineCounter = 0
                 with open(csvFilePath) as infoFd:
                     while lineCounter < CourseCSVServer.NUM_OF_TABLE_SAMPLE_LINES:
                         tableRow = infoFd.readline()
                         if len(tableRow) > 0:
-                            self.send(tableRow + '<br>')
+                            self.writeResult('printTblInfo', tableRow + '<br>')
                         lineCounter += 1
-        self.send('<br>')
+        #****self.writeResult('<br>')
      
     def addClientInstructions(self):
         # Get just the first table path, we just
         # need its subdirectory name to build the
         # URL:
         if len(self.csvFilePaths) == 0:
-            #self.send("Cannot create client instructions: file %s did not contain table paths.<br>" % self.infoTmpFile.name)
+            #self.writeError("Cannot create client instructions: file %s did not contain table paths.<br>" % self.infoTmpFile.name)
             return
         # Get the last part of the directory,
         # which is the 'CourseSubdir' in
@@ -239,16 +249,16 @@ class CourseCSVServer(WebSocketHandler):
         tableDir = os.path.basename(os.path.dirname(self.csvFilePaths[0]))
         thisFullyQualDomainName = socket.getfqdn()
         url = "http://%s/instructor/%s" % (thisFullyQualDomainName, tableDir)
-        self.send("<b>Email draft for client; copy-paste into email program:</b><br>")
+        self.writeResult('progress', "<b>Email draft for client; copy-paste into email program:</b><br>")
         msgStart = 'Hi,<br>your data is ready for pickup. Please visit our <a href="%s">pickup page</a>.<br>' % url
-        self.send(msgStart)
+        self.writeResult('progress', msgStart)
         # The rest of the msg is in a file:
         with open('clientInstructions.html', 'r') as txtFd:
             lines = txtFd.readlines()
         txt = '<br>'.join(lines)
         # Remove \n everywhere:
         txt = string.replace(txt, '\n', '')
-        self.send(txt)
+        self.writeResult('progress', txt)
       
     def queryCourseNameList(self, courseID):
         '''
@@ -276,7 +286,7 @@ class CourseCSVServer(WebSocketHandler):
         return courseNames
       
     def reportProgress(self):
-        self.send('.')
+        self.writeResult('progress', '.')
         self.setTimer(CourseCSVServer.PROGRESS_INTERVAL)
                 
     def setTimer(self, time=None):
@@ -311,7 +321,7 @@ if __name__ == '__main__':
 #          component subtracted to be 0, so that the
 #          microseconds won't get printed:        
 #         duration = endTime - datetime.timedelta(microseconds=endTime.microseconds)
-#         server.send("Runtime: %s" % str(duration))
+#         server.writeResult('progress', "Runtime: %s" % str(duration))
 #         if exportSuccess:
 #             server.printClassTableInfo()
 #             server.addClientInstructions()
