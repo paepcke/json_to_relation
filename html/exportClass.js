@@ -13,8 +13,11 @@ function ExportClass() {
     var screenContent = "";
     var source = null;
     var ws = null;
-    var chosenCourseID = null;
+    var chosenCourseNameObj = null;
     var timer = null;
+    // Form node containing the course name
+    // selection list:
+    var crsNmFormObj = null; 
 
     /*----------------------------  Constructor ---------------------*/
     this.construct = function() {
@@ -61,7 +64,7 @@ function ExportClass() {
 
 	try {
 	    if (courseNameArr.length == 0) {
-		addToProgDiv("No matching course names found.");
+		addTextToProgDiv("No matching course names found.");
 		return;
 	    }
 	    //if (courseNameArr.length == 1) {
@@ -69,7 +72,7 @@ function ExportClass() {
 	    //}
 
 	    clrProgressDiv();
-	    addToProgDiv('<h3>Matching class names; pick one:</h3>');
+	    addTextToProgDiv('<h3>Matching class names; pick one:</h3>');
 
 	    // JSON encode/decode adds an empty string at the
 	    // start of the course names array; eliminate that:
@@ -84,17 +87,14 @@ function ExportClass() {
 		// Remove surrounding double quotes from strings:
 		crsNm = crsNm.replace(/"/g, '');
 		theId = 'courseIDRadBtns' + i;
-		addToProgDiv('<input type="radio" id="' + theId + '" ' +
-			     'name="courseIDChoice" value="' + 
-			     crsNm + '">' +
-			     '<label for="' + theId + '">' + crsNm + '<br>');
+		addRadioButtonToProgDiv(crsNm, theId, 'courseIDChoice');
 	    }
 
 	    // Add the Now Get the Data button below the radio buttons:
-	    addToProgDiv('<input type="button" ' +
-                         'id="courseIDChoiceBtn"' +
-                         'value="Get Data"' +
-                         'onclick="classExporter.evtFinalCourseSelButton()">');
+	    addButtonToDiv('progress', 
+			   'Get Data', 
+			   'courseIDChoiceBtn', 
+			   'classExporter.evtFinalCourseSelButton()');
 	    
 	    // Activate the first radiobutton (must do after the above 
 	    // statement, else radio button is unchecked again:
@@ -105,11 +105,11 @@ function ExportClass() {
     }
 
     var displayProgressInfo = function(strToDisplay) {
-	addToProgDiv(strToDisplay);
+	addTextToProgDiv(strToDisplay);
     }
 
     var displayTableInfo = function(tblSamplesTxt) {
-	addToProgDiv('<div class="tblExtract">' + tblSamplesTxt + '</div>');
+	addTextToProgDiv('<div class="tblExtract">' + tblSamplesTxt + '</div>');
     }
 
     /*----------------------------  Widget Event Handlers ---------------------*/
@@ -127,12 +127,12 @@ function ExportClass() {
 	queryCourseIDResolution(courseIDRegExp);
     }
 
-    this.evtFinalCourseSelButton = function() {
+    var evtFinalCourseSelButton = function() {
 	// Get the full course name that is associated
 	// with the checked radio buttion in the course
 	// name list:
-	fullCourseName = getCourseNameChoice();
-	if fullCourseName == null {
+	var fullCourseName = getCourseNameChoice();
+	if (fullCourseName == null) {
 	    alert('Please (re-)select one of the classes');
 	    return;
 	}
@@ -151,19 +151,29 @@ function ExportClass() {
 
     var getCourseNameChoice = function() {
 	try {
-	    document.querySelector('input[name="courseIDChoice"]:checked').value;
+	    // Get currently checked course name radio button
+	    // obj and store it in instance var:
+	    var chosenCourseNameObj = document.querySelector('input[name="courseIDChoice"]:checked')
+	    return chosenCourseNameObj.value;
 	} catch(err) {
+	    alert("System error: could not set course name radio button to checked.");
 	    return null;
 	}
     }
 
-    var setCourseNameChoice = function() {
-	***** Continue here; in func above: add remembering of the radio button
-	***** in add to progress div, re-check the current radio button
+    var restoreCourseNameChoice = function() {
+	// Adding to the progress div changes 
+	// makes the chosen course appear unchecked,
+	// even though its obj's 'checked' var is
+	// true. Turn the radiobutton off and on
+	// to restore the visibility of the checkmark:
 	try {
-	    document.querySelector('input[name="courseIDChoice"]:checked').value;
+	    if (chosenCourseNameObj != null) {
+		chosenCourseNameObj.visbile = false;
+		chosenCourseNameObj.visible = true;
+	    }
 	} catch(err) {
-	    return null;
+	    return;
 	}
     }
 
@@ -174,11 +184,11 @@ function ExportClass() {
 	// is buffering:
 	var currDate = new Date();
 	clrProgressDiv();
-	addToProgDiv(screenContent + 
-	    currDate.toLocaleDateString() + 
-	    " " +
-	    currDate.toLocaleTimeString()
-		      );
+	addTextToProgDiv(screenContent + 
+			 currDate.toLocaleDateString() + 
+			 " " +
+			 currDate.toLocaleTimeString()
+			);
     }
 
     var queryCourseIDResolution = function(courseQuery) {
@@ -211,7 +221,7 @@ function ExportClass() {
 	// the timer func can append to that:
 	
 	screenContent = "<h2>Data Export Progress</h2>\n\n";
-	addToProgDiv(screenContent);
+	addTextToProgDiv(screenContent);
 	//*********timer = window.setInterval(progressUpdate,1000);
 
 	ws.send(req);
@@ -221,7 +231,10 @@ function ExportClass() {
 
     var clrProgressDiv = function() {
 	/* Clear the progress information section on screen */
-	document.getElementById("progress").innerHTML = '';
+	progressNode = document.getElementById('progress');
+	while (progressNode.firstChild) {
+	    progressNode.removeChild(progressNode.firstChild);
+	}
 	hideClearProgressButton();
 	hideCourseIdChoices()
     }
@@ -259,8 +272,57 @@ function ExportClass() {
 	document.getElementById("courseIDChoiceBtn").style.visibility="visible";
     }
 
-    var addToProgDiv = function(msg) {
-	document.getElementById("progress").innerHTML += msg;
+    var createCourseNameForm = function() {
+      crsNmFormObj = document.createElement('form');
+      crsNmFormObj.setAttribute("id", "courseIDChoice");
+      crsNmFormObj.setAttribute("name", "courseIDChoiceForm");
+      document.getElementById('progress').appendChild(crsNmFormObj);
     }
+
+    var addTextToProgDiv = function(txt) {
+	txtNode = document.createElement('text');
+	txtNode.data = txt;
+	document.getElementById('progress').appendChild(txtNode);
+    }
+
+    var addRadioButtonToProgDiv = function(label, id, groupName) {
+	// Add radio button with label to progress div:
+	if (crsNmFormObj == null) {
+	    // Form node does not yet exist within progress div:
+            createCourseNameForm();
+	}
+	var radioObj = document.createElement('input');
+	radioObj.setAttribute("type", "radio");
+	radioObj.setAttribute("id", id);
+	radioObj.setAttribute("name", groupName);
+	crsNmFormObj.appendChild(radioObj);
+  
+	// Need label object associated witthe the new 
+	// radio button, so that user can click on the 
+	// label to activate the radio button:
+	var labelObj     = document.createElement('label');
+	labelObj.setAttribute("htmlFor", id);
+	labelObj.setAttribute("for", id);
+	labelObj.innerHTML = label;
+
+	courseNameChoiceFormNode = document.getElementById('courseIDChoice');
+	courseNameChoiceFormNode.appendChild(radioObj);
+	courseNameChoiceFormNode.appendChild(labelObj);
+	courseNameChoiceFormNode.appendChild(labelObj);
+	courseNameChoiceFormNode.appendChild(makeBRNode());
+    }
+
+    var addButtonToDiv = function(divName, label, id, funcStr) {
+	var btnObj = document.createElement('button');
+	btnObj.innerHTML = label;
+	btnObj.setAttribute('id', id);
+	btnObj.onclick = function(){evtFinalCourseSelButton();};
+	document.getElementById(divName).appendChild(btnObj);
+    }
+
+	var makeBRNode = function() {
+	    return document.createElement('br');
+	}
+
 }
 var classExporter = new ExportClass();
