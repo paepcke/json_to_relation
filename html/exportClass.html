@@ -20,6 +20,9 @@
     #spanTab {
        margin-right: 1cm;
     }
+    #spanBackTab {
+       margin-left: 1cm;
+    }
     #widgetCol {
        margin-left: 2cm;
     }
@@ -28,8 +31,6 @@
     }
   </style>
   
-  <script src="exportClass.js"></script>
-
 </head>
 <body>
 
@@ -39,25 +40,38 @@
     <span id="spanTab">Course to export; may use MySQL regex;<br>
       example: Education/EDUC-FACT%:
     </span>
-    <div id=widgetCol><input type="text" id="courseID"><br>
+    <div id=widgetCol><input type="text" id="courseID" size="35"><br>
           <input type="checkbox" id="fileAction" value="xpunge">
-	  Remove any previous exports of same class
+	  Remove any previous exports of same class<br>
+	  <input type="checkbox" id="piiPolicy" value="inclPII">
+	  Include personally identifiable information
     </div>
 	     
     <p>
-    <input type="button" value="List Matching Classes" onclick="classExporter.evtResolveCourseNames()">
-    <input type="button" value="Cancel Process" onclick="classExporter.evtCancelProcess()">
+    <span>
+      <input type="button" 
+	     value="List Matching Classes"
+	     id="listClassesBtn">
+      <input type="button" 
+	     value="Get Data"
+	     id="getDataBtn">
+      <input type="button" 
+	     value="Clear Progress Pane"
+	     id="clrProgressBtn">
+
+      <span id="spanBackTab">
+	<input type="button" 
+	       value="Cancel Process"
+	       id="cancelBtn">
+      </span>
+    </span>
 
   <br>
   <hr>
-  <div id="tmpButtons">
-    <input type="button" 
-	   id="clrProgBtn"
-	   value="Clear Progress Info"
-           onclick="clrProgressDiv()" 
-	   style="visibility: hidden">
-  </div>
   <div id="progress"></div>
+
+  <script src="exportClass.js"></script>
+
 
 </body>
 </html>

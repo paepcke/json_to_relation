@@ -158,7 +158,9 @@ class CourseCSVServer(WebSocketHandler):
         @param args: any Python datastructure that can be turned into JSON
         @type args: {int | String | [String] | ...}
         '''
-        self.write_message('{"resp" : "%s", "args" : %s}' % (responseName, json.dumps(args)))
+        jsonArgs = json.dumps(args)
+        msg = '{"resp" : "%s", "args" : %s}' % (responseName, jsonArgs)
+        self.write_message(msg)
         
     def exportClass(self, detailDict):
         '''

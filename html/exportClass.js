@@ -86,15 +86,15 @@ function ExportClass() {
 		var crsNm = courseNameArr[i];
 		// Remove surrounding double quotes from strings:
 		crsNm = crsNm.replace(/"/g, '');
-		theId = 'courseIDRadBtns' + i;
+		var theId = 'courseIDRadBtns' + i;
 		addRadioButtonToProgDiv(crsNm, theId, 'courseIDChoice');
 	    }
 
-	    // Add the Now Get the Data button below the radio buttons:
-	    addButtonToDiv('progress', 
-			   'Get Data', 
-			   'courseIDChoiceBtn', 
-			   'classExporter.evtFinalCourseSelButton()');
+	    //*******REMOVE // Add the Now Get the Data button below the radio buttons:
+	    // addButtonToDiv('progress', 
+	    // 		   'Get Data', 
+	    // 		   'courseIDChoiceBtn', 
+	    // 		   'classExporter.evtFinalCourseSelButton()');
 	    
 	    // Activate the first radiobutton (must do after the above 
 	    // statement, else radio button is unchecked again:
@@ -118,7 +118,7 @@ function ExportClass() {
 	/* Called when Export Class button is pushed. Request
 	   that server find all matching course names:
 	*/	
-	courseIDRegExp = document.getElementById("courseID").value;
+	var courseIDRegExp = document.getElementById("courseID").value;
 	// Course id regexp fld empty? If so: MySQL wildcard:
 	if (courseIDRegExp.length == 0) {
 	    courseIDRegExp = '%';
@@ -127,16 +127,25 @@ function ExportClass() {
 	queryCourseIDResolution(courseIDRegExp);
     }
 
-    var evtFinalCourseSelButton = function() {
+    this.evtGetData = function() {
 	// Get the full course name that is associated
 	// with the checked radio buttion in the course
 	// name list:
-	var fullCourseName = getCourseNameChoice();
+	var fullCourseName = null;
+	try {
+	    fullCourseName = getCourseNameChoice();
+	} catch(err) {}
+
 	if (fullCourseName == null) {
-	    alert('Please (re-)select one of the classes');
+	    classExporter.evtResolveCourseNames();
+	    alert('Please select one of the classes');
 	    return;
 	}
 	startProgressStream(fullCourseName);
+    }
+
+    this.evtClrPro = function() {
+	clrProgressDiv();
     }
 
     this.evtCancelProcess = function() {
@@ -154,9 +163,12 @@ function ExportClass() {
 	    // Get currently checked course name radio button
 	    // obj and store it in instance var:
 	    var chosenCourseNameObj = document.querySelector('input[name="courseIDChoice"]:checked')
+	    if (chosenCourseNameObj == null) {
+		return null;
+	    }
 	    return chosenCourseNameObj.value;
 	} catch(err) {
-	    alert("System error: could not set course name radio button to checked.");
+	    //alert("System error: could not set course name radio button to checked.");
 	    return null;
 	}
     }
@@ -192,7 +204,7 @@ function ExportClass() {
     }
 
     var queryCourseIDResolution = function(courseQuery) {
-	req = buildRequest("reqCourseNames", courseQuery);
+	var req = buildRequest("reqCourseNames", courseQuery);
 	ws.send(req);
     }
 
@@ -200,8 +212,8 @@ function ExportClass() {
 	// Given the name of a request to the server,
 	// and its arguments, return a JSON string
 	// ready to send to server:
-	req = {"req" : reqName,
-	       "args": args};
+	var req = {"req" : reqName,
+		   "args": args};
 	return JSON.stringify(req);
     }
 
@@ -231,12 +243,13 @@ function ExportClass() {
 
     var clrProgressDiv = function() {
 	/* Clear the progress information section on screen */
-	progressNode = document.getElementById('progress');
+	var progressNode = document.getElementById('progress');
 	while (progressNode.firstChild) {
 	    progressNode.removeChild(progressNode.firstChild);
 	}
-	hideClearProgressButton();
-	hideCourseIdChoices()
+	crsNmFormObj = null;
+	//*******hideClearProgressButton();
+	//*******hideCourseIdChoices()
     }
 
     var exposeClearProgressButton = function() {
@@ -255,14 +268,18 @@ function ExportClass() {
     }
 
     var hideCourseIdChoices = function() {
-	// Hide course ID radio buttons and the 'go do the data pull'
-	// button if they have been inserted earlier:
-	try {
-	    document.getElementById("courseIDRadBtns").style.visibility="hidden";
-	} catch(err){}
-	try {
-	    document.getElementById("courseIDChoiceBtn").style.visibility="hidden";
-	} catch(err) {}
+	if (crsNmFormObj != null) {
+	    crsNmFormObj.style.visibility="hidden";
+	}
+
+	// // Hide course ID radio buttons and the 'go do the data pull'
+	// // button if they have been inserted earlier:
+	// try {
+	//     document.getElementById("courseIDRadBtns").style.visibility="hidden";
+	// } catch(err){}
+	// try {
+	//     document.getElementById("courseIDChoiceBtn").style.visibility="hidden";
+	// } catch(err) {}
     }
 
     var exposeCourseIdChoices = function() {
@@ -273,6 +290,8 @@ function ExportClass() {
     }
 
     var createCourseNameForm = function() {
+      // The following var refers to the instance var
+      // and must therefore not be locally declared:
       crsNmFormObj = document.createElement('form');
       crsNmFormObj.setAttribute("id", "courseIDChoice");
       crsNmFormObj.setAttribute("name", "courseIDChoiceForm");
@@ -280,9 +299,9 @@ function ExportClass() {
     }
 
     var addTextToProgDiv = function(txt) {
-	txtNode = document.createElement('text');
-	txtNode.data = txt;
-	document.getElementById('progress').appendChild(txtNode);
+	var divNode = document.createElement('div');
+	divNode.innerHTML = txt;
+	document.getElementById('progress').appendChild(divNode);
     }
 
     var addRadioButtonToProgDiv = function(label, id, groupName) {
@@ -305,11 +324,14 @@ function ExportClass() {
 	labelObj.setAttribute("for", id);
 	labelObj.innerHTML = label;
 
-	courseNameChoiceFormNode = document.getElementById('courseIDChoice');
-	courseNameChoiceFormNode.appendChild(radioObj);
-	courseNameChoiceFormNode.appendChild(labelObj);
-	courseNameChoiceFormNode.appendChild(labelObj);
-	courseNameChoiceFormNode.appendChild(makeBRNode());
+	if (crsNmFormObj == null) {
+	    // Form node does not yet exist within progress div:
+            createCourseNameForm();
+	}
+	crsNmFormObj.appendChild(radioObj);
+	crsNmFormObj.appendChild(labelObj);
+	crsNmFormObj.appendChild(labelObj);
+	crsNmFormObj.appendChild(makeBRNode());
     }
 
     var addButtonToDiv = function(divName, label, id, funcStr) {
@@ -326,3 +348,8 @@ function ExportClass() {
 
 }
 var classExporter = new ExportClass();
+
+document.getElementById('listClassesBtn').addEventListener('click', classExporter.evtResolveCourseNames);
+document.getElementById('getDataBtn').addEventListener('click', classExporter.evtGetData);
+document.getElementById('clrProgressBtn').addEventListener('click', classExporter.evtClrPro);
+document.getElementById('cancelBtn').addEventListener('click', classExporter.evtCancelProcess);
