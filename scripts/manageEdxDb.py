@@ -527,8 +527,8 @@ class TrackLogPuller(object):
                 # dest exists:
                 try:
                     os.makedirs(os.path.dirname(localDest))
-                except OSError:
-                    pass
+                except OSError as e:
+                    self.logErr('Error while trying to write track log file to local (%s): %s' % (localDest, `e`))
                 fileKey.get_contents_to_filename(localDest)
         if dryRun:
             self.logInfo("Would have pulled OpenEdX tracking log files from S3 as per above listings.")
