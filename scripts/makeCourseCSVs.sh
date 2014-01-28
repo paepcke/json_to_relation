@@ -463,7 +463,9 @@ else
   WHERE course_display_name LIKE '"$COURSE_SUBSTR"';"
 fi
 
-EXPORT_VideoInteraction_CMD=" \
+if $pii
+then
+  EXPORT_VideoInteraction_CMD=" \
   SELECT VideoInteraction.*, Account.name, Account.screen_name \
   INTO OUTFILE '"$VideoInteraction_VALUES"' \
     FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
@@ -471,6 +473,15 @@ EXPORT_VideoInteraction_CMD=" \
   FROM Edx.VideoInteraction, EdxPrivate.Account \
   WHERE course_display_name LIKE '"$COURSE_SUBSTR"' \
     AND VideoInteraction.anon_screen_name = Account.anon_screen_name;"
+else
+EXPORT_VideoInteraction_CMD=" \
+  SELECT * \
+  INTO OUTFILE '"$VideoInteraction_VALUES"' \
+    FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
+    LINES TERMINATED BY '\r\n' \
+  FROM Edx.VideoInteraction \
+  WHERE course_display_name LIKE '"$COURSE_SUBSTR"';"
+fi
 
 #********************
  # echo "EXPORT_EventXtract_CMD: $EXPORT_EventXtract_CMD"

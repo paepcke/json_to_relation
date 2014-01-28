@@ -124,8 +124,8 @@ function ExportClass() {
 	if (courseIDRegExp.length == 0) {
 	    courseIDRegExp = '%';
 	}
-	classExporter.clrProgressDiv();
-	classExporter.queryCourseIDResolution(courseIDRegExp);
+	clrProgressDiv();
+	queryCourseIDResolution(courseIDRegExp);
     }
 
     this.evtGetData = function() {
@@ -146,7 +146,7 @@ function ExportClass() {
     }
 
     this.evtClrPro = function() {
-	classExporter.clrProgressDiv();
+	clrProgressDiv();
     }
 
     this.evtCancelProcess = function() {
@@ -154,7 +154,7 @@ function ExportClass() {
 	    source.close();
 	} catch(err) {}
 	//*************window.clearInterval(timer);
-	classExporter.clrProgressDiv();
+	clrProgressDiv();
     }
 
     this.evtCryptoPwdSubmit = function() {
@@ -189,7 +189,14 @@ function ExportClass() {
 	    if (chosenCourseNameObj == null) {
 		return null;
 	    }
-	    return chosenCourseNameObj.value;
+	    var chosenCourseNameId = chosenCourseNameObj.getAttribute("id");
+	    var labels = document.getElementsByTagName("LABEL");
+	    for (var i = 0; i < labels.length; i++) {
+		var oneLabel = labels[i];
+		if (oneLabel.getAttribute("htmlFor") == chosenCourseNameId) {
+		    return oneLabel.innerHTML;
+		}
+	    }
 	} catch(err) {
 	    //alert("System error: could not set course name radio button to checked.");
 	    return null;
@@ -340,7 +347,7 @@ function ExportClass() {
 	radioObj.setAttribute("name", groupName);
 	crsNmFormObj.appendChild(radioObj);
   
-	// Need label object associated witthe the new 
+	// Need label object associated with the new 
 	// radio button, so that user can click on the 
 	// label to activate the radio button:
 	var labelObj     = document.createElement('label');
@@ -380,38 +387,8 @@ function ExportClass() {
 	// which will be added to the widget column under
 	// the course name regex text field:
 
-	var pwdSolicitationDiv = document.createElement('div');
-	pwdSolicitationDiv.setAttribute('id','pwdSolicitationDiv');
-	
-	var typePrompt = document.createTextNode("Crypto passwd: ");
-
-	var pwdFld1 = document.createElement('input');
-	pwdFld1.setAttribute("id", 'pwdFld1');
-	pwdFld1.setAttribute("type", 'password');
-
-	var retypePrompt = document.createTextNode("Please retype: ");
-
-	var pwdFld2 = document.createElement('input');
-	pwdFld2.setAttribute("id", 'pwdFld2');
-	pwdFld2.setAttribute("type", 'password');
-	
-	var okBtn = document.createElement('button');
-	okBtn.setAttribute("id", 'pwdOK');
-	okBtnLabel = document.createTextNode('Set Password');
-	okBtn.appendChild(okBtnLabel);
-	// Event listener: func that will compare the two
-	// typed pwds:
-	okBtn.addEventListener('click', classExporter.evtCryptoPwdSubmit);
-
-	pwdSolicitationDiv.appendChild(typePrompt);
-	pwdSolicitationDiv.appendChild(pwdFld1);
-	pwdSolicitationDiv.appendChild(document.createElement('br'));
-	pwdSolicitationDiv.appendChild(retypePrompt);
-	pwdSolicitationDiv.appendChild(pwdFld2);
-	pwdSolicitationDiv.appendChild(okBtn);
-
-	var reqForm = document.getElementById('reqForm');
-	reqForm.appendChild(pwdSolicitationDiv);
+	var pwdSolicitationDiv = document.getElementById('pwdSolicitationDiv');
+	pwdSolicitationDiv.style.visibility = "visible";
     }
     
     this.hideCryptoPwdSolicitation = function() {
@@ -419,11 +396,8 @@ function ExportClass() {
 	// elements, and remove it. First, get that div's 
 	// parent, which is the column of widgets under the
 	// course regex text entry fld:
-	var reqForm = document.getElementById('reqForm');
 	var pwdSolicitationDiv = document.getElementById('pwdSolicitationDiv');
-	if ((reqForm != null) && (pwdSolicitationDiv != null)){
-	    reqForm.removeChild(pwdSolicitationDiv);
-	}
+	pwdSolicitationDiv.style.visibility = "hidden";
     }
 
 
@@ -435,3 +409,4 @@ document.getElementById('getDataBtn').addEventListener('click', classExporter.ev
 document.getElementById('clrProgressBtn').addEventListener('click', classExporter.evtClrPro);
 document.getElementById('cancelBtn').addEventListener('click', classExporter.evtCancelProcess);
 document.getElementById('piiPolicy').addEventListener('change', classExporter.evtPIIPolicyClicked);
+document.getElementById('pwdOK').addEventListener('click', classExporter.evtCryptoPwdSubmit);

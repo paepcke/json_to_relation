@@ -145,7 +145,7 @@ class CourseCSVServer(WebSocketHandler):
         @param msg: error message to send to browser
         @type msg: String
         '''
-        self.writeError(msg)
+        self.write_message('{"resp" : "error", "args" : "%s"}' % msg)
 
     def writeResult(self, responseName, args):
         '''
@@ -251,7 +251,7 @@ class CourseCSVServer(WebSocketHandler):
         tableDir = os.path.basename(os.path.dirname(self.csvFilePaths[0]))
         thisFullyQualDomainName = socket.getfqdn()
         url = "http://%s/instructor/%s" % (thisFullyQualDomainName, tableDir)
-        self.writeResult('progress', "<b>Email draft for client; copy-paste into email program:</b><br>")
+        self.writeResult('progress', "<p><b>Email draft for client; copy-paste into email program:</b><br>")
         msgStart = 'Hi,<br>your data is ready for pickup. Please visit our <a href="%s">pickup page</a>.<br>' % url
         self.writeResult('progress', msgStart)
         # The rest of the msg is in a file:
@@ -276,9 +276,18 @@ class CourseCSVServer(WebSocketHandler):
         '''
         courseNames = []
         if self.mysqlDb is not None:
-            for courseName in self.mysqlDb.query('SELECT DISTINCT course_display_name ' +\
-                                                 'FROM Edx.EventXtract ' +\
-                                                 'WHERE course_display_name LIKE "%s";' % courseID):
+            for courseName in self.mysqlDb.query('(SELECT DISTINCT course_display_name ' +\
+                                                ' FROM EventXtract ' +\
+                                                ' WHERE course_display_name LIKE "%s")' % courseID +\
+                                                'UNION' +\
+                                                '(SELECT DISTINCT course_display_name' +\
+                                                ' FROM ActivityGrade' +\
+                                                ' WHERE course_display_name LIKE "%s")' % courseID +\
+                                                'UNION' +\
+                                                '(SELECT DISTINCT course_display_name' +\
+                                                ' FROM VideoInteraction' +\
+                                                ' WHERE course_display_name LIKE "%s")' % courseID +\
+                                                'ORDER BY course_display_name;'):
                 if courseName is not None:
                     # Results are singleton tuples, so
                     # need to get 0th element:
