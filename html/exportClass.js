@@ -18,6 +18,7 @@ function ExportClass() {
     // Form node containing the course name
     // selection list:
     var crsNmFormObj = null; 
+    var encryptionPwd = null;
 
     /*----------------------------  Constructor ---------------------*/
     this.construct = function() {
@@ -123,8 +124,8 @@ function ExportClass() {
 	if (courseIDRegExp.length == 0) {
 	    courseIDRegExp = '%';
 	}
-	clrProgressDiv();
-	queryCourseIDResolution(courseIDRegExp);
+	classExporter.clrProgressDiv();
+	classExporter.queryCourseIDResolution(courseIDRegExp);
     }
 
     this.evtGetData = function() {
@@ -145,7 +146,7 @@ function ExportClass() {
     }
 
     this.evtClrPro = function() {
-	clrProgressDiv();
+	classExporter.clrProgressDiv();
     }
 
     this.evtCancelProcess = function() {
@@ -153,7 +154,29 @@ function ExportClass() {
 	    source.close();
 	} catch(err) {}
 	//*************window.clearInterval(timer);
-	clrProgressDiv();
+	classExporter.clrProgressDiv();
+    }
+
+    this.evtCryptoPwdSubmit = function() {
+	var pwdFld1 = document.getElementById('pwdFld1');
+	var pwdFld2 = document.getElementById('pwdFld2');
+	if (pwdFld1.value != pwdFld2.value) {
+	    alert("Passwords do not match, please try again");
+	    pwdFld1.value = '';
+	    pwdFld2.value = '';
+	    return
+	}
+	encryptionPwd = pwdFld1.value;
+	classExporter.hideCryptoPwdSolicitation();
+    }
+
+    this.evtPIIPolicyClicked = function() {
+	piiPolicyChkBox = document.getElementById('piiPolicy');
+	if (piiPolicyChkBox.checked) {
+	    classExporter.showCryptoPwdSolicitation();
+	} else {
+	    classExporter.hideCryptoPwdSolicitation();
+	}
     }
 
     /*----------------------------  Utility Functions ---------------------*/
@@ -224,8 +247,9 @@ function ExportClass() {
 	*/
 	var xmlHttp = null;
 	var fileAction = document.getElementById("fileAction").checked;
+	var inclPII    = document.getElementById("piiPolicy").checked;
 
-	var argObj = {"courseId" : resolvedCourseID, "wipeExisting" : fileAction};
+	var argObj = {"courseId" : resolvedCourseID, "wipeExisting" : fileAction, "inclPII" : inclPII, "cryptoPwd" : encryptionPwd};
 	var req = buildRequest("getData", argObj);
 
 	// Start the progress timer; remember the existing
@@ -342,9 +366,66 @@ function ExportClass() {
 	document.getElementById(divName).appendChild(btnObj);
     }
 
-	var makeBRNode = function() {
-	    return document.createElement('br');
+    var makeBRNode = function() {
+	return document.createElement('br');
+    }
+
+    /*----------------------------  Encryption Pwd Entry Solicitation ---------------------*/
+
+    this.showCryptoPwdSolicitation = function() {
+	// Make two pwd text entry input fields, an OK
+	// button, and associated text labels. The pwd
+	// entry flds won't echo. All nodes will be 
+	// children of a new div: pwdSolicitationDiv, 
+	// which will be added to the widget column under
+	// the course name regex text field:
+
+	var pwdSolicitationDiv = document.createElement('div');
+	pwdSolicitationDiv.setAttribute('id','pwdSolicitationDiv');
+	
+	var typePrompt = document.createTextNode("Crypto passwd: ");
+
+	var pwdFld1 = document.createElement('input');
+	pwdFld1.setAttribute("id", 'pwdFld1');
+	pwdFld1.setAttribute("type", 'password');
+
+	var retypePrompt = document.createTextNode("Please retype: ");
+
+	var pwdFld2 = document.createElement('input');
+	pwdFld2.setAttribute("id", 'pwdFld2');
+	pwdFld2.setAttribute("type", 'password');
+	
+	var okBtn = document.createElement('button');
+	okBtn.setAttribute("id", 'pwdOK');
+	okBtnLabel = document.createTextNode('Set Password');
+	okBtn.appendChild(okBtnLabel);
+	// Event listener: func that will compare the two
+	// typed pwds:
+	okBtn.addEventListener('click', classExporter.evtCryptoPwdSubmit);
+
+	pwdSolicitationDiv.appendChild(typePrompt);
+	pwdSolicitationDiv.appendChild(pwdFld1);
+	pwdSolicitationDiv.appendChild(document.createElement('br'));
+	pwdSolicitationDiv.appendChild(retypePrompt);
+	pwdSolicitationDiv.appendChild(pwdFld2);
+	pwdSolicitationDiv.appendChild(okBtn);
+
+	var reqForm = document.getElementById('reqForm');
+	reqForm.appendChild(pwdSolicitationDiv);
+    }
+    
+    this.hideCryptoPwdSolicitation = function() {
+	// Find the div that holds the crypto solicitation
+	// elements, and remove it. First, get that div's 
+	// parent, which is the column of widgets under the
+	// course regex text entry fld:
+	var reqForm = document.getElementById('reqForm');
+	var pwdSolicitationDiv = document.getElementById('pwdSolicitationDiv');
+	if ((reqForm != null) && (pwdSolicitationDiv != null)){
+	    reqForm.removeChild(pwdSolicitationDiv);
 	}
+    }
+
 
 }
 var classExporter = new ExportClass();
@@ -353,3 +434,4 @@ document.getElementById('listClassesBtn').addEventListener('click', classExporte
 document.getElementById('getDataBtn').addEventListener('click', classExporter.evtGetData);
 document.getElementById('clrProgressBtn').addEventListener('click', classExporter.evtClrPro);
 document.getElementById('cancelBtn').addEventListener('click', classExporter.evtCancelProcess);
+document.getElementById('piiPolicy').addEventListener('change', classExporter.evtPIIPolicyClicked);

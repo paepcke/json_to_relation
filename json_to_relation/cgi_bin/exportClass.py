@@ -169,36 +169,36 @@ class CourseCSVServer(WebSocketHandler):
         @type detailDict:
         '''
         theCourseID = detailDict.get('courseId', '')
-        if len(theCourseID) == 0:           
-
+        if len(theCourseID) == 0:     
             self.writeError('Please fill in the course ID field.')
             return False
         # Check whether we are to delete any already existing
         # csv files for this class:
         xpungeExisting = detailDict.get("wipeExisting", False)
-#         try:
-#             if xpungeExisting == 'true':
-#                 subprocess.call([self.exportCSVScript, '-u', 'www-data', '-x', '-i', self.infoTmpFile.name, theCourseID],
-#                                 stdout=sys.stdout, stderr=sys.stdout)
-#             else:
-#                 subprocess.call([self.exportCSVScript, '-u', 'www-data', '-i', self.infoTmpFile.name, theCourseID],
-#                                 stdout=sys.stdout, stderr=sys.stdout)
-#         except Exception as e:
-#             self.writeError(`e`)
-
+        inclPII = detailDict.get("inclPII", False)
+        cryptoPWD = detailDict.get("cryptoPwd", '')
+        if cryptoPWD is None:
+            cryptoPWD = ''
         try:
             if xpungeExisting:
-                pipeFromScript = subprocess.Popen([self.exportCSVScript, '-u', 'www-data', '-x', '-i', self.infoTmpFile.name, theCourseID],
-                                                  stdout=subprocess.PIPE).stdout
+                if inclPII:
+                    pipeFromScript = subprocess.Popen([self.exportCSVScript, '-u', 'www-data', '-x', '-i', self.infoTmpFile.name, '-n', cryptoPWD, theCourseID],
+                                                      stdout=subprocess.PIPE).stdout
+                else:
+                    pipeFromScript = subprocess.Popen([self.exportCSVScript, '-u', 'www-data', '-x', '-i', self.infoTmpFile.name, theCourseID],
+                                                      stdout=subprocess.PIPE).stdout
             else:
-                pipeFromScript = subprocess.Popen([self.exportCSVScript, '-u', 'www-data', '-i', self.infoTmpFile.name, theCourseID],
-                                                  stdout=subprocess.PIPE).stdout
+                if inclPII:
+                    pipeFromScript = subprocess.Popen([self.exportCSVScript, '-u', 'www-data', '-i', self.infoTmpFile.name, '-n', cryptoPWD, theCourseID],
+                                                      stdout=subprocess.PIPE).stdout
+                else:
+                    pipeFromScript = subprocess.Popen([self.exportCSVScript, '-u', 'www-data', '-i', self.infoTmpFile.name, theCourseID],
+                                                      stdout=subprocess.PIPE).stdout
             for msgFromScript in pipeFromScript:
                 self.writeResult('progress', msgFromScript)
                                                   
         except Exception as e:
             self.writeError(`e`)
-
 
         # Make an array of csv file paths:
         self.csvFilePaths = []

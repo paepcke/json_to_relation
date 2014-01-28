@@ -32,8 +32,12 @@
 # The -x option controls what happens if the target csv files already
 # exist. If the option is present, then existing files will be overwritten,
 # else execution is aborted if any one of the files exists.
+#
+# The -n option, if provided, must specify a password. That pwd will
+# be used to encrypt the output table files into a single .zip file.
 
-USAGE="Usage: "`basename $0`" [-u uid][-p][-d destDirPath][-x xpunge][-i infoDest] courseNamePattern"
+
+USAGE="Usage: "`basename $0`" [-u uid][-p][-d destDirPath][-x xpunge][-i infoDest][-n encryptionPwd] courseNamePattern"
 
 # ----------------------------- Process CLI Parameters -------------
 
@@ -51,9 +55,11 @@ xpungeFiles=false
 destDirGiven=false
 DEST_DIR='/home/dataman/Data/CustomExcerpts'
 INFO_DEST=''
+pii=false
+ENCRYPT_PWD=''
 
 # Execute getopt
-ARGS=`getopt -o "u:pxd:i:" -l "user:,password,xpunge,destDir:infoDest:" \
+ARGS=`getopt -o "u:pxd:i:n:" -l "user:,password,xpunge,destDir:infoDest:names:" \
       -n "getopt.sh" -- "$@"`
  
 #Bad arguments
@@ -112,7 +118,19 @@ do
 	echo $USAGE
 	exit 1
       fi;;
- 
+    -n|--names)
+      pii=true
+      shift
+      # Grab the encryption pwd:
+      if [ -n "$1" ]
+      then
+	  ENCRYPT_PWD=$1
+	  shift
+      else
+	  echo $USAGE
+	  echo "Need to provide an encryption pwd for the result zip file."
+	  exit 1
+      fi;;
     --)
       shift
       break;;
@@ -242,7 +260,19 @@ fi
 # echo "DEST_DIR: '$DEST_DIR'"
 # echo "COURSE_SUBSTR: $COURSE_SUBSTR"
 # echo "DIR_LEAF: $DIR_LEAF"
-# exit 0
+# if $pii
+# then
+#    echo "Want pii"
+# else
+#    echo "No pii"
+# fi
+# if [ -z $ENCRYPT_PWD ]
+# then
+#     echo "ENCYPT_PWD empty"
+# else
+#     echo "Encryption pwd: $ENCRYPT_PWD"
+# fi
+#  exit 0
 #*************
 
 # ----------------------------- Get column headers for each table -------------
@@ -328,81 +358,125 @@ echo "$EVENT_XTRACT_HEADER" | sed '/[*]*\s*1\. row\s*[*]*$/d' | sed 's/[^:]*: //
 EVENT_EXTRACT_FNAME=$DEST_DIR/${DIR_LEAF}_EventXtract.csv
 ACTIVITY_GRADE_FNAME=$DEST_DIR/${DIR_LEAF}_ActivityGrade.csv
 VIDEO_FNAME=$DEST_DIR/${DIR_LEAF}_VideoInteraction.csv
+ZIP_FNAME=$DEST_DIR/${DIR_LEAF}_report.zip
 
 # ----------------------------- If requested on CL: Punt if tables exist -------------
 
 # Refuse to overwrite existing files, unless the -x option
 # was present in the CL:
-if [ -e $EVENT_EXTRACT_FNAME ]
+
+# If caller wanted pii then only a zipped file
+# would interfere:
+if $pii
 then
-    if $xpungeFiles
+    if [ -e $ZIPPED ]
     then
-	echo "Removing existing csv file $EVENT_EXTRACT_FNAME<br>"
-	rm $EVENT_EXTRACT_FNAME
-    else
-	echo "File $EVENT_EXTRACT_FNAME already exists; aborting.<br>"
-	exit 1
+	if $xpungeFiles
+	then
+	    echo "Removing existing zipped csv file $ZIP_FNAME<br>"
+	    rm $ZIP_FNAME
+	else
+	    echo "File $ZIP_FNAME already exists; aborting.<br>"
+	    exit 1
+	fi
+    fi
+else
+    # No PII: check for each .csv file being present:
+    if [ -e $EVENT_EXTRACT_FNAME ]
+    then
+	if $xpungeFiles
+	then
+	    echo "Removing existing csv file $EVENT_EXTRACT_FNAME<br>"
+	    rm $EVENT_EXTRACT_FNAME
+	else
+	    echo "File $EVENT_EXTRACT_FNAME already exists; aborting.<br>"
+	    exit 1
+	fi
+    fi
+
+    if [ -e $ACTIVITY_GRADE_FNAME ]
+    then
+	if $xpungeFiles
+	then
+	    echo "Removing existing csv file $ACTIVITY_GRADE_FNAME<br>"
+	    rm $ACTIVITY_GRADE_FNAME
+	else
+	    echo "File $ACTIVITY_GRADE_FNAME already exists; aborting.<br>"
+	    exit 1
+	fi
+    fi
+    if [ -e $VIDEO_FNAME ]
+    then
+	if $xpungeFiles
+	then
+	    echo "Removing existing csv file $VIDEO_FNAME<br>"
+	    rm $VIDEO_FNAME
+	else
+	    echo "File $VIDEO_FNAME already exists; aborting.<br>"
+	    exit 1
+	fi
     fi
 fi
-
-if [ -e $ACTIVITY_GRADE_FNAME ]
-then
-    if $xpungeFiles
-    then
-	echo "Removing existing csv file $ACTIVITY_GRADE_FNAME<br>"
-	rm $ACTIVITY_GRADE_FNAME
-    else
-	echo "File $ACTIVITY_GRADE_FNAME already exists; aborting.<br>"
-	exit 1
-    fi
-fi
-
-if [ -e $VIDEO_FNAME ]
-then
-    if $xpungeFiles
-    then
-	echo "Removing existing csv file $VIDEO_FNAME<br>"
-	rm $VIDEO_FNAME
-    else
-	echo "File $VIDEO_FNAME already exists; aborting.<br>"
-	exit 1
-    fi
-fi
-
 
 # ----------------------------- Create MySQL Commands -------------
 
 # Create the three MySQL export commands that 
-# will write the table values:
-EXPORT_EventXtract_CMD=" \
+# will write the table values. Two variants for each table:
+# with or without personally identifiable information:
+if $pii
+then
+  EXPORT_EventXtract_CMD=" \
+  SELECT EventXtract.*, Account.name, Account.screen_name \
+  INTO OUTFILE '"$EventXtract_VALUES"' \
+    FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
+    LINES TERMINATED BY '\r\n' \
+  FROM Edx.EventXtract, EdxPrivate.Account \
+  WHERE course_display_name LIKE '"$COURSE_SUBSTR"' \
+    AND EventXtract.anon_screen_name = Account.anon_screen_name;"
+else
+  EXPORT_EventXtract_CMD=" \
   SELECT * \
   INTO OUTFILE '"$EventXtract_VALUES"' \
     FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
     LINES TERMINATED BY '\r\n' \
   FROM Edx.EventXtract \
   WHERE course_display_name LIKE '"$COURSE_SUBSTR"';"
+fi
 
-EXPORT_ActivityGrade_CMD=" \
+if $pii
+then
+  EXPORT_ActivityGrade_CMD=" \
+  SELECT ActivityGrade.*, Account.name, Account.screen_name \
+  INTO OUTFILE '"$ActivityGrade_VALUES"' \
+    FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
+    LINES TERMINATED BY '\r\n' \
+  FROM Edx.ActivityGrade, EdxPrivate.Account \
+  WHERE course_display_name LIKE '"$COURSE_SUBSTR"' \
+    AND ActivityGrade.anon_screen_name = Account.anon_screen_name;"
+else
+  EXPORT_ActivityGrade_CMD=" \
   SELECT * \
   INTO OUTFILE '"$ActivityGrade_VALUES"' \
     FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
     LINES TERMINATED BY '\r\n' \
   FROM Edx.ActivityGrade \
   WHERE course_display_name LIKE '"$COURSE_SUBSTR"';"
+fi
 
 EXPORT_VideoInteraction_CMD=" \
-  SELECT * \
+  SELECT VideoInteraction.*, Account.name, Account.screen_name \
   INTO OUTFILE '"$VideoInteraction_VALUES"' \
     FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
     LINES TERMINATED BY '\r\n' \
-  FROM Edx.VideoInteraction \
-  WHERE course_display_name LIKE '"$COURSE_SUBSTR"';"
+  FROM Edx.VideoInteraction, EdxPrivate.Account \
+  WHERE course_display_name LIKE '"$COURSE_SUBSTR"' \
+    AND VideoInteraction.anon_screen_name = Account.anon_screen_name;"
 
 #********************
-# echo "EXPORT_EventXtract_CMD: $EXPORT_EventXtract_CMD"
-# echo "EXPORT_ActivityGrade_CMD: $EXPORT_ActivityGrade_CMD"
-# echo "EXPORT_VideoInteraction_CMD: $EXPORT_VideoInteraction_CMD"
-# exit 0
+ # echo "EXPORT_EventXtract_CMD: $EXPORT_EventXtract_CMD"
+ # echo "EXPORT_ActivityGrade_CMD: $EXPORT_ActivityGrade_CMD"
+ # echo "EXPORT_VideoInteraction_CMD: $EXPORT_VideoInteraction_CMD"
+ # exit 0
 #********************
 
 # ----------------------------- Execute the MySQL Commands -------------
@@ -443,7 +517,28 @@ fi
 
 echo "Done exporting class $COURSE_SUBSTR to CSV<br>"
 
+# ----------------------- If PII then Zip and Encrypt -------------
+
+if $pii
+then
+    echo "Encrypting report...<br>"
+    # The --junk-paths puts just the files into
+    # the zip, not all the directories on their
+    # path from root to leaf:
+    zip --junk-paths --password $ENCRYPT_PWD $ZIP_FNAME $EVENT_EXTRACT_FNAME $ACTIVITY_GRADE_FNAME $VIDEO_FNAME
+    rm $EVENT_EXTRACT_FNAME $ACTIVITY_GRADE_FNAME $VIDEO_FNAME
+    # Write path to the encrypted zip file to 
+    # path the caller provided:
+    if [ ! -z $INFO_DEST ]
+    then
+	echo $ZIP_FNAME > $INFO_DEST
+    fi
+    exit 0
+fi
+
 # ----------------------- Write table paths to a file -------------
+
+# For unencrypted files:
 
 if [ ! -z $INFO_DEST ]
 then
@@ -451,4 +546,5 @@ then
     echo ${ACTIVITY_GRADE_FNAME}   >> $INFO_DEST
     echo ${VIDEO_FNAME}            >> $INFO_DEST
 fi
+
 exit 0
