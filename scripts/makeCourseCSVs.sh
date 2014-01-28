@@ -19,7 +19,9 @@
 #
 # If the -p option is given, a password is requested on the commandline.
 #
-# If no password is provided, the script examines the effective user's
+# If the -w option is given, it provides the MySQL pwd to use.
+#
+# If neither -p nor -w is provided, the script examines the effective user's
 # $HOME/.ssh directory for a file named 'mysql'. If that file exists, 
 # its content is used as a MySQL password, else no password is used 
 # for running MySQL.
@@ -37,7 +39,7 @@
 # be used to encrypt the output table files into a single .zip file.
 
 
-USAGE="Usage: "`basename $0`" [-u uid][-p][-d destDirPath][-x xpunge][-i infoDest][-n encryptionPwd] courseNamePattern"
+USAGE="Usage: "`basename $0`" [-u uid][-p][-w mySqlPwd][-d destDirPath][-x xpunge][-i infoDest][-n encryptionPwd] courseNamePattern"
 
 # ----------------------------- Process CLI Parameters -------------
 
@@ -59,7 +61,7 @@ pii=false
 ENCRYPT_PWD=''
 
 # Execute getopt
-ARGS=`getopt -o "u:pxd:i:n:" -l "user:,password,xpunge,destDir:infoDest:names:" \
+ARGS=`getopt -o "u:pw:xd:i:n:" -l "user:,password,mysqlpwd:,xpunge,destDir:infoDest:names:" \
       -n "getopt.sh" -- "$@"`
  
 #Bad arguments
@@ -92,6 +94,19 @@ do
       needPasswd=true
       shift;;
  
+    -w|--mysqlpwd)
+      shift
+      # Grab the option value:
+      if [ -n "$1" ]
+      then
+        PASSWD=$1
+	needPasswd=false
+        shift
+      else
+	echo $USAGE
+	exit 1
+      fi;;
+
     -d|--destDir)
       shift
       # Grab the option value:
@@ -235,14 +250,19 @@ then
     read -s -p "Password for user '$USERNAME' on `hostname`'s MySQL server: " PASSWD
     echo
 else
-    # Get home directory of whichever user will
-    # log into MySQL:
-    HOME_DIR=$(getent passwd $USERNAME | cut -d: -f6)
-    # If the home dir has a readable file called mysql in its .ssh
-    # subdir, then pull the pwd from there:
-    if test -f $HOME_DIR/.ssh/mysql && test -r $HOME_DIR/.ssh/mysql
+    # MySQL pwd may have been provided via the -w option:
+    if [ -z $PASSWD ]
     then
-	PASSWD=`cat $HOME_DIR/.ssh/mysql`
+	# Password was not provided with -w option.
+        # Get home directory of whichever user will
+        # log into MySQL:
+	HOME_DIR=$(getent passwd $USERNAME | cut -d: -f6)
+        # If the home dir has a readable file called mysql in its .ssh
+        # subdir, then pull the pwd from there:
+	if test -f $HOME_DIR/.ssh/mysql && test -r $HOME_DIR/.ssh/mysql
+	then
+	    PASSWD=`cat $HOME_DIR/.ssh/mysql`
+	fi
     fi
 fi
 
@@ -377,6 +397,12 @@ then
 	    rm $ZIP_FNAME
 	else
 	    echo "File $ZIP_FNAME already exists; aborting.<br>"
+	    # Zero out the file in which we are to list
+	    # the names of the result files:
+	    if [ ! -z $INFO_DEST ]
+	    then
+		truncate -s 0 $INFO_DEST
+	    fi
 	    exit 1
 	fi
     fi
@@ -390,6 +416,12 @@ else
 	    rm $EVENT_EXTRACT_FNAME
 	else
 	    echo "File $EVENT_EXTRACT_FNAME already exists; aborting.<br>"
+	    # Zero out the file in which we are to list
+	    # the names of the result files:
+	    if [ ! -z $INFO_DEST ]
+	    then
+		truncate -s 0 $INFO_DEST
+	    fi
 	    exit 1
 	fi
     fi
@@ -402,6 +434,12 @@ else
 	    rm $ACTIVITY_GRADE_FNAME
 	else
 	    echo "File $ACTIVITY_GRADE_FNAME already exists; aborting.<br>"
+	    # Zero out the file in which we are to list
+	    # the names of the result files:
+	    if [ ! -z $INFO_DEST ]
+	    then
+		truncate -s 0 $INFO_DEST
+	    fi
 	    exit 1
 	fi
     fi
@@ -413,6 +451,12 @@ else
 	    rm $VIDEO_FNAME
 	else
 	    echo "File $VIDEO_FNAME already exists; aborting.<br>"
+	    # Zero out the file in which we are to list
+	    # the names of the result files:
+	    if [ ! -z $INFO_DEST ]
+	    then
+		truncate -s 0 $INFO_DEST
+	    fi
 	    exit 1
 	fi
     fi

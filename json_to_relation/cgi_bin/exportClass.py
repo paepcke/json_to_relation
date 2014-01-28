@@ -65,15 +65,16 @@ class CourseCSVServer(WebSocketHandler):
         # tables into that file:
         self.infoTmpFile = tempfile.NamedTemporaryFile()
         self.dbError = 'no error'
-        currUser = getpass.getuser()
+        self.currUser = getpass.getuser()
         try:
-            with open('/home/%s/.ssh/mysql' % currUser, 'r') as fd:
-                pwd = fd.readline()
-                self.mysqlDb = MySQLDB(user=currUser, passwd=pwd, db='Edx')
+            with open('/home/%s/.ssh/mysql' % self.currUser, 'r') as fd:
+                self.mySQLPwd = fd.readline()
+                self.mysqlDb = MySQLDB(user=self.currUser, passwd=self.mySQLPwd, db='Edx')
         except Exception:
             try:
                 # Try w/o a pwd:
-                self.mysqlDb = MySQLDB(user=currUser, db='Edx')
+                self.mySQLPwd = None
+                self.mysqlDb = MySQLDB(user=self.currUser, db='Edx')
             except Exception as e:
                 # Remember the error msg for later:
                 self.dbError = `e`;
@@ -121,7 +122,11 @@ class CourseCSVServer(WebSocketHandler):
             else:
                 self.writeError("Unknown request name: %s" % requestName)
         except Exception as e:
-            self.writeError("Server could not extract request name/args from (%s): %s" % (message, `e`))
+            # Need to escape double-quotes so that the 
+            # browser-side JSON parser for this response
+            # doesn't get confused:
+            safeResp = json.dumps('(%s): %s)' % (message, `e`))
+            self.writeError("Server could not extract request name/args from %s" % safeResp)
             
     def handleCourseNamesReq(self, requestName, args):
         try:
@@ -179,41 +184,60 @@ class CourseCSVServer(WebSocketHandler):
         cryptoPWD = detailDict.get("cryptoPwd", '')
         if cryptoPWD is None:
             cryptoPWD = ''
+            
+        # Build the CL command for script makeCourseCSV.sh
+        scriptCmd = [self.exportCSVScript,'-u',self.currUser]
+        if self.mySQLPwd is not None:
+            scriptCmd.extend(['-w',self.mySQLPwd])
+        if xpungeExisting:
+            scriptCmd.append('-x')
+        scriptCmd.extend(['-i',self.infoTmpFile.name])
+        if inclPII:
+            scriptCmd.extend(['-n',cryptoPWD])
+        scriptCmd.append(theCourseID)
+        
+        # Call makeClassCSV.sh to export:
         try:
-            if xpungeExisting:
-                if inclPII:
-                    pipeFromScript = subprocess.Popen([self.exportCSVScript, '-u', 'www-data', '-x', '-i', self.infoTmpFile.name, '-n', cryptoPWD, theCourseID],
-                                                      stdout=subprocess.PIPE).stdout
-                else:
-                    pipeFromScript = subprocess.Popen([self.exportCSVScript, '-u', 'www-data', '-x', '-i', self.infoTmpFile.name, theCourseID],
-                                                      stdout=subprocess.PIPE).stdout
-            else:
-                if inclPII:
-                    pipeFromScript = subprocess.Popen([self.exportCSVScript, '-u', 'www-data', '-i', self.infoTmpFile.name, '-n', cryptoPWD, theCourseID],
-                                                      stdout=subprocess.PIPE).stdout
-                else:
-                    pipeFromScript = subprocess.Popen([self.exportCSVScript, '-u', 'www-data', '-i', self.infoTmpFile.name, theCourseID],
-                                                      stdout=subprocess.PIPE).stdout
+            pipeFromScript = subprocess.Popen(scriptCmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE).stdout
             for msgFromScript in pipeFromScript:
                 self.writeResult('progress', msgFromScript)
-                                                  
         except Exception as e:
             self.writeError(`e`)
 
-        # Make an array of csv file paths:
-        self.csvFilePaths = []
-        self.infoTmpFile.seek(0)
-        for csvFilePath in self.infoTmpFile:
-            self.csvFilePaths.append(csvFilePath.strip())        
-            
-        # Send table row samples to browser:
-        self.printClassTableInfo()
+        # The bash script will have placed a list of
+        # output files it has created into self.infoTmpFile.
+        # If the script aborted b/c it did not wish to overwrite
+        # existing files, then the script truncated 
+        # the file to zero:
         
-        # Add an example client letter:
-        self.addClientInstructions()
+        if os.path.getsize(self.infoTmpFile.name) > 0:
+            # Make an array of csv file paths:
+            self.csvFilePaths = []
+            self.infoTmpFile.seek(0)
+            for csvFilePath in self.infoTmpFile:
+                self.csvFilePaths.append(csvFilePath.strip())        
+                
+            # Send table row samples to browser:
+            self.printClassTableInfo(inclPII)
+            
+            # Add an example client letter:
+            self.addClientInstructions()
         return True
     
-    def printClassTableInfo(self):
+    def printClassTableInfo(self, inclPII):
+        '''
+        Writes html to browser that shows result table
+        file names and sizes. Also sends a few lines
+        from each table as samples.
+        In case of PII-including reports, only one file
+        exists, and it is zipped and encrypted.
+        @param inclPII: whether or not the report includes PII
+        @type inclPII: Boolean 
+        '''
+        if inclPII:
+            self.writeResult('printTblInfo', '<br><b>Tables are zipped and encrypted</b></br>')
+            return
+        
         for csvFilePath in self.csvFilePaths:
             tblFileSize = os.path.getsize(csvFilePath)
             # Get the line count:
@@ -225,9 +249,30 @@ class CourseCSVServer(WebSocketHandler):
                 lineCnt = lineCntAndFilename.split(' ')[0]
             except (CalledProcessError, IndexError):
                 pass
+            
+            # Get the table name from the table file name:
+            if csvFilePath.find('EventXtract') > -1:
+                tblName = 'EventXtract'
+            elif csvFilePath.find('VideoInteraction') > -1:
+                tblName = 'VideoInteraction'
+            elif csvFilePath.find('ActivityGrade') > -1:
+                tblName = 'ActivityGrade'
+            else:
+                tblName = 'unknown table name'
+            
+            # Only output size and sample rows if table
+            # wasn't empty. Line count of an empty
+            # table will be 1, b/c the col header will
+            # have been placed in it. So tblFileSize == 0
+            # won't happen, unless we change that:
+            if tblFileSize == 0 or lineCnt == '1':
+                self.writeResult('printTblInfo', '<br><b>Table %s</b> is empty.' % tblName)
+                continue
+            
             self.writeResult('printTblInfo', 
-                             "<br><b>Table file</b> %s size: %d bytes, %s line(s)<br><b>Sample rows:</b><br>" % 
-                             (csvFilePath, tblFileSize, lineCnt))
+                             '<br><b>Table %s</b></br>' % tblName +\
+                             '(file %s size: %d bytes, %s line(s))<br>' % (csvFilePath, tblFileSize, lineCnt) +\
+                             'Sample rows:<br>')
             if tblFileSize > 0:
                 lineCounter = 0
                 with open(csvFilePath) as infoFd:

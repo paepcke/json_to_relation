@@ -34,6 +34,7 @@ function ExportClass() {
 		var args    = argsObj.args;
 	    } catch(err) {
 		alert('Bad response from server (' + evt.data + '): ' + err );
+		return
 	    }
 	    handleResponse(response, args);
 	}
@@ -166,16 +167,23 @@ function ExportClass() {
 	    pwdFld2.value = '';
 	    return
 	}
+	if (pwdFld1.value.length == 0) {
+	    alert("Please enter an encryption password");
+	    return;
+	}
 	encryptionPwd = pwdFld1.value;
 	classExporter.hideCryptoPwdSolicitation();
+	classExporter.setGetDataButtonUsability(true);
     }
 
     this.evtPIIPolicyClicked = function() {
 	piiPolicyChkBox = document.getElementById('piiPolicy');
 	if (piiPolicyChkBox.checked) {
 	    classExporter.showCryptoPwdSolicitation();
+	    setGetDataButtonUsability(false);
 	} else {
 	    classExporter.hideCryptoPwdSolicitation();
+	    setGetDataButtonUsability(true);
 	}
     }
 
@@ -268,6 +276,14 @@ function ExportClass() {
 	//*********timer = window.setInterval(progressUpdate,1000);
 
 	ws.send(req);
+    }
+
+    var setGetDataButtonUsability = function(makeUsable) {
+	if (makeUsable) {
+	    document.getElementById("getDataBtn").disabled = false;
+	} else {
+	    document.getElementById("getDataBtn").disabled = true;
+	}
     }
 
     /*----------------------------  Managing Progress Div Area ---------------------*/
@@ -410,3 +426,7 @@ document.getElementById('clrProgressBtn').addEventListener('click', classExporte
 document.getElementById('cancelBtn').addEventListener('click', classExporter.evtCancelProcess);
 document.getElementById('piiPolicy').addEventListener('change', classExporter.evtPIIPolicyClicked);
 document.getElementById('pwdOK').addEventListener('click', classExporter.evtCryptoPwdSubmit);
+
+// Initially, we hide the solicitation for
+// a PII zip file encryption pwd:
+classExporter.hideCryptoPwdSolicitation();
