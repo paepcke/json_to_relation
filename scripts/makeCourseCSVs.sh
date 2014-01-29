@@ -410,7 +410,7 @@ ZIP_FNAME=$DEST_DIR/${DIR_LEAF}_report.zip
 # would interfere:
 if $pii
 then
-    if [ -e $ZIPPED ]
+    if [ -e $ZIP_FNAME ]
     then
 	if $xpungeFiles
 	then
