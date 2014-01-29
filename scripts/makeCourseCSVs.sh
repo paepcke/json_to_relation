@@ -312,13 +312,13 @@ fi
 # remaining info, the actual col names, to a tmp file. We
 # do this for each of the three tables. 
 #
-# Get all tmp files:
+# Create all tmp files:
 
 EventXtract_HEADER_FILE=`mktemp -p /tmp`
 VideoInteraction_HEADER_FILE=`mktemp -p /tmp`
 ActivityGrade_HEADER_FILE=`mktemp -p /tmp`
 
-# Ensure the files are cleaned up:
+# Ensure the files are cleaned up when script exits:
 trap "rm -f $EventXtract_HEADER_FILE VideoInteraction_HEADER_FILE ActivityGrade_HEADER_FILE" EXIT
 
 # A tmp file for one table's csv data:
@@ -332,8 +332,16 @@ EventXtract_VALUES=`mktemp -u -p /tmp`
 VideoInteraction_VALUES=`mktemp -u -p /tmp`
 ActivityGrade_VALUES=`mktemp -u -p /tmp`
 
+# Auth part for the subsequent three mysql calls:
+if [ -z $PASSWD ]
+then
+    # Password empty...
+    MYSQL_AUTH="-u $USERNAME"
+else
+    MYSQL_AUTH="-u $USERNAME -p$PASSWD"
+fi
 
-ACTIVITY_GRADE_HEADER=`mysql --batch -e "
+ACTIVITY_GRADE_HEADER=`mysql --batch $MYSQL_AUTH -e "
               SELECT GROUP_CONCAT(CONCAT(\"'\",information_schema.COLUMNS.COLUMN_NAME,\"'\")) 
 	      FROM information_schema.COLUMNS 
 	      WHERE TABLE_SCHEMA = 'Edx' 
@@ -372,6 +380,19 @@ EVENT_XTRACT_HEADER=`mysql --batch -e "
 # in a tempfile:
 echo "$EVENT_XTRACT_HEADER" | sed '/[*]*\s*1\. row\s*[*]*$/d' | sed 's/[^:]*: //'  | cat > $EventXtract_HEADER_FILE
 
+
+#*******************
+# echo "EventXtract header line should be in $EventXtract_HEADER_FILE"
+# echo "VideoInteraction  header line should be in $VideoInteraction_HEADER_FILE"
+# echo "ActivityGrade  header line should be in $ActivityGrade_HEADER_FILE"
+# echo "Contents EventXtract header file:"
+# cat $EventXtract_HEADER_FILE
+# echo "Contents VideoInteraction header file:"
+# cat $VideoInteraction_HEADER_FILE
+# echo "Contents ActivityGrade header file:"
+# cat $ActivityGrade_HEADER_FILE
+# exit 0
+#*******************
 
 # ----------------------------- Create a full path for each of the tables -------------
 
@@ -536,39 +557,18 @@ fi
 
 # ----------------------------- Execute the MySQL Commands -------------
 
-# If the pwd is empty, don't issue -p to mysql:
-if [ -z $PASSWD ]
-then
-    # Password empty...
-    echo "Creating extract EventXtract ...<br>"
-    echo "$EXPORT_EventXtract_CMD" | mysql -u $USERNAME
-    # Concatenate the col name header and the table:
-    cat $EventXtract_HEADER_FILE $EventXtract_VALUES > $EVENT_EXTRACT_FNAME
+echo "Creating extract EventXtract ...<br>"
+echo "$EXPORT_EventXtract_CMD" | mysql $MYSQL_AUTH
+# Concatenate the col name header and the table:
+cat $EventXtract_HEADER_FILE $EventXtract_VALUES > $EVENT_EXTRACT_FNAME
 
-    echo "Creating extract ActivityGrade ...<br>"
-    echo "$EXPORT_ActivityGrade_CMD" | mysql -u $USERNAME
-    cat $ActivityGrade_HEADER_FILE $ActivityGrade_VALUES > $ACTIVITY_GRADE_FNAME
+echo "Creating extract ActivityGrade ...<br>"
+echo "$EXPORT_ActivityGrade_CMD" | mysql $MYSQL_AUTH
+cat $ActivityGrade_HEADER_FILE $ActivityGrade_VALUES > $ACTIVITY_GRADE_FNAME
 
-    echo "Creating extract VideoInteraction ...<br>"
-    echo "$EXPORT_VideoInteraction_CMD" | mysql -u $USERNAME
-    cat $VideoInteraction_HEADER_FILE $VideoInteraction_VALUES > $VIDEO_FNAME
-
-else
-    # Password not empty ...
-    echo "Creating extract EventXtract ...<br>"
-    echo "$EXPORT_EventXtract_CMD" | mysql -u $USERNAME -p$PASSWD
-    # Concatenate the col name header and the table:
-    cat $EventXtract_HEADER_FILE $EventXtract_VALUES > $EVENT_EXTRACT_FNAME
-
-    echo "Creating extract ActivityGrade ...<br>"
-    echo "$EXPORT_ActivityGrade_CMD" | mysql -u $USERNAME -p$PASSWD
-    cat $ActivityGrade_HEADER_FILE $ActivityGrade_VALUES > $ACTIVITY_GRADE_FNAME
-
-    echo "Creating extract VideoInteraction ...<br>"
-    echo "$EXPORT_VideoInteraction_CMD" | mysql -u $USERNAME -p$PASSWD
-    cat $VideoInteraction_HEADER_FILE $VideoInteraction_VALUES > $VIDEO_FNAME
-
-fi
+echo "Creating extract VideoInteraction ...<br>"
+echo "$EXPORT_VideoInteraction_CMD" | mysql $MYSQL_AUTH
+cat $VideoInteraction_HEADER_FILE $VideoInteraction_VALUES > $VIDEO_FNAME
 
 echo "Done exporting class $COURSE_SUBSTR to CSV<br>"
 
