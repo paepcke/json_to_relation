@@ -23,7 +23,7 @@ function ExportClass() {
     /*----------------------------  Constructor ---------------------*/
     this.construct = function() {
 	ws = new WebSocket("wss://localhost:8080/exportClass");
-	ws.onopen = function() {};p
+	ws.onopen = function() {};
 
 	ws.onmessage = function(evt) {
 	    // Internalize the JSON
