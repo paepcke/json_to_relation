@@ -283,7 +283,17 @@ class CourseCSVServer(WebSocketHandler):
                         lineCounter += 1
         #****self.writeResult('<br>')
      
-    def addClientInstructions(self):
+    def addClientInstructions(self, inclPII):
+        '''
+        Send the draft of an email message for the client
+        back to the browsser. The message will contain the
+        URL to where the client can pick up the result. If
+        personally identifiable information was requested,
+        the draft will include instructions for opening the
+        zip file.
+        @param inclPII: whether or not PII was requested
+        @type inclPII: Boolean
+        '''
         # Get just the first table path, we just
         # need its subdirectory name to build the
         # URL:
@@ -300,8 +310,12 @@ class CourseCSVServer(WebSocketHandler):
         msgStart = 'Hi,<br>your data is ready for pickup. Please visit our <a href="%s">pickup page</a>.<br>' % url
         self.writeResult('progress', msgStart)
         # The rest of the msg is in a file:
-        with open('clientInstructions.html', 'r') as txtFd:
-            lines = txtFd.readlines()
+        if inclPII:
+            with open('clientInstructionsSecure.html', 'r') as txtFd:
+                lines = txtFd.readlines()
+        else:
+            with open('clientInstructions.html', 'r') as txtFd:
+                lines = txtFd.readlines()
         txt = '<br>'.join(lines)
         # Remove \n everywhere:
         txt = string.replace(txt, '\n', '')

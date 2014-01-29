@@ -22,8 +22,8 @@ function ExportClass() {
 
     /*----------------------------  Constructor ---------------------*/
     this.construct = function() {
-	ws =  new WebSocket("ws://localhost:8080/exportClass");
-	ws.onopen = function() {};
+	ws = new WebSocket("wss://localhost:8080/exportClass");
+	ws.onopen = function() {};p
 
 	ws.onmessage = function(evt) {
 	    // Internalize the JSON
@@ -184,6 +184,12 @@ function ExportClass() {
 	} else {
 	    classExporter.hideCryptoPwdSolicitation();
 	    setGetDataButtonUsability(true);
+	}
+    }
+
+    var evtCarriageReturnListMatchesTrigger = function(e) {
+	if (e.keyCode == 13) {
+	    document.getElementById("listClassesBtn").click();
 	}
     }
 
@@ -426,6 +432,10 @@ document.getElementById('clrProgressBtn').addEventListener('click', classExporte
 document.getElementById('cancelBtn').addEventListener('click', classExporter.evtCancelProcess);
 document.getElementById('piiPolicy').addEventListener('change', classExporter.evtPIIPolicyClicked);
 document.getElementById('pwdOK').addEventListener('click', classExporter.evtCryptoPwdSubmit);
+// The following is intended to make CR in 
+// course ID text field click the Get Course List
+// button, but the assigned func is never talled:
+document.getElementById('listClassesBtn').addEventListener('onkeydown', classExporter.evtCarriageReturnListMatchesTrigger);
 
 // Initially, we hide the solicitation for
 // a PII zip file encryption pwd:
