@@ -378,7 +378,27 @@ class CourseCSVServer(WebSocketHandler):
 if __name__ == '__main__':
     
     application = tornado.web.Application([(r"/exportClass", CourseCSVServer),])
-    application.listen(8080)
+    #application.listen(8080)
+    
+    # To find the SSL certificate location, we assume
+    # that it is stored in dir '.ssl' in the current 
+    # user's home dir. 
+    # We'll build string up to, and excl. '.crt'/'.key' in:
+    #     "/home/paepcke/.ssl/mono.stanford.edu.crt"
+    # and "/home/paepcke/.ssl/mono.stanford.edu.key"
+    # The home dir and fully qual. domain name
+    # will vary by the machine this code runs on:    
+    # We assume the cert and key files are called
+    # <fqdn>.crt and <fqdn>.key:
+    
+    homeDir = os.path.expanduser("~")
+    thisFQDN = socket.getfqdn()
+    
+    sslRoot = '%s/.ssl/%s' % (homeDir, thisFQDN)
+    application.listen(8080, ssl_options={
+                            "certfile": sslRoot + '.crt',
+                            "keyfile":  sslRoot + '.key',
+                            })    
     tornado.ioloop.IOLoop.instance().start()
     
 #          Timer sending dots for progress not working b/c of
