@@ -71,9 +71,9 @@ fi
 
 if [ -z $PASSWD ]
 then
-    MYSQL_AUTH='-u '$USERNAME
+    MYSQL_AUTH="-u $USERNAME"
 else
-    MYSQL_AUTH='-u '$USERNAME '-p'$PASSWD
+    MYSQL_AUTH="-u $USERNAME -p$PASSWD"
 fi
 
 mysql $MYSQL_AUTH -e "USE Edx; DROP TABLE IF EXISTS AllCourseDisplayNames;"
