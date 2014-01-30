@@ -335,17 +335,9 @@ class CourseCSVServer(WebSocketHandler):
         '''
         courseNames = []
         if self.mysqlDb is not None:
-            for courseName in self.mysqlDb.query('(SELECT DISTINCT course_display_name ' +\
-                                                ' FROM EventXtract ' +\
-                                                ' WHERE course_display_name LIKE "%s")' % courseID +\
-                                                'UNION' +\
-                                                '(SELECT DISTINCT course_display_name' +\
-                                                ' FROM ActivityGrade' +\
-                                                ' WHERE course_display_name LIKE "%s")' % courseID +\
-                                                'UNION' +\
-                                                '(SELECT DISTINCT course_display_name' +\
-                                                ' FROM VideoInteraction' +\
-                                                ' WHERE course_display_name LIKE "%s")' % courseID +\
+            for courseName in self.mysqlDb.query('SELECT course_display_name ' +\
+                                                ' FROM AllCourseDisplayNames' +\
+                                                ' WHERE course_display_name LIKE "%s"' % courseID +\
                                                 'ORDER BY course_display_name;'):
                 if courseName is not None:
                     # Results are singleton tuples, so
