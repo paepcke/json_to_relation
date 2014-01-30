@@ -68,7 +68,7 @@ class CourseCSVServer(WebSocketHandler):
         self.currUser = getpass.getuser()
         try:
             with open('/home/%s/.ssh/mysql' % self.currUser, 'r') as fd:
-                self.mySQLPwd = fd.readline()
+                self.mySQLPwd = fd.readline().strip()
                 self.mysqlDb = MySQLDB(user=self.currUser, passwd=self.mySQLPwd, db='Edx')
         except Exception:
             try:
@@ -395,6 +395,12 @@ if __name__ == '__main__':
     thisFQDN = socket.getfqdn()
     
     sslRoot = '%s/.ssl/%s' % (homeDir, thisFQDN)
+    
+    http_server = tornado.httpserver.HTTPServer(application,ssl_options={
+       "certfile": sslRoot + '.crt',
+       "keyfile":  sslRoot + '.key',
+       })
+    
     application.listen(8080, ssl_options={
                             "certfile": sslRoot + '.crt',
                             "keyfile":  sslRoot + '.key',

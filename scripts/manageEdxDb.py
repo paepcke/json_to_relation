@@ -696,7 +696,16 @@ class TrackLogPuller(object):
             self.logInfo('Starting to load %d transformed files' % len(sqlFilesToLoad))
             self.logDebug('Calling Bash with %s' % shadowCmd)
             subprocess.call(shellCommand)
-            
+        
+        # Finally, update the pre-computed table that stores
+        # all of the course_display_names from EventXtract, and 
+        # ActivityGrade, into AllCourseDisplayNames
+        makeCourseNameListScriptName = os.path.join(currDir, 'makeCourseNameListTable.sh')
+        try:
+            subprocess.call([makeCourseNameListScriptName])
+        except Exception as e:
+            self.logErr('Could not create table of all course_display_list: %s' % `e`)
+        
     # ----------------------------------------  Private Methods ----------------------
 
     def getNumOfRemoteTrackingLogFiles(self):
