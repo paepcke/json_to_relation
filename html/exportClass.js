@@ -22,7 +22,8 @@ function ExportClass() {
 
     /*----------------------------  Constructor ---------------------*/
     this.construct = function() {
-	ws = new WebSocket("wss://datastage.stanford.edu:8080/exportClass");
+	originHost = window.location.host;
+	ws = new WebSocket("wss://" + originHost + ":8080/exportClass");
 	ws.onopen = function() {};
 
 	ws.onmessage = function(evt) {
