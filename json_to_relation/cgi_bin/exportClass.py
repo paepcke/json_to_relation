@@ -16,6 +16,7 @@ from threading import Timer
 import time # @UnusedImport
 import getpass
 import json
+import datetime
 
 # Add json_to_relation source dir to $PATH
 # for duration of this execution:
@@ -118,7 +119,16 @@ class CourseCSVServer(WebSocketHandler):
             if requestName == 'reqCourseNames':
                 self.handleCourseNamesReq(requestName, args)
             elif requestName == 'getData':
+                startTime = datetime.datetime.now()
+                self.setTimer()
                 self.exportClass(args)
+                self.cancelTimer()
+                endTime = datetime.datetime.now() - startTime
+                # Get a timedelta object with the microsecond
+                # component subtracted to be 0, so that the
+                # microseconds won't get printed:        
+                duration = endTime - datetime.timedelta(microseconds=endTime.microseconds)
+                self.writeResult("Runtime: %s" % str(duration))
             else:
                 self.writeError("Unknown request name: %s" % requestName)
         except Exception as e:
