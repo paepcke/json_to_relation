@@ -173,7 +173,7 @@ function ExportClass() {
 	}
 	encryptionPwd = pwdFld1.value;
 	classExporter.hideCryptoPwdSolicitation();
-	classExporter.setGetDataButtonUsability(true);
+	setGetDataButtonUsability(true);
     }
 
     this.evtPIIPolicyClicked = function() {

@@ -221,7 +221,7 @@ class CourseCSVServer(WebSocketHandler):
             self.printClassTableInfo(inclPII)
             
             # Add an example client letter:
-            self.addClientInstructions()
+            self.addClientInstructions(inclPII)
         return True
     
     def printClassTableInfo(self, inclPII):
