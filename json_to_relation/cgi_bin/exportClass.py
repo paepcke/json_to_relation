@@ -33,6 +33,11 @@ from tornado.httpserver import HTTPServer;
 
 class CourseCSVServer(WebSocketHandler):
     
+    LOG_LEVEL_NONE  = 0
+    LOG_LEVEL_ERR   = 1
+    LOG_LEVEL_INFO  = 2
+    LOG_LEVEL_DEBUG = 3
+    
     # Time interval after which a 'dot' or other progress
     # indicator is sent to the calling browser:
     PROGRESS_INTERVAL = 3 # seconds
@@ -56,9 +61,12 @@ class CourseCSVServer(WebSocketHandler):
         super(CourseCSVServer, self).__init__(application, request, **kwargs);
         self.request = request;        
 
+        self.loglevel = CourseCSVServer.LOG_LEVEL_DEBUG
+
         # Locate the makeCourseCSV.sh script:
-        thisScriptDir = os.path.dirname(__file__)
-        self.exportCSVScript = os.path.join(thisScriptDir, '../../scripts/makeCourseCSVs.sh')
+        self.thisScriptDir = os.path.dirname(__file__)
+        self.exportCSVScript = os.path.join(self.thisScriptDir, '../../scripts/makeCourseCSVs.sh')
+        self.searchCourseNameScript = os.path.join(self.thisScriptDir, '../../scripts/searchCourseDisplayNames.sh')
         self.csvFilePaths = []
         
         # A tempfile passed to the makeCourseCSVs.sh script.
@@ -97,7 +105,7 @@ class CourseCSVServer(WebSocketHandler):
         Called by WebSocket/tornado when a client connects. Method must
         be named 'open'
         '''
-        #print("Open called")
+        self.logDebug("Open called")
     
     def on_message(self, message):
         '''
@@ -109,6 +117,7 @@ class CourseCSVServer(WebSocketHandler):
         #print message
         try:
             requestDict = json.loads(message)
+            self.logDebug("request received: %s" % str(message))
         except Exception as e:
             self.writeError("Bad JSON in request received at server: %s" % `e`)
 
@@ -121,22 +130,33 @@ class CourseCSVServer(WebSocketHandler):
             elif requestName == 'getData':
                 startTime = datetime.datetime.now()
                 self.setTimer()
+                
                 self.exportClass(args)
+                
                 self.cancelTimer()
                 endTime = datetime.datetime.now() - startTime
                 # Get a timedelta object with the microsecond
                 # component subtracted to be 0, so that the
                 # microseconds won't get printed:        
                 duration = endTime - datetime.timedelta(microseconds=endTime.microseconds)
-                self.writeResult("Runtime: %s" % str(duration))
+                self.writeResult('progress', "<br>Runtime: %s<br>" % str(duration))
+                                
+                # Add an example client letter:
+                inclPII = args.get("inclPII", False)
+                self.addClientInstructions(inclPII)
+
             else:
                 self.writeError("Unknown request name: %s" % requestName)
         except Exception as e:
+            # Stop sending progress indicators to browser:
+            self.cancelTimer()
+            self.logErr('Error while processing req: %s' % `e`)
             # Need to escape double-quotes so that the 
             # browser-side JSON parser for this response
             # doesn't get confused:
-            safeResp = json.dumps('(%s): %s)' % (message, `e`))
-            self.writeError("Server could not extract request name/args from %s" % safeResp)
+            #safeResp = json.dumps('(%s): %s)' % (requestDict['req']+str(requestDict['args']), `e`))
+            #self.writeError("Server could not extract request name/args from %s" % safeResp)
+            self.writeError("%s" % `e`)
             
     def handleCourseNamesReq(self, requestName, args):
         try:
@@ -160,6 +180,7 @@ class CourseCSVServer(WebSocketHandler):
         @param msg: error message to send to browser
         @type msg: String
         '''
+        self.logDebug("Sending err to browser: %s" % msg)
         self.write_message('{"resp" : "error", "args" : "%s"}' % msg)
 
     def writeResult(self, responseName, args):
@@ -173,8 +194,10 @@ class CourseCSVServer(WebSocketHandler):
         @param args: any Python datastructure that can be turned into JSON
         @type args: {int | String | [String] | ...}
         '''
+        self.logDebug("Prep to send result to browser: %s" % responseName + ':' +  str(args))
         jsonArgs = json.dumps(args)
         msg = '{"resp" : "%s", "args" : %s}' % (responseName, jsonArgs)
+        self.logDebug("Sending result to browser: %s" % msg)
         self.write_message(msg)
         
     def exportClass(self, detailDict):
@@ -206,14 +229,28 @@ class CourseCSVServer(WebSocketHandler):
             scriptCmd.extend(['-n',cryptoPWD])
         scriptCmd.append(theCourseID)
         
+        #************
+        self.logDebug("Script cmd is: %s" % str(scriptCmd))
+        #************
+        
         # Call makeClassCSV.sh to export:
         try:
-            pipeFromScript = subprocess.Popen(scriptCmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE).stdout
-            for msgFromScript in pipeFromScript:
-                self.writeResult('progress', msgFromScript)
+            #pipeFromScript = subprocess.Popen(scriptCmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE).stdout
+            pipeFromScript = subprocess.Popen(scriptCmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            while pipeFromScript.poll() is None:
+                (msgFromScript,errmsg) = pipeFromScript.communicate()
+                if len(errmsg) > 0:
+                    self.writeResult('progress', errmsg)
+                else:
+                    self.writeResult('progress', msgFromScript)
+                    
+            #**********8            
+            #for msgFromScript in pipeFromScript:
+            #    self.writeResult('progress', msgFromScript)
+            #**********8                            
         except Exception as e:
             self.writeError(`e`)
-
+        
         # The bash script will have placed a list of
         # output files it has created into self.infoTmpFile.
         # If the script aborted b/c it did not wish to overwrite
@@ -230,8 +267,6 @@ class CourseCSVServer(WebSocketHandler):
             # Send table row samples to browser:
             self.printClassTableInfo(inclPII)
             
-            # Add an example client letter:
-            self.addClientInstructions(inclPII)
         return True
     
     def printClassTableInfo(self, inclPII):
@@ -244,9 +279,12 @@ class CourseCSVServer(WebSocketHandler):
         @param inclPII: whether or not the report includes PII
         @type inclPII: Boolean 
         '''
+        
         if inclPII:
             self.writeResult('printTblInfo', '<br><b>Tables are zipped and encrypted</b></br>')
             return
+        
+        self.logDebug('Getting table names from %s' % str(self.csvFilePaths))
         
         for csvFilePath in self.csvFilePaths:
             tblFileSize = os.path.getsize(csvFilePath)
@@ -315,17 +353,21 @@ class CourseCSVServer(WebSocketHandler):
         # /home/dataman/Data/CustomExcerpts/CourseSubdir/<tables>.csv:
         tableDir = os.path.basename(os.path.dirname(self.csvFilePaths[0]))
         thisFullyQualDomainName = socket.getfqdn()
-        url = "http://%s/instructor/%s" % (thisFullyQualDomainName, tableDir)
+        url = "https://%s/instructor/%s" % (thisFullyQualDomainName, tableDir)
         self.writeResult('progress', "<p><b>Email draft for client; copy-paste into email program:</b><br>")
         msgStart = 'Hi,<br>your data is ready for pickup. Please visit our <a href="%s">pickup page</a>.<br>' % url
         self.writeResult('progress', msgStart)
         # The rest of the msg is in a file:
-        if inclPII:
-            with open('clientInstructionsSecure.html', 'r') as txtFd:
-                lines = txtFd.readlines()
-        else:
-            with open('clientInstructions.html', 'r') as txtFd:
-                lines = txtFd.readlines()
+        try:
+            if inclPII:
+                with open(os.path.join(self.thisScriptDir, 'clientInstructionsSecure.html'), 'r') as txtFd:
+                    lines = txtFd.readlines()
+            else:
+                with open(os.path.join(self.thisScriptDir, 'clientInstructions.html'), 'r') as txtFd:
+                    lines = txtFd.readlines()
+        except Exception as e:
+            self.writeError('Could not read client instruction file: %s' % `e`)
+            return
         txt = '<br>'.join(lines)
         # Remove \n everywhere:
         txt = string.replace(txt, '\n', '')
@@ -344,17 +386,19 @@ class CourseCSVServer(WebSocketHandler):
         @rtype: {[String] | None}
         '''
         courseNames = []
-        if self.mysqlDb is not None:
-            for courseName in self.mysqlDb.query('SELECT course_display_name ' +\
-                                                ' FROM AllCourseDisplayNames' +\
-                                                ' WHERE course_display_name LIKE "%s"' % courseID +\
-                                                'ORDER BY course_display_name;'):
-                if courseName is not None:
-                    # Results are singleton tuples, so
-                    # need to get 0th element:
-                    courseNames.append('"%s"' % courseName[0])
-        else:
-            return None
+        mySqlCmd = [self.searchCourseNameScript,'-u',self.currUser]
+        if self.mySQLPwd is not None:
+            mySqlCmd.extend(['-w',self.mySQLPwd])
+        mySqlCmd.extend([courseID])
+        self.logDebug("About to query for course names on regexp: '%s'" % mySqlCmd)
+        
+        try:
+            pipeFromMySQL = subprocess.Popen(mySqlCmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE).stdout
+        except Exception as e:
+            self.writeError('Error while searching for course names: %s' % `e`)
+            return courseNames
+        for courseName in pipeFromMySQL:
+            courseNames.append(courseName)
         return courseNames
       
     def reportProgress(self):
@@ -364,12 +408,27 @@ class CourseCSVServer(WebSocketHandler):
     def setTimer(self, time=None):
         if time is None:
             time = CourseCSVServer.PROGRESS_INTERVAL
-        self.currTimer = Timer(time, self.reportProgress).start()
+        self.currTimer = Timer(time, self.reportProgress)
+        self.currTimer.start()
 
     def cancelTimer(self):
         if self.currTimer is not None:
             self.currTimer.cancel()
+            self.logDebug('Cancelling progress timer')
             
+    def logInfo(self, msg):
+        if self.loglevel >= CourseCSVServer.LOG_LEVEL_INFO:
+            print(str(datetime.datetime.now()) + ' info: ' + msg) 
+
+    def logErr(self, msg):
+        if self.loglevel >= CourseCSVServer.LOG_LEVEL_ERR:
+            print(str(datetime.datetime.now()) + ' error: ' + msg) 
+
+    def logDebug(self, msg):
+        if self.loglevel >= CourseCSVServer.LOG_LEVEL_DEBUG:
+            print(str(datetime.datetime.now()) + ' debug: ' + msg) 
+
+     
     # -------------------------------------------  Testing  ------------------
                 
     def echoParms(self):

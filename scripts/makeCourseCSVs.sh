@@ -367,7 +367,7 @@ VIDEO_INTERACTION_HEADER=`mysql --batch $MYSQL_AUTH -e "
 # in a tempfile:
 echo "$VIDEO_INTERACTION_HEADER" | sed '/[*]*\s*1\. row\s*[*]*$/d' | sed 's/[^:]*: //'  | cat > $VideoInteraction_HEADER_FILE
 
-EVENT_XTRACT_HEADER=`mysql --batch -e $MYSQL_AUTH "
+EVENT_XTRACT_HEADER=`mysql --batch $MYSQL_AUTH -e "
               SELECT GROUP_CONCAT(CONCAT(\"'\",information_schema.COLUMNS.COLUMN_NAME,\"'\")) 
 	      FROM information_schema.COLUMNS 
 	      WHERE TABLE_SCHEMA = 'Edx' 
@@ -555,7 +555,7 @@ fi
  # exit 0
 #********************
 
-# ----------------------------- Execute the MySQL Commands -------------
+# ----------------------------- Execute the Main MySQL Commands -------------
 
 echo "Creating extract EventXtract ...<br>"
 echo "$EXPORT_EventXtract_CMD" | mysql $MYSQL_AUTH
