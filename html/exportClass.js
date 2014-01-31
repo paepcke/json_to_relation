@@ -77,10 +77,10 @@ function ExportClass() {
 	    clrProgressDiv();
 	    addTextToProgDiv('<h3>Matching class names; pick one:</h3>');
 
-	    // JSON encode/decode adds an empty string at the
-	    // start of the course names array; eliminate that:
-	    if (courseNameArr[0] === '""') {
-		// Splice is a destructive op:
+	    // JSON encode/decode adds a string with \n at index 0
+	    // of the course names array; eliminate that:
+	    if (courseNameArr[0].trim().length === 0) {
+		// Splice away 0th alement (a destructive op):
 		courseNameArr.splice(0,1);
 	    }
 
