@@ -61,7 +61,8 @@ class CourseCSVServer(WebSocketHandler):
         super(CourseCSVServer, self).__init__(application, request, **kwargs);
         self.request = request;        
 
-        self.loglevel = CourseCSVServer.LOG_LEVEL_DEBUG
+        #self.loglevel = CourseCSVServer.LOG_LEVEL_DEBUG
+        self.loglevel = CourseCSVServer.LOG_LEVEL_NONE
 
         # Locate the makeCourseCSV.sh script:
         self.thisScriptDir = os.path.dirname(__file__)
@@ -206,7 +207,7 @@ class CourseCSVServer(WebSocketHandler):
         @param detailDict:
         @type detailDict:
         '''
-        theCourseID = detailDict.get('courseId', '')
+        theCourseID = detailDict.get('courseId', '').strip()
         if len(theCourseID) == 0:     
             self.writeError('Please fill in the course ID field.')
             return False

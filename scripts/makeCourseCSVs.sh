@@ -491,13 +491,17 @@ fi
 if $pii
 then
   EXPORT_EventXtract_CMD=" \
-  SELECT EventXtract.*, Account.name, Account.screen_name \
-  INTO OUTFILE '"$EventXtract_VALUES"' \
-    FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
-    LINES TERMINATED BY '\r\n' \
-  FROM Edx.EventXtract, EdxPrivate.Account \
-  WHERE course_display_name LIKE '"$COURSE_SUBSTR"' \
-    AND EventXtract.anon_screen_name = Account.anon_screen_name;"
+   SELECT Events.*, PII.name, PII.screen_name \
+   INTO OUTFILE '"$EventXtract_VALUES"' \
+     FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
+     LINES TERMINATED BY '\r\n' \
+   FROM (SELECT Edx.EventXtract.* \
+   FROM Edx.EventXtract \
+   WHERE Edx.EventXtract.course_display_name LIKE '"$COURSE_SUBSTR"') AS Events, \
+   (SELECT DISTINCT EdxPrivate.Account.name AS name, \
+   EdxPrivate.Account.screen_name AS screen_name \
+   FROM EdxPrivate.Account \
+   WHERE EdxPrivate.Account.course_id LIKE '"$COURSE_SUBSTR"') AS PII;"
 else
   EXPORT_EventXtract_CMD=" \
   SELECT * \
@@ -511,13 +515,17 @@ fi
 if $pii
 then
   EXPORT_ActivityGrade_CMD=" \
-  SELECT ActivityGrade.*, Account.name, Account.screen_name \
-  INTO OUTFILE '"$ActivityGrade_VALUES"' \
-    FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
-    LINES TERMINATED BY '\r\n' \
-  FROM Edx.ActivityGrade, EdxPrivate.Account \
-  WHERE course_display_name LIKE '"$COURSE_SUBSTR"' \
-    AND ActivityGrade.anon_screen_name = Account.anon_screen_name;"
+   SELECT ActivityGrades.*, PII.name, PII.screen_name \
+   INTO OUTFILE '"$ActivityGrade_VALUES"' \
+     FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
+     LINES TERMINATED BY '\r\n' \
+   FROM (SELECT Edx.ActivityGrade.* \
+   FROM Edx.ActivityGrade \
+   WHERE Edx.ActivityGrade.course_display_name LIKE '"$COURSE_SUBSTR"') AS ActivityGrades, \
+   (SELECT DISTINCT EdxPrivate.Account.name AS name, \
+   EdxPrivate.Account.screen_name AS screen_name \
+   FROM EdxPrivate.Account \
+   WHERE EdxPrivate.Account.course_id LIKE '"$COURSE_SUBSTR"') AS PII;"
 else
   EXPORT_ActivityGrade_CMD=" \
   SELECT * \
@@ -531,13 +539,17 @@ fi
 if $pii
 then
   EXPORT_VideoInteraction_CMD=" \
-  SELECT VideoInteraction.*, Account.name, Account.screen_name \
-  INTO OUTFILE '"$VideoInteraction_VALUES"' \
-    FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
-    LINES TERMINATED BY '\r\n' \
-  FROM Edx.VideoInteraction, EdxPrivate.Account \
-  WHERE course_display_name LIKE '"$COURSE_SUBSTR"' \
-    AND VideoInteraction.anon_screen_name = Account.anon_screen_name;"
+   SELECT VideoEvents.*, PII.name, PII.screen_name \
+   INTO OUTFILE '"$VideoInteraction_VALUES"' \
+     FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
+     LINES TERMINATED BY '\r\n' \
+   FROM (SELECT Edx.VideoInteraction.* \
+   FROM Edx.VideoInteraction \
+   WHERE Edx.VideoInteraction.course_display_name LIKE '"$COURSE_SUBSTR"') AS VideoEvents, \
+   (SELECT DISTINCT EdxPrivate.Account.name AS name, \
+   EdxPrivate.Account.screen_name AS screen_name \
+   FROM EdxPrivate.Account \
+   WHERE EdxPrivate.Account.course_id LIKE '"$COURSE_SUBSTR"') AS PII;"
 else
 EXPORT_VideoInteraction_CMD=" \
   SELECT * \

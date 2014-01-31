@@ -108,7 +108,14 @@ function ExportClass() {
     }
 
     var displayProgressInfo = function(strToDisplay) {
-	addTextToProgDiv(strToDisplay);
+	//addTextToProgDiv(strToDisplay);
+	progDiv = document.getElementById('progress');
+	lastTxtEl = progDiv.lastChild;
+	if (lastTxtEl == undefined) {
+	    addTextToProgDiv('');
+	    lastTxtEl = progDiv.lastChild;
+	}
+	lastTxtEl.innerHTML += strToDisplay;
     }
 
     var displayTableInfo = function(tblSamplesTxt) {
