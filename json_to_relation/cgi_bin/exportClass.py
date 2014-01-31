@@ -399,7 +399,8 @@ class CourseCSVServer(WebSocketHandler):
             self.writeError('Error while searching for course names: %s' % `e`)
             return courseNames
         for courseName in pipeFromMySQL:
-            courseNames.append(courseName)
+            if len(courseName) > 0:
+                courseNames.append(courseName)
         return courseNames
       
     def reportProgress(self):
