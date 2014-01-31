@@ -61,8 +61,8 @@ class CourseCSVServer(WebSocketHandler):
         super(CourseCSVServer, self).__init__(application, request, **kwargs);
         self.request = request;        
 
-        #self.loglevel = CourseCSVServer.LOG_LEVEL_DEBUG
-        self.loglevel = CourseCSVServer.LOG_LEVEL_NONE
+        self.loglevel = CourseCSVServer.LOG_LEVEL_DEBUG
+        #self.loglevel = CourseCSVServer.LOG_LEVEL_NONE
 
         # Locate the makeCourseCSV.sh script:
         self.thisScriptDir = os.path.dirname(__file__)
