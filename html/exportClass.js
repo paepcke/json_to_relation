@@ -79,7 +79,7 @@ function ExportClass() {
 
 	    // JSON encode/decode adds an empty string at the
 	    // start of the course names array; eliminate that:
-	    if (courseNameArr[0].length == 0) {
+	    if (courseNameArr[0] === '""') {
 		// Splice is a destructive op:
 		courseNameArr.splice(0,1);
 	    }
