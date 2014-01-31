@@ -134,6 +134,8 @@ function ExportClass() {
 	    courseIDRegExp = '%';
 	}
 	clrProgressDiv();
+	// Clear the 'I want PII checkbox':
+	document.getElementById('piiPolicy').checked = false;
 	queryCourseIDResolution(courseIDRegExp);
     }
 
