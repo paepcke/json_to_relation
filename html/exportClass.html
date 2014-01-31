@@ -6,6 +6,17 @@
   <meta charset="UTF-8">
   <style type="text/css">
     body { background-color:#FFF8E8;}
+
+    label.long {
+    display: inline-block;
+    width: 400px;
+    }
+
+    label.short {
+    display: inline-block;
+    width: 150px;
+    }
+
     H1 { 
          text-align: center;
          margin-bottom: 0cm;
@@ -40,26 +51,33 @@
     <span id="spanTab">Course to export; may use MySQL regex;<br>
       example: Education/EDUC-FACT%:
     </span>
-    <form id=reqForm><input type="text" id="courseID" size="35" autofocus="autofocus"><br>
+    <form id=reqForm>
+          <input type="text" id="courseID" size="35" autofocus="autofocus">
+	  <input type="button" value="List Matching Classes"id="listClassesBtn"><br>
+
           <input type="checkbox" id="fileAction" value="xpunge">
-	  Remove any previous exports of same class<br>
+	  <label class="long" for="fileAction">
+	    Remove any previous exports of same class
+	  </label>
+	  <br>
 	  <input type="checkbox" id="piiPolicy" value="inclPII">
-	  Include personally identifiable information
+	  <label class="long" for="piiPolicy">
+	    Include personally identifiable information
+	  </label>
+	  <br>
 	  <div id="pwdSolicitationDiv">
-	    Crypto passwd: <input id="pwdFld1" type="password"><br>
-	    Please retype: <input id="pwdFld2" type="password"><br>
-	    <input id="pwdOK" type="button" value="Set Password">
+	    <label class="short" for="pwdFld1">Crypto passwd:</label> <input id="pwdFld1" type="password"><br>
+	    <label class="short" for="pwdFld2">Please retype:</label> <input id="pwdFld2" type="password"><br>
+	    <label class="short" for="pwdOK"></label>        <input id="pwdOK" type="button" value="Set Password">
 	  </div>
     </form>
 	     
     <p>
+    <input type="button" 
+	   value="Get Data"
+	   id="getDataBtn">
+    <hr>
     <span>
-      <input type="button" 
-	     value="List Matching Classes"
-	     id="listClassesBtn">
-      <input type="button" 
-	     value="Get Data"
-	     id="getDataBtn">
       <input type="button" 
 	     value="Clear Progress Pane"
 	     id="clrProgressBtn">
@@ -75,7 +93,7 @@
   <hr>
   <div id="progress"></div>
 
-  <script src="exportClass.js"></script>
+<script src="exportClass.js"></script>
 
 
 </body>
