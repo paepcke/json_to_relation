@@ -9,10 +9,14 @@ Modifications:
 
 '''
 
+import re
+import subprocess
+import tempfile
+
 import pymysql
+
+
 #import MySQLdb
-
-
 class MySQLDB(object):
     '''
     Shallow interface to MySQL databases. Some niceties nonetheless.
@@ -22,11 +26,27 @@ class MySQLDB(object):
     '''
 
     def __init__(self, host='127.0.0.1', port=3306, user='root', passwd='', db='mysql'):
+        '''
+        
+        @param host: MySQL host
+        @type host: string
+        @param port: MySQL host's port
+        @type port: int
+        @param user: user to log in as
+        @type user: string
+        @param passwd: password to use for given user
+        @type passwd: string
+        @param db: database to connect to within server
+        @type db: string
+        '''
         
         # If all arguments are set to None, we are unittesting:
         if all(arg is None for arg in (host,port,user,passwd,db)):
             return
         
+        self.user = user
+        self.pwd  = passwd
+        self.db   = db
         self.cursors = []
         try:
             self.connection = pymysql.connect(host=host, port=port, user=user, passwd=passwd, db=db)
@@ -103,7 +123,37 @@ class MySQLDB(object):
             self.connection.commit()
         finally:
             cursor.close()
-        
+    
+    def bulkInsert(self, tblName, colNameTuple, valueTupleArray):
+        '''
+        Inserts large number of rows into given table. Strategy: write
+        the values to a temp file, then generate a LOAD INFILE LOCAL
+        MySQL command. Execute that command via subprocess.call(). 
+        Using a cursor.execute() fails with error 'LOAD DATA LOCAL
+        is not supported in this MySQL version...' even though MySQL
+        is set up to allow the op (load-infile=1 for both mysql and
+        mysqld in my.cnf).
+        @param tblName: table into which to insert
+        @type tblName: string
+        @param colNameTuple: tuple containing column names in proper order, i.e. 
+                corresponding to valueTupleArray orders.
+        @type colNameTuple: (str[,str[...]])
+        @param valueTupleArray: array of n-tuples, which hold the values. Order of
+                values must corresond to order of column names in colNameTuple.
+        @type valueTupleArray: [(<anyMySQLCompatibleTypes>[<anyMySQLCompatibleTypes,...]])
+        '''
+        tmpCSVFile = tempfile.NamedTemporaryFile(dir='/tmp',prefix='userCountryTmp',suffix='.csv')
+        for valueTuple in valueTupleArray:
+            tmpCSVFile.write(','.join(valueTuple) + '\n')
+        try:
+            # Remove quotes from the values inside the colNameTuple's:
+            mySQLColNameList = re.sub("'","",str(colNameTuple))
+            mySQLCmd = "USE %s; LOAD DATA LOCAL INFILE '%s' INTO TABLE %s FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\\n' %s" %\
+                      (self.db, tmpCSVFile.name, tblName, mySQLColNameList)
+            subprocess.call(['mysql', '-u', self.user, '-p%s'%self.pwd, '-e', mySQLCmd])
+        finally:
+            tmpCSVFile.close()
+    
     def update(self, tblName, colName, newVal, fromCondition=None):
         '''
         Update one column with a new value.

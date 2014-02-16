@@ -3878,6 +3878,22 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 
             return accountDict
 
+    def anonymizeUser(self,screenName,email):
+        '''
+        Generate a user hash, using email if available,
+        else the screenName. (Sometimes either email or screenName are empty)
+        @param screenName: user screen name in system
+        @type screenName: string
+        @param email: user email address
+        @type email: string
+        @return: 40 byte hash
+        @rtype: string
+        '''
+        if len(email) > 0:
+            return self.hashGeneral(email)
+        else:
+            return self.hashGeneral(screenName)
+
     def hashGeneral(self, username):
         '''
         Returns a ripemd160 40 char hash of the given name. Uses the
