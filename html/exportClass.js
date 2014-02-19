@@ -116,6 +116,10 @@ function ExportClass() {
 	    lastTxtEl = progDiv.lastChild;
 	}
 	lastTxtEl.innerHTML += strToDisplay;
+	// Scroll down, because user won't see
+	// the progress info if many courses
+	// are visible on the screen:
+	window.scrollTo(0,document.body.scrollHeight);
     }
 
     var displayTableInfo = function(tblSamplesTxt) {
@@ -153,11 +157,6 @@ function ExportClass() {
 	    alert('Please select one of the classes');
 	    return;
 	}
-	// Scroll down, because user won't see
-	// the progress info if many courses
-	// are visible on the screen:
-	var progressDiv = document.getElementById("progress");
-	progressDiv.scrollTop = progressDiv.scrollHeight
 	startProgressStream(fullCourseName);
     }
 
