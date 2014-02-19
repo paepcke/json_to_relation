@@ -488,76 +488,83 @@ fi
 # Create the three MySQL export commands that 
 # will write the table values. Two variants for each table:
 # with or without personally identifiable information:
+
 if $pii
 then
   EXPORT_EventXtract_CMD=" \
-   SELECT Events.*, PII.name, PII.screen_name \
+   SELECT DISTINCT Edx.EventXtract.*, PIITable.name, PIITable.screen_name \
    INTO OUTFILE '"$EventXtract_VALUES"' \
      FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
      LINES TERMINATED BY '\r\n' \
-   FROM (SELECT Edx.EventXtract.* \
    FROM Edx.EventXtract \
-   WHERE Edx.EventXtract.course_display_name LIKE '"$COURSE_SUBSTR"') AS Events, \
-   (SELECT DISTINCT EdxPrivate.Account.name AS name, \
-   EdxPrivate.Account.screen_name AS screen_name \
-   FROM EdxPrivate.Account \
-   WHERE EdxPrivate.Account.course_id LIKE '"$COURSE_SUBSTR"') AS PII;"
+   LEFT JOIN
+   (SELECT anon_screen_name, name, screen_name
+    FROM EdxPrivate.Account
+   ) AS PIITable
+   ON  Edx.EventXtract.anon_screen_name = PIITable.anon_screen_name
+   WHERE Edx.EventXtract.course_display_name LIKE '"$COURSE_SUBSTR"')
+     AND Edx.EventXtract.anon_screen_name != '9c1185a5c5e9fc54612808977ee8f548b2258d31';"
 else
   EXPORT_EventXtract_CMD=" \
-  SELECT * \
+  SELECT DISTINCT Edx.EventXtract.* \
   INTO OUTFILE '"$EventXtract_VALUES"' \
     FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
     LINES TERMINATED BY '\r\n' \
   FROM Edx.EventXtract \
-  WHERE course_display_name LIKE '"$COURSE_SUBSTR"';"
+  WHERE Edx.EventXtract.course_display_name LIKE '"$COURSE_SUBSTR"'
+    AND Edx.EventXtract.anon_screen_name != '9c1185a5c5e9fc54612808977ee8f548b2258d31';"
 fi
 
 if $pii
 then
   EXPORT_ActivityGrade_CMD=" \
-   SELECT ActivityGrades.*, PII.name, PII.screen_name \
+   SELECT DISTINCT Edx.EventXtract.*, PIITable.name, PIITable.screen_name \
    INTO OUTFILE '"$ActivityGrade_VALUES"' \
      FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
      LINES TERMINATED BY '\r\n' \
-   FROM (SELECT Edx.ActivityGrade.* \
    FROM Edx.ActivityGrade \
-   WHERE Edx.ActivityGrade.course_display_name LIKE '"$COURSE_SUBSTR"') AS ActivityGrades, \
-   (SELECT DISTINCT EdxPrivate.Account.name AS name, \
-   EdxPrivate.Account.screen_name AS screen_name \
-   FROM EdxPrivate.Account \
-   WHERE EdxPrivate.Account.course_id LIKE '"$COURSE_SUBSTR"') AS PII;"
+   LEFT JOIN
+   (SELECT anon_screen_name, name, screen_name
+    FROM EdxPrivate.Account
+   ) AS PIITable
+   ON ON  Edx.ActivityGrade.anon_screen_name = PIITable.anon_screen_name
+   WHERE Edx.ActivityGrade.course_display_name LIKE '"$COURSE_SUBSTR"')
+     AND Edx.ActivityGrade.anon_screen_name != '9c1185a5c5e9fc54612808977ee8f548b2258d31';\n"
 else
   EXPORT_ActivityGrade_CMD=" \
-  SELECT * \
+  SELECT DISTINCT Edx.ActivityGrade.* \
   INTO OUTFILE '"$ActivityGrade_VALUES"' \
     FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
     LINES TERMINATED BY '\r\n' \
   FROM Edx.ActivityGrade \
-  WHERE course_display_name LIKE '"$COURSE_SUBSTR"';"
+  WHERE Edx.ActivityGrade.course_display_name LIKE '"$COURSE_SUBSTR"'
+    AND Edx.ActivityGrade.anon_screen_name != '9c1185a5c5e9fc54612808977ee8f548b2258d31';"
 fi
 
 if $pii
 then
   EXPORT_VideoInteraction_CMD=" \
-   SELECT VideoEvents.*, PII.name, PII.screen_name \
+   SELECT DISTINCT Edx.EventXtract.*, PIITable.name, PIITable.screen_name \
    INTO OUTFILE '"$VideoInteraction_VALUES"' \
      FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
      LINES TERMINATED BY '\r\n' \
-   FROM (SELECT Edx.VideoInteraction.* \
    FROM Edx.VideoInteraction \
-   WHERE Edx.VideoInteraction.course_display_name LIKE '"$COURSE_SUBSTR"') AS VideoEvents, \
-   (SELECT DISTINCT EdxPrivate.Account.name AS name, \
-   EdxPrivate.Account.screen_name AS screen_name \
-   FROM EdxPrivate.Account \
-   WHERE EdxPrivate.Account.course_id LIKE '"$COURSE_SUBSTR"') AS PII;"
+   LEFT JOIN
+   (SELECT anon_screen_name, name, screen_name
+    FROM EdxPrivate.Account
+   ) AS PIITable
+   ON  Edx.VideoInteraction.anon_screen_name = PIITable.anon_screen_name
+   WHERE Edx.VideoInteraction.course_display_name LIKE '"$COURSE_SUBSTR"')
+     AND Edx.VideoInteraction.anon_screen_name != '9c1185a5c5e9fc54612808977ee8f548b2258d31';\n"
 else
 EXPORT_VideoInteraction_CMD=" \
-  SELECT * \
+  SELECT DISTINCT Edx.VideoInteraction.* \
   INTO OUTFILE '"$VideoInteraction_VALUES"' \
     FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
     LINES TERMINATED BY '\r\n' \
   FROM Edx.VideoInteraction \
-  WHERE course_display_name LIKE '"$COURSE_SUBSTR"';"
+  WHERE Edx.VideoInteraction.course_display_name LIKE '"$COURSE_SUBSTR"'
+    AND Edx.VideoInteraction.anon_screen_name != '9c1185a5c5e9fc54612808977ee8f548b2258d31';"
 fi
 
 #********************
