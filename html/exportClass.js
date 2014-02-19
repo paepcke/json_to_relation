@@ -153,6 +153,11 @@ function ExportClass() {
 	    alert('Please select one of the classes');
 	    return;
 	}
+	// Scroll down, because user won't see
+	// the progress info if many courses
+	// are visible on the screen:
+	var progressDiv = document.getElementById("progress");
+	progressDiv.scrollTop = progressDiv.scrollHeight
 	startProgressStream(fullCourseName);
     }
 
