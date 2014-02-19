@@ -950,9 +950,9 @@ if __name__ == '__main__':
 #    sys.exit(0)
     
     if args.verbose:
-        puller = TrackLogPuller(logFile=args.errLogFile, loggingLevel=logging.DEBUG)
+        tblCreator = TrackLogPuller(logFile=args.errLogFile, loggingLevel=logging.DEBUG)
     else:
-        puller = TrackLogPuller(logFile=args.errLogFile)
+        tblCreator = TrackLogPuller(logFile=args.errLogFile)
 
     # For certain operations, either LOCAL_LOG_STORE_ROOT or
     # relevant options must be defined. Check for that to 
@@ -960,45 +960,45 @@ if __name__ == '__main__':
     if (TrackLogPuller.LOCAL_LOG_STORE_ROOT is None) and \
         ((args.toDo == 'pull') or (args.toDo == 'pullTransform') or (args.toDo == 'pullTransformLoad')) and \
          (args.sqlDest is None):
-        puller.logErr("For 'pull' operation must either define LOCAL_LOG_STORE_ROOT or use command line option '--sqlDest")             
+        tblCreator.logErr("For 'pull' operation must either define LOCAL_LOG_STORE_ROOT or use command line option '--sqlDest")             
         sys.exit(1)
     if (TrackLogPuller.LOCAL_LOG_STORE_ROOT is None) and \
         ((args.toDo == 'transform') or (args.toDo == 'pullTransform') or (args.toDo == 'transformLoad') or (args.toDo == 'pullTransformLoad')) and \
         (args.logsSrc is None):
-        puller.logErr("For 'transform' operation must either define LOCAL_LOG_STORE_ROOT or use command line option '--logsSrc")             
+        tblCreator.logErr("For 'transform' operation must either define LOCAL_LOG_STORE_ROOT or use command line option '--logsSrc")             
         sys.exit(1)
     if (TrackLogPuller.LOCAL_LOG_STORE_ROOT is None) and \
         ((args.toDo == 'load') or (args.toDo == 'transformLoad') or (args.toDo == 'pullTransformLoad')) and \
         (args.sqlSrc is None):
-        puller.logErr("For 'load' operation must either define LOCAL_LOG_STORE_ROOT or use command line option '--sqlSrc")             
+        tblCreator.logErr("For 'load' operation must either define LOCAL_LOG_STORE_ROOT or use command line option '--sqlSrc")             
         sys.exit(1)
     
     if args.user is None:
-        puller.user = getpass.getuser()
+        tblCreator.user = getpass.getuser()
     else:
-        puller.user = args.user
+        tblCreator.user = args.user
         
     if args.password:
-        puller.pwd = getpass.getpass("Enter %s's MySQL password on localhost: " % puller.user)
+        tblCreator.pwd = getpass.getpass("Enter %s's MySQL password on localhost: " % tblCreator.user)
     else:
         # Try to find pwd in specified user's $HOME/.ssh/mysql
         currUserHomeDir = os.getenv('HOME')
         if currUserHomeDir is None:
-            puller.pwd = None
+            tblCreator.pwd = None
         else:
             # Don't really want the *current* user's homedir,
             # but the one specified in the -u cli arg:
-            userHomeDir = os.path.join(os.path.dirname(currUserHomeDir), puller.user)
+            userHomeDir = os.path.join(os.path.dirname(currUserHomeDir), tblCreator.user)
             try:
-                if puller.user == 'root':
+                if tblCreator.user == 'root':
                     with open(os.path.join(currUserHomeDir, '.ssh/mysql_root')) as fd:
-                        puller.pwd = fd.readline().strip()
+                        tblCreator.pwd = fd.readline().strip()
                 else:
                     with open(os.path.join(userHomeDir, '.ssh/mysql')) as fd:
-                        puller.pwd = fd.readline().strip()
+                        tblCreator.pwd = fd.readline().strip()
             except IOError:
                 # No .ssh subdir of user's home, or no mysql inside .ssh:
-                puller.pwd = None
+                tblCreator.pwd = None
 
     if args.pullLimit is not None:
         # Make sure that the load limit is
@@ -1010,30 +1010,30 @@ if __name__ == '__main__':
         
     #**********************
     # For testing different sections:
-    #print('User: ' + str(puller.user))
-    #print('PWD: ' + str(puller.pwd))
+    #print('User: ' + str(tblCreator.user))
+    #print('PWD: ' + str(tblCreator.pwd))
     #sys.exit()
     #
-    #print(puller.identifyNewLogFiles("/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingSep20_To_Dec5_2013"))
-    #print(puller.identifyNewLogFiles("/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingSep20_To_Dec5_2013"))
-    #print(puller.identifyNewLogFiles())
+    #print(tblCreator.identifyNewLogFiles("/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingSep20_To_Dec5_2013"))
+    #print(tblCreator.identifyNewLogFiles("/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingSep20_To_Dec5_2013"))
+    #print(tblCreator.identifyNewLogFiles())
     #sys.exit()
     #
-    #puller.identifySQLToLoad()
+    #tblCreator.identifySQLToLoad()
     #sys.exit()
     #
-    #print(puller.pullNewFiles(dryRun=True))
+    #print(tblCreator.pullNewFiles(dryRun=True))
     #sys.exit()
     #
-    #print(puller.identifyNotTransformedLogFiles(csvDestDir='/home/paepcke/tmp/CSV'))
-    #print(puller.identifyNotTransformedLogFiles('/foo.log')) # should be empty list
+    #print(tblCreator.identifyNotTransformedLogFiles(csvDestDir='/home/paepcke/tmp/CSV'))
+    #print(tblCreator.identifyNotTransformedLogFiles('/foo.log')) # should be empty list
     #sys.exit()
     #
-    #puller.transform(dryRun=True)
-    #puller.transform(csvDestDir='/home/paepcke/tmp/CSV')
+    #tblCreator.transform(dryRun=True)
+    #tblCreator.transform(csvDestDir='/home/paepcke/tmp/CSV')
     #sys.exit()
     #
-    #puller.load()
+    #tblCreator.load()
     #sys.exit()
     #**********************
     
@@ -1041,9 +1041,9 @@ if __name__ == '__main__':
         # For pull cmd, 'logs' must be a writable directory (to which the track logs will be written). 
         # It will come in as a singleton array:
         if (args.logsDest is not None and not os.access(args.logsDest, os.W_OK)):
-            puller.logErr("For pulling track log files from S3, the 'logs' parameter must either not be present, or it must be one *writable* directory (where files will be deposited).")
+            tblCreator.logErr("For pulling track log files from S3, the 'logs' parameter must either not be present, or it must be one *writable* directory (where files will be deposited).")
             sys.exit(1)
-        receivedFiles = puller.pullNewFiles(destDir=args.logsDest, pullLimit=args.pullLimit, dryRun=args.dryRun)
+        receivedFiles = tblCreator.pullNewFiles(destDir=args.logsDest, pullLimit=args.pullLimit, dryRun=args.dryRun)
     
     if args.toDo == 'transform' or args.toDo == 'pullTransform' or args.toDo == 'transformLoad' or args.toDo == 'pullTransformLoad':
         # For transform cmd, logs will be defaulted, or be a space-or-comma-separated string of log files/directories:
@@ -1065,19 +1065,19 @@ if __name__ == '__main__':
             for fileOrDir in logFilesOrDirs:
                 # Whether file or directory: either must be readable:
                 if not os.access(fileOrDir, os.R_OK):
-                    puller.logErr("Tracking log file or directory '%s' not readable or non-existent; ignored." % fileOrDir)
+                    tblCreator.logErr("Tracking log file or directory '%s' not readable or non-existent; ignored." % fileOrDir)
                     continue
                 if os.path.isdir(fileOrDir):
                     # For directories in the args, ensure that
                     # each gzipped file within is readable:
-                    dirFiles = filter(puller.isGzippedFile, os.listdir(fileOrDir))
+                    dirFiles = filter(tblCreator.isGzippedFile, os.listdir(fileOrDir))
                     for dirFile in dirFiles:
                         if not os.access(os.path.join(fileOrDir,dirFile), os.R_OK):
-                            puller.logErr("Tracking log file '%s' not readable or non-existent; ignored." % os.path.join(fileOrDir, dirFile))
+                            tblCreator.logErr("Tracking log file '%s' not readable or non-existent; ignored." % os.path.join(fileOrDir, dirFile))
                             continue
                         allLogFiles.append(os.path.join(fileOrDir,dirFile))
                 else: # arg not a directory:
-                    if puller.isGzippedFile(fileOrDir):
+                    if tblCreator.isGzippedFile(fileOrDir):
                         allLogFiles.append(fileOrDir)
         else:
             allLogFiles = None
@@ -1086,9 +1086,9 @@ if __name__ == '__main__':
         # sanity checks:
         if ((args.sqlDest is not None and not os.path.isdir(args.sqlDest)) or \
             (args.sqlDest is not None and not os.access(args.sqlDest, os.W_OK))):
-            puller.logErr("For transform command the 'sqlDest' parameter must be a single directory where result .sql files are written.")
+            tblCreator.logErr("For transform command the 'sqlDest' parameter must be a single directory where result .sql files are written.")
             sys.exit(1)
-        puller.transform(logFilePaths=allLogFiles, csvDestDir=args.sqlDest, dryRun=args.dryRun)
+        tblCreator.transform(logFilePaths=allLogFiles, csvDestDir=args.sqlDest, dryRun=args.dryRun)
     
     if args.toDo == 'load' or args.toDo == 'transformLoad' or args.toDo == 'pullTransformLoad':
         # For loading, args.sqlSrc must be None, or a readable directory, or a sequence of readable .sql files.
@@ -1103,30 +1103,30 @@ if __name__ == '__main__':
                 # space:
                 sqlFilesToLoad = [oneFile for oneFile in sqlFilesToLoad if len(oneFile) > 0]
             except AttributeError:
-                puller.logErr("For load the '--sqlSrc' option value  must be string listing full paths of .sql files to load, separated by spaces.")
+                tblCreator.logErr("For load the '--sqlSrc' option value  must be string listing full paths of .sql files to load, separated by spaces.")
                 sys.exit(1)
             # All files must exist:
             trueFalseList = map(os.path.exists, sqlFilesToLoad)
             ok = True
             for i in range(len(trueFalseList)):
                 if not trueFalseList[i]:
-                    puller.logErr("File % does not exist." %  sqlFilesToLoad[i])
+                    tblCreator.logErr("File % does not exist." %  sqlFilesToLoad[i])
                     ok = False
                 if not os.access(sqlFilesToLoad[i], os.R_OK):
-                    puller.logErr("File % exists, but is not readable." % sqlFilesToLoad[i])
+                    tblCreator.logErr("File % exists, but is not readable." % sqlFilesToLoad[i])
                     ok = False
             if not ok:
-                puller.logErr("Command aborted, no action was taken.")
+                tblCreator.logErr("Command aborted, no action was taken.")
                 sys.exit(1)
         # For DB ops need DB root pwd, which was 
-        # put into puller.pwd above by various means:
-        puller.load(mysqlPWD=puller.pwd, sqlFilesToLoad=sqlFilesToLoad, logDir=os.path.dirname(args.errLogFile), dryRun=args.dryRun)
+        # put into tblCreator.pwd above by various means:
+        tblCreator.load(mysqlPWD=tblCreator.pwd, sqlFilesToLoad=sqlFilesToLoad, logDir=os.path.dirname(args.errLogFile), dryRun=args.dryRun)
     
-    puller.logInfo('Processing %s done.' % args.toDo)
+    tblCreator.logInfo('Processing %s done.' % args.toDo)
     sys.exit(0)
-    #puller.createHistory('/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsSep20_2013/tracking/app10', tracklogRoot)
-    #puller.createHistory('/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsSep20_2013/tracking/app11', tracklogRoot)
-    #puller.createHistory('/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsSep20_2013/tracking/app20', tracklogRoot)
-    #puller.createHistory('/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsSep20_2013/tracking/app21', tracklogRoot)
+    #tblCreator.createHistory('/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsSep20_2013/tracking/app10', tracklogRoot)
+    #tblCreator.createHistory('/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsSep20_2013/tracking/app11', tracklogRoot)
+    #tblCreator.createHistory('/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsSep20_2013/tracking/app20', tracklogRoot)
+    #tblCreator.createHistory('/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsSep20_2013/tracking/app21', tracklogRoot)
 
-    #puller.runTransforms(newLogs, '~/tmp', dryRun=True)
+    #tblCreator.runTransforms(newLogs, '~/tmp', dryRun=True)
