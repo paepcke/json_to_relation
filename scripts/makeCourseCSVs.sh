@@ -518,18 +518,19 @@ if $pii
 then
   EXPORT_EventXtract_CMD=" \
    USE Edx;
+   CREATE VIEW PIITable AS 
+     SELECT anon_screen_name, name, screen_name
+     FROM EdxPrivate.Account;
    SELECT DISTINCT EventXtract.*, PIITable.name, PIITable.screen_name \
    INTO OUTFILE '"$EventXtract_VALUES"' \
      FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
      LINES TERMINATED BY '\r\n' \
    FROM Edx.EventXtract \
-   LEFT JOIN
-   (SELECT anon_screen_name, name, screen_name
-    FROM EdxPrivate.Account
-   ) AS PIITable
+   LEFT JOIN PIITable
    ON  Edx.EventXtract.anon_screen_name = PIITable.anon_screen_name
    WHERE Edx.EventXtract.course_display_name LIKE '"$COURSE_SUBSTR"'
-     AND Edx.EventXtract.anon_screen_name != '9c1185a5c5e9fc54612808977ee8f548b2258d31';"
+     AND Edx.EventXtract.anon_screen_name != '9c1185a5c5e9fc54612808977ee8f548b2258d31';
+   DROP VIEW PIITable;"
 else
   EXPORT_EventXtract_CMD=" \
   USE Edx;
@@ -549,18 +550,20 @@ fi
 if $pii
 then
   EXPORT_ActivityGrade_CMD=" \
+   USE Edx;
+   CREATE VIEW PIITable AS 
+   SELECT anon_screen_name, name, screen_name
+    FROM EdxPrivate.Account;
    SELECT DISTINCT Edx.ActivityGrade.*, PIITable.name, PIITable.screen_name \
    INTO OUTFILE '"$ActivityGrade_VALUES"' \
      FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
      LINES TERMINATED BY '\r\n' \
    FROM Edx.ActivityGrade \
-   LEFT JOIN
-   (SELECT anon_screen_name, name, screen_name
-    FROM EdxPrivate.Account
-   ) AS PIITable
+   LEFT JOIN PIITable
    ON  Edx.ActivityGrade.anon_screen_name = PIITable.anon_screen_name
    WHERE Edx.ActivityGrade.course_display_name LIKE '"$COURSE_SUBSTR"'
-     AND Edx.ActivityGrade.anon_screen_name != '9c1185a5c5e9fc54612808977ee8f548b2258d31';"
+     AND Edx.ActivityGrade.anon_screen_name != '9c1185a5c5e9fc54612808977ee8f548b2258d31';
+   DROP VIEW PIITable;"
 else
   EXPORT_ActivityGrade_CMD=" \
   SELECT DISTINCT Edx.ActivityGrade.* \
@@ -575,18 +578,20 @@ fi
 if $pii
 then
   EXPORT_VideoInteraction_CMD=" \
+   USE Edx;
+   CREATE VIEW PIITable AS 
+   SELECT anon_screen_name, name, screen_name
+   FROM EdxPrivate.Account;
    SELECT DISTINCT Edx.VideoInteraction.*, PIITable.name, PIITable.screen_name \
    INTO OUTFILE '"$VideoInteraction_VALUES"' \
      FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
      LINES TERMINATED BY '\r\n' \
    FROM Edx.VideoInteraction \
-   LEFT JOIN
-   (SELECT anon_screen_name, name, screen_name
-    FROM EdxPrivate.Account
-   ) AS PIITable
+   LEFT JOIN PIITable
    ON  Edx.VideoInteraction.anon_screen_name = PIITable.anon_screen_name
    WHERE Edx.VideoInteraction.course_display_name LIKE '"$COURSE_SUBSTR"'
-     AND Edx.VideoInteraction.anon_screen_name != '9c1185a5c5e9fc54612808977ee8f548b2258d31';"
+     AND Edx.VideoInteraction.anon_screen_name != '9c1185a5c5e9fc54612808977ee8f548b2258d31';
+   DROP VIEW PIITable;"
 else
 EXPORT_VideoInteraction_CMD=" \
   SELECT DISTINCT Edx.VideoInteraction.* \
