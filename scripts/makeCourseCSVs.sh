@@ -351,8 +351,15 @@ ACTIVITY_GRADE_HEADER=`mysql --batch $MYSQL_AUTH -e "
 # line: "********** 1. row *********" (see above).
 # The second 'sed' call removes everything of the second
 # line up to the ': '. The result finally is placed
-# in a tempfile:
-echo "$ACTIVITY_GRADE_HEADER" | sed '/[*]*\s*1\. row\s*[*]*$/d' | sed 's/[^:]*: //'  | cat > $ActivityGrade_HEADER_FILE
+# in a tempfile. In case of PII delivery, add the 
+# name and screen_name column header:
+
+if $PII
+then
+    echo "$ACTIVITY_GRADE_HEADER"",name,screen_name" | sed '/[*]*\s*1\. row\s*[*]*$/d' | sed 's/[^:]*: //'  | cat > $ActivityGrade_HEADER_FILE
+else
+    echo "$ACTIVITY_GRADE_HEADER" | sed '/[*]*\s*1\. row\s*[*]*$/d' | sed 's/[^:]*: //'  | cat > $ActivityGrade_HEADER_FILE
+fi
 
 VIDEO_INTERACTION_HEADER=`mysql --batch $MYSQL_AUTH -e "
               SELECT GROUP_CONCAT(CONCAT(\"'\",information_schema.COLUMNS.COLUMN_NAME,\"'\")) 
@@ -364,8 +371,16 @@ VIDEO_INTERACTION_HEADER=`mysql --batch $MYSQL_AUTH -e "
 # line: "********** 1. row *********" (see above).
 # The second 'sed' call removes everything of the second
 # line up to the ': '. The result finally is placed
-# in a tempfile:
-echo "$VIDEO_INTERACTION_HEADER" | sed '/[*]*\s*1\. row\s*[*]*$/d' | sed 's/[^:]*: //'  | cat > $VideoInteraction_HEADER_FILE
+# in a tempfile In case of PII delivery, add the 
+# name and screen_name column header:
+
+
+if $PII
+then
+    echo "$VIDEO_INTERACTION_HEADER"",name,screen_name" | sed '/[*]*\s*1\. row\s*[*]*$/d' | sed 's/[^:]*: //'  | cat > $VideoInteraction_HEADER_FILE
+else
+    echo "$VIDEO_INTERACTION_HEADER" | sed '/[*]*\s*1\. row\s*[*]*$/d' | sed 's/[^:]*: //'  | cat > $VideoInteraction_HEADER_FILE
+fi
 
 EVENT_XTRACT_HEADER=`mysql --batch $MYSQL_AUTH -e "
               SELECT GROUP_CONCAT(CONCAT(\"'\",information_schema.COLUMNS.COLUMN_NAME,\"'\")) 
@@ -376,9 +391,19 @@ EVENT_XTRACT_HEADER=`mysql --batch $MYSQL_AUTH -e "
 # In the following the first 'sed' call removes the
 # line: "********** 1. row *********" (see above).
 # The second 'sed' call removes everything of the second
-# line up to the ': '. The result finally is placed
-# in a tempfile:
-echo "$EVENT_XTRACT_HEADER" | sed '/[*]*\s*1\. row\s*[*]*$/d' | sed 's/[^:]*: //'  | cat > $EventXtract_HEADER_FILE
+# line up to the ': '. 
+# The third sed call in the ELSE branch below
+# removes the 'ip' from the header
+# if it exists: We don't provide IP with non-PII
+# exports. The result finally is placed
+# in a tempfile. In case of PII we also add
+# student name and screen_name to the header:
+if $pii
+then
+    echo "$EVENT_XTRACT_HEADER"",name,screen_name" | sed '/[*]*\s*1\. row\s*[*]*$/d' | sed 's/[^:]*: //'  | cat > $EventXtract_HEADER_FILE
+else
+    echo "$EVENT_XTRACT_HEADER" | sed '/[*]*\s*1\. row\s*[*]*$/d' | sed 's/[^:]*: //'  | sed -n "s/,'ip'//p" | cat > $EventXtract_HEADER_FILE
+fi
 
 
 #*******************
@@ -492,7 +517,8 @@ fi
 if $pii
 then
   EXPORT_EventXtract_CMD=" \
-   SELECT DISTINCT Edx.EventXtract.*, PIITable.name, PIITable.screen_name \
+   USE Edx;
+   SELECT DISTINCT EventXtract.*, PIITable.name, PIITable.screen_name \
    INTO OUTFILE '"$EventXtract_VALUES"' \
      FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
      LINES TERMINATED BY '\r\n' \
@@ -502,11 +528,16 @@ then
     FROM EdxPrivate.Account
    ) AS PIITable
    ON  Edx.EventXtract.anon_screen_name = PIITable.anon_screen_name
-   WHERE Edx.EventXtract.course_display_name LIKE '"$COURSE_SUBSTR"')
+   WHERE Edx.EventXtract.course_display_name LIKE '"$COURSE_SUBSTR"'
      AND Edx.EventXtract.anon_screen_name != '9c1185a5c5e9fc54612808977ee8f548b2258d31';"
 else
   EXPORT_EventXtract_CMD=" \
-  SELECT DISTINCT Edx.EventXtract.* \
+  USE Edx;
+   SELECT DISTINCT anon_screen_name,event_type,time, \
+		   course_display_name,resource_display_name,success, \
+		   video_code, video_current_time, video_speed, video_old_time, \
+		   video_new_time, video_seek_type, video_new_speed, video_old_speed, \
+		   goto_from, goto_dest \
   INTO OUTFILE '"$EventXtract_VALUES"' \
     FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
     LINES TERMINATED BY '\r\n' \
@@ -518,7 +549,7 @@ fi
 if $pii
 then
   EXPORT_ActivityGrade_CMD=" \
-   SELECT DISTINCT Edx.EventXtract.*, PIITable.name, PIITable.screen_name \
+   SELECT DISTINCT Edx.ActivityGrade.*, PIITable.name, PIITable.screen_name \
    INTO OUTFILE '"$ActivityGrade_VALUES"' \
      FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
      LINES TERMINATED BY '\r\n' \
@@ -527,9 +558,9 @@ then
    (SELECT anon_screen_name, name, screen_name
     FROM EdxPrivate.Account
    ) AS PIITable
-   ON ON  Edx.ActivityGrade.anon_screen_name = PIITable.anon_screen_name
-   WHERE Edx.ActivityGrade.course_display_name LIKE '"$COURSE_SUBSTR"')
-     AND Edx.ActivityGrade.anon_screen_name != '9c1185a5c5e9fc54612808977ee8f548b2258d31';\n"
+   ON  Edx.ActivityGrade.anon_screen_name = PIITable.anon_screen_name
+   WHERE Edx.ActivityGrade.course_display_name LIKE '"$COURSE_SUBSTR"'
+     AND Edx.ActivityGrade.anon_screen_name != '9c1185a5c5e9fc54612808977ee8f548b2258d31';"
 else
   EXPORT_ActivityGrade_CMD=" \
   SELECT DISTINCT Edx.ActivityGrade.* \
@@ -544,7 +575,7 @@ fi
 if $pii
 then
   EXPORT_VideoInteraction_CMD=" \
-   SELECT DISTINCT Edx.EventXtract.*, PIITable.name, PIITable.screen_name \
+   SELECT DISTINCT Edx.VideoInteraction.*, PIITable.name, PIITable.screen_name \
    INTO OUTFILE '"$VideoInteraction_VALUES"' \
      FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
      LINES TERMINATED BY '\r\n' \
@@ -554,8 +585,8 @@ then
     FROM EdxPrivate.Account
    ) AS PIITable
    ON  Edx.VideoInteraction.anon_screen_name = PIITable.anon_screen_name
-   WHERE Edx.VideoInteraction.course_display_name LIKE '"$COURSE_SUBSTR"')
-     AND Edx.VideoInteraction.anon_screen_name != '9c1185a5c5e9fc54612808977ee8f548b2258d31';\n"
+   WHERE Edx.VideoInteraction.course_display_name LIKE '"$COURSE_SUBSTR"'
+     AND Edx.VideoInteraction.anon_screen_name != '9c1185a5c5e9fc54612808977ee8f548b2258d31';"
 else
 EXPORT_VideoInteraction_CMD=" \
   SELECT DISTINCT Edx.VideoInteraction.* \
