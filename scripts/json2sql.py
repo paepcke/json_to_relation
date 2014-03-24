@@ -70,6 +70,8 @@ def buildOutputFileName(inFilePath, destDir, fileStamp):
         return os.path.join(destDir, os.path.basename(inFilePath)) + '.' + fileStamp + '.sql'
     subTreePath = inFilePath[rootEnd+len(LOCAL_LOG_STORE_ROOT):]
     subTreePath = re.sub('/', '.', subTreePath)
+    if subTreePath[0] == '.':
+        subTreePath = subTreePath[1:]
     res = os.path.join(destDir, subTreePath + '.' + fileStamp + '.sql')
     return res
 
