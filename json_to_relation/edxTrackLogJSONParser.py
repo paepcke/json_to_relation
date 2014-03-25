@@ -371,7 +371,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaAccountTbl['zipcode'] = ColDataType.TINYTEXT      # Picked out from mailing_address
         self.schemaAccountTbl['country'] = ColDataType.TINYTEXT      # Picked out from mailing_address
         self.schemaAccountTbl['gender'] = ColDataType.TINYTEXT
-        self.schemaAccountTbl['year_of_birth'] = ColDataType.TINYINT
+        self.schemaAccountTbl['year_of_birth'] = ColDataType.INT
         self.schemaAccountTbl['level_of_education'] = ColDataType.TINYTEXT
         self.schemaAccountTbl['goals'] = ColDataType.TEXT
         self.schemaAccountTbl['honor_code'] = ColDataType.TINYINT

@@ -7,7 +7,14 @@ setup(
 
     # Dependencies on other packages:
     setup_requires   = ['nose>=1.1.2'],
-    install_requires = ['ijson>=1.0', 'pymongo>=2.6.2', 'pymysql3>=0.5', 'configparser>=3.3.0r2', 'argparse>=1.2.1', 'unidecode>=0.04.14', 'boto>=2.16.0'],
+    install_requires = ['ijson>=1.0', 
+			'pymongo>=2.6.2', 
+			'pymysql3>=0.5', 
+			'configparser>=3.3.0r2', 
+			'argparse>=1.2.1', 
+			'unidecode>=0.04.14', 
+			'boto>=2.16.0',
+			'python-daemon>=1.5.5'],
     tests_require    = ['mongomock>=1.0.1', 'sentinels>=0.0.6', 'nose>=1.0'],
 
     # Unit tests; they are initiated via 'python setup.py test'

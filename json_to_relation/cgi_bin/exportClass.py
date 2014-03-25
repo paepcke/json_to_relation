@@ -3,6 +3,14 @@
 Created on Jan 14, 2014
 
 @author: paepcke
+
+Web service partner to exportClass.html. Uses Tornado to listen to
+port 8080 under SSL protocol. Accepts requests for exporting
+the data of one class. Can export just anonymized part of the
+class info, or more, i.e. data that includes potentially 
+personally identifiable information (PII). If PII is involved,
+data is encrypted into a .zip file. Either way the data is
+deposited in /home/dataman/Data/CustomExcerpts/CourseSubdir/<tables>.csv.
 '''
 
 import os
@@ -17,6 +25,7 @@ import time # @UnusedImport
 import getpass
 import json
 import datetime
+import daemon
 
 # Add json_to_relation source dir to $PATH
 # for duration of this execution:
@@ -491,7 +500,7 @@ if __name__ == '__main__':
     # To find the SSL certificate location, we assume
     # that it is stored in dir '.ssl' in the current 
     # user's home dir. 
-    # We'll build string up to, and excl. '.crt'/'.key' in:
+    # We'll build string up to, and excl. '.crt'/'.key' in (for example):
     #     "/home/paepcke/.ssl/mono.stanford.edu.crt"
     # and "/home/paepcke/.ssl/mono.stanford.edu.key"
     # The home dir and fully qual. domain name

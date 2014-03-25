@@ -350,10 +350,18 @@ class TrackLogPuller(object):
                                   for sqlFilePath in allTransformSQLFiles  # go through all transform output file names 
                                   for logFilePath in localTrackingLogFilePaths # go through each .json file path
                                   if os.path.basename(sqlFilePath).find(outputFilePrepend + os.path.basename(logFilePath)) > -1] # keep only the matches
+        alreadyTransformedList1 = []
+        for alreadyDoneSQLPath in allTransformSQLFiles:
+            for logFilePath in localTrackingLogFilePaths:
+                logFileNameFrag = re.sub('/', '.', logFilePath[len(TrackLogPuller.LOCAL_LOG_STORE_ROOT):])
+                if alreadyDoneSQLPath.find(logFileNameFrag) > -1:
+                    alreadyTransformedList1.append(logFilePath)
+            
         # Finally: the .json files that need to be transformed
         # are the ones that are in the .json file list, but not
         # in the .sql file list: use set difference:
         toDo = sets.Set(localTrackingLogFilePaths).difference(sets.Set(alreadyTransformedList))
+        toDo1 = sets.Set(localTrackingLogFilePaths).difference(sets.Set(alreadyTransformedList1))
         # Return an array, rather than the set,
         # b/c that's more common:
         return list(toDo)
