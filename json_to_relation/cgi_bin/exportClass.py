@@ -47,6 +47,11 @@ class CourseCSVServer(WebSocketHandler):
     # checking:
     NUM_OF_TABLE_SAMPLE_LINES = 5
     
+    # Root of directory where computed tables are dropped.
+    # The tables are in DELIVERY_HOME/<course_name>, where course_name
+    # is the name of the course with slashes replaced by underscores:
+    DELIVERY_HOME = '/home/dataman/Data/CustomExcerpts'
+    
     def __init__(self, application, request, **kwargs ):
         '''
         Invoked when browser accesses this server via ws://...
@@ -203,9 +208,10 @@ class CourseCSVServer(WebSocketHandler):
         
     def exportClass(self, detailDict):
         '''
+        Export basic info about one class: EventXtract, VideoInteraction, and ActivityGrade.
         {courseId : <the courseID>, wipeExisting : <true/false wipe existing class tables files>}
-        @param detailDict:
-        @type detailDict:
+        @param detailDict: Dict with all info necessary to export standard class info. 
+        @type detailDict: {String : String, String : Boolean}
         '''
         theCourseID = detailDict.get('courseId', '').strip()
         if len(theCourseID) == 0:     
@@ -225,6 +231,8 @@ class CourseCSVServer(WebSocketHandler):
             scriptCmd.extend(['-w',self.mySQLPwd])
         if xpungeExisting:
             scriptCmd.append('-x')
+        # Tell script where to report names of tmp files
+        # where it deposited results:
         scriptCmd.extend(['-i',self.infoTmpFile.name])
         if inclPII:
             scriptCmd.extend(['-n',cryptoPWD])
@@ -269,6 +277,22 @@ class CourseCSVServer(WebSocketHandler):
             self.printClassTableInfo(inclPII)
             
         return True
+    
+    def exportTimeEngagement(self, detailDict):
+        '''
+        Export two CSV files: a summary of time effort aggregated over all students,
+        and a per-student-per-week aggregation.
+        detailDict provides any necessary info: 
+           {courseId : <the courseID>, wipeExisting : <true/false wipe existing class tables files>}
+        @param detailDict: Dict with all info necessary to export standard class info. 
+        @type detailDict: {String : String, String : Boolean}
+        '''
+        try:
+            courseId = detailDict['courseId']
+        except KeyError:
+            self.logErr('In exportTimeEngagement: course ID was not included; could not compute engagement tables.')
+            return
+        
     
     def printClassTableInfo(self, inclPII):
         '''
@@ -404,8 +428,29 @@ class CourseCSVServer(WebSocketHandler):
         return courseNames
       
     def reportProgress(self):
+        '''
+        Writes a dot to remote browser to indicate liveness.
+        Restarts timer for next dot.
+        '''
         self.writeResult('progress', '.')
         self.setTimer(CourseCSVServer.PROGRESS_INTERVAL)
+     
+    def getDeliveryURL(self, courseId):
+        '''
+        Given a course ID string, return a URL from which
+        completed course tables can be picked up:
+        @param courseId: course identifier, e.g.: /networking/EE120/Fall
+        @type courseId: String
+        @return: URL at which tables computed for a class are visible.
+        @rtype: String 
+        '''
+        # FQDN of machine on which this service is running:
+        thisFullyQualDomainName = socket.getfqdn()
+        # Replace slashes in class by underscores, so that the
+        # course ID can be used as part of a directory name:
+        courseIdAsDirName = courseId.strip('/').replace('/','_')
+        url = "https://%s/instructor/%s" % (thisFullyQualDomainName, courseIdAsDirName)
+        return url
                 
     def setTimer(self, time=None):
         if time is None:
