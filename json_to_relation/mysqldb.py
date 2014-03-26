@@ -106,6 +106,19 @@ class MySQLDB(object):
         finally:
             cursor.close()
 
+    def truncateTable(self, tableName):
+        '''
+        Delete all table rows. No errors
+        @param tableName: name of table
+        @type tableName: String
+        '''
+        cursor = self.connection.cursor()
+        try:
+            cursor.execute('TRUNCATE TABLE %s' % tableName)
+            self.connection.commit()
+        finally:
+            cursor.close()
+
     def insert(self, tblName, colnameValueDict):
         '''
         Given a dictionary mapping column names to column values,

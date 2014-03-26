@@ -2,7 +2,7 @@ import multiprocessing
 from setuptools import setup, find_packages
 setup(
     name = "json_to_relation",
-    version = "0.1",
+    version = "0.2",
     packages = find_packages(),
 
     # Dependencies on other packages:
@@ -14,7 +14,8 @@ setup(
 			'argparse>=1.2.1', 
 			'unidecode>=0.04.14', 
 			'boto>=2.16.0',
-			'python-daemon>=1.5.5'],
+			'python-daemon>=1.5.5'
+			],
     tests_require    = ['mongomock>=1.0.1', 'sentinels>=0.0.6', 'nose>=1.0'],
 
     # Unit tests; they are initiated via 'python setup.py test'
@@ -30,9 +31,9 @@ setup(
 
     # metadata for upload to PyPI
     author = "Andreas Paepcke",
-    #author_email = "me@example.com",
+    author_email = "paepcke@cs.stanford.edu",
     description = "Converts file with multiple JSON objects to one relational table.",
     license = "BSD",
-    keywords = "json, relation",
+    keywords = "json, relation, OpenEdX",
     url = "https://github.com/paepcke/json_to_relation",   # project home page, if any
 )
