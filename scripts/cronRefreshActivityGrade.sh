@@ -24,6 +24,7 @@ USAGE='Usage: '`basename $0`' [-u localMySQLUser][-s remoteMySQLUser][-p][-pLoca
 REMOTE_MYSQL_PASSWD=''
 LOCAL_MYSQL_PASSWD=''
 targetFile=$HOME/MySQLTmp/studModTable.tsv
+LOG_FILE=/home/dataman/Data/EdX/NonTransformLogs/refreshActivityGradeTable.log
 LOCAL_USERNAME=`whoami`
 REMOTE_USERNAME='readonly'
 needLocalPasswd=false
@@ -163,7 +164,7 @@ fi
 #**********
 
 # ------------------ Signin -------------------
-echo `date`": Start updating table ActivityGrade..."
+echo `date`": Start updating table ActivityGrade..."  | tee --append $LOG_FILE
 
 # ----------------- Find Newest Entry in Local ActivityGrade Table ------------------
 
@@ -196,7 +197,7 @@ mkdir -p $(dirname ${targetFile})
 #     o cronRefreshActivityGradeCrTable.sql and
 #     o addAnonToActivityGradeTable.py
       
-echo `date`": About to pull courseware_studentmodule excerpt from S3"
+echo `date`": About to pull courseware_studentmodule excerpt from S3"  | tee --append $LOG_FILE
 
 ssh goldengate.class.stanford.edu "mysql --host=edx-prod-ro.cn2cujs3bplc.us-west-1.rds.amazonaws.com \
                                          -u "$REMOTE_USERNAME" \
@@ -217,7 +218,7 @@ ssh goldengate.class.stanford.edu "mysql --host=edx-prod-ro.cn2cujs3bplc.us-west
                                              
                                   " > $targetFile
 
-echo `date`": Done pulling courseware_studentmodule excerpt from S3"
+echo `date`": Done pulling courseware_studentmodule excerpt from S3"  | tee --append $LOG_FILE
 
 # ----------------- Fill in the Module IDs' Human Readable Names and  anon_screen_name  Columns ----------
 
@@ -230,7 +231,7 @@ currScriptsDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # The following adds those values to the end of 
 # each TSV row:
 
-echo `date`": About to add percent_grade, resolve resource id, and add anon_screen_name..."
+echo `date`": About to add percent_grade, resolve resource id, add anon_screen_name, and module_id..."  | tee --append $LOG_FILE
 
 if [ ! -z $LOCAL_MYSQL_PASSWD ]
 then
@@ -239,7 +240,7 @@ else
     $currScriptsDir/addAnonToActivityGradeTable.py -u $LOCAL_USERNAME $targetFile
 fi
 
-echo `date`": Done adding percent_grade, ..."
+echo `date`": Done adding percent_grade, ..."  | tee --append $LOG_FILE
 
 # ------------------ Load CSV Into Local MySQL -------------------
 
@@ -270,13 +271,13 @@ then
     # echo `date`": Done creating ActivityGrade table..."
 
     # Do the load:
-    echo `date`": About to load TSV into ActivityGrade table..."
+    echo `date`": About to load TSV into ActivityGrade table..."  | tee --append $LOG_FILE
     # Turn off indexing update during load:
     mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE Edx; ALTER TABLE ActivityGrade DISABLE KEYS;"
     mysql --local-infile -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE Edx; $MYSQL_LOAD_CMD"
     # Rebuild the indexex:
     mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD -e "USE Edx; ALTER TABLE ActivityGrade ENABLE KEYS;"
-    echo `date`": Done loading TSV into ActivityGrade table..."
+    echo `date`": Done loading TSV into ActivityGrade table..."  | tee --append $LOG_FILE
 
     # Indexes are updated during the insert now, so no need to
     # build them:
@@ -285,7 +286,7 @@ then
     # echo `date`": About to build ActivityGrade indexes..."
     # mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD < $currScriptsDir/cronRefreshActivityGradeMkIndexes.sql
 
-    echo `date`": Done building ActivityGrade indexes..."
+    echo `date`": Done building ActivityGrade indexes..."  | tee --append $LOG_FILE
 else
     # This commented block used to delete ActivityGrade, and
     # recreate it. But the db on goldengate isn't able to 
@@ -303,11 +304,11 @@ else
     # echo `date`": Done creating ActivityGrade table..."
 
     # Do the load:
-    echo `date`": About to load TSV into ActivityGrade table..."
+    echo `date`": About to load TSV into ActivityGrade table..."  | tee --append $LOG_FILE
     # Turn off indexing update during load:
     mysql -u $LOCAL_USERNAME -e "USE Edx; ALTER TABLE ActivityGrade DISABLE KEYS;"
     mysql --local-infile -u $LOCAL_USERNAME -e "USE Edx; $MYSQL_LOAD_CMD"
-    echo `date`": Done loading TSV into ActivityGrade table..."
+    echo `date`": Done loading TSV into ActivityGrade table..."  | tee --append $LOG_FILE
     # Rebuild the indexex:
     mysql -u $LOCAL_USERNAME -e "USE Edx; ALTER TABLE ActivityGrade ENABLE KEYS;"
 
@@ -324,6 +325,6 @@ fi
 #*********rm $targetFile
 
 # ------------------ Signout -------------------
-echo `date`": Finished updating table ActivityGrade."
-echo "----------"
+echo `date`": Finished updating table ActivityGrade."  | tee --append $LOG_FILE
+echo "----------"  | tee --append $LOG_FILE
 

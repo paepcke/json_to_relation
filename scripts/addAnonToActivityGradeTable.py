@@ -11,7 +11,8 @@ calling script cronRefreshActivityGrade.sh.
 
 This class appends 'anon_sceen_name' to the header line in
 the TSV file, and inserts 'percent_grade' after the 'max_grade'
-column name.
+column name. It alsow appends 'module_id' to the header line,
+and appends the raw module_id to the end of each row.
 
 For each row in the TSV file, the class then extracts the 
 student_id column and computes the corresponding anonymization 
@@ -19,7 +20,8 @@ hash. That hash is appended as an additional column to the
 TSV row. 
 
 The class then grabs the module_id value from the TSV row, and 
-replaces it with a human-readable string.
+replaces it with a human-readable string. The module_id's original
+value is appended to the end of the row.
 
 Finally, the class computes the percentage grade using the
 grade and max_grade columns, and inserts the result after the
@@ -37,7 +39,7 @@ Assumptions:
         first_submit, 
         last_submit, 
         module_type, 
-        resource_display_name
+        resource_display_name  [actually contains raw module_id initially]
         
      in that order.
      The activity_grade_id is renamed from the original 'id' in courseware_studentmodule
@@ -49,7 +51,7 @@ Assumptions:
 
 When we are done with a row, its schema will be::
 
-        activity_grade_id, student_id, course_display_name, grade, max_grade, parts_correctness, wrong_answers, numAttempts, module_type, resource_display_name
+   activity_grade_id, student_id, course_display_name, grade, max_grade, parts_correctness, wrong_answers, numAttempts, module_type, resource_display_name, module_id
 
 '''
 import argparse
@@ -162,7 +164,9 @@ class AnonAndModIDAdder(object):
                     'first_submit',
                     'last_submit',
                     'module_type', 
-                    'resource_display_name\n']
+                    'resource_display_name',
+		    'anon_screen_name',
+		    'module_id'\n']
         self.tmpFd.write(string.join(colNames, '\t'))
 
         # We tested for self.tsvFileName being readable
@@ -225,7 +229,11 @@ class AnonAndModIDAdder(object):
             # to the end of the .tsv row, where it will end up 
             # as column anon_screen_name
             # in table Edx.ActivityGrade:
-            colVals.append('%s\n' % theAnonName)
+            colVals.append('%s\t' % theAnonName)
+
+	    # Append the original module_id to the row 
+	    # as well
+	    colVals.append('%s\n' % module_id)
 
             # Write the array into the tmp file:
             try:
