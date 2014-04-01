@@ -1,10 +1,16 @@
 #!/bin/bash
 
-# NOTE: this script is only used for repairs when entire
-#       tables had to be deleted, and were then loaded
-#       (and thereby created) from scratch. In that case
-#       all the indexes would be missing. No need to
-#       use this script if using manageEdxDb.sh
+# NOTE: this script is only used in two situations:
+#       1. for repairs when entire
+#          tables had to be deleted, and were then loaded
+#          (and thereby created) from scratch. In that case
+#          all the indexes would be missing. No need to
+#          use this script if using manageEdxDb.sh
+#       2. when manageEdxDb.py loads new events into
+#          it disables indexes to speed up the load.
+#          When loading finishes, indexes need to be
+#          rebuilt to reflect the additional rows.
+#
 # Optionally given one or more table names in the Edx 
 # or EdxPrivate databases, create the indexes that are 
 # needed for those tables. If no tables are given,
@@ -170,6 +176,10 @@ do
 	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxTime', '"${allTables[$table]}".EdxTrackEvent', 'time', NULL);"
 	echo "Creating index on EdxTrackEvent(ip) if needed..."
 	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxIP', '"${allTables[$table]}".EdxTrackEvent', 'ip', 16);"
+	echo "Creating index on EdxTrackEvent(course_display_name,time) if needed..."
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxIP', '"${allTables[$table]}".EdxTrackEvent', 'course_display_name,time', 16);"
+
+
     elif [ $table == 'Answer' ]
     then
 	echo "Creating index on Answer(answer) if needed..."

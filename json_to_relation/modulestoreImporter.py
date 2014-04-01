@@ -72,7 +72,7 @@ class ModulestoreImporter(DictMixin):
         @param parent: the caller object. If provided, that object must provide
                methods logInfo(), logWarn(), logDebug(), and logError(). If this
                argument is left at None, no logging is done.
-        @type GenericJSONParser
+        @type parent: GenericJSONParser
         @raise OSError: when there is a problem calling the cronRefreshModuleStore.sh script.
         @raise ValueError: when modulestore JSON could not be parsed.
         '''

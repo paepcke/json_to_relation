@@ -40,6 +40,7 @@
 
 USAGE="Usage: "`basename $0`" [-p] targetDir"
 
+LOG_FILE=/home/dataman/Data/EdX/NonTransformLogs/refreshModuleStore.log
 PASSWD=''
 needPasswd=false
 
@@ -87,7 +88,7 @@ fi
 targetFile=$TARGET_DIR/modulestore_`date +"%m_%d_%Y_%H_%M_%S"`.json
 
 # ------------------ Signin -------------------
-echo `date`": Start refreshing modulestore extract..."
+echo `date`": Start refreshing modulestore extract..."  | tee --append $LOG_FILE
 
 # ------------------ Pull Excerpt of Modulestore from S3 -------------------
 
@@ -124,5 +125,5 @@ else
 fi
 
 # ------------------ Signout -------------------
-echo `date`": Finished updating table modulestore extract."
+echo `date`": Finished updating table modulestore extract."  | tee --append $LOG_FILE
 echo "----------"
