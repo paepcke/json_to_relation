@@ -134,13 +134,14 @@ class AnonAndModIDAdder(object):
     def computeAndAddFileBased(self):
         '''
         The heavy lifting: reads TSV rows from the courseware_studentmodule one by one 
-        into memory. Makes two changes to each row: The last column, which 
-        is populated with the courseware_studentmodule's module_id value is
+        into memory. Makes two changes to each row: The resource_display_name, which 
+        is initially populated with the courseware_studentmodule's module_id value is
         replaced by a human-readable value, or an empty string if there is no
         human-readable equivalent (as is the case for module_type 'course').
         Additionally, the courseware_studentmodule's integer student_id
         is use to generate an equivalent hash value, which is added as an
-        additional column at the end of each row. 
+        additional column at the end of each row. Finally, the original module_id
+	is appended to each row again.
         
         Once these changes are made, the row is written to a temp file.
         When all rows have been processed that way, the temp file is

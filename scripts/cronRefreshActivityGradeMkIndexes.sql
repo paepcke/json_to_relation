@@ -10,3 +10,4 @@ CALL createIndexIfNotExists('ActivityGradePercGrdIdx', 'ActivityGrade', 'percent
 CALL createIndexIfNotExists('ActivityGradeModTypeIdx', 'ActivityGrade', 'module_type', 32);
 CALL createIndexIfNotExists('ActivityGradeRsrcDispIdx', 'ActivityGrade', 'resource_display_name', 255);
 CALL createIndexIfNotExists('ActivityGradeAnonNmIdx', 'ActivityGrade', 'anon_screen_name', 40);
+CALL createIndexIfNotExists('ActivityGradeModIdIdx', 'ActivityGrade', 'module_id', 255);
