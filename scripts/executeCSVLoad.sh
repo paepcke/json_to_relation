@@ -162,11 +162,11 @@ LOG_FILE=$logDir/$LOGFILE_NAME
 echo "Load process is logging to "$LOG_FILE
 
 #**************
-# echo 'Password: '$password
-# echo 'Log dir: '$logDir
-# echo 'Files to load: '$@
-# echo 'Log file: ' $LOG_FILE
-# exit 0
+ # echo 'Password: '$password
+ # echo 'Log dir: '$logDir
+ # echo 'Files to load: '$@
+ # echo 'Log file: ' $LOG_FILE
+ # exit 0
 #**************
 
 # Get "datadir = <loc of MySQL data directory as declared in my.cnf>":

@@ -1000,12 +1000,12 @@ if __name__ == '__main__':
             # but the one specified in the -u cli arg:
             userHomeDir = os.path.join(os.path.dirname(currUserHomeDir), tblCreator.user)
             try:
-                if tblCreator.user == 'root':
-                    with open(os.path.join(currUserHomeDir, '.ssh/mysql_root')) as fd:
-                        tblCreator.pwd = fd.readline().strip()
-                else:
-                    with open(os.path.join(userHomeDir, '.ssh/mysql')) as fd:
-                        tblCreator.pwd = fd.readline().strip()
+                # Need to access MySQL db as its 'root':
+                with open(os.path.join(currUserHomeDir, '.ssh/mysql_root')) as fd:
+                    tblCreator.pwd = fd.readline().strip()
+                # Switch user to 'root' b/c from now on it will need to be root:
+                tblCreator.user = 'root'
+                
             except IOError:
                 # No .ssh subdir of user's home, or no mysql inside .ssh:
                 tblCreator.pwd = None
