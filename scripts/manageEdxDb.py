@@ -336,12 +336,30 @@ class TrackLogPuller(object):
         # the dot-separated components of the source .json file that
         # lie between the log file root and the file, and then append
         # filename elements to the original tracking log file
-        # name. Example .sql file from a prior transform: 
+        # name. 
+        # Example: for a tracking log file
+        #   /home/dataman/.../tracking/app10/tracking.log-20130609.gz
+        # the.sql file from a prior transform would look like this: 
         #    tracking.app10.tracking.log-20130609.gz.2013-12-23T13_07_05.081102_11121.sql
-        # We thus find all tracking log files that do not have
-        # a .sql file that starts with the prepended components (tracking.app10.
-        # in the above example), followed by the json file name (tracking.log-20130609.gz
-        # in the above example).
+        # To determine whether a given tracking log file has already
+        # been transformed, we thus find all tracking log files that do not have
+        # a .sql file that contains the distinguishing part of the
+        # tracking log filename. For the example, we look for a .sql
+        # file name that contains 'app10.tracking.log-20130609.gz'. If
+        # none is found the respective tracking file is yet to be
+        # transformed:
+        #
+        # The ugly conditional below works like this:logFilePath.split('/')
+        # turns /home/dataman/.../tracking/app10/tracking.log-20130609.gz
+        # into .home.dataman....tracking.app10.tracking.log-20130609.gz
+        # The [-1] and [-2] pick out 'app10' and 'tracking.log-20130609.gz'
+        # from the resulting list.
+        # These two are combined into app10.tracking.log-20130609.gz. 
+        # The find() looks for 'app10.tracking.log-20130609.gz' in 
+        # each sqlFilePath. If none is found, the respective tracking
+        # log file is yet to be transformed. This ugly expression
+        # can surely be prettified, but I need to move on.
+        # 
         # I'm trying out the pythonic use of list comprehensions.
         # I'm not convinced that this syntax is more clear than
         # using a more verbose, standard approach. You be the judge: 
@@ -349,21 +367,12 @@ class TrackLogPuller(object):
         alreadyTransformedList = [logFilePath 
                                   for sqlFilePath in allTransformSQLFiles  # go through all transform output file names 
                                   for logFilePath in localTrackingLogFilePaths # go through each .json file path
-                                  if os.path.basename(sqlFilePath).find(outputFilePrepend + os.path.basename(logFilePath)) > -1] # keep only the matches
-#*****        
-#         alreadyTransformedList1 = []
-#         for alreadyDoneSQLPath in allTransformSQLFiles:
-#             for logFilePath in localTrackingLogFilePaths:
-#                 logFileNameFrag = re.sub('/', '.', logFilePath[len(TrackLogPuller.LOCAL_LOG_STORE_ROOT):])
-#                 if alreadyDoneSQLPath.find(logFileNameFrag) > -1:
-#                     alreadyTransformedList1.append(logFilePath)
-#*****        
-            
+                                  if sqlFilePath.find( logFilePath.split('/')[-2] + '.' + logFilePath.split('/')[-1] ) > -1
+                                  ]
         # Finally: the .json files that need to be transformed
         # are the ones that are in the .json file list, but not
         # in the .sql file list: use set difference:
         toDo = sets.Set(localTrackingLogFilePaths).difference(sets.Set(alreadyTransformedList))
-#***        toDo1 = sets.Set(localTrackingLogFilePaths).difference(sets.Set(alreadyTransformedList1))
         # Return an array, rather than the set,
         # b/c that's more common:
         return list(toDo)
