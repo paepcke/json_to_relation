@@ -177,7 +177,7 @@ do
 	echo "Creating index on EdxTrackEvent(ip) if needed..."
 	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxIP', '"${allTables[$table]}".EdxTrackEvent', 'ip', 16);"
 	echo "Creating index on EdxTrackEvent(course_display_name,time) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxCourseNameTime', '"${allTables[$table]}".EdxTrackEvent', 'course_display_name,time', 16);"
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxCourseNameTime', '"${allTables[$table]}".EdxTrackEvent', 'course_display_name,time', NULL);"
 	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxVideoId', '"${allTables[$table]}".EdxTrackEvent', 'video_id', 255);"
 
     elif [ $table == 'Answer' ]
