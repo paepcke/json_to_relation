@@ -56,6 +56,32 @@ the LMS computing grades including policies, like 'drop the worst
 assignment.' This script will likely switch to pulling those
 grades when they become available.
 
+The cronRefreshEdxprod.sh script is a Stanford-specific utility.
+It copies a nightly dump of all MySQL formatted platform indigenous
+tables to datastage. It retrieves a customizable selection of tables
+from the mysqldump, loads them into database 'edxprod' and creates a
+set of indexes.
+
+The cronRefreshEdxForum.sh script is a Stanford-specific utility. It
+retrieves the latest forum dump from machine
+deploy.prod.class.stanford.edu, anonymizes the content, and loads it
+into the EdxForum database.
+
+The cronRefreshActivityGrade.sh constructs a table of information
+about participants' assessment related interactions. The information
+is pulled from several platform indigenous tables, not from tracking
+events. Contributing tables are auth_user and
+certificates_generatedcertificate. The table shows which part of
+assignments were correct, cumulative number of attempts date of
+submission. The module_id names names are resolved into human readable
+strings. 
+
+The extractTableFromDump.sh script is primarily used by
+cronRefreshEdxprod.sh, but can be used by itself. It takes a
+(optionally compressed) mysqldump file and the name of a table. The
+script extracts all parts of the dumpfile that are needed to restore
+just the table. That information is written to stdout.
+
 Script createEmptyEdxDbs.sh is dangerous! After requesting
 confirmation, the script deletes all content from databases 
 Edx and EdxPrivate. Do use this script, rather than manually
@@ -83,6 +109,10 @@ executeCSVLoad.sh script
 
 The script executeCSVLoad.sh loads the file collections into the
 Edx/EdxPrivate databases.
+
+Files cronRefreshActivityGradeMkIndexes.sql and
+cronRefreshActivityGradeCrTable.sql are support sql instructions used
+by cronRefreshActivityGrade.sh.
 
 
 The testAllTruthFiles.py script is used to ensure that all unittest

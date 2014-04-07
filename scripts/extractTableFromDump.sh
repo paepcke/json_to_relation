@@ -1,8 +1,13 @@
 #!/bin/bash
 
-# Takes a standard mysqldump file and a table name.'
+# Takes a standard mysqldump file and a table name.
 # Writes to stdout a new mysqldump file that contains
 # only restoration information for the given table.
+# Handles .sql and .sql.gz input files.
+# 
+# This is a service script for cronRefreshEdxprod.sh.
+# Though it may be called by itself.
+
 
 USAGE='Usage: '`basename $0`' <MySQL dump file> <table name>'
 
@@ -22,7 +27,7 @@ fi
 SOURCE_MYSQL_DUMP=$1
 TABLE=$2
 
-echo "-- Prolog" >>$TARGET_FILE
+echo "-- Prolog"
 
 echo "/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;" 
 echo "/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;" 
@@ -36,4 +41,12 @@ echo "/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */
 echo "/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;" 
 
 
-sed -n '/-- Table structure for table `'$TABLE'`/,/UNLOCK TABLES;/p' $SOURCE_MYSQL_DUMP
+# If source mysqldump gzipped, deal with
+# it without unzipping:
+if [[ $SOURCE_MYSQL_DUMP == *.sql.gz ]]
+then
+    zcat $SOURCE_MYSQL_DUMP | sed -n '/-- Table structure for table `'$TABLE'`/,/UNLOCK TABLES;/p'
+else
+    sed -n '/-- Table structure for table `'$TABLE'`/,/UNLOCK TABLES;/p' $SOURCE_MYSQL_DUMP
+fi
+
