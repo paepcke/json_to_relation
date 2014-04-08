@@ -5,63 +5,28 @@ Created on Jan 3, 2014
 @author: paepcke
 
 Used by cronRefreshActivityGrade.sh.
-Accesses a TSV file of the ActivityGrade table being built. This TSV
-file was previously extracted from the courseware_studentmodule at S3 by the
-calling script cronRefreshActivityGrade.sh.
 
-This class appends 'anon_sceen_name' to the header line in
-the TSV file, and inserts 'percent_grade' after the 'max_grade'
-column name. It alsow appends 'module_id' to the header line,
-and appends the raw module_id to the end of each row.
+- fill in resource_display_name
+- fill in anon_screen_name
+- compute the percent_grade column
+- parse the original 'state' column's JSON and replace with plusses/minuses
 
-For each row in the TSV file, the class then extracts the 
-student_id column and computes the corresponding anonymization 
-hash. That hash is appended as an additional column to the 
-TSV row. 
-
-The class then grabs the module_id value from the TSV row, and 
-replaces it with a human-readable string. The module_id's original
-value is appended to the end of the row.
-
-Finally, the class computes the percentage grade using the
-grade and max_grade columns, and inserts the result after the
-max_grade column value
 
 Assumptions:
-   o The TSV file has the following schema::
-   
-        activity_grade_id, 
-        student_id, 
-        course_display_name, 
-        grade, 
-        max_grade, 
-        parts_correctness, 
-        first_submit, 
-        last_submit, 
-        module_type, 
-        resource_display_name  [actually contains raw module_id initially]
-        
-     in that order.
-     The activity_grade_id is renamed from the original 'id' in courseware_studentmodule
-     the resource_display_name is renamed from 'module_id' in courseware_studentmodule.
-   o The TSV file's resource_display_name contains the module_id string
-     from courseware_studentmodule. Example::
-         i4x://Medicine/HRP258/sequential/d62f01652c82413395189f660fa0fe8a
-   o The TSV file's anon_screen_name column is empty. 
-
-When we are done with a row, its schema will be::
-
-   activity_grade_id, student_id, course_display_name, grade, max_grade, parts_correctness, wrong_answers, numAttempts, module_type, resource_display_name, module_id
+    o TEMPORARY table StudentmoduleExcerpt
 
 '''
 import argparse
 import getpass
-import os
-import string
-import sys
-import tempfile
-import re
 import itertools
+import os
+import re
+import subprocess
+import sys
+
+from pymysql_utils.pymysql_utils import MySQLDB
+from utils import Utils
+
 
 # Add json_to_relation source dir to $PATH
 # for duration of this execution:
@@ -69,41 +34,76 @@ source_dir = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "../json_
 source_dir.extend(sys.path)
 sys.path = source_dir
 
-from mysqldb import MySQLDB
-from utils import Utils
 
 
 class AnonAndModIDAdder(object):
+
+
+    # SET @emptyStr:='';
+    # SET @floatPlaceholder:=-1.0;
+    # SET @intPlaceholder:=-1;
+    # CREATE TEMPORARY TABLE StudentmoduleExcerpt
+    # SELECT id AS activity_grade_id, \
+    #        student_id, \
+    #        course_id AS course_display_name, \
+    #        grade, \
+    #        max_grade, \
+    #        @floatPlaceholder AS percent_grade, \
+    #        state AS parts_correctness, \
+    #        @emptyStr AS answers, \
+    #        @intPlaceholder AS num_attempts, \
+    #        created AS first_submit, \
+    #        modified AS last_submit, \
+    #        module_type, \
+    #        @emptyStr AS anon_screen_name, \
+    #        @emptyStr AS resource_display_name, \
+    #        module_id
+    # FROM courseware_studentmodule \
+    # WHERE modified > '"$LATEST_DATE"'; \" \
+
+
+
+    # Number of rows to process in memory
+    # before writing to ActivityGrade:
+    BATCH_SIZE = 1000
     
     # For explanation of the following regex patterns,
     # see header comment of parseStateJSON:
     SOLUTION_RESULT_PATTERN  = re.compile(r'[^"]*correctness": "([^"]*)')
     SOLUTION_ANSWERS_PATTERN = re.compile(r'[^:]*: "([^"]*)"')
     
-    # Zero-origin column positions in TSV file:
-    STUDENT_ID_COL_POS = 1
-    GRADE_COL_POS = 3
-    MAX_GRADE_COL_POS = 4    
+    ACTIVITY_GRADE_COL_NAMES = [
+                'activity_grade_id',
+                'student_id',
+                'course_display_name',
+                'grade',
+                'max_grade',
+                'percent_grade',
+                'parts_correctness',
+                'answers',
+                'num_attempts',
+                'first_submit',
+                'last_submit',
+                'module_type',
+                'anon_screen_name',
+                'resource_display_name',
+                'module_id'
+                ]
     
-    # In TSV the following contains the JSON 
-    # content of the 'state' col, but we will
-    # replace that with the plus/minus signs;
-    # therefore the col name 'parts_correctness':
-    PARTS_CORRECTNESS_COL_POS = 5
+    # Indices into tuples from StudentmoduleExcerpt:
+    STUDENT_INT_ID_INDEX = 1
+    GRADE_INDEX = 3
+    MAX_GRADE_INDEX = 4
+    PERCENT_GRADE_INDEX = 5
+    PARTS_CORRECTNESS_INDEX = 6
+    ANSWERS_INDEX = 7
+    NUM_ATTEMPTS_INDEX = 8
+    ANON_SCREEN_NAME_INDEX = 12
+    RESOURCE_DISPLAY_NAME_INDEX = 13
+    MODULE_ID_INDEX = 14
     
-    # In TSV the following contains the 
-    # content of column module_id, but below
-    # we convert that id to a human-readable
-    # string, therefore the col name resource_display_name:
-    RESOURCE_DISPLAY_NAME_COL_POS = 9
     
-    # Position before which the newly computed
-    # percentage grade will be inserted:
-    NEW_PERCENT_GRADE_COL_POS = 5
-    
-    FIRST_SUBMIT_COL_POS = 6
-    
-    def __init__(self, uid, pwd, tsvFileName):
+    def __init__(self, uid, pwd, db='Edx'):
         '''
         ****** Update this comment header
         Make connection to MySQL wrapper.
@@ -111,142 +111,68 @@ class AnonAndModIDAdder(object):
         @type uid: String
         @param pwd: MySQL password for user uid. May be None.
         @type pwd: {String | None}
-        @param tsvFileName: name of TSV file where rows of edxprod's
-               certificates_generatedcertificate table are located.
-               It is assumed that the caller verified existence and
-               readability of this file.
-        @type String
         '''
-
-        if not os.access(tsvFileName, os.R_OK):
-            print('Courseware_studentmodule tsv file does not exist: %s' % str(tsvFileName))
-            return
-        
-        self.uid = uid
-        self.pwd = pwd
-        self.tsvFileName = tsvFileName
-        
+        self.db = db
         if pwd is None:
-            self.mysqldb = MySQLDB(user=uid, db='EdxPrivate')
+            self.mysqldbStudModule = MySQLDB(user=uid, db=db)
         else:
-            self.mysqldb = MySQLDB(user=uid, passwd=pwd, db='EdxPrivate')
-
-    def computeAndAddFileBased(self):
-        '''
-        The heavy lifting: reads TSV rows from the courseware_studentmodule one by one 
-        into memory. Makes two changes to each row: The resource_display_name, which 
-        is initially populated with the courseware_studentmodule's module_id value is
-        replaced by a human-readable value, or an empty string if there is no
-        human-readable equivalent (as is the case for module_type 'course').
-        Additionally, the courseware_studentmodule's integer student_id
-        is use to generate an equivalent hash value, which is added as an
-        additional column at the end of each row. Finally, the original module_id
-	is appended to each row again.
+            self.mysqldbStudModule = MySQLDB(user=uid, passwd=pwd, db=db)
+        # Create a string with the parameters of the SELECT call,
+        # (activity_grade_id,student_id,...):
+        self.colSpec = AnonAndModIDAdder.ACTIVITY_GRADE_COL_NAMES[0]
+        for colName in AnonAndModIDAdder.ACTIVITY_GRADE_COL_NAMES[1:]:
+            self.colSpec += ',' + colName
         
-        Once these changes are made, the row is written to a temp file.
-        When all rows have been processed that way, the temp file is
-        'mv'ed to the original file.
-        '''
-        # If delete is not set to False in the following,
-        # then the rename() further down will fail, b/c it
-        # closes the tmp file first:
-        self.tmpFd = tempfile.NamedTemporaryFile(dir=os.path.dirname(self.tsvFileName), 
-                                            suffix='studMod',
-                                            delete=False)
-        colNames = ['activity_grade_id', 
-                    'student_id', 
-                    'course_display_name', 
-                    'grade', 
-                    'max_grade', 
-                    'percent_grade',
-                    'parts_correctness', 
-                    'wrong_answers', 
-                    'numAttempts',
-                    'first_submit',
-                    'last_submit',
-                    'module_type', 
-                    'resource_display_name',
-		    'anon_screen_name',
-		    'module_id'\n']
-        self.tmpFd.write(string.join(colNames, '\t'))
+        self.pullRowByRow()
 
-        # We tested for self.tsvFileName being readable
-        # in __init__() msg; so no need to do it here:
-        tsvFd = open(self.tsvFileName, 'r')
-        # Read and discard the header row we dealt
-        # with above:
-        tsvFd.readline()
-        
-        for row in tsvFd:
-            colVals = row.split('\t')
-            # Each line's last TSV value element has
-            # a \n glued to it. Get rid of that:
-            colVals[-1] = colVals[-1].strip()
+    def pullRowByRow(self):
+        rowBatch = []
+        for studmodTuple in self.mysqldbStudModule.query("SELECT %s FROM StudentmoduleExcerpt" % self.colSpec):
+            # Results return as tuples, but we need to change tuple items by index.
+            # So must convert to list:
+            studmodTuple = list(studmodTuple)
+            # Resolve the module_id into a human readable resource_display_name:
+            moduleID = studmodTuple[AnonAndModIDAdder.MODULE_ID_INDEX]
+            studmodTuple[AnonAndModIDAdder.RESOURCE_DISPLAY_NAME_INDEX] = self.getResourceDisplayName(moduleID)
             
-            # Pick the int-typed student ID out of the row:
-            intStudentId = colVals[AnonAndModIDAdder.STUDENT_ID_COL_POS]
-            # Get the equivalent anon_screen_name:
+            # Compute the anon_screen_name:
+            studentIntId = studmodTuple[AnonAndModIDAdder.STUDENT_INT_ID_INDEX]
             try:
-                theAnonName = self.getAnonFromIntID(int(intStudentId))
+                studmodTuple[AnonAndModIDAdder.ANON_SCREEN_NAME_INDEX] = self.getAnonFromIntID(studentIntId)
             except TypeError:
-                theAnonName = ''
-            
-            # Get the module_id:
-            moduleID = colVals[AnonAndModIDAdder.RESOURCE_DISPLAY_NAME_COL_POS]
-            moduleName = Utils.getModuleNameFromID(moduleID)
-            
-            # Replace the existing module_id col with the human-readable 
-            # moduleName; the column was already called
-            # resource_display_name when cronRefreshActivityGradeCrTable.sql
-            # was sourced into MySQL by cronRefreshActivityGrade.sh.
-            colVals[AnonAndModIDAdder.RESOURCE_DISPLAY_NAME_COL_POS] = moduleName
-            
+                studmodTuple[AnonAndModIDAdder.ANON_SCREEN_NAME_INDEX] = ''
+
             # Pick grade and max_grade out of the row,
-            # compute the percentage, and *insert* that 
-            # into the array at NEW_Percent_grade_COL_POS:
-            grade = colVals[AnonAndModIDAdder.GRADE_COL_POS]
-            max_grade = colVals[AnonAndModIDAdder.MAX_GRADE_COL_POS]
+            # compute the percentage, and place that 
+            # back into the row in col 
+            grade = studmodTuple[AnonAndModIDAdder.GRADE_INDEX]
+            max_grade = studmodTuple[AnonAndModIDAdder.MAX_GRADE_INDEX]
             percent_grade = 'NULL'
             try:
                 percent_grade = round((int(grade) * 100.0/ int(max_grade)), 2)
             except:
                 pass
-            colVals.insert(AnonAndModIDAdder.NEW_PERCENT_GRADE_COL_POS, str(percent_grade))
+            studmodTuple[AnonAndModIDAdder.PERCENT_GRADE_INDEX] = str(percent_grade)
 
-            # Pick the JSON of the courseware_studentmodule's
-            # 'state' col from the TSV row, and replace it
-            # with the plusses and minusses. The '+1' accounts
-            # for the percent_grade we just inserted above: 
-            (partsCorrectness, wrongAnswers, numAttempts) = \
-                self.parseStateJSON(colVals[AnonAndModIDAdder.PARTS_CORRECTNESS_COL_POS + 1])
-            colVals[AnonAndModIDAdder.PARTS_CORRECTNESS_COL_POS + 1] = partsCorrectness
-            # Next *insert* the wrongAnswers and numAttempts as
-            # new columns in front of the FIRST_SUBMIT_COL_POS:
-            colVals.insert(AnonAndModIDAdder.FIRST_SUBMIT_COL_POS + 1, ','.join(wrongAnswers))
-            # The +1 below accounts for the wrongAnswers we just inserted:
-            colVals.insert(AnonAndModIDAdder.FIRST_SUBMIT_COL_POS + 2, str(numAttempts))
+            # Parse 'state' column from JSON and put result into plusses/minusses column:
+            (partsCorrectness, answers, numAttempts) = \
+                self.parseStateJSON(studmodTuple[AnonAndModIDAdder.PARTS_CORRECTNESS_INDEX])
             
-            # Append the anon name
-            # to the end of the .tsv row, where it will end up 
-            # as column anon_screen_name
-            # in table Edx.ActivityGrade:
-            colVals.append('%s\t' % theAnonName)
+            studmodTuple[AnonAndModIDAdder.PARTS_CORRECTNESS_INDEX] = partsCorrectness
+            studmodTuple[AnonAndModIDAdder.ANON_SCREEN_NAME_INDEX] = ','.join(answers)
+            studmodTuple[AnonAndModIDAdder.NUM_ATTEMPTS_INDEX] = numAttempts
+            
+            rowBatch.append(studmodTuple)
+            if len(rowBatch) >= AnonAndModIDAdder.BATCH_SIZE:
+                self.mysqldbStudModule.bulkInsert('StudentmoduleExcerpt', AnonAndModIDAdder.ACTIVITY_GRADE_COL_NAMES, rowBatch)
+                rowBatch = []
+        if len(rowBatch) > 0:
+            self.mysqldbStudModule.bulkInsert('ActivityGrade', AnonAndModIDAdder.ACTIVITY_GRADE_COL_NAMES, rowBatch)
+    
+    def getResourceDisplayName(self, moduleID):
+        moduleName = Utils.getModuleNameFromID(moduleID)
+        return moduleName
 
-	    # Append the original module_id to the row 
-	    # as well
-	    colVals.append('%s\n' % module_id)
-
-            # Write the array into the tmp file:
-            try:
-                self.tmpFd.write(string.join(colVals, '\t'))
-            except UnicodeEncodeError:
-                strToWrite = string.join(colVals, '\t')
-                self.tmpFd.write(Utils.makeInsertSafe(strToWrite))
-        
-        #self.tmpFd.flush()
-        self.tmpFd.close()        
-        # Now mv the temp file into the tsv file, replacing it:
-        os.rename(self.tmpFd.name, self.tsvFileName)
 
     def parseStateJSON(self, jsonStateStr, srcTableName='courseware_studentmodule'):
         '''
@@ -323,16 +249,26 @@ class AnonAndModIDAdder(object):
         @type jsonStateStr:
         @param srcTableName:
         @type srcTableName:
+        @return: plus/minus string, array of participant's answers, number of attempts. 
+               If number of attempts is -1 the row was not a problem statement,
+               or number of attempts was otherwise unavailable.
+        @rtype: (string, [string], int)
         '''
         successResults = ''
-        badAnswers = []
+        # The following badAnswers array is filled with
+        # just the wrong answers. It's maintained, but
+        # not currently returned, b/c users didn't feel
+        # they needed it.
+        badAnswers = [] 
+        answers = []
         numAttempts = -1
         
         # Many state entries are not student problem result 
         # submissions, but of the form "{'postion': 4}".
         # Weed those out:
         if jsonStateStr.find('correct_map') == -1:
-            return (successResults, badAnswers, numAttempts)
+            #return (successResults, badAnswers, numAttempts)
+            return (successResults, answers, numAttempts)
         
         # Get the ['correct','incorrect',...] array;
         # we'll use it later on:
@@ -345,12 +281,13 @@ class AnonAndModIDAdder(object):
         chopPos = jsonStateStr.find(chopTxtMarker)
         if chopPos == -1:
             # Couldn't find the student answers; fine;
-            return (successResults, badAnswers, numAttempts)
+            #return (successResults, badAnswers, numAttempts)
+            return (successResults, answers, numAttempts)
         else:
             # Get left with str starting at '{' in
             # "student_answers": {
-    		#   "i4x-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_2_1": "choice_3",
-    		#   "i4x-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_3_1": "choice_0"
+            #   "i4x-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_2_1": "choice_3",
+            #   "i4x-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_3_1": "choice_0"
             restJSON = jsonStateStr[chopPos+len(chopTxtMarker):]
             # ... and put the regex to work:
             answers = AnonAndModIDAdder.SOLUTION_ANSWERS_PATTERN.findall(restJSON)
@@ -360,10 +297,10 @@ class AnonAndModIDAdder(object):
         chopTxtMarker = '"attempts": '
         chopPos = jsonStateStr.find(chopTxtMarker)
         if chopPos > 0:
-           upToNum = jsonStateStr[chopPos+len(chopTxtMarker):]
-           try:
-               numAttempts = int("".join(itertools.takewhile(str.isdigit, upToNum)))
-           except ValueError:
+            upToNum = jsonStateStr[chopPos+len(chopTxtMarker):]
+            try:
+                numAttempts = int("".join(itertools.takewhile(str.isdigit, upToNum)))
+            except ValueError:
                 # Couldn't find the number of attempts.
                 # Just punt.
                 pass
@@ -384,23 +321,17 @@ class AnonAndModIDAdder(object):
                 except IndexError:
                     badAnswers.append('<unknown>')
 
-        return (successResults, badAnswers, numAttempts)
+        #return (successResults, badAnswers, numAttempts)
+        return (successResults, answers, numAttempts)
         
     def getAnonFromIntID(self, intStudentId):
         theAnonName = ''
-        for anonName in self.mysqldb.query("SELECT idInt2Anon(%d)" % intStudentId):
+        for anonName in self.mysqldbStudModule.query("SELECT Edx.idInt2Anon(%d)" % intStudentId):
             if anonName is not None:
                 # Results come back as tuples; singleton tuple in this case:
                 return anonName[0]
             else:
                 theAnonName
-
-    
-    def cleanup(self):
-        try:
-            os.remove(self.tmpFd.name)
-        except:
-            pass
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]), formatter_class=argparse.RawTextHelpFormatter)
@@ -416,17 +347,7 @@ if __name__ == '__main__':
                         dest='givenPass',
                         help='Mysql password. Default: see --password. If both -p and -w are provided, -w is used.'
                         )
-    parser.add_argument('tsvFileName',
-                        help='File containing the TSV of the certificates_generatedcertificate table obtained from edxprod'
-                        )  
     args = parser.parse_args();
-
-    if not os.access(args.tsvFileName, os.R_OK):
-        print("File %s is not readable or does not exist." % args.tsvFileName)
-        parser.print_usage()
-        sys.exit()
-        
-    tsvFileName = args.tsvFileName
 
     if args.user is None:
         user = getpass.getuser()
@@ -464,9 +385,4 @@ if __name__ == '__main__':
     #sys.exit()
     #************
                     
-    anonAdder = AnonAndModIDAdder(user, pwd, tsvFileName)
-    try:
-        anonAdder.computeAndAddFileBased()
-    finally:
-        anonAdder.cleanup()
-    
+    anonAdder = AnonAndModIDAdder(user, pwd)
