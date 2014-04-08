@@ -182,7 +182,7 @@ fi
 #exit 0
 #****************
 
-# ------------------ Retrieve courseware_studentmodule Excerpt from S3 as CSV -------------------
+# ------------------ Retrieve courseware_studentmodule Excerpt  -------------------
 
 # Ensure all directories to the target
 # file exist:
@@ -198,6 +198,30 @@ mkdir -p $(dirname ${targetFile})
 #     o addAnonToActivityGradeTable.py
       
 echo `date`": About to pull courseware_studentmodule excerpt from S3"  | tee --append $LOG_FILE
+
+SET @emptyStr:='';
+SET @floatPlaceholder:=-1.0;
+SET @intPlaceholder:=-1;
+CREATE TEMPORARY TABLE StudentmoduleExcerpt
+SELECT id AS activity_grade_id, \
+       student_id, \
+       course_id AS course_display_name, \
+       grade, \
+       max_grade, \
+       @floatPlaceholder AS percent_grade, \
+       state AS parts_correctness, \
+       @emptyStr AS answers, \
+       @intPlaceholder AS num_attempts, \
+       created AS first_submit, \
+       modified AS last_submit, \
+       module_type, \
+       @emptyStr AS anon_screen_name, \
+       @emptyStr AS resource_display_name, \
+       module_id
+FROM courseware_studentmodule \
+WHERE modified > '"$LATEST_DATE"'; \" \
+
+
 
 ssh goldengate.class.stanford.edu "mysql --host=edx-prod-ro.cn2cujs3bplc.us-west-1.rds.amazonaws.com \
                                          -u "$REMOTE_USERNAME" \
