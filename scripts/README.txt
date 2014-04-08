@@ -16,6 +16,10 @@ Use --help for details. Note that manageEdxDb.py can run
 each of its actions in 'pretend' mode, if given the 
 --dryRun commandline option.
 
+In the descriptions below we try to indicate which scripts make
+assumptions about Stanford's OpenEdX platform instance. Some of these
+are likely present in any OpenEdX installation, but I'm not sure. 
+
 # ------------ Public Scripts ---------------
 
 Script manageEdxDb.py: most used script.
