@@ -3,14 +3,13 @@
 # Copies latest edxprod database with all its tables from
 # deploy.prod.class.stanford.edu:/data/dump, and imports
 # a selection of tables into local MySQL's db 'edxprod'. Password-less
-# login must have been arranged to the remote machine.
+# login must have been arranged to the remote machine so
+# that scp works.
 #
 # To add tables that are to be included in the load, modify
 # below as follows:
 #
 #   1. In array variable TABLE, add name of new table
-#   2. In file createEdxprodTables.sql add the table's CREATE statement.
-#   3. In section 'Build Indexes of Tables We Just Loaded' below: add index creation of new table.
 #
 # This script uses service script extractTableFromDump.sh
 # Stats:
@@ -162,36 +161,6 @@ do
     echo `date`": Loading table $TABLE."  | tee --append $LOG_FILE
     mysql -u root -p$MYSQL_PASSWD edxprod < $EDXPROD_DUMP_DIR/$TABLE.sql
 done
-
-# -------------- Build Indexes of Tables We Just Loaded -------------------
-
-# Indexes of courseware_studentmodule:
-echo `date`": Creating indexes for table courseware_studentmodule."  | tee --append $LOG_FILE
-mysql -u root -p$MYSQL_PASSWD edxprod -e "CREATE INDEX courseware_studentmodule_module_type_IDX ON courseware_studentmodule (module_type (32));"
-mysql -u root -p$MYSQL_PASSWD edxprod -e "CREATE INDEX courseware_studentmodule_module_id_IDX ON courseware_studentmodule (module_id (255));"
-mysql -u root -p$MYSQL_PASSWD edxprod -e "CREATE INDEX courseware_studentmodule_student_id_IDX ON courseware_studentmodule (student_id);"
-mysql -u root -p$MYSQL_PASSWD edxprod -e "CREATE INDEX courseware_studentmodule_grade_IDX ON courseware_studentmodule (grade);"
-mysql -u root -p$MYSQL_PASSWD edxprod -e "CREATE INDEX courseware_studentmodule_created_IDX ON courseware_studentmodule (created);"
-mysql -u root -p$MYSQL_PASSWD edxprod -e "CREATE INDEX courseware_studentmodule_modified_IDX ON courseware_studentmodule (modified);"
-mysql -u root -p$MYSQL_PASSWD edxprod -e "CREATE INDEX courseware_studentmodule_max_grade_IDX ON courseware_studentmodule (max_grade);"
-mysql -u root -p$MYSQL_PASSWD edxprod -e "CREATE INDEX courseware_studentmodule_done_IDX ON courseware_studentmodule (done (8));"
-mysql -u root -p$MYSQL_PASSWD edxprod -e "CREATE INDEX courseware_studentmodule_course_id_IDX ON courseware_studentmodule (course_id (255));"
-
-# Indexes of student_auth:
-echo `date`": Creating indexes for table auth_user."  | tee --append $LOG_FILE
-mysql -u root -p$MYSQL_PASSWD edxprod -e "CREATE INDEX auth_user_username_IDX ON auth_user (username(30));"
-mysql -u root -p$MYSQL_PASSWD edxprod -e "CREATE INDEX auth_user_email_IDX ON auth_user  (email (255));"
-
-# Indexes of courseware_studentmodulehistory
-echo `date`": Creating indexes for table courseware_studentmodulehistory."  | tee --append $LOG_FILE
-mysql -u root -p$MYSQL_PASSWD edxprod -e "CREATE INDEX courseware_studenthistory_student_module_id_IDX ON courseware_studentmodulehistory(student_module_id);"
-mysql -u root -p$MYSQL_PASSWD edxprod -e "CREATE INDEX courseware_studenthistory_version_IDX ON courseware_studentmodulehistory(version (255));"
-mysql -u root -p$MYSQL_PASSWD edxprod -e "CREATE INDEX courseware_studenthistory_created_IDX ON courseware_studentmodulehistory(created);"
-
-# Indexes of certificates_generatedcertificate
-echo `date`": Creating indexes for table certificates_generatedcertificate."  | tee --append $LOG_FILE
-mysql -u root -p$MYSQL_PASSWD edxprod -e "CREATE INDEX certificates_generatedcertificate_course_id_IDX ON certificates_generatedcertificate(course_id (255));"
-mysql -u root -p$MYSQL_PASSWD edxprod -e "CREATE INDEX certificates_generatedcertificate_user_id_IDX ON certificates_generatedcertificate(user_id);"
 
 
 # ------------------ Signout -------------------

@@ -4,7 +4,13 @@ Created on Jan 3, 2014
 
 @author: paepcke
 
-Used by cronRefreshActivityGrade.sh.
+Used by cronRefreshActivityGrade.sh, which
+prepares a temp table with information from
+courseware_studentmodule (see below for detail).
+This script processes the information in that
+temp table, and addes the result to table
+ActivityGrade. In particular, the following
+happens here:
 
 - fill in resource_display_name
 - fill in anon_screen_name
@@ -13,7 +19,31 @@ Used by cronRefreshActivityGrade.sh.
 
 
 Assumptions:
-    o TEMPORARY table StudentmoduleExcerpt
+    o (Optionally) TEMPORARY table StudentmoduleExcerpt holds 
+       the result of the following query to courseware_studentmodule:
+
+    	 SET @emptyStr:='';
+    	 SET @floatPlaceholder:=-1.0;
+    	 SET @intPlaceholder:=-1;
+    	 USE edxprod;
+    	 CREATE TABLE StudentmoduleExcerpt
+    	 SELECT id AS activity_grade_id, \
+    	        student_id, \
+    	        course_id AS course_display_name, \
+    	        grade, \
+    	        max_grade, \
+    	        @floatPlaceholder AS percent_grade, \
+    	        state AS parts_correctness, \
+    	        @emptyStr AS answers, \
+    	        @intPlaceholder AS num_attempts, \
+    	        created AS first_submit, \
+    	        modified AS last_submit, \
+    	        module_type, \
+    	        @emptyStr AS anon_screen_name, \
+    	        @emptyStr AS resource_display_name, \
+    	        module_id
+    	 FROM courseware_studentmodule \
+    	 WHERE modified > '"$LATEST_DATE"'; \" \
 
 '''
 import argparse
@@ -21,7 +51,6 @@ import getpass
 import itertools
 import os
 import re
-import subprocess
 import sys
 
 from pymysql_utils.pymysql_utils import MySQLDB
@@ -34,34 +63,7 @@ source_dir = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "../json_
 source_dir.extend(sys.path)
 sys.path = source_dir
 
-
-
 class AnonAndModIDAdder(object):
-
-
-    # SET @emptyStr:='';
-    # SET @floatPlaceholder:=-1.0;
-    # SET @intPlaceholder:=-1;
-    # CREATE TEMPORARY TABLE StudentmoduleExcerpt
-    # SELECT id AS activity_grade_id, \
-    #        student_id, \
-    #        course_id AS course_display_name, \
-    #        grade, \
-    #        max_grade, \
-    #        @floatPlaceholder AS percent_grade, \
-    #        state AS parts_correctness, \
-    #        @emptyStr AS answers, \
-    #        @intPlaceholder AS num_attempts, \
-    #        created AS first_submit, \
-    #        modified AS last_submit, \
-    #        module_type, \
-    #        @emptyStr AS anon_screen_name, \
-    #        @emptyStr AS resource_display_name, \
-    #        module_id
-    # FROM courseware_studentmodule \
-    # WHERE modified > '"$LATEST_DATE"'; \" \
-
-
 
     # Number of rows to process in memory
     # before writing to ActivityGrade:
@@ -127,7 +129,7 @@ class AnonAndModIDAdder(object):
 
     def pullRowByRow(self):
         rowBatch = []
-        for studmodTuple in self.mysqldbStudModule.query("SELECT %s FROM StudentmoduleExcerpt" % self.colSpec):
+        for studmodTuple in self.mysqldbStudModule.query("SELECT %s FROM edxprod.StudentmoduleExcerpt" % self.colSpec):
             # Results return as tuples, but we need to change tuple items by index.
             # So must convert to list:
             studmodTuple = list(studmodTuple)
@@ -164,7 +166,7 @@ class AnonAndModIDAdder(object):
             
             rowBatch.append(studmodTuple)
             if len(rowBatch) >= AnonAndModIDAdder.BATCH_SIZE:
-                self.mysqldbStudModule.bulkInsert('StudentmoduleExcerpt', AnonAndModIDAdder.ACTIVITY_GRADE_COL_NAMES, rowBatch)
+                self.mysqldbStudModule.bulkInsert('ActivityGrade', AnonAndModIDAdder.ACTIVITY_GRADE_COL_NAMES, rowBatch)
                 rowBatch = []
         if len(rowBatch) > 0:
             self.mysqldbStudModule.bulkInsert('ActivityGrade', AnonAndModIDAdder.ACTIVITY_GRADE_COL_NAMES, rowBatch)
