@@ -82,7 +82,12 @@ then
     read -s -p "Password for user 'readonly' on modulestore repo: " PASSWD
     echo
 else
-    PASSWD=$(<$HOME/.ssh/modstore)
+    if [ ! -f $HOME/.ssh/modstore ]
+    then
+	echo "No password found for modulestore in $HOME/.ssh/modstore; trying without a password (which may hang on remote prompt)"
+    else
+	PASSWD=$(<$HOME/.ssh/modstore)
+    fi
 fi
 
 targetFile=$TARGET_DIR/modulestore_`date +"%m_%d_%Y_%H_%M_%S"`.json

@@ -54,14 +54,13 @@ import re
 import sys
 
 from pymysql_utils.pymysql_utils import MySQLDB
-from utils import Utils
-
 
 # Add json_to_relation source dir to $PATH
 # for duration of this execution:
 source_dir = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "../json_to_relation/")]
 source_dir.extend(sys.path)
 sys.path = source_dir
+from utils import Utils
 
 class AnonAndModIDAdder(object):
 

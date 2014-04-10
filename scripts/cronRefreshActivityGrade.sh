@@ -26,6 +26,14 @@ LOG_FILE=/home/dataman/Data/EdX/NonTransformLogs/refreshActivityGradeTable.log
 USERNAME=`whoami`
 needLocalPasswd=false
 
+if [ ! -f $LOG_FILE ]
+then
+    # Create directories to log file as needed:
+    DIR_PART_LOG_FILE=`dirname $LOG_FILE`
+    mkdir --parents $DIR_PART_LOG_FILE
+    touch $LOG_FILE
+fi
+
 # ------------------ Process Commandline Options -------------------
 
 # Check whether given -pPassword, i.e. fused -p with a 
@@ -127,7 +135,7 @@ else
 fi
 
 #****************
-#echo "LATEST_DATE: $LATEST_DATE"
+echo "LATEST_DATE: $LATEST_DATE"
 #exit 0
 #****************
 
@@ -149,6 +157,7 @@ tmpTableCmd="SET @emptyStr:=''; \
 SET @floatPlaceholder:=-1.0; \
 SET @intPlaceholder:=-1; \
 USE edxprod;
+DROP TABLE StudentmoduleExcerpt;
 CREATE TABLE StudentmoduleExcerpt \
 SELECT id AS activity_grade_id, \
        student_id, \
@@ -168,6 +177,7 @@ SELECT id AS activity_grade_id, \
 FROM edxprod.courseware_studentmodule \
 WHERE modified > '"$LATEST_DATE"'; "
 
+echo `date`": About to create auxiliary table StudentmoduleExcerpt in prep of addAnonToActivityGradeTable.py..."  | tee --append $LOG_FILE
 if [ -z $MYSQL_PWD ]
 then
     mysql -u $USERNAME -e "$tmpTableCmd"
@@ -175,12 +185,7 @@ else
     mysql -u $USERNAME -p$MYSQL_PWD -e "$tmpTableCmd"
 fi
 
-
-echo `date`": Done querying for courseware_studentmodule"  | tee --append $LOG_FILE
-
-#****************
-exit 0
-#****************
+echo `date`": Done creating auxiliary table."  | tee --append $LOG_FILE
 
 # ----------------- Fill in the Module IDs' Human Readable Names and  anon_screen_name  Columns ----------
 
@@ -201,6 +206,19 @@ echo `date`": Done adding percent_grade, ..."  | tee --append $LOG_FILE
 
 # ------------------ Cleanup -------------------
 
+# Commented block below removes the now no longer needed
+# auxiliary table edxprod.StudentmoduleExcerpt. Keeping
+# the table around for debugging or post mortem. It's
+# dropped earlier in this script when it needs to be gone.
+
+# echo `date`": Cleanup: dropping auxiliary table edxprod.StudentmoduleExcerpt."  | tee --append $LOG_FILE
+# dropCmd="DROP TABLE StudentmoduleExcerpt;"
+# if [ -z $MYSQL_PWD ]
+# then
+#     mysql -u $USERNAME edxprod -e "$dropCmd"
+# else
+#     mysql -u $USERNAME -p$MYSQL_PWD edxprod -e "$dropCmd"
+# fi
 
 # ------------------ Signout -------------------
 echo `date`": Finished updating table ActivityGrade."  | tee --append $LOG_FILE
