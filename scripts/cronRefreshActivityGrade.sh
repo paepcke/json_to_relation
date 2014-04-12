@@ -156,8 +156,8 @@ echo `date`": About to query for courseware_studentmodule"  | tee --append $LOG_
 tmpTableCmd="SET @emptyStr:=''; \
 SET @floatPlaceholder:=-1.0; \
 SET @intPlaceholder:=-1; \
-USE edxprod;
-DROP TABLE StudentmoduleExcerpt;
+USE edxprod; \
+DROP TABLE StudentmoduleExcerpt; \
 CREATE TABLE StudentmoduleExcerpt \
 SELECT id AS activity_grade_id, \
        student_id, \
@@ -177,16 +177,17 @@ SELECT id AS activity_grade_id, \
 FROM edxprod.courseware_studentmodule \
 WHERE modified > '"$LATEST_DATE"'; "
 
-echo `date`": About to create auxiliary table StudentmoduleExcerpt in prep of addAnonToActivityGradeTable.py..."  | tee --append $LOG_FILE
-if [ -z $MYSQL_PWD ]
-then
-    mysql -u $USERNAME -e "$tmpTableCmd"
-else
-    mysql -u $USERNAME -p$MYSQL_PWD -e "$tmpTableCmd"
-fi
+#*********************
+# echo `date`": About to create auxiliary table StudentmoduleExcerpt in prep of addAnonToActivityGradeTable.py..."  | tee --append $LOG_FILE
+# if [ -z $MYSQL_PWD ]
+# then
+#     mysql -u $USERNAME -e "$tmpTableCmd"
+# else
+#     mysql -u $USERNAME -p$MYSQL_PWD -e "$tmpTableCmd"
+# fi
 
-echo `date`": Done creating auxiliary table."  | tee --append $LOG_FILE
-
+# echo `date`": Done creating auxiliary table."  | tee --append $LOG_FILE
+#*********************
 # ----------------- Fill in the Module IDs' Human Readable Names and  anon_screen_name  Columns ----------
 
 # Get directory in which this script is running,
