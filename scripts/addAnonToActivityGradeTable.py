@@ -128,7 +128,11 @@ class AnonAndModIDAdder(object):
 
     def pullRowByRow(self):
         rowBatch = []
-        for studmodTuple in self.mysqldbStudModule.query("SELECT %s FROM edxprod.StudentmoduleExcerpt" % self.colSpec):
+        if self.db == 'unittest':
+            queryIt = self.mysqldbStudModule.query("SELECT %s FROM unittest.StudentmoduleExcerpt" % self.colSpec)
+        else:
+            queryIt = self.mysqldbStudModule.query("SELECT %s FROM edxprod.StudentmoduleExcerpt" % self.colSpec)
+        for studmodTuple in queryIt:
             # Results return as tuples, but we need to change tuple items by index.
             # So must convert to list:
             studmodTuple = list(studmodTuple)
@@ -304,6 +308,9 @@ class AnonAndModIDAdder(object):
             except ValueError:
                 # Couldn't find the number of attempts.
                 # Just punt.
+                pass
+            except TypeError:
+                # Unicode garbage, clearly not a digit
                 pass
                 
         # Go through the ['correct','incorrect',...] array,

@@ -2,10 +2,13 @@
 Created on Apr 7, 2014
 
 @author: paepcke
+
+NOTE: Requires existence of database 'unittest' and user 'unittest' without pwd
+       and ALL privileges. (Could get away with fewer privileges, but who cares. 
+
 '''
 from collections import OrderedDict
 import datetime
-import subprocess
 import unittest
 
 from addAnonToActivityGradeTable import AnonAndModIDAdder
