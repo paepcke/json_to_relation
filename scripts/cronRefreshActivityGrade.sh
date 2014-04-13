@@ -134,8 +134,14 @@ else
 	  "SELECT MAX(last_submit) FROM ActivityGrade;"`
 fi
 
+if [ $LATEST_DATE = NULL ]
+then
+    # No dated entry in ActivityGrade at all (likely table is empty):
+    LATEST_DATE='0000-00-00 00:00:00'
+fi
+
 #****************
-echo "LATEST_DATE in current ActivityGrade: $LATEST_DATE"
+echo "LATEST_DATE in current ActivityGrade: '$LATEST_DATE'"
 #exit 0
 #****************
 
