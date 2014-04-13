@@ -21,8 +21,9 @@ class MySQLDB(object):
     '''
     Shallow interface to MySQL databases. Some niceties nonetheless.
     The query() method is an iterator. So::
-        for result in mySqlObj.query('SELECT * FROM foo'):
-            print result
+
+      for result in mySqlObj.query('SELECT * FROM foo'):
+           print result
     '''
 
     def __init__(self, host='127.0.0.1', port=3306, user='root', passwd='', db='mysql'):
@@ -149,7 +150,7 @@ class MySQLDB(object):
         @param tblName: table into which to insert
         @type tblName: string
         @param colNameTuple: tuple containing column names in proper order, i.e. 
-                corresponding to valueTupleArray orders.
+	corresponding to valueTupleArray orders.
         @type colNameTuple: (str[,str[...]])
         @param valueTupleArray: array of n-tuples, which hold the values. Order of
                 values must corresond to order of column names in colNameTuple.
