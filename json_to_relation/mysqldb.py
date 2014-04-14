@@ -21,8 +21,9 @@ class MySQLDB(object):
     '''
     Shallow interface to MySQL databases. Some niceties nonetheless.
     The query() method is an iterator. So::
-        for result in mySqlObj.query('SELECT * FROM foo'):
-            print result
+
+      for result in mySqlObj.query('SELECT * FROM foo'):
+           print result
     '''
 
     def __init__(self, host='127.0.0.1', port=3306, user='root', passwd='', db='mysql'):
@@ -146,13 +147,14 @@ class MySQLDB(object):
         is not supported in this MySQL version...' even though MySQL
         is set up to allow the op (load-infile=1 for both mysql and
         mysqld in my.cnf).
+
         @param tblName: table into which to insert
         @type tblName: string
-        @param colNameTuple: tuple containing column names in proper order, i.e. 
-                corresponding to valueTupleArray orders.
+        @param colNameTuple: tuple containing column names in proper order, i.e. \
+	   corresponding to valueTupleArray orders.
         @type colNameTuple: (str[,str[...]])
-        @param valueTupleArray: array of n-tuples, which hold the values. Order of
-                values must corresond to order of column names in colNameTuple.
+        @param valueTupleArray: array of n-tuples, which hold the values. Order of\
+           values must corresond to order of column names in colNameTuple.
         @type valueTupleArray: [(<anyMySQLCompatibleTypes>[<anyMySQLCompatibleTypes,...]])
         '''
         tmpCSVFile = tempfile.NamedTemporaryFile(dir='/tmp',prefix='userCountryTmp',suffix='.csv')
@@ -176,9 +178,9 @@ class MySQLDB(object):
         @type colName: String
         @param newVal: value acceptable to MySQL for the given column 
         @type newVal: type acceptable to MySQL for the given column 
-        @param fromCondition: optionally condition that selects which rows to update.
-                      if None, the named column in all rows are updated to
-                      the given value. Syntax must conform to what may be in
+        @param fromCondition: optionally condition that selects which rows to update.\
+                      if None, the named column in all rows are updated to\
+                      the given value. Syntax must conform to what may be in\
                       a MySQL FROM clause (don't include the 'FROM' keyword)
         @type fromCondition: String
         '''
