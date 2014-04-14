@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Sources mysqlProcAndFuncBodies.sql into the local
-# MySQL server twice: once into the Edx database,
-# and once into the EdxPrivate database. 
+# MySQL server three times: once into the Edx database,
+# once into the EdxPrivate database, and again in EdxForum.
 # Without args: runs as root with no pwd.
 # Obviously, then MySQL will complain if root
 # has a pwd.
@@ -90,7 +90,9 @@ if [ -z $PASSWD ]
 then
     mysql -u $USERNAME -e "USE Edx; source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
     mysql -u $USERNAME -e "USE EdxPrivate; source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+    mysql -u $USERNAME -e "USE EdxForum; source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
 else
     mysql -u $USERNAME -p$PASSWD -e "USE Edx; source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
     mysql -u $USERNAME -p$PASSWD -e "USE EdxPrivate; source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+    mysql -u $USERNAME -p$PASSWD -e "USE EdxForum; source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
 fi
