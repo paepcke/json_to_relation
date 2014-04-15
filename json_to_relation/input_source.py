@@ -76,7 +76,8 @@ class InURI(InputSource):
         '''
         Identify this source such that logging can identify sources
         of errors.
-        @return: a string that can be prepended to a line number in error/warn msgs
+
+        :return: a string that can be prepended to a line number in error/warn msgs
         @rtype: String
         '''
         return self.inFilePathOrURL
@@ -106,8 +107,9 @@ class InURI(InputSource):
         Given a file path, determine by file extension whether
         the file is gzip or bzip2 compressed, or whether it is
         not compressed.
-        @param fileURI: item that str() turns into a file path or URL
-        @type fileURI: STRING
+
+        :param fileURI: item that str() turns into a file path or URL
+        :type fileURI: STRING
         '''
         if str(fileURI).endswith('bz2'):
             return COMPRESSION_TYPE.BZIP2
@@ -125,8 +127,9 @@ class InURI(InputSource):
         the file into a local tmp file and returns that
         file name. In this case the flag self.deleteTempFile
         is set to True. 
-        @param inFilePathOrURL: file path or URL to file
-        @type inFilePathOrURL: String
+
+        :param inFilePathOrURL: file path or URL to file
+        :type inFilePathOrURL: String
         '''
         self.localFilePath = inFilePathOrURL
         self.deleteTempFile = False
@@ -150,7 +153,8 @@ class InString(InputSource):
         '''
         Identify this source such that logging can identify sources
         of errors.
-        @return: a string that can be prepended to a line number in error/warn msgs
+
+        :return: a string that can be prepended to a line number in error/warn msgs
         @rtype: String
         '''
         return "In-string"
@@ -158,8 +162,9 @@ class InString(InputSource):
     def decompress(self, line):
         '''
         No decompression for strings
-        @param line:
-        @type line:
+
+        :param line:
+        :type line:
         '''
         return line
                 
@@ -178,7 +183,8 @@ class InMongoDB(InputSource):
         '''
         Identify this source such that logging can identify sources
         of errors.
-        @return: a string that can be prepended to a line number in error/warn msgs
+
+        :return: a string that can be prepended to a line number in error/warn msgs
         @rtype: String
         '''
         return "%s:%s" % (self.dbName, self.collName)
@@ -201,7 +207,8 @@ class InPipe(InputSource):
         '''
         Identify this source such that logging can identify sources
         of errors.
-        @return: a string that can be prepended to a line number in error/warn msgs
+
+        :return: a string that can be prepended to a line number in error/warn msgs
         @rtype: String
         '''
         return "Pipe"
@@ -210,8 +217,9 @@ class InPipe(InputSource):
     def decompress(self, line):
         '''
         No decompression for pipes. Pipe through gunzip or similar first.
-        @param line:
-        @type line:
+
+        :param line:
+        :type line:
         '''
         return line
         

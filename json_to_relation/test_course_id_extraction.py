@@ -37,9 +37,9 @@ class Test(unittest.TestCase):
         partially elided) hex number. This is where the course number is
         extracted.
         
-        @param event: JSON record of an edx tracking event as internalized dict
-        @type event: Dict<String,Dict<<any>>
-        @return: two-tuple: fulle name of course in which event occurred, and descriptive name.
+        :param event: JSON record of an edx tracking event as internalized dict
+        :type event: Dict<String,Dict<<any>>
+        :return: two-tuple: fulle name of course in which event occurred, and descriptive name.
                  None if course ID could not be obtained.
         @rtype: {(String,String) | None} 
         '''

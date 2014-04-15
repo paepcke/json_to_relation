@@ -22,14 +22,15 @@ class GenericJSONParser(object):
 
     def __init__(self, jsonToRelationConverter, logfileID='', progressEvery=1000):
         '''
-        @param jsonToRelationConverter: JSONToRelation instance
-        @type jsonToRelationConverter: JSONToRelation
-        @param logfileID: an identfier of the tracking log file being processed. Used 
+
+        :param jsonToRelationConverter: JSONToRelation instance
+        :type jsonToRelationConverter: JSONToRelation
+        :param logfileID: an identfier of the tracking log file being processed. Used 
                to build error/warning msgs that cite a file and line number in
                their text
-        @type logfileID: String
-        @param progressEvery: number of input lines, a.k.a. JSON objects after which logging should report total done
-        @type progressEvery: int 
+        :type logfileID: String
+        :param progressEvery: number of input lines, a.k.a. JSON objects after which logging should report total done
+        :type progressEvery: int 
         '''
         self.jsonToRelationConverter = jsonToRelationConverter
         self.logfileID = logfileID
@@ -74,11 +75,11 @@ class GenericJSONParser(object):
     		('start_array', None)
     		('end_array', None)
 		
-		@param jsonStr: string of a single, self contained JSON object
-		@type jsonStr: String
-		@param row: partially filled array of values.
-		@type row: List<<any>>
-		@return: array of values. Fills into the passed-in row array
+		:param jsonStr: string of a single, self contained JSON object
+		:type jsonStr: String
+		:param row: partially filled array of values.
+		:type row: List<<any>>
+		:return: array of values. Fills into the passed-in row array
 		@rtype: [<any>]
         '''
         self.jsonToRelationConverter.bumpLineCounter()
@@ -184,13 +185,14 @@ class GenericJSONParser(object):
         add the column to the row, or set the value in an already
         existing row. Uses the JSONToRelation instance passed to 
         __init__() to obtain current schema. 
-        @param theRow: list of values in their proper column positions
-        @type theRow: List<<any>>
-        @param colName: name of column into which value is to be inserted.
-        @type colName: String
-        @param value: the field value
-        @type value: <any>, as per ColDataType
-        @return: the passed-in row, with the new value added at the proper index.
+
+        :param theRow: list of values in their proper column positions
+        :type theRow: List<<any>>
+        :param colName: name of column into which value is to be inserted.
+        :type colName: String
+        :param value: the field value
+        :type value: <any>, as per ColDataType
+        :return: the passed-in row, with the new value added at the proper index.
         @rtype: List<<any>>
         '''
     
@@ -263,9 +265,10 @@ class GenericJSONParser(object):
         '''
         Given a label, like employee.item.name, remove the last
         occurrence of 'item'
-        @param label: string from which last 'item' occurrence is to be removed
-        @type label: String
-        @return: label after deletion of the substring
+
+        :param label: string from which last 'item' occurrence is to be removed
+        :type label: String
+        :return: label after deletion of the substring
         @rtype: String
         '''
         # JSONToRelation.REMOVE_ITEM_FROM_STRING_PATTERN is a regex pattern to remove '.item.' 

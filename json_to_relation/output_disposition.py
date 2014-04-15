@@ -39,8 +39,9 @@ class OutputDisposition(object):
     '''
     def __init__(self, outputFormat, outputDestObj=None):
         '''
-        @param outputDestObj: instance of one of the subclasses
-        @type outputDestObj: Subclass(OutputDisposition)
+
+        :param outputDestObj: instance of one of the subclasses
+        :type outputDestObj: Subclass(OutputDisposition)
         
         '''
         self.outputFormat = outputFormat
@@ -80,10 +81,11 @@ class OutputDisposition(object):
     def addSchemaHints(self, tableName, schemaHints):
         '''
         Provide a schema hint dict for the table of the given name.
-        @param tableName: name of table to which schema applies. The name may be None, in which case it refers to the main (default) table.
-        @type tableName: String
-        @param schemaHints: dict mapping column names to SQL types via ColumnSpec instances
-        @type schemaHints: [ordered]Dict<String,ColumnSpec>
+
+        :param tableName: name of table to which schema applies. The name may be None, in which case it refers to the main (default) table.
+        :type tableName: String
+        :param schemaHints: dict mapping column names to SQL types via ColumnSpec instances
+        :type schemaHints: [ordered]Dict<String,ColumnSpec>
         '''
         self.schemas.addColSpecs(tableName, schemaHints)
 
@@ -92,11 +94,12 @@ class OutputDisposition(object):
         Given a column name, and a table name, return the ColumnSpec object
         that describes that column. If tableName is None, the main (default)
         table's schema will be searched for a colName entry
-        @param colName: name of column whose schema info is sought
-        @type colName: String
-        @param tableName: name of table in which the given column resides
-        @type tableName: String
-        @return: list of ColumnSpec instances
+
+        :param colName: name of column whose schema info is sought
+        :type colName: String
+        :param tableName: name of table in which the given column resides
+        :type tableName: String
+        :return: list of ColumnSpec instances
         @rtype: (ColumnSpec)
         @raise KeyError: if table or column are not found 
         '''
@@ -123,12 +126,13 @@ class OutputDisposition(object):
         column has previously been encountered. If not, a column information
         object is created, which will eventually be used to create the column
         header, or SQL alter statements.
-        @param colName: name of the column to consider
-        @type colName: String
-        @param colDataType: datatype of the column.
-        @type colDataType: ColDataType
-        @param tableName: name of table to which the column is to belong; None if for main table
-        @type tableName: {String | None}
+
+        :param colName: name of the column to consider
+        :type colName: String
+        :param colDataType: datatype of the column.
+        :type colDataType: ColDataType
+        :param tableName: name of table to which the column is to belong; None if for main table
+        :type tableName: {String | None}
         '''
         schemaDict = self.schemas[tableName]
         if schemaDict is None or len(schemaDict) == 0:
@@ -151,11 +155,12 @@ class OutputDisposition(object):
         Used for cases in which parsers must create more than one
         table. Those tables need to be written to disk, even when
         output of the main table is piped.
-        @param tableName: name by which the table file obj can be retrieved 
-        @type tableName: String
-        @param fileSuffix: suffix for temp file name. Ex. 'csv' for CSV outputs, or 'sql' for SQL dumps
-        @type fileSuffix: String
-        @return: file object open for writing
+
+        :param tableName: name by which the table file obj can be retrieved 
+        :type tableName: String
+        :param fileSuffix: suffix for temp file name. Ex. 'csv' for CSV outputs, or 'sql' for SQL dumps
+        :type fileSuffix: String
+        :return: file object open for writing
         @rtype: File
         '''
         self.csvTableFiles[tableName] = tempfile.NamedTemporaryFile(prefix='tmpTable', 
@@ -208,8 +213,9 @@ class OutputPipe(OutputDisposition):
         '''
         Called when parser needs to create a table beyond
         the main table. 
-        @param schemaHintsNewTable:
-        @type schemaHintsNewTable:
+
+        :param schemaHintsNewTable:
+        :type schemaHintsNewTable:
         '''
         self.addSchemaHints(tableName, schemaHintsNewTable)
         tmpTableFile = self.createTmpTableFile(tableName, 'csv')
@@ -222,8 +228,9 @@ class OutputPipe(OutputDisposition):
     def write(self, whatToWrite):
         '''
         Write given string straight to the output. No assumption made about the format
-        @param whatToWrite:
-        @type whatToWrite:
+
+        :param whatToWrite:
+        :type whatToWrite:
         '''
         sys.stdout.write(whatToWrite)
         sys.stdout.flush()
@@ -249,14 +256,14 @@ class OutputFile(OutputDisposition):
         is CSV, then the fileName is a prefix for the file names of each generated CSV file
         (one file for each table).
                    
-        @param fileName: fully qualified name of output file for CSV (in case of CSV-only), 
+        :param fileName: fully qualified name of output file for CSV (in case of CSV-only), 
                    or MySQL INSERT statement dump 
-        @type fileName: String
-        @param outputFormat: whether to output CSV or MySQL INSERT statements
-        @type outputFormat: OutputDisposition.OutputFormat
-        @param options: output file options as per Python built-in 'open()'. Defaults to append/binary. The
+        :type fileName: String
+        :param outputFormat: whether to output CSV or MySQL INSERT statements
+        :type outputFormat: OutputDisposition.OutputFormat
+        :param options: output file options as per Python built-in 'open()'. Defaults to append/binary. The
                   latter for compatibility with Windows
-        @type options: String
+        :type options: String
         '''
         super(OutputFile, self).__init__(outputFormat)        
         # Make file name accessible as property just like 
@@ -302,8 +309,9 @@ class OutputFile(OutputDisposition):
         Get file name of a MySQL INSERT statement outfile,
         or, given a table name, the name of the outfile
         for CSV destined to the given table.
-        @param tableName:
-        @type tableName:
+
+        :param tableName:
+        :type tableName:
         '''
         if tableName is None:
             return self.name
@@ -326,13 +334,14 @@ class OutputFile(OutputDisposition):
         the INSERT statements to their output file. Then, if output
         format is SQL_INSERTS_AND_CSV, we also extract the MySQL
         values and write them to the proper CSV file.
-        @param colElementArray: either a MySQL INSERT statement, or an array of values
-        @type colElementArray: {String | [string]}
-        @param tableName: name of table to which output is destined. Only needed for 
+
+        :param colElementArray: either a MySQL INSERT statement, or an array of values
+        :type colElementArray: {String | [string]}
+        :param tableName: name of table to which output is destined. Only needed for 
                   value arrays from CSV-only parsers. Their value arrays don't contain
                   info on the destination table. INSERT statements do contain the destination table
                   name.
-        @type tableName: String
+        :type tableName: String
         '''
         if isinstance(colElementArray, list):
             # Simple CSV array of values; 
@@ -364,8 +373,9 @@ class OutputFile(OutputDisposition):
     def write(self, whatToWrite):
         '''
         Write given string straight to the output. No assumption made about the format
-        @param whatToWrite:
-        @type whatToWrite:
+
+        :param whatToWrite:
+        :type whatToWrite:
         '''
         self.fileHandle.write(whatToWrite)
         self.fileHandle.flush()
@@ -375,10 +385,11 @@ class OutputFile(OutputDisposition):
         Called when parser needs to create a table beyond
         the main table (in case of CSV-Only), or any table
         in case of SQLInsert+CSV. 
-        @param tableName: name of new table
-        @type tableName: string
-        @param schemaHintsNewTable: map column name to column SQL type
-        @type schemaHintsNewTable: {String,ColDataType}
+
+        :param tableName: name of new table
+        :type tableName: string
+        :param schemaHintsNewTable: map column name to column SQL type
+        :type schemaHintsNewTable: {String,ColDataType}
         '''
         self.addSchemaHints(tableName, schemaHintsNewTable)
         if self.outputFormat == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
@@ -401,9 +412,10 @@ class OutputFile(OutputDisposition):
         Checks whether an open File object exists for the given
         table. If not, creates one. Returns the FD. The output
         file is created in the same directory as self.out
-        @param tableName: name of table whose CSV output file we are to check for, or create
-        @type tableName: String
-        @return: a File object open for writing/appending
+
+        :param tableName: name of table whose CSV output file we are to check for, or create
+        :type tableName: String
+        :return: a File object open for writing/appending
         @rtype: File
         '''
         try:
@@ -442,8 +454,9 @@ class OutputFile(OutputDisposition):
         expressions that expect the specific format. Prerequisite: self.tableCSVWriters
         is a dictionary that maps table names into File objects that are open
         for writing.
-        @param insertStatement: Well-formed MySQL INSERT statement 
-        @type insertStatement: String
+
+        :param insertStatement: Well-formed MySQL INSERT statement 
+        :type insertStatement: String
         @raise ValueError: if table name could not be extracted from the
                INSERT statement, or if the insertStatement contains no VALUES
                clause. 
@@ -493,12 +506,13 @@ class ColumnSpec(object):
     def __init__(self, colName, colDataType, jsonToRelationProcessor):
         '''
         Create a ColumnSpec instance.
-        @param colName: name of column
-        @type colName: String
-        @param colDataType: data type of column (an enum)
-        @type colDataType: ColumnSpec
-        @param jsonToRelationProcessor: associated JSON to relation JSONToRelation instance
-        @type jsonToRelationProcessor: JSONToRelation
+
+        :param colName: name of column
+        :type colName: String
+        :param colDataType: data type of column (an enum)
+        :type colDataType: ColumnSpec
+        :param jsonToRelationProcessor: associated JSON to relation JSONToRelation instance
+        :type jsonToRelationProcessor: JSONToRelation
         '''
         self.colName = colName
         self.colDataType = colDataType
@@ -511,7 +525,8 @@ class ColumnSpec(object):
     def getName(self):
         '''
         Return column name
-        @return: name of column
+
+        :return: name of column
         @rtype: String
         '''
         return self.colName
@@ -519,7 +534,8 @@ class ColumnSpec(object):
     def getType(self):
         '''
         Return SQL type
-        @return: SQL type of colum in upper case
+
+        :return: SQL type of colum in upper case
         @rtype: String
         '''
         return ColDataType().toString(self.colDataType).upper()

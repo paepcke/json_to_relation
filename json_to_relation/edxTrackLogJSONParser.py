@@ -128,26 +128,27 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def __init__(self, jsonToRelationConverter, mainTableName, logfileID='', progressEvery=1000, replaceTables=False, dbName='test', useDisplayNameCache=False):
         '''
         Constructor
-        @param jsonToRelationConverter: JSONToRelation instance
-        @type jsonToRelationConverter: JSONToRelation
-        @param mainTableName: name wanted for the table into which the bulk of event data is placed
-        @type mainTableName: String
-        @param logfileID: an identfier of the tracking log file being processed. Used 
+
+        :param jsonToRelationConverter: JSONToRelation instance
+        :type jsonToRelationConverter: JSONToRelation
+        :param mainTableName: name wanted for the table into which the bulk of event data is placed
+        :type mainTableName: String
+        :param logfileID: an identfier of the tracking log file being processed. Used 
                to build error/warning msgs that cite a file and line number in
                their text
-        @type logfileID: String
-        @param progressEvery: number of input lines, a.k.a. JSON objects after which logging should report total done
-        @type progressEvery: int
-        @param replaceTables: determines whether the tables that constitute EdX track logs are to be deleted before inserting entries. Default: False
-        @type  replaceTables: bool
-        @param dbName: database name into which tables will be created (if replaceTables is True), and into which insertions will take place.
-        @type dbName: String
-        @param useDisplayNameCache: if True then use an existing cache for mapping
+        :type logfileID: String
+        :param progressEvery: number of input lines, a.k.a. JSON objects after which logging should report total done
+        :type progressEvery: int
+        :param replaceTables: determines whether the tables that constitute EdX track logs are to be deleted before inserting entries. Default: False
+        :type  replaceTables: bool
+        :param dbName: database name into which tables will be created (if replaceTables is True), and into which insertions will take place.
+        :type dbName: String
+        :param useDisplayNameCache: if True then use an existing cache for mapping
                     OpenEdx hashes to human readable display names is used. Else
                     the required information is read and parsed from a JSON file name
                     that contains the needed information from modulestore. See
                     modulestoreImporter.py for details. 
-        @type useDisplayNameCache: Bool      
+        :type useDisplayNameCache: Bool      
         '''
         super(EdXTrackLogJSONParser, self).__init__(jsonToRelationConverter, 
                                                     logfileID=logfileID, 
@@ -539,11 +540,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
              "page": "https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/495757ee7b25401599b1ef0495b068e4/6fd116e15ab9436fa70b8c22474b3c17/"
              }
                 
-        @param jsonStr: string of a single, self contained JSON object
-        @type jsonStr: String
-        @param row: partially filled array of values. Passed by reference
-        @type row: List<<any>>
-        @return: the filled-in row
+        :param jsonStr: string of a single, self contained JSON object
+        :type jsonStr: String
+        :param row: partially filled array of values. Passed by reference
+        :type row: List<<any>>
+        :return: the filled-in row
         @rtype: [<any>]
         '''
         # No error has occurred yet in processing this JSON str:
@@ -877,18 +878,19 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         Given an array of column names, and an array of column values,
         construct the return triplet needed for JSONToRelation instance
         to generate its INSERT statements (see JSONToRelation.prepareMySQLRow()).
-        @param row: array of column values 
-        @type row: [<any>]
-        @param targetTableName: name of SQL table to which the result is directed. The caller
+
+        :param row: array of column values 
+        :type row: [<any>]
+        :param targetTableName: name of SQL table to which the result is directed. The caller
                             of processOneJSONObject() will create an INSERT statement
                             for that table.
-        @type targetTableName: String
-        @param colNamesToSet: array of strings listing column names in the order in which
+        :type targetTableName: String
+        :param colNamesToSet: array of strings listing column names in the order in which
                               their values appear in the row parameter. If None, we assume
                               the values are destined for the main event table, whose
                               schema is 'well known'.
-        @type colNamesToSet: [String]
-        @return: table name, string with all comma-separated column names, and values as a 3-tuple
+        :type colNamesToSet: [String]
+        :return: table name, string with all comma-separated column names, and values as a 3-tuple
         @rtype: (String, String, [<any>])
         '''
         if colNamesToSet is None and targetTableName != self.mainTableName:
@@ -921,9 +923,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         auxiliary. After these CREATE statements, 'START TRANSACTION;\\n' is
         pushed. The caller is responsible for pushing 'COMMIT;\\n' when all
         subsequent INSERT statements have been pushed.  
-        @param replaceTables: if True, then generated CREATE statements will first DROP the various tables. 
+
+        :param replaceTables: if True, then generated CREATE statements will first DROP the various tables. 
                               If False, the CREATE statements will be IF NOT EXISTS
-        @type replaceTables: Boolean
+        :type replaceTables: Boolean
         '''
         self.jsonToRelationConverter.pushString('USE %s;\n' % self.dbName)
         self.jsonToRelationConverter.pushString(self.dumpPreamble)
@@ -979,16 +982,17 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 		{'OtherTable' : ('col3', 'int_col_name_there'),
 		 'YetOtherTable : ('col4', 'varchar_col_name_there')
 		 }
-        @param tableName: name of table to be created
-        @type tableName: String
-        @param schemaDict: dict mapping column names to ColumnSpec objects
-        @type schemaDict: Dict<String,ColumnSpec>
-        @param primaryKeyName: name of the primary key column, if any
-        @type primaryKeyName: String
-        @param foreignKeyColNames: dict mapping foreign table names to tuples (localColName, foreignColName)
-        @type foreignKeyColNames: Dict<String,(String,String)>
-        @param autoincrement: whether this table's primary key is autoincrement
-        @type autoincrement: Boolean
+
+        :param tableName: name of table to be created
+        :type tableName: String
+        :param schemaDict: dict mapping column names to ColumnSpec objects
+        :type schemaDict: Dict<String,ColumnSpec>
+        :param primaryKeyName: name of the primary key column, if any
+        :type primaryKeyName: String
+        :param foreignKeyColNames: dict mapping foreign table names to tuples (localColName, foreignColName)
+        :type foreignKeyColNames: Dict<String,(String,String)>
+        :param autoincrement: whether this table's primary key is autoincrement
+        :type autoincrement: Boolean
         '''
         createStatement = "CREATE TABLE IF NOT EXISTS %s (\n" % tableName
         for colname in schemaDict.keys():
@@ -1184,14 +1188,14 @@ class EdXTrackLogJSONParser(GenericJSONParser):
              "page": "https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/53b0357680d24191a60156e74e184be3/"
              }        
         
-        @param record:
-        @type record:
-        @param row:
-        @type row:
-        @param event:
-        @type event:
-        @param eventType:
-        @type eventType:
+        :param record:
+        :type record:
+        :param row:
+        :type row:
+        :param event:
+        :type event:
+        :param eventType:
+        :type eventType:
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text in sequence navigation event." %\
@@ -1297,12 +1301,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
         We handle the complex version here, but call problemCheckSimpleCase() 
         for the simple case.
-		@param record:
-        @type record:
-        @param row:
-        @type row:
-        @param event:
-        @type event:
+
+		:param record:
+        :type record:
+        :param row:
+        :type row:
+        :param event:
+        :type event:
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text in problem_check event." %\
@@ -1411,10 +1416,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 		   "event": "\"input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_2_1=choice_2&
 		               input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_3_1=choice_2\"", 
         The problems and proposed solutions are styled like HTTP GET request parameters.        
-        @param row:
-        @type row:
-        @param event:
-        @type event:
+
+        :param row:
+        :type row:
+        :param event:
+        :type event:
         '''
         # Easy case: event field is GET-styled list of problem ID/choices.
         # Separate all (&-separated) answers into strings like 'problem10=choice_2':
@@ -1487,9 +1493,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 		    }
 		}
 		The above has two correctmaps.
-        @param correctMapsDict: dict of CorrectMap dicts
-        @type correctMapsDict: Dict<String, Dict<String,String>>
-        @return: array of unique keys, one key for each CorrectMap row the method has added.
+
+        :param correctMapsDict: dict of CorrectMap dicts
+        :type correctMapsDict: Dict<String, Dict<String,String>>
+        :return: array of unique keys, one key for each CorrectMap row the method has added.
                  In case of the above example that would be two keys (uuids)
         @rtype: [String]
         '''
@@ -1554,9 +1561,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": "choice_0",
                 "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": "choice_3"
             }
-        @param answersDict:
-        @type answersDict:
-        @return: array of keys created for answers in answersDict, and a dict mapping each key to the 
+
+        :param answersDict:
+        :type answersDict:
+        :return: array of keys created for answers in answersDict, and a dict mapping each key to the 
                  corresponding problem ID
         @rtype: ([String], Dict<String,String>
         '''
@@ -1618,9 +1626,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 	            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": {}
 	        }
 	    }        
-        @param stateDict:
-        @type stateDict:
-        @return: array of keys into State table that were created in this method
+
+        :param stateDict:
+        :type stateDict:
+        :return: array of keys into State table that were created in this method
         @rtype: [String]
         '''
         stateFKeys = []
@@ -1694,9 +1703,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {},
                 "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": {}
             }        
-        @param inputStatesDict:
-        @type inputStatesDict:
-        @return: array of keys created for input state problems.
+
+        :param inputStatesDict:
+        :type inputStatesDict:
+        :return: array of keys created for input state problems.
         @rtype: [String]
         '''
         inputStateKeys = []
@@ -1729,8 +1739,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         Account table, and returns the resulting row
         primary key for inclusion in the main table's
         accountFKey field. 
-        @param accountDict:
-        @type accountDict:
+
+        :param accountDict:
+        :type accountDict:
         '''
         accountDict['account_id'] = self.getUniqueID()
         self.jsonToRelationConverter.pushToTable(self.resultTriplet(accountDict.values(), 'Account', self.schemaAccountTbl.keys()))
@@ -1757,12 +1768,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         In the latter case we just put that string into the problemID field
         of the main table
         
-        @param record:
-        @type record:
-        @param row:
-        @type row:
-        @param event:
-        @type event:
+        :param record:
+        :type record:
+        :param row:
+        :type row:
+        :param event:
+        :type event:
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text in event type problem_reset." %\
@@ -1808,12 +1819,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         After turning this JSON into Python::
         {u'problem': u'i4x://Medicine/HRP258/problem/c5cf8f02282544729aadd1f9c7ccbc87'}
 
-        @param record:
-        @type record:
-        @param row:
-        @type row:
-        @param event:
-        @type event:
+        :param record:
+        :type record:
+        :param row:
+        :type row:
+        :param event:
+        :type event:
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text in event type problem_show." %\
@@ -1853,12 +1864,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         After splitting this string on '&', and then each result on '=', we add the 
         problemID/solution pairs to the Answer table:
 
-        @param record:
-        @type record:
-        @param row:
-        @type row:
-        @param event:
-        @type event:
+        :param record:
+        :type record:
+        :param row:
+        :type row:
+        :param event:
+        :type event:
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text in event type problem_save." %\
@@ -2117,12 +2128,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         Events look like this::
            "{\"id\":\"i4x-Medicine-HRP258-videoalpha-4b200d3944cc47e5ae3ad142c1006075\",\"code\":\"html5\",\"currentTime\":348.4132080078125}"    
-        @param record:
-        @type record:
-        @param row:
-        @type row:
-        @param event:
-        @type event:
+
+        :param record:
+        :type record:
+        :param row:
+        :type row:
+        :param event:
+        :type event:
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text event type fullscreen." %\
@@ -2149,12 +2161,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         Events look like this::
            "{\"id\":\"i4x-Medicine-HRP258-videoalpha-c5cbefddbd55429b8a796a6521b9b752\",\"code\":\"html5\",\"currentTime\":661.1010131835938}"        
-        @param record:
-        @type record:
-        @param row:
-        @type row:
-        @param event:
-        @type event:
+
+        :param record:
+        :type record:
+        :param row:
+        :type row:
+        :param event:
+        :type event:
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text event type fullscreen." %\
@@ -2243,12 +2256,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
               \"currentTime\":0}"
               
         Same for hide_transcript
-        @param record:
-        @type record:
-        @param row:
-        @type row:
-        @param event:
-        @type event:
+
+        :param record:
+        :type record:
+        :param row:
+        :type row:
+        :param event:
+        :type event:
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event info in show_transcript or hide_transcript." %\
@@ -2300,12 +2314,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 "i4x-Education-EDUC115N-problem-ab38a55d2eb145ae8cec26acebaca27f_2_1": "choice_0"
               }
             }        
-        @param record:
-        @type record:
-        @param row:
-        @type row:
-        @param event:
-        @type event:
+
+        :param record:
+        :type record:
+        :param row:
+        :type row:
+        :param event:
+        :type event:
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text in problem_check event." %\
@@ -2392,12 +2407,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         No example available. Records reportedly include:
         state, problem_id, and failure reason
-        @param record:
-        @type record:
-        @param row:
-        @type row:
-        @param event:
-        @type event:
+
+        :param record:
+        :type record:
+        :param row:
+        :type row:
+        :param event:
+        :type event:
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event info in problem_rescore_fail." %\
@@ -2435,12 +2451,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         Fields: state, problemID, orig_score (int), orig_total(int), new_score(int),
         new_total(int), correct_map, success (string 'correct' or 'incorrect'), and
         attempts(int)
-        @param record:
-        @type record:
-        @param row:
-        @type row:
-        @param event:
-        @type event:
+
+        :param record:
+        :type record:
+        :param row:
+        :type row:
+        :param event:
+        :type event:
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text in problem_rescore event." %\
@@ -2496,12 +2513,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         Do have examples. event has fields state, problem_id, failure, and answers.
         For save_problem_success or save_problem_check there is no failure field 
-        @param record:
-        @type record:
-        @param row:
-        @type row:
-        @param event:
-        @type event:
+
+        :param record:
+        :type record:
+        :param row:
+        :type row:
+        :param event:
+        :type event:
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text in save_problem_fail, save_problem_success, or reset_problem_fail." %\
@@ -2599,12 +2617,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 
               "problem_id": "i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33", 
               "new_state": {"student_answers": {}, "seed": 93, "done": false, "correct_map": {}, "input_state": {"i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1": {}}}}   
-        @param record:
-        @type record:
-        @param row:
-        @type row:
-        @param event:
-        @type event:
+
+        :param record:
+        :type record:
+        :param row:
+        :type row:
+        :param event:
+        :type event:
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text in reset_problem." %\
@@ -2865,12 +2884,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         the event. User is the group member being talked about. For clarity,
         'user' is called 'group_user', and 'event' is called 'group_event' in the
         main table.
-        @param record:
-        @type record:
-        @param row:
-        @type row:
-        @param event:
-        @type event:
+
+        :param record:
+        :type record:
+        :param row:
+        :type row:
+        :param event:
+        :type event:
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event info add-or-remove-user-group" %\
@@ -2918,12 +2938,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                         \"password\": \"********\", 
                         \"enrollment_action\": [\"enroll\"], 
                         \"email\": [\"luig.cannon@yahoo.com\"]}, \"GET\": {}}"        
-        @param record:
-        @type record:
-        @param row:
-        @type row:
-        @param event:
-        @type event:
+
+        :param record:
+        :type record:
+        :param row:
+        :type row:
+        :param event:
+        :type event:
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text in event type create_account." %\
@@ -3027,12 +3048,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         Events look like this::
      		'[...#8217;t improve or get worse. Calculate the 95% confidence interval for the true proportion of heart disease patients who improve their fitness using this particular exercise regimen. Recall that proportions are normally distributed with a standard error of </p><p>\\\\[ \\\\sqrt{\\\\frac{p(1-p)}{n}} \\\\]</p><p>(You may use the observed proportion to calculate the standard error.)</p><span><form class=\\\"choicegroup capa_inputtype\\\" id=\\\"inputtype_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\"><div class=\\\"indicator_container\\\">\\n    </div><fieldset><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_0\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_0\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" value=\\\"choice_0\\\"/> 66%\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_1\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_1\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" value=\\\"choice_1\\\"/> 66%-70%\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_2\\\" class=\\\"choicegroup_correct\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_2\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" value=\\\"choice_2\\\" checked=\\\"true\\\"/> 50%-84%\\n\\n            \\n            <span class=\\\"sr\\\" aria-describedby=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_2\\\">Status: correct</span>\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_3\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_...        
     		]'
-    	@param record:
-        @type record:
-        @param row:
-        @type row:
-        @param event:
-        @type event:
+
+    	:param record:
+        :type record:
+        :param row:
+        :type row:
+        :param event:
+        :type event:
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text in save_problem_fail, save_problem_success, or reset_problem_fail." %\
@@ -3094,12 +3116,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         Event is something like this::
             {"course": "Medicine/SciWrite/Fall2013", "receive_emails": "yes"}
-        @param record:
-        @type record:
-        @param row:
-        @type row:
-        @param event:
-        @type event:
+
+        :param record:
+        :type record:
+        :param row:
+        :type row:
+        :param event:
+        :type event:
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text in event type change-email-settings." %\
@@ -3157,12 +3180,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
           /courses/Education/EDUC115N/How_to_Learn_Math/courseware
         Most have action instructions at the end, some don't. The ones that don't 
         have no additional information. We drop those events.
-        @param record:
-        @type record:
-        @param row:
-        @type row:
-        @param event:
-        @type event:
+
+        :param record:
+        :type record:
+        :param row:
+        :type row:
+        :param event:
+        :type event:
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text in event %s." %\
@@ -3230,10 +3254,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         Called from handlePathStyledEventTypes(). Event dict looks like this::
            {\"location\": [\"i4x://Education/EDUC115N/combinedopenended/0d67667941cd4e14ba29abd1542a9c5f\"]}, \"GET\": {}"        
         The caller is expected to have verified the legitimacy of EventDict
-        @param row:
-        @type row:
-        @param eventDict:
-        @type eventDict:
+
+        :param row:
+        :type row:
+        :param eventDict:
+        :type eventDict:
         '''
 
         # Get location:
@@ -3259,10 +3284,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         Called from handlePathStyledEventTypes(). Event dict looks like this::
            {\"position\": [\"2\"]}, \"GET\": {}}"
         The caller is expected to have verified the legitimacy of EventDict
-        @param row:
-        @type row:
-        @param eventDict:
-        @type eventDict:
+
+        :param row:
+        :type row:
+        :param eventDict:
+        :type eventDict:
         '''
 
         # Get location:
@@ -3288,10 +3314,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         Called from handlePathStyledEventTypes(). Event dict looks like this::
            {\"location\": [\"i4x://Education/EDUC115N/combinedopenended/0d67667941cd4e14ba29abd1542a9c5f\"]}, \"GET\": {}}"
         The caller is expected to have verified the legitimacy of EventDict
-        @param row:
-        @type row:
-        @param eventDict:
-        @type eventDict:
+
+        :param row:
+        :type row:
+        :param eventDict:
+        :type eventDict:
         '''
 
         # Get location:
@@ -3319,10 +3346,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             \"student_answer\": [\"Students will have to use higher level thinking to describe the...in the race. \"], 
             \"can_upload_files\": [\"false\"]}, \"GET\": {}}"        
         The caller is expected to have verified the legitimacy of EventDict
-        @param row:
-        @type row:
-        @param eventDict:
-        @type eventDict:
+
+        :param row:
+        :type row:
+        :param eventDict:
+        :type eventDict:
         '''
 
         student_file = eventDict.get('student_file', [''])
@@ -3364,10 +3392,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         Get something like::
            "{\"POST\": {\"submission_id\": [\"60611\"], 
                         \"feedback\": [\"<p>This is a summary of a paper stating the positive effects of a certain hormone on face recognition for people with disrupted face processing [1].\\n<br>\\n<br>Face recognition is essential for social interaction and most people perform it effortlessly. But a surprisingly high number of people \\u2013 one in forty \\u2013 are impaired since birth in their ability to recognize faces [2]. This condition is called 'developmental prosopagnosia'. Its cause isn\\u2"        
-        @param row:
-        @type row:
-        @param postDict:
-        @type postDict:
+
+        :param row:
+        :type row:
+        :param postDict:
+        :type postDict:
         '''
         if postDict is None:
             return row
@@ -3384,10 +3413,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         Get dict like this::
            {\"input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1\": [\"choice_3\"]}, 
             \"GET\": {}}"        
-        @param row:
-        @type row:
-        @param answersDict:
-        @type answersDict:
+
+        :param row:
+        :type row:
+        :param answersDict:
+        :type answersDict:
         '''
         if answersDict is not None:
             # Receive all the Answer table keys generated for
@@ -3418,14 +3448,15 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         Events look like this::
             "{\"POST\": {\"password\": \"********\", \"email\": [\"emil.smith@gmail.com\"], \"remember\": [\"true\"]}, \"GET\": {}}"        
-        @param record:
-        @type record:
-        @param row:
-        @type row:
-        @param event:
-        @type event:
-        @param eventType:
-        @type eventType:
+
+        :param record:
+        :type record:
+        :param row:
+        :type row:
+        :param event:
+        :type event:
+        :param eventType:
+        :type eventType:
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text in event %s." %\
@@ -3463,15 +3494,16 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         Called by json_to_relation parent after 
         the last insert for one file is done.
         We do what's needed to close out the transform.
-        @param includeCSVLoadCommands: if True, then the main output file will just have
+
+        :param includeCSVLoadCommands: if True, then the main output file will just have
                   table locking, and turning off consistency checks. In that case we
                   insert CSV file load statements. Otherwise the output file already
                   has INSERT statements, and we just add table unlocking, etc.:
-        @type includeCSVLoadCommands: Boolean
-        @param outputDisposition: an OutputDisposition that offers a method getCSVTableOutFileName(tableName),
+        :type includeCSVLoadCommands: Boolean
+        :param outputDisposition: an OutputDisposition that offers a method getCSVTableOutFileName(tableName),
                   which provides the fully qualified file name that is the 
                   destination for CSV rows destined for a given table.
-        @type outputDisposition: OutputDisposition
+        :type outputDisposition: OutputDisposition
         '''
         if includeCSVLoadCommands:
             self.jsonToRelationConverter.pushString(self.createCSVTableLoadCommands(outputDisposition))
@@ -3488,10 +3520,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         Create a series of LOAD INFILE commands as a string. One load command
         for each of the Edx track log tables.
-        @param outputDisposition: an OutputDisposition that offers a method getCSVTableOutFileName(tableName),
+
+        :param outputDisposition: an OutputDisposition that offers a method getCSVTableOutFileName(tableName),
                   which provides the fully qualified file name that is the 
                   destination for CSV rows destined for a given table.
-        @type outputDisposition: OutputDisposition
+        :type outputDisposition: OutputDisposition
         '''
         csvLoadCommands    = "SET sql_log_bin=0;\n"
         for tableName in ['LoadInfo', 'InputState', 'State', 'CorrectMap', 'Answer', 'Account', 'EdxTrackEvent']:
@@ -3527,10 +3560,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         When JSON parsing fails, place the offending text into 
         longAnswer. Happens, for instance, when student answers have embedded
         quotes that confused some upstream load process.
-        @param row:
-        @type row:
-        @param offendingText:
-        @type offendingText:
+
+        :param row:
+        :type row:
+        :param offendingText:
+        :type offendingText:
         '''
         self.setValInRow(row, 'badly_formatted', self.makeInsertSafe(offendingText))
         return row
@@ -3570,9 +3604,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         partially elided) hex number. This is where the course number is
         extracted.
         
-        @param event: JSON record of an edx tracking event as internalized dict
-        @type event: Dict<String,Dict<<any>>
-        @return: two-tuple: full name of course in which event occurred, and descriptive name.
+        :param event: JSON record of an edx tracking event as internalized dict
+        :type event: Dict<String,Dict<<any>>
+        :return: two-tuple: full name of course in which event occurred, and descriptive name.
                  None if course ID could not be obtained.
         @rtype: {(String,String) | None} 
         '''
@@ -3633,8 +3667,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def getCourseDisplayName(self, fullCourseName):
         '''
         Given a 
-        @param fullCourseName:
-        @type fullCourseName:
+
+        :param fullCourseName:
+        :type fullCourseName:
         '''
         hashStr = self.extractOpenEdxHash(fullCourseName)
         if hashStr is None:
@@ -3661,8 +3696,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         Given the 'event' field of an event of type problem_check, problem_check_fail, problem_save...,
         extract the course ID. Ex from save_problem_check::
             "event": {"success": "correct", "correct_map": {"i4x-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_2_1": {"hint": "", "hintmode": null,...
-        @param event:
-        @type event:
+
+        :param event:
+        :type event:
         '''
         if event is None:
             return None
@@ -3684,8 +3720,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         If event is either a dict, or a string with a dict
         definition inside, returns a dict. Else returns None
         
-        @param event:
-        @type event:
+        :param event:
+        :type event:
         '''
         if isinstance(event, dict):
             return event
@@ -3705,8 +3741,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         If event is either a Python array, or a string with an array
         definition inside, returns the array. Else returns None
         
-        @param event:
-        @type event:
+        :param event:
+        :type event:
         '''
         if isinstance(event, list):
             return event
@@ -3728,9 +3764,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         semicolons. Escapes commas and single quotes. Backslash is
         replaced by double backslash. This is needed for unicode, like
         \0245 (invented example)
-        @param unsafeStr: string that possibly contains unsafe chars
-        @type unsafeStr: String
-        @return: same string, with unsafe chars properly replaced or escaped
+
+        :param unsafeStr: string that possibly contains unsafe chars
+        :type unsafeStr: String
+        :return: same string, with unsafe chars properly replaced or escaped
         @rtype: String
         '''
         #return unsafeStr.replace("'", "\\'").replace('\n', "; ").replace('\r', "; ").replace(',', "\\,").replace('\\', '\\\\')
@@ -3751,8 +3788,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         Given a JSON string, make it safe for loading via
         json.loads(). Backslashes before chars other than 
         any of \bfnrtu/ are escaped with a second backslash 
-        @param jsonStr:
-        @type jsonStr:
+
+        :param jsonStr:
+        :type jsonStr:
         '''
         res = EdXTrackLogJSONParser.JSON_BAD_BACKSLASH_PATTERN.sub(self.fixOneJSONBackslashProblem, jsonStr)
         return res
@@ -3765,9 +3803,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         the replacement string to use by the caller for the substitution. 
         Ex. a match received from the original string "\d'Orsay" returns
         "\\d".    
-        @param matchObj: a Match object resulting from a regex search/replace
+
+        :param matchObj: a Match object resulting from a regex search/replace
                          call.
-        @type matchObj: Match
+        :type matchObj: Match
         '''
         return "\\\\" + matchObj.group(1)
 
@@ -3777,8 +3816,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         the username, host, session, event_type, event_source, and event fields
         verbatim, i.e. without real parsing. We place those in the proper 
         fields, and leave it at that.
-        @param badJSONStr:
-        @type badJSONStr:
+
+        :param badJSONStr:
+        :type badJSONStr:
         '''
         screen_name = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['username'], badJSONStr)
         #host = self.tryJSONExtraction(EdXTrackLogJSONParser.searchPatternDict['host'], badJSONStr)
@@ -3882,11 +3922,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         Generate a user hash, using email if available,
         else the screenName. (Sometimes either email or screenName are empty)
-        @param screenName: user screen name in system
-        @type screenName: string
-        @param email: user email address
-        @type email: string
-        @return: 40 byte hash
+
+        :param screenName: user screen name in system
+        :type screenName: string
+        :param email: user email address
+        :type email: string
+        :return: 40 byte hash
         @rtype: string
         '''
         if len(email) > 0:
@@ -3898,9 +3939,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         Returns a ripemd160 40 char hash of the given name. Uses the
         corresponding class method below. 
-        @param username: name to be hashed
-        @type username: String
-        @return: hashed equivalent. Calling this function multiple times returns the same string
+
+        :param username: name to be hashed
+        :type username: String
+        :return: hashed equivalent. Calling this function multiple times returns the same string
         @rtype: String
         '''
         return EdXTrackLogJSONParser.makeHash(username)
@@ -3909,9 +3951,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def makeHash(cls, username):
         '''
         Returns a ripemd160 40 char hash of the given name. 
-        @param username: name to be hashed
-        @type username: String
-        @return: hashed equivalent. Calling this function multiple times returns the same string
+
+        :param username: name to be hashed
+        :type username: String
+        :return: hashed equivalent. Calling this function multiple times returns the same string
         @rtype: String
         '''
         #return hashlib.sha224(username).hexdigest()
@@ -3931,8 +3974,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         a minimal check, the method does ensure that there is at most one 
         qualifying string present; we know that this is the case with problem_id
         and other strings.
-        @param idStr: problem, module, video ID and others that might contain a 32 bit OpenEdx platform hash
-        @type idStr: string
+
+        :param idStr: problem, module, video ID and others that might contain a 32 bit OpenEdx platform hash
+        :type idStr: string
         '''
         if idStr is None:
             return None
@@ -3950,11 +3994,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         string, as in::
             input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_2_1
         We fish it out of there.            
-        @param row: current row's values
-        @type row: [<any>]
-        @param openEdxHash: 32-bit hash string encoding a problem, video, or class, or 
+
+        :param row: current row's values
+        :type row: [<any>]
+        :param openEdxHash: 32-bit hash string encoding a problem, video, or class, or 
                        such a 32-bit hash embedded in a larger string.
-        @type openEdxHash: String
+        :type openEdxHash: String
         '''
         if openEdxHash is not None and len(openEdxHash) > 0:
             # Fish out the actual 32-bit hash:
@@ -3971,9 +4016,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         facilities to get a canonical name. Inputs look like::
             Medicine/HRP258/Statistics_in_Medicine
             /courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/sequential/1b3ac347ca064b3eaaddbc27d4200964/goto_position
-        @param trackLogStr: string that hopefully contains a course short name
-        @type trackLogStr: String
-        @return: a string of the form org/courseShortName/courseTitle, or None if no course name 
+
+        :param trackLogStr: string that hopefully contains a course short name
+        :type trackLogStr: String
+        :return: a string of the form org/courseShortName/courseTitle, or None if no course name 
                   could be found in the given string.
         @rtype: {String | None}
         '''

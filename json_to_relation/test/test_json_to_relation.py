@@ -5,10 +5,10 @@ import os
 import tempfile
 import unittest
 
-from json_to_relation.col_data_type import ColDataType
-from json_to_relation.input_source import InputSource, InURI, InString, InMongoDB, InPipe #@UnusedImport
-from json_to_relation.json_to_relation import JSONToRelation
-from json_to_relation.output_disposition import ColumnSpec, OutputPipe, \
+from col_data_type import ColDataType
+from input_source import InputSource, InURI, InString, InMongoDB, InPipe #@UnusedImport
+from json_to_relation import JSONToRelation
+from output_disposition import ColumnSpec, OutputPipe, \
     OutputDisposition, OutputFile
 
 

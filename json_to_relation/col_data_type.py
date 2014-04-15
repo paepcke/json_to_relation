@@ -101,10 +101,11 @@ class ColDataType:
         '''
         Given a value, return the best fitting MySQL data type
         Special case: None: we return TEXT.
-        @param cls: ColDataType, makes it a class method
-        @type cls: ColDataType
-        @param value: example value
-        @type value: {str | unicode | int | float | bool | None}
+
+        :param cls: ColDataType, makes it a class method
+        :type cls: ColDataType
+        :param value: example value
+        :type value: {str | unicode | int | float | bool | None}
         '''
 
         if value is None:
