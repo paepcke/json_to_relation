@@ -1,0 +1,728 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>test Package &mdash; json_to_relation 0.2 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="json_to_relation 0.2 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">json_to_relation 0.2 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="test-package">
+<h1>test Package<a class="headerlink" href="#test-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-json_to_relation.test.testAddAnonToActivityGradeTable">
+<span id="testaddanontoactivitygradetable-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">testAddAnonToActivityGradeTable</span></tt> Module<a class="headerlink" href="#module-json_to_relation.test.testAddAnonToActivityGradeTable" title="Permalink to this headline">¶</a></h2>
+<p>Created on Apr 7, 2014</p>
+<p>&#64;author: paepcke</p>
+<dl class="docutils">
+<dt>NOTE: Requires existence of database &#8216;unittest&#8217; and user &#8216;unittest&#8217; without pwd</dt>
+<dd>and ALL privileges. (Could get away with fewer privileges, but who cares.</dd>
+</dl>
+<dl class="class">
+<dt id="json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade">
+<em class="property">class </em><tt class="descclassname">json_to_relation.test.testAddAnonToActivityGradeTable.</tt><tt class="descname">TestAddAnonToActivityGrade</tt><big>(</big><em>methodName='runTest'</em><big>)</big><a class="headerlink" href="#json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">unittest.case.TestCase</span></tt></p>
+<dl class="attribute">
+<dt id="json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade.modid1">
+<tt class="descname">modid1</tt><em class="property"> = 'i4x://Carnegie/2013/chapter/1fee4bc0d5384cb4aa7a0d65f3ac5d9b'</em><a class="headerlink" href="#json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade.modid1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade.modid2">
+<tt class="descname">modid2</tt><em class="property"> = 'i4x://Carnegie/2013/chapter/5d08d2bae3ac4047bf5abe1d8dd16ac3'</em><a class="headerlink" href="#json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade.modid2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade.modid3">
+<tt class="descname">modid3</tt><em class="property"> = 'i4x://Carnegie/2013/chapter/9a9455cd30bd4c14819542bcd11bfcf8'</em><a class="headerlink" href="#json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade.modid3" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade.setUp">
+<tt class="descname">setUp</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade.setUp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade.state1">
+<tt class="descname">state1</tt><em class="property"> = ' {&quot;correct_map&quot;: {&quot;i4x-Medicine-HRP258-problem-0c6cf38317be42e0829d10cc68e7451b_2_1&quot;: {&quot;hint&quot;: &quot;&quot;, &quot;hintmode&quot;: null, &quot;correctness&quot;: &quot;correct&quot;, &quot;npoints&quot;: null, &quot;msg&quot;: &quot;&quot;, &quot;queuestate&quot;: null}}, &quot;input_state&quot;: {&quot;i4x-Medicine-HRP258-problem-0c6cf38317be42e0829d10cc68e7451b_2_1&quot;: {}}, &quot;attempts&quot;: 1, &quot;seed&quot;: 1, &quot;done&quot;: true, &quot;student_answers&quot;: {&quot;i4x-Medicine-HRP258-problem-0c6cf38317be42e0829d10cc68e7451b_2_1&quot;: &quot;choice_1&quot;}} '</em><a class="headerlink" href="#json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade.state1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade.state2">
+<tt class="descname">state2</tt><em class="property"> = '{&quot;correct_map&quot;: {}, &quot;seed&quot;: 1, &quot;student_answers&quot;: {}, &quot;input_state&quot;: {&quot;i4x-Medicine-HRP258-problem-0c6cf38317be42e0829d10cc68e7451b_2_1&quot;: {}}}'</em><a class="headerlink" href="#json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade.state2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade.state3">
+<tt class="descname">state3</tt><em class="property"> = '{&quot;position&quot;: 1}'</em><a class="headerlink" href="#json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade.state3" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade.studentmoduleExcerptColNames">
+<tt class="descname">studentmoduleExcerptColNames</tt><em class="property"> = ['activity_grade_id', 'student_id', 'course_display_name', 'grade', 'max_grade', 'percent_grade', 'parts_correctness', 'answers', 'num_attempts', 'first_submit', 'last_submit', 'module_type', 'anon_screen_name', 'resource_display_name', 'module_id']</em><a class="headerlink" href="#json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade.studentmoduleExcerptColNames" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade.studentmoduleExcerptSchema">
+<tt class="descname">studentmoduleExcerptSchema</tt><em class="property"> = OrderedDict([('activity_grade_id', 'INT'), ('course_display_name', 'VARCHAR(255)'), ('grade', 'VARCHAR(5)'), ('parts_correctness', 'VARCHAR(255)'), ('answers', 'VARCHAR(255)'), ('max_grade', 'DOUBLE'), ('module_type', 'VARCHAR(255)'), ('module_id', 'VARCHAR(255)'), ('percent_grade', 'DOUBLE'), ('resource_display_name', 'VARCHAR(255)'), ('student_id', 'INT'), ('first_submit', 'DATETIME'), ('last_submit', 'DATETIME'), ('num_attempts', 'INT'), ('anon_screen_name', 'VARCHAR(40)')])</em><a class="headerlink" href="#json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade.studentmoduleExcerptSchema" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade.studentmoduleExcerptValues">
+<tt class="descname">studentmoduleExcerptValues</tt><em class="property"> = [[0, 1, 'myCourse', 3, 10, -1.0, ' {&quot;correct_map&quot;: {&quot;i4x-Medicine-HRP258-problem-0c6cf38317be42e0829d10cc68e7451b_2_1&quot;: {&quot;hint&quot;: &quot;&quot;, &quot;hintmode&quot;: null, &quot;correctness&quot;: &quot;correct&quot;, &quot;npoints&quot;: null, &quot;msg&quot;: &quot;&quot;, &quot;queuestate&quot;: null}}, &quot;input_state&quot;: {&quot;i4x-Medicine-HRP258-problem-0c6cf38317be42e0829d10cc68e7451b_2_1&quot;: {}}, &quot;attempts&quot;: 1, &quot;seed&quot;: 1, &quot;done&quot;: true, &quot;student_answers&quot;: {&quot;i4x-Medicine-HRP258-problem-0c6cf38317be42e0829d10cc68e7451b_2_1&quot;: &quot;choice_1&quot;}} ', '', -1, '2014-01-10 04:10:45', '2014-02-10 10:14:40', 'modtype1', '', '', 'i4x://Carnegie/2013/chapter/1fee4bc0d5384cb4aa7a0d65f3ac5d9b'], [1, 2, 'myCourse', 5, 10, -1.0, '{&quot;correct_map&quot;: {}, &quot;seed&quot;: 1, &quot;student_answers&quot;: {}, &quot;input_state&quot;: {&quot;i4x-Medicine-HRP258-problem-0c6cf38317be42e0829d10cc68e7451b_2_1&quot;: {}}}', '', -1, '2014-01-10 11:30:23', '2014-02-10 14:30:12', 'modtype2', '', '', 'i4x://Carnegie/2013/chapter/5d08d2bae3ac4047bf5abe1d8dd16ac3'], [2, 3, 'yourCourse', 8, 10, -1.0, '{&quot;position&quot;: 1}', '', -1, '2014-01-10 18:34:12', '2014-02-10 19:10:33', 'modtype2', '', '', 'i4x://Carnegie/2013/chapter/9a9455cd30bd4c14819542bcd11bfcf8']]</em><a class="headerlink" href="#json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade.studentmoduleExcerptValues" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade.tearDown">
+<tt class="descname">tearDown</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade.tearDown" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade.testAddAnonToActivityTable">
+<tt class="descname">testAddAnonToActivityTable</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.testAddAnonToActivityGradeTable.TestAddAnonToActivityGrade.testAddAnonToActivityTable" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-json_to_relation.test.test_edxTrackLogJSONParser">
+<span id="test-edxtracklogjsonparser-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">test_edxTrackLogJSONParser</span></tt> Module<a class="headerlink" href="#module-json_to_relation.test.test_edxTrackLogJSONParser" title="Permalink to this headline">¶</a></h2>
+<p>Created on Oct 3, 2013</p>
+<p>&#64;author: paepcke</p>
+<dl class="class">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser">
+<em class="property">class </em><tt class="descclassname">json_to_relation.test.test_edxTrackLogJSONParser.</tt><tt class="descname">TestEdxTrackLogJSONParser</tt><big>(</big><em>methodName='runTest'</em><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">unittest.case.TestCase</span></tt></p>
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.assertFileContentEquals">
+<tt class="descname">assertFileContentEquals</tt><big>(</big><em>expected</em>, <em>filePathOrStrToCompareTo</em><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.assertFileContentEquals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compares two file or string contents. First arg is either an open file or a string.
+That is the ground truth to compare to. Second argument is the same: file or string.
+&#64;param expected:
+&#64;type expected:
+&#64;param filePathOrStrToCompareTo:
+&#64;type filePathOrStrToCompareTo:</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.hashLookupDict">
+<tt class="descname">hashLookupDict</tt><em class="property"> = None</em><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.hashLookupDict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.printFile">
+<tt class="descname">printFile</tt><big>(</big><em>fileName</em><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.printFile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.setUp">
+<tt class="descname">setUp</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.setUp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.setUpClass">
+<em class="property">classmethod </em><tt class="descname">setUpClass</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.setUpClass" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called once, pulling a fresh version of the full modulestore 
+JSON file, to see whether that succeeds. Subsequent instantiations 
+of ModulestoreImporter then use the resulting cache, or use
+a smaller excerpt.
+&#64;param cls: TestEdxTrackLogJSONParser
+&#64;type cls: Class</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.tearDown">
+<tt class="descname">tearDown</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.tearDown" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testAbout">
+<tt class="descname">testAbout</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testAbout" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testAddRemoveUserGroup">
+<tt class="descname">testAddRemoveUserGroup</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testAddRemoveUserGroup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testAjaxLogin">
+<tt class="descname">testAjaxLogin</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testAjaxLogin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testAllTableCreation">
+<tt class="descname">testAllTableCreation</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testAllTableCreation" title="Permalink to this definition">¶</a></dt>
+<dd><p>This test is being skipped by the decorator above.
+It would fail any time any of the tables change. But
+Running it nicely prints all the CREATE TABLE statements
+that are created.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testChangeEmailSettings">
+<tt class="descname">testChangeEmailSettings</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testChangeEmailSettings" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testCourseIdGetsProbId">
+<tt class="descname">testCourseIdGetsProbId</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testCourseIdGetsProbId" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testCreateAccountTrueZipWithOtherCountry">
+<tt class="descname">testCreateAccountTrueZipWithOtherCountry</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testCreateAccountTrueZipWithOtherCountry" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testCreateAccountUS">
+<tt class="descname">testCreateAccountUS</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testCreateAccountUS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testCreateAccountUnitedArabEmirates">
+<tt class="descname">testCreateAccountUnitedArabEmirates</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testCreateAccountUnitedArabEmirates" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testCreateAccountZipNoCountry">
+<tt class="descname">testCreateAccountZipNoCountry</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testCreateAccountZipNoCountry" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testCreateAccountZipWithOtherCountry">
+<tt class="descname">testCreateAccountZipWithOtherCountry</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testCreateAccountZipWithOtherCountry" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testEdxHeartbeat">
+<tt class="descname">testEdxHeartbeat</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testEdxHeartbeat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testExtractCanonicalCourseName">
+<tt class="descname">testExtractCanonicalCourseName</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testExtractCanonicalCourseName" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testExtractCourseIDFromProblemXEvent">
+<tt class="descname">testExtractCourseIDFromProblemXEvent</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testExtractCourseIDFromProblemXEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testFullscreen">
+<tt class="descname">testFullscreen</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testFullscreen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testGetCourseID">
+<tt class="descname">testGetCourseID</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testGetCourseID" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testGotoPosition">
+<tt class="descname">testGotoPosition</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testGotoPosition" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testIsStudentCalibrated">
+<tt class="descname">testIsStudentCalibrated</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testIsStudentCalibrated" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testKeyErrorHRP259">
+<tt class="descname">testKeyErrorHRP259</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testKeyErrorHRP259" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testLoadInfo">
+<tt class="descname">testLoadInfo</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testLoadInfo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testLocationManager">
+<tt class="descname">testLocationManager</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testLocationManager" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testMakeJSONSafe">
+<tt class="descname">testMakeJSONSafe</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testMakeJSONSafe" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testNoCourseIDInProblemCheck">
+<tt class="descname">testNoCourseIDInProblemCheck</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testNoCourseIDInProblemCheck" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testNotFullscreen">
+<tt class="descname">testNotFullscreen</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testNotFullscreen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testOCallaghan">
+<tt class="descname">testOCallaghan</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testOCallaghan" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProblem">
+<tt class="descname">testProblem</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProblem" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProblemCheckEventTypeComplexCase">
+<tt class="descname">testProblemCheckEventTypeComplexCase</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProblemCheckEventTypeComplexCase" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProblemCheckFail">
+<tt class="descname">testProblemCheckFail</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProblemCheckFail" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProblemCheckInPath">
+<tt class="descname">testProblemCheckInPath</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProblemCheckInPath" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProblemCheckSimpleCase">
+<tt class="descname">testProblemCheckSimpleCase</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProblemCheckSimpleCase" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProblemCheckSimpleCaseCSV">
+<tt class="descname">testProblemCheckSimpleCaseCSV</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProblemCheckSimpleCaseCSV" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProblemCheckWithEmbeddedQuotes">
+<tt class="descname">testProblemCheckWithEmbeddedQuotes</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProblemCheckWithEmbeddedQuotes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProblemGradedOneProblemNoStatus">
+<tt class="descname">testProblemGradedOneProblemNoStatus</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProblemGradedOneProblemNoStatus" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProblemGradedOneProblemWithStatus">
+<tt class="descname">testProblemGradedOneProblemWithStatus</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProblemGradedOneProblemWithStatus" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProblemGradedThreeProblemsIncompleteJSON">
+<tt class="descname">testProblemGradedThreeProblemsIncompleteJSON</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProblemGradedThreeProblemsIncompleteJSON" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProblemReset">
+<tt class="descname">testProblemReset</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProblemReset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProblemSave">
+<tt class="descname">testProblemSave</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProblemSave" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProcessOneJSONObject">
+<tt class="descname">testProcessOneJSONObject</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProcessOneJSONObject" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProcessSeq_Goto">
+<tt class="descname">testProcessSeq_Goto</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testProcessSeq_Goto" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testRescueJSON">
+<tt class="descname">testRescueJSON</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testRescueJSON" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testResetProblem">
+<tt class="descname">testResetProblem</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testResetProblem" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testSaveAnswer">
+<tt class="descname">testSaveAnswer</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testSaveAnswer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testSaveAnswerInPath">
+<tt class="descname">testSaveAnswerInPath</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testSaveAnswerInPath" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testSaveProblemCheck">
+<tt class="descname">testSaveProblemCheck</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testSaveProblemCheck" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testScottishNames">
+<tt class="descname">testScottishNames</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testScottishNames" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testSeekVideo">
+<tt class="descname">testSeekVideo</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testSeekVideo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testSeekVideoAnother">
+<tt class="descname">testSeekVideoAnother</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testSeekVideoAnother" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testShowTranscript">
+<tt class="descname">testShowTranscript</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testShowTranscript" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testTableCreationStatementConstruction">
+<tt class="descname">testTableCreationStatementConstruction</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testTableCreationStatementConstruction" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testTableSchemaRepo">
+<tt class="descname">testTableSchemaRepo</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testTableSchemaRepo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testURLEscapedAnswerChoice">
+<tt class="descname">testURLEscapedAnswerChoice</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testURLEscapedAnswerChoice" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testUnicode">
+<tt class="descname">testUnicode</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testUnicode" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testUnicodeOutOfBounds">
+<tt class="descname">testUnicodeOutOfBounds</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testUnicodeOutOfBounds" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testUnicodeOutOfRange">
+<tt class="descname">testUnicodeOutOfRange</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testUnicodeOutOfRange" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testVideoSpeedChange">
+<tt class="descname">testVideoSpeedChange</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.testVideoSpeedChange" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.updateTruth">
+<tt class="descname">updateTruth</tt><big>(</big><em>newTruthFilePath</em>, <em>destinationTruthFilePath</em><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.updateTruth" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.updateTruthFromString">
+<tt class="descname">updateTruthFromString</tt><big>(</big><em>newTruthStr</em>, <em>destinationTruthFilePath</em><big>)</big><a class="headerlink" href="#json_to_relation.test.test_edxTrackLogJSONParser.TestEdxTrackLogJSONParser.updateTruthFromString" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-json_to_relation.test.test_json_to_relation">
+<span id="test-json-to-relation-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">test_json_to_relation</span></tt> Module<a class="headerlink" href="#module-json_to_relation.test.test_json_to_relation" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="json_to_relation.test.test_json_to_relation.TestJSONToRelation">
+<em class="property">class </em><tt class="descclassname">json_to_relation.test.test_json_to_relation.</tt><tt class="descname">TestJSONToRelation</tt><big>(</big><em>methodName='runTest'</em><big>)</big><a class="headerlink" href="#json_to_relation.test.test_json_to_relation.TestJSONToRelation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">unittest.case.TestCase</span></tt></p>
+<dl class="method">
+<dt id="json_to_relation.test.test_json_to_relation.TestJSONToRelation.assertFileContentEquals">
+<tt class="descname">assertFileContentEquals</tt><big>(</big><em>expected</em>, <em>filePath</em><big>)</big><a class="headerlink" href="#json_to_relation.test.test_json_to_relation.TestJSONToRelation.assertFileContentEquals" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_json_to_relation.TestJSONToRelation.setUp">
+<tt class="descname">setUp</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_json_to_relation.TestJSONToRelation.setUp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_json_to_relation.TestJSONToRelation.tearDown">
+<tt class="descname">tearDown</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_json_to_relation.TestJSONToRelation.tearDown" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_json_to_relation.TestJSONToRelation.testInsertStatementConstruction">
+<tt class="descname">testInsertStatementConstruction</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_json_to_relation.TestJSONToRelation.testInsertStatementConstruction" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_json_to_relation.TestJSONToRelation.testPrepareMySQLRow">
+<tt class="descname">testPrepareMySQLRow</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_json_to_relation.TestJSONToRelation.testPrepareMySQLRow" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_json_to_relation.TestJSONToRelation.test_arrays">
+<tt class="descname">test_arrays</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_json_to_relation.TestJSONToRelation.test_arrays" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_json_to_relation.TestJSONToRelation.test_edX_stress_import">
+<tt class="descname">test_edX_stress_import</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_json_to_relation.TestJSONToRelation.test_edX_stress_import" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_json_to_relation.TestJSONToRelation.test_edX_tracking_import">
+<tt class="descname">test_edX_tracking_import</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_json_to_relation.TestJSONToRelation.test_edX_tracking_import" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_json_to_relation.TestJSONToRelation.test_embedded_json_strings_comma_escaping">
+<tt class="descname">test_embedded_json_strings_comma_escaping</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_json_to_relation.TestJSONToRelation.test_embedded_json_strings_comma_escaping" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_json_to_relation.TestJSONToRelation.test_ensure_mysql_identifier_legal">
+<tt class="descname">test_ensure_mysql_identifier_legal</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_json_to_relation.TestJSONToRelation.test_ensure_mysql_identifier_legal" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_json_to_relation.TestJSONToRelation.test_json_to_file_with_col_header">
+<tt class="descname">test_json_to_file_with_col_header</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_json_to_relation.TestJSONToRelation.test_json_to_file_with_col_header" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_json_to_relation.TestJSONToRelation.test_schema_hints">
+<tt class="descname">test_schema_hints</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_json_to_relation.TestJSONToRelation.test_schema_hints" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_json_to_relation.TestJSONToRelation.test_simple_json">
+<tt class="descname">test_simple_json</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_json_to_relation.TestJSONToRelation.test_simple_json" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_json_to_relation.TestJSONToRelation.test_simple_json_to_file">
+<tt class="descname">test_simple_json_to_file</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_json_to_relation.TestJSONToRelation.test_simple_json_to_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-json_to_relation.test.test_modulestoreImporter">
+<span id="test-modulestoreimporter-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">test_modulestoreImporter</span></tt> Module<a class="headerlink" href="#module-json_to_relation.test.test_modulestoreImporter" title="Permalink to this headline">¶</a></h2>
+<p>Created on Nov 30, 2013</p>
+<p>&#64;author: paepcke</p>
+<dl class="class">
+<dt id="json_to_relation.test.test_modulestoreImporter.TestModuleStore">
+<em class="property">class </em><tt class="descclassname">json_to_relation.test.test_modulestoreImporter.</tt><tt class="descname">TestModuleStore</tt><big>(</big><em>methodName='runTest'</em><big>)</big><a class="headerlink" href="#json_to_relation.test.test_modulestoreImporter.TestModuleStore" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">unittest.case.TestCase</span></tt></p>
+<dl class="method">
+<dt id="json_to_relation.test.test_modulestoreImporter.TestModuleStore.assertFileContentEquals">
+<tt class="descname">assertFileContentEquals</tt><big>(</big><em>expected</em>, <em>filePathOrStrToCompareTo</em><big>)</big><a class="headerlink" href="#json_to_relation.test.test_modulestoreImporter.TestModuleStore.assertFileContentEquals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compares two file or string contents. First arg is either an open file or a string.
+That is the ground truth to compare to. Second argument is the same: file or string.
+&#64;param expected:
+&#64;type expected:
+&#64;param filePathOrStrToCompareTo:
+&#64;type filePathOrStrToCompareTo:</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="json_to_relation.test.test_modulestoreImporter.TestModuleStore.hashLookupDict">
+<tt class="descname">hashLookupDict</tt><em class="property"> = None</em><a class="headerlink" href="#json_to_relation.test.test_modulestoreImporter.TestModuleStore.hashLookupDict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_modulestoreImporter.TestModuleStore.testCourseNameExport">
+<tt class="descname">testCourseNameExport</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_modulestoreImporter.TestModuleStore.testCourseNameExport" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_modulestoreImporter.TestModuleStore.testModulestoreImportExportHashInfo">
+<tt class="descname">testModulestoreImportExportHashInfo</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_modulestoreImporter.TestModuleStore.testModulestoreImportExportHashInfo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_modulestoreImporter.TestModuleStore.testModulestoreImportLookups">
+<tt class="descname">testModulestoreImportLookups</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_modulestoreImporter.TestModuleStore.testModulestoreImportLookups" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_modulestoreImporter.TestModuleStore.updateTruth">
+<tt class="descname">updateTruth</tt><big>(</big><em>newTruthFilePath</em>, <em>destinationTruthFilePath</em><big>)</big><a class="headerlink" href="#json_to_relation.test.test_modulestoreImporter.TestModuleStore.updateTruth" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-json_to_relation.test.test_mongodb">
+<span id="test-mongodb-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">test_mongodb</span></tt> Module<a class="headerlink" href="#module-json_to_relation.test.test_mongodb" title="Permalink to this headline">¶</a></h2>
+<p>Created on Sep 15, 2013</p>
+<p>&#64;author: paepcke</p>
+<dl class="class">
+<dt id="json_to_relation.test.test_mongodb.MongoTest">
+<em class="property">class </em><tt class="descclassname">json_to_relation.test.test_mongodb.</tt><tt class="descname">MongoTest</tt><big>(</big><em>methodName='runTest'</em><big>)</big><a class="headerlink" href="#json_to_relation.test.test_mongodb.MongoTest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">unittest.case.TestCase</span></tt></p>
+<p>Test the mongodb.py module. Uses a library that fakes
+a MongoDB server. See <a class="reference external" href="https://pypi.python.org/pypi/mongomock/1.0.1">https://pypi.python.org/pypi/mongomock/1.0.1</a></p>
+<dl class="method">
+<dt id="json_to_relation.test.test_mongodb.MongoTest.setUp">
+<tt class="descname">setUp</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_mongodb.MongoTest.setUp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_mongodb.MongoTest.tearDown">
+<tt class="descname">tearDown</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_mongodb.MongoTest.tearDown" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_mongodb.MongoTest.test_clear_collection">
+<tt class="descname">test_clear_collection</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_mongodb.MongoTest.test_clear_collection" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_mongodb.MongoTest.test_multi_result">
+<tt class="descname">test_multi_result</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_mongodb.MongoTest.test_multi_result" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_mongodb.MongoTest.test_only_some_return_columns">
+<tt class="descname">test_only_some_return_columns</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_mongodb.MongoTest.test_only_some_return_columns" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_mongodb.MongoTest.test_set_coll_use_different_coll">
+<tt class="descname">test_set_coll_use_different_coll</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_mongodb.MongoTest.test_set_coll_use_different_coll" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_mongodb.MongoTest.test_update_and_find_one">
+<tt class="descname">test_update_and_find_one</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_mongodb.MongoTest.test_update_and_find_one" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-json_to_relation.test.test_utils">
+<span id="test-utils-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">test_utils</span></tt> Module<a class="headerlink" href="#module-json_to_relation.test.test_utils" title="Permalink to this headline">¶</a></h2>
+<p>Created on Sep 22, 2013</p>
+<p>&#64;author: paepcke</p>
+<dl class="class">
+<dt id="json_to_relation.test.test_utils.Test">
+<em class="property">class </em><tt class="descclassname">json_to_relation.test.test_utils.</tt><tt class="descname">Test</tt><big>(</big><em>methodName='runTest'</em><big>)</big><a class="headerlink" href="#json_to_relation.test.test_utils.Test" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">unittest.case.TestCase</span></tt></p>
+<dl class="method">
+<dt id="json_to_relation.test.test_utils.Test.testEnsureMySQLTyping">
+<tt class="descname">testEnsureMySQLTyping</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_utils.Test.testEnsureMySQLTyping" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_utils.Test.testRemoveItemPartFromString">
+<tt class="descname">testRemoveItemPartFromString</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_utils.Test.testRemoveItemPartFromString" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="json_to_relation.test.test_utils.Test.testStack">
+<tt class="descname">testStack</tt><big>(</big><big>)</big><a class="headerlink" href="#json_to_relation.test.test_utils.Test.testStack" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">test Package</a><ul>
+<li><a class="reference internal" href="#module-json_to_relation.test.testAddAnonToActivityGradeTable"><tt class="docutils literal"><span class="pre">testAddAnonToActivityGradeTable</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-json_to_relation.test.test_edxTrackLogJSONParser"><tt class="docutils literal"><span class="pre">test_edxTrackLogJSONParser</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-json_to_relation.test.test_json_to_relation"><tt class="docutils literal"><span class="pre">test_json_to_relation</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-json_to_relation.test.test_modulestoreImporter"><tt class="docutils literal"><span class="pre">test_modulestoreImporter</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-json_to_relation.test.test_mongodb"><tt class="docutils literal"><span class="pre">test_mongodb</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-json_to_relation.test.test_utils"><tt class="docutils literal"><span class="pre">test_utils</span></tt> Module</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/json_to_relation.test.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">json_to_relation 0.2 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Andreas Paepcke.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

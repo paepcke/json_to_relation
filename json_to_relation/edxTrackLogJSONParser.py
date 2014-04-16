@@ -1,23 +1,25 @@
 '''
 Created on Oct 2, 2013
 
-@author: paepcke
+:author: paepcke
 
 Modifications:
-  - Dec 28, 2013: Col load_info_fk in EdxTrackEvent now properly typed to varchar(40)
-                  to match LoadInfo.load_info_id's type
-                  uses REPLACE INTO, rather than INSERT INTO
-  - Dec 28, 2013: Fixed some epydoc comment format errors.  
-  - Dec 29, 2013: Caused the ALTER ENABLE KEYS section in the output .sql file
-                  to be commented out. When loading multiple .sql files in a row,
-                  these statements caused re-creation of indexes after each load,
-                  adding significantly to the load time. Instead, manageEdxDb.py
-                  handles the re-enabling. 
-                  In pushDBCreations() pushed a header comment into the output .sql
-                  file to warn about the commented-out ALTER ENABLE KEYS. The comment
-                  advises to uncomment if loading manually, i.e. not via
-                  manageEdxDb.py.
+
+* Dec 28, 2013: Col load_info_fk in EdxTrackEvent now properly typed to varchar(40) to match LoadInfo.load_info_id's type uses REPLACE INTO, rather than INSERT INTO
+* Dec 28, 2013: Fixed some epydoc comment format errors.  
+
+* Dec 29, 2013: Caused the ALTER ENABLE KEYS section in the output .sql file
+                to be commented out. When loading multiple .sql files in a row,
+                these statements caused re-creation of indexes after each load,
+                adding significantly to the load time. Instead, manageEdxDb.py
+                handles the re-enabling. 
+                In pushDBCreations() pushed a header comment into the output .sql
+                file to warn about the commented-out ALTER ENABLE KEYS. The comment
+                advises to uncomment if loading manually, i.e. not via
+                manageEdxDb.py.
+                
 '''
+
 from collections import OrderedDict
 import datetime
 import hashlib
