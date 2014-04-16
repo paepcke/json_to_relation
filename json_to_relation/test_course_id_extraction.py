@@ -41,7 +41,8 @@ class Test(unittest.TestCase):
         :type event: Dict<String,Dict<<any>>
         :return: two-tuple: fulle name of course in which event occurred, and descriptive name.
                  None if course ID could not be obtained.
-        @rtype: {(String,String) | None} 
+
+        :rtype: {(String,String) | None} 
         '''
         course_id = None
         if event['event_source'] == 'server':

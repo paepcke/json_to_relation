@@ -547,7 +547,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         :param row: partially filled array of values. Passed by reference
         :type row: List<<any>>
         :return: the filled-in row
-        @rtype: [<any>]
+
+        :rtype: [<any>]
         '''
         # No error has occurred yet in processing this JSON str:
         self.errorOccurred = False
@@ -893,7 +894,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                               schema is 'well known'.
         :type colNamesToSet: [String]
         :return: table name, string with all comma-separated column names, and values as a 3-tuple
-        @rtype: (String, String, [<any>])
+
+        :rtype: (String, String, [<any>])
         '''
         if colNamesToSet is None and targetTableName != self.mainTableName:
             raise ValueError("If colNamesToSet is None, the target table must be the main table whose name was passed into __init__(); was %s" % targetTableName)
@@ -1500,7 +1502,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         :type correctMapsDict: Dict<String, Dict<String,String>>
         :return: array of unique keys, one key for each CorrectMap row the method has added.
                  In case of the above example that would be two keys (uuids)
-        @rtype: [String]
+
+        :rtype: [String]
         '''
         # We'll create uuids for each new CorrectMap row
         # we create. We collect these uuids in the following
@@ -1568,7 +1571,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         :type answersDict:
         :return: array of keys created for answers in answersDict, and a dict mapping each key to the 
                  corresponding problem ID
-        @rtype: ([String], Dict<String,String>
+
+        :rtype: ([String], Dict<String,String>
         '''
         answersKeys = []
         answerToProblemMap = {}
@@ -1632,7 +1636,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         :param stateDict:
         :type stateDict:
         :return: array of keys into State table that were created in this method
-        @rtype: [String]
+
+        :rtype: [String]
         '''
         stateFKeys = []
         studentAnswersDict = stateDict.get('student_answers', None)
@@ -1709,7 +1714,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         :param inputStatesDict:
         :type inputStatesDict:
         :return: array of keys created for input state problems.
-        @rtype: [String]
+
+        :rtype: [String]
         '''
         inputStateKeys = []
         for problemID in inputStatesDict.keys():
@@ -3610,7 +3616,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         :type event: Dict<String,Dict<<any>>
         :return: two-tuple: full name of course in which event occurred, and descriptive name.
                  None if course ID could not be obtained.
-        @rtype: {(String,String) | None} 
+
+        :rtype: {(String,String) | None} 
         '''
         course_id = ''
         eventSource = event.get('event_source', None)
@@ -3770,7 +3777,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         :param unsafeStr: string that possibly contains unsafe chars
         :type unsafeStr: String
         :return: same string, with unsafe chars properly replaced or escaped
-        @rtype: String
+
+        :rtype: String
         '''
         #return unsafeStr.replace("'", "\\'").replace('\n', "; ").replace('\r', "; ").replace(',', "\\,").replace('\\', '\\\\')
         if unsafeStr is None or not isinstance(unsafeStr, basestring) or len(unsafeStr) == 0:
@@ -3930,7 +3938,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         :param email: user email address
         :type email: string
         :return: 40 byte hash
-        @rtype: string
+
+        :rtype: string
         '''
         if len(email) > 0:
             return self.hashGeneral(email)
@@ -3945,7 +3954,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         :param username: name to be hashed
         :type username: String
         :return: hashed equivalent. Calling this function multiple times returns the same string
-        @rtype: String
+
+        :rtype: String
         '''
         return EdXTrackLogJSONParser.makeHash(username)
         
@@ -3957,7 +3967,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         :param username: name to be hashed
         :type username: String
         :return: hashed equivalent. Calling this function multiple times returns the same string
-        @rtype: String
+
+        :rtype: String
         '''
         #return hashlib.sha224(username).hexdigest()
         oneHash = hashlib.new('ripemd160')
@@ -4023,7 +4034,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         :type trackLogStr: String
         :return: a string of the form org/courseShortName/courseTitle, or None if no course name 
                   could be found in the given string.
-        @rtype: {String | None}
+
+        :rtype: {String | None}
         '''
         # First, remove substrings that are obviously 
         # hashes that could match short course names:

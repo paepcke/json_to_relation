@@ -152,7 +152,8 @@ class ModulestoreImporter(DictMixin):
         :param hashStr: string of 32 hex digits
         :type hashStr: string
         :return: a display name as was used on the course Web site
-        @rtype: {String | None} 
+
+        :rtype: {String | None} 
         '''
         infoDict = self.hashLookup.get(hashStr, None)
         if infoDict is None:
@@ -168,7 +169,8 @@ class ModulestoreImporter(DictMixin):
         :param hashStr: string of 32 hex digits
         :type hashStr: string
         :return: the organization that offered the class or resource
-        @rtype: {String | None} 
+
+        :rtype: {String | None} 
         '''
         infoDict = self.hashLookup.get(hashStr, None)
         if infoDict is None:
@@ -184,7 +186,8 @@ class ModulestoreImporter(DictMixin):
         :param hashStr: string of 32 hex digits
         :type hashStr: string
         :return: the short name of the course associated with the hash. Ex: 'HRP258'
-        @rtype: {String | None} 
+
+        :rtype: {String | None} 
         '''
         infoDict = self.hashLookup.get(hashStr, None)
         if infoDict is None:
@@ -200,7 +203,8 @@ class ModulestoreImporter(DictMixin):
         :param hashStr: string of 32 hex digits
         :type hashStr: string
         :return: the category associated with the hash. Ex.: 'problem', 'vertical', 'video'
-        @rtype: {String | None} 
+
+        :rtype: {String | None} 
         '''
         infoDict = self.hashLookup.get(hashStr, None)
         if infoDict is None:
@@ -216,7 +220,8 @@ class ModulestoreImporter(DictMixin):
         :param hashStr: string of 32 hex digits
         :type hashStr: string
         :return: the revision of the resource associated with the hash
-        @rtype: {String | None} 
+
+        :rtype: {String | None} 
         '''
         infoDict = self.hashLookup.get(hashStr, None)
         if infoDict is None:

@@ -100,7 +100,8 @@ class OutputDisposition(object):
         :param tableName: name of table in which the given column resides
         :type tableName: String
         :return: list of ColumnSpec instances
-        @rtype: (ColumnSpec)
+
+        :rtype: (ColumnSpec)
         @raise KeyError: if table or column are not found 
         '''
         return self.schemas[tableName][colName]
@@ -161,7 +162,8 @@ class OutputDisposition(object):
         :param fileSuffix: suffix for temp file name. Ex. 'csv' for CSV outputs, or 'sql' for SQL dumps
         :type fileSuffix: String
         :return: file object open for writing
-        @rtype: File
+
+        :rtype: File
         '''
         self.csvTableFiles[tableName] = tempfile.NamedTemporaryFile(prefix='tmpTable', 
                                                                     suffix=fileSuffix)
@@ -416,7 +418,8 @@ class OutputFile(OutputDisposition):
         :param tableName: name of table whose CSV output file we are to check for, or create
         :type tableName: String
         :return: a File object open for writing/appending
-        @rtype: File
+
+        :rtype: File
         '''
         try:
             # If we already have an FD for this table, return:
@@ -527,7 +530,8 @@ class ColumnSpec(object):
         Return column name
 
         :return: name of column
-        @rtype: String
+
+        :rtype: String
         '''
         return self.colName
     
@@ -536,7 +540,8 @@ class ColumnSpec(object):
         Return SQL type
 
         :return: SQL type of colum in upper case
-        @rtype: String
+
+        :rtype: String
         '''
         return ColDataType().toString(self.colDataType).upper()
     

@@ -66,7 +66,8 @@ class MongoDB(object):
         '''
         Obtain the name of the MongoDB database that is
         currently the default for calls to methods of this class.
-        @rtype: String
+
+        :rtype: String
         '''
         return self.dbName
 
@@ -84,7 +85,8 @@ class MongoDB(object):
         '''
         Obtain the name of the MongoDB collection that is
         currently the default for calls to methods of this class.
-        @rtype: String
+
+        :rtype: String
         '''
         return self.coll.name
         
@@ -118,7 +120,8 @@ class MongoDB(object):
         :type db: String
         :param collection: name of MongoDB collection other than the current default
         :type collection: String
-        @rtype: {generator<ResultDict>} 
+
+        :rtype: {generator<ResultDict>} 
         '''
         with newMongoDB(self, db) as db, newMongoColl(self, collection) as coll:
             # Turn the list of column names to return into
@@ -175,7 +178,8 @@ class MongoDB(object):
         :param queryDict: Same query that was provided to the query() method
         :type queryDict: Dict<String,<any>>
         :return: number of results, taking into account limit provided to query(). None if no result has been pulled from query()
-        @rtype: {int | None}
+
+        :rtype: {int | None}
         '''
         try:
             cursor = MongoDB.queryCursors[str(queryDict)]

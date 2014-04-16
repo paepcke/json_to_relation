@@ -78,7 +78,8 @@ class InURI(InputSource):
         of errors.
 
         :return: a string that can be prepended to a line number in error/warn msgs
-        @rtype: String
+
+        :rtype: String
         '''
         return self.inFilePathOrURL
     
@@ -155,7 +156,8 @@ class InString(InputSource):
         of errors.
 
         :return: a string that can be prepended to a line number in error/warn msgs
-        @rtype: String
+
+        :rtype: String
         '''
         return "In-string"
         
@@ -185,7 +187,8 @@ class InMongoDB(InputSource):
         of errors.
 
         :return: a string that can be prepended to a line number in error/warn msgs
-        @rtype: String
+
+        :rtype: String
         '''
         return "%s:%s" % (self.dbName, self.collName)
 
@@ -209,7 +212,8 @@ class InPipe(InputSource):
         of errors.
 
         :return: a string that can be prepended to a line number in error/warn msgs
-        @rtype: String
+
+        :rtype: String
         '''
         return "Pipe"
 

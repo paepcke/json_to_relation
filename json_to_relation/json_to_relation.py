@@ -308,7 +308,8 @@ class JSONToRelation(object):
         :param tableName: name of table of which the column is a part 
         :type tableName: {String | None}
         :return: a ColumnSpec object that contains the SQL type name of the column
-        @rtype: ColumnSpec
+
+        :rtype: ColumnSpec
         @raise KeyError: if either the table or the column don't exist.  
         '''
         if tableName is None:
@@ -557,7 +558,8 @@ class JSONToRelation(object):
               ('bar',20);
 
         :return: a fully formed SQL INSERT statement, possibly including multiple values. None if nothing to insert.
-        @rtype: {String | None}
+
+        :rtype: {String | None}
         '''
         
         try:
@@ -587,7 +589,8 @@ class JSONToRelation(object):
         :param valsArrays: array of values arrays
         :type valsArrays: [[<any>]]
         :return: IOString string file with legal VALUES section of INSERT statement
-        @rtype: IOString
+
+        :rtype: IOString
         '''
         # Build the values part:
         valsFileStr = StringIO()
@@ -631,7 +634,8 @@ class JSONToRelation(object):
         :param tableName: name of table for which schema is wanted. None: the main (default) table. 
         :type tableName: String
         :return: ordered list of column information
-        @rtype: (ColumnSpec) 
+
+        :rtype: (ColumnSpec) 
         '''
         if tableName is None:
             tableName = self.mainTableName
@@ -643,7 +647,8 @@ class JSONToRelation(object):
 
         :return: list of column headers that were discovered so far by an 
                  associated JSON parser descending into a JSON structure.
-        @rtype: [String]
+
+        :rtype: [String]
         '''
         headers = []
         for colSpec in self.getSchema(tableName):
@@ -657,7 +662,8 @@ class JSONToRelation(object):
         label is encountered.
 
         :return: position in schema where the next new discovered column header is to go.
-        @rtype: int 
+
+        :rtype: int 
         '''
         return self.nextNewColPos
     
@@ -695,7 +701,8 @@ class JSONToRelation(object):
         :param proposedMySQLName: input name
         :type proposedMySQLName: String
         :return: the possibly modified, legal MySQL identifier
-        @rtype: String
+
+        :rtype: String
         '''
         if JSONToRelation.LEGAL_MYSQL_ATTRIBUTE_PATTERN.match(proposedMySQLName) is not None:
             return proposedMySQLName

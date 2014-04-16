@@ -80,7 +80,8 @@ class GenericJSONParser(object):
 		:param row: partially filled array of values.
 		:type row: List<<any>>
 		:return: array of values. Fills into the passed-in row array
-		@rtype: [<any>]
+
+		:rtype: [<any>]
         '''
         self.jsonToRelationConverter.bumpLineCounter()
         try:
@@ -193,7 +194,8 @@ class GenericJSONParser(object):
         :param value: the field value
         :type value: <any>, as per ColDataType
         :return: the passed-in row, with the new value added at the proper index.
-        @rtype: List<<any>>
+
+        :rtype: List<<any>>
         '''
     
         if tableName is None:
@@ -269,7 +271,8 @@ class GenericJSONParser(object):
         :param label: string from which last 'item' occurrence is to be removed
         :type label: String
         :return: label after deletion of the substring
-        @rtype: String
+
+        :rtype: String
         '''
         # JSONToRelation.REMOVE_ITEM_FROM_STRING_PATTERN is a regex pattern to remove '.item.' 
         # from column header names. Example: employee.item.name

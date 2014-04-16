@@ -48,7 +48,8 @@ class Utils(object):
         :param unsafeStr: string that possibly contains unsafe chars
         :type unsafeStr: String
         :return: same string, with unsafe chars properly replaced or escaped
-        @rtype: String
+
+        :rtype: String
         '''
         #return unsafeStr.replace("'", "\\'").replace('\n', "; ").replace('\r', "; ").replace(',', "\\,").replace('\\', '\\\\')
         if unsafeStr is None or not isinstance(unsafeStr, basestring) or len(unsafeStr) == 0:
