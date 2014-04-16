@@ -1,5 +1,5 @@
 .. json_to_relation documentation master file, created by
-   sphinx-quickstart on Tue Apr 15 15:23:42 2014.
+   sphinx-quickstart on Wed Apr 16 13:41:15 2014.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
@@ -11,6 +11,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   includeme
 
 
 Indices and tables
