@@ -93,6 +93,7 @@ class Utils(object):
         Given a module or sequence id hash, possibly 
         embedded in another string, return a human readable
         resolution if possible. Example input::
+        
            i4x://Medicine/HRP258/sequential/99b37c2c139b45cab9a06fb49ff6594f
 
         :param cls: this class instance; passed transparently by Python
@@ -118,9 +119,13 @@ class Utils(object):
     def extractOpenEdxHash(cls, idStr):
         '''
         Given a string, such as::
+        
             i4x-Medicine-HRP258-videoalpha-7cd4bf0813904612bcd583a73ade1d54
-            or:
+            
+        or::
+        
             input_i4x-Medicine-HRP258-problem-98ca37dbf24849debcc29eb36811cb68_3_1_choice_3'
+            
         extract and return the 32 bit hash portion. If none is found,
         return None. Method takes any string and finds a 32 bit hex number.
         It is up to the caller to ensure that the return is meaningful. As

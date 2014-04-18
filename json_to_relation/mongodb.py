@@ -1,4 +1,8 @@
+'''
+Very simple Python interface to MongoDB.
 
+@Author: paepcke
+'''
 
 from pymongo import MongoClient
 
@@ -14,7 +18,9 @@ class MongoDB(object):
     and find_one(). The query() method makes it very convenient to
     to request only particular sets of fields (columns in relational 
     terms). Example::
+    
         myMongoDb.query({'lname' : 'Doe'}, ('fname', 'lname', 'age'))
+        
     '''
     
     # Map of query strings to MongoDB cursors. Administered

@@ -497,6 +497,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         Different types of JSON records will be passed: server heartbeats,
         dashboard accesses, account creations, user logins. Example record
         for the latter::
+        
             {"username": "", 
              "host": "class.stanford.edu", 
              "event_source": "server", 
@@ -514,6 +515,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         Two more examples to show the variance in the format. Note "event" field:
         
         Second example::
+        
             {"username": "jane", 
              "host": "class.stanford.edu", 
              "event_source": "server", 
@@ -528,6 +530,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
              }
                 
         Third example::
+        
             {"username": "miller", 
              "host": "class.stanford.edu", 
              "session": "fa715506e8eccc99fddffc6280328c8b", 
@@ -973,6 +976,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         a basic SQL CREATE TABLE statement. Primary and foreign key names may
         optionally be provided. An example of the most complex create statement generated
         by this method is::
+        
         CREATE TABLE myTable
             col1 VARCHAR(40) NOT NULL Primary Key,
 			col2 TEXT,
@@ -981,8 +985,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 			FOREIGN KEY(col3) REFERENCES OtherTable(int_col_name_there),
 			FOREIGN KEY(col4) REFERENCES YetOtherTable(varchar_col_name_there),
 			);
+			
 		Example for the optional foreign key specification parameter
 		that would create the above example::
+		
 		{'OtherTable' : ('col3', 'int_col_name_there'),
 		 'YetOtherTable : ('col4', 'varchar_col_name_there')
 		 }
@@ -1180,6 +1186,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleSeqNav(self, record, row, event, eventType):
         '''
         Video navigation. Events look like this::
+        
             {"username": "BetaTester1", 
              "host": "class.stanford.edu", 
              "session": "009e5b5e1bd4ab5a800cafc48bad9e44", 
@@ -1231,6 +1238,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         The problem_check event comes in two flavors (assertained by observation):
         The most complex is this one::
+        
 		  {       
 		    "success": "correct",
 		    "correct_map": {
@@ -1290,6 +1298,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 		  }
 		  
 		The simpler version is like this, in which the answers are styled as HTTP GET parameters::
+		
 		  {"username": "smitch", 
 		   "host": "class.stanford.edu", 
 		   "session": "75a8c9042ba10156301728f61e487414", 
@@ -1417,6 +1426,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         Handle the simple case of problem_check type events. 
         Their event field has this form::
+        
 		   "event": "\"input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_2_1=choice_2&
 		               input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_3_1=choice_2\"", 
         The problems and proposed solutions are styled like HTTP GET request parameters.        
@@ -1479,6 +1489,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def pushCorrectMaps(self, correctMapsDict):
         '''
         Get dicts like this::
+        
 		{"i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {
 		        "hint": "",
 		        "hintmode": null,
@@ -1496,6 +1507,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 		        "queuestate": null
 		    }
 		}
+		
 		The above has two correctmaps.
 
         :param correctMapsDict: dict of CorrectMap dicts
@@ -1602,6 +1614,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def pushState(self, stateDict):
         '''
         We get a structure like this::
+        
 	    {   
 	        "student_answers": {
 	            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": "choice_3",
@@ -1706,6 +1719,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def pushInputStates(self, inputStatesDict):
         '''
         Gets structure like this::
+        
             {
                 "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {},
                 "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": {}
@@ -1766,11 +1780,15 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleProblemReset(self, record, row, event):
         '''
         Gets a event string like this::
+        
            "{\"POST\": {\"id\": [\"i4x://Engineering/EE222/problem/e68cfc1abc494dfba585115792a7a750@draft\"]}, \"GET\": {}}"
+           
         After turning this JSON into Python::
+        
            {u'POST': {u'id': [u'i4x://Engineering/EE222/problem/e68cfc1abc494dfba585115792a7a750@draft']}, u'GET': {}}
         
         Or the event could be simpler, like this::
+        
            u'input_i4x-Engineering-QMSE01-problem-dce5fe9e04be4bc1932efb05a2d6db68_2_1=2'
            
         In the latter case we just put that string into the problemID field
@@ -1822,9 +1840,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleProblemShow(self, record, row, event):
         '''
         Gets a event string like this::
+        
          "{\"problem\":\"i4x://Medicine/HRP258/problem/c5cf8f02282544729aadd1f9c7ccbc87\"}"
         
         After turning this JSON into Python::
+        
         {u'problem': u'i4x://Medicine/HRP258/problem/c5cf8f02282544729aadd1f9c7ccbc87'}
 
         :param record:
@@ -1864,6 +1884,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleProblemSave(self, record, row, event):
         '''
         Gets a event string like this::
+        
 		   "\"input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_2_1=13.4&
 		      input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_3_1=2.49&
 		      input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_4_1=13.5&
@@ -1934,9 +1955,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleQuestionProblemHidingShowing(self, record, row, event):
         '''
         Gets a event string like this::
+        
         "{\"location\":\"i4x://Education/EDUC115N/combinedopenended/c8af7daea1f54436b0b25930b1631845\"}"
+        
         After importing from JSON into Python::
+        
         {u'location': u'i4x://Education/EDUC115N/combinedopenended/c8af7daea1f54436b0b25930b1631845'}
+        
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text in question hide or show." %\
@@ -1966,8 +1991,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleRubricSelect(self, record, row, event):
         '''
         Gets a event string like this::
+        
         "{\"location\":\"i4x://Education/EDUC115N/combinedopenended/4abb8b47b03d4e3b8c8189b3487f4e8d\",\"selection\":\"1\",\"category\":0}"
         {u'category': 0, u'selection': u'1', u'location': u'i4x://Education/EDUC115N/combinedopenended/4abb8b47b03d4e3b8c8189b3487f4e8d'}
+        
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text in select_rubric." %\
@@ -2005,9 +2032,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleOEFeedbackResponseSelected(self, record, row, event):
         '''
         Gets a event string like this::
-        "event": "{\"value\":\"5\"}"
-        After JSON import into Python:
-        {u'value': u'5'}
+        
+            "event": "{\"value\":\"5\"}"
+            
+        After JSON import into Python::
+        
+            {u'value': u'5'}
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text in oe_feedback_response_selected." %\
@@ -2033,11 +2063,17 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleVideoPlayPause(self, record, row, event):
         '''
         For play_video, event looks like this::
+        
             "{\"id\":\"i4x-Education-EDUC115N-videoalpha-c41e588863ff47bf803f14dec527be70\",\"code\":\"html5\",\"currentTime\":0}"
+            
         For pause_video::
+        
             "{\"id\":\"i4x-Education-EDUC115N-videoalpha-c5f2fd6ee9784df0a26984977658ad1d\",\"code\":\"html5\",\"currentTime\":124.017784}"
+            
         For load_video::
+        
             "{\"id\":\"i4x-Education-EDUC115N-videoalpha-003bc44b4fd64cb79cdfd459e93a8275\",\"code\":\"4GlF1t_5EwI\"}"
+            
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text in video play or pause." %\
@@ -2065,11 +2101,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleVideoSeek(self, record, row, event):
         '''
         For play_video, event looks like this::
+        
            "{\"id\":\"i4x-Medicine-HRP258-videoalpha-413d6a45b82848339ab5fd3836dfb928\",
              \"code\":\"html5\",
              \"old_time\":308.506103515625,
              \"new_time\":290,
-             \"type\":\"slide_seek\"}"        
+             \"type\":\"slide_seek\"}"
+                     
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text in video seek." %\
@@ -2099,11 +2137,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleVideoSpeedChange(self, record, row, event):
         '''
         Events look like this::
+        
            "{\"id\":\"i4x-Medicine-HRP258-videoalpha-7cd4bf0813904612bcd583a73ade1d54\",
              \"code\":\"html5\",
              \"currentTime\":1.6694719791412354,
              \"old_speed\":\"1.50\",
-             \"new_speed\":\"2.0\"}"        
+             \"new_speed\":\"2.0\"}"
+                     
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text in video speed change." %\
@@ -2135,6 +2175,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleFullscreen(self, record, row, event):
         '''
         Events look like this::
+        
            "{\"id\":\"i4x-Medicine-HRP258-videoalpha-4b200d3944cc47e5ae3ad142c1006075\",\"code\":\"html5\",\"currentTime\":348.4132080078125}"    
 
         :param record:
@@ -2168,6 +2209,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleNotFullscreen(self, record, row, event):
         '''
         Events look like this::
+        
            "{\"id\":\"i4x-Medicine-HRP258-videoalpha-c5cbefddbd55429b8a796a6521b9b752\",\"code\":\"html5\",\"currentTime\":661.1010131835938}"        
 
         :param record:
@@ -2228,6 +2270,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleShowAnswer(self, record, row, event):
         '''
         Gets a event string like this::
+        
         {"problem_id": "i4x://Medicine/HRP258/problem/28b525192c4e43daa148dc7308ff495e"}
         '''
         if event is None:
@@ -2259,6 +2302,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleShowHideTranscript(self, record, row, event):
         '''
         Events look like this::
+        
             "{\"id\":\"i4x-Medicine-HRP258-videoalpha-c26e4247f7724cc3bc407a7a3541ed90\",
               \"code\":\"q3cxPJGX4gc\",
               \"currentTime\":0}"
@@ -2293,6 +2337,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleProblemCheckFail(self, record, row, event):
         '''
         Gets events like this::
+        
             {
               "failure": "unreset",
               "state": {
@@ -2614,6 +2659,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleResetProblem(self, record, row, event):
         '''
         Events look like this::
+        
             {"old_state": 
                 {"student_answers": {"i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1": "choice_2"}, 
                  "seed": 811, 
@@ -2885,6 +2931,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleAddRemoveUserGroup(self, record, row, event):
         '''
         This event looks like this::
+        
            {"event_name": "beta-tester", 
             "user": "smith", 
             "event": "add"}
@@ -2933,6 +2980,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleCreateAccount(self, record, row, event):
         '''
         Get event structure like this (fictitious values)::
+        
            "{\"POST\": {\"username\": [\"luisXIV\"], 
                         \"name\": [\"Roy Luigi Cannon\"], 
                         \"mailing_address\": [\"3208 Dead St\\r\\nParis, GA 30243\"], 
@@ -3054,6 +3102,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleProblemGraded(self, record, row, event):
         '''
         Events look like this::
+        
      		'[...#8217;t improve or get worse. Calculate the 95% confidence interval for the true proportion of heart disease patients who improve their fitness using this particular exercise regimen. Recall that proportions are normally distributed with a standard error of </p><p>\\\\[ \\\\sqrt{\\\\frac{p(1-p)}{n}} \\\\]</p><p>(You may use the observed proportion to calculate the standard error.)</p><span><form class=\\\"choicegroup capa_inputtype\\\" id=\\\"inputtype_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\"><div class=\\\"indicator_container\\\">\\n    </div><fieldset><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_0\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_0\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" value=\\\"choice_0\\\"/> 66%\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_1\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_1\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" value=\\\"choice_1\\\"/> 66%-70%\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_2\\\" class=\\\"choicegroup_correct\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_2\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" value=\\\"choice_2\\\" checked=\\\"true\\\"/> 50%-84%\\n\\n            \\n            <span class=\\\"sr\\\" aria-describedby=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_2\\\">Status: correct</span>\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_3\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_...        
     		]'
 
@@ -3123,6 +3172,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleReceiveEmail(self, record, row, event):
         '''
         Event is something like this::
+        
             {"course": "Medicine/SciWrite/Fall2013", "receive_emails": "yes"}
 
         :param record:
@@ -3183,9 +3233,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         Called when an event type is a long path-like string.
         Examples::
+        
           /courses/OpenEdX/200/Stanford_Sandbox/modx/i4x://OpenEdX/200/combinedopenended/5fb3b40e76a14752846008eeaca05bdf/check_for_score
           /courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/peergrading/ef6ba7f803bb46ebaaf008cde737e3e9/is_student_calibrated",
           /courses/Education/EDUC115N/How_to_Learn_Math/courseware
+          
         Most have action instructions at the end, some don't. The ones that don't 
         have no additional information. We drop those events.
 
@@ -3260,7 +3312,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def subHandleIsStudentCalibrated(self, row, eventDict):
         '''
         Called from handlePathStyledEventTypes(). Event dict looks like this::
+        
            {\"location\": [\"i4x://Education/EDUC115N/combinedopenended/0d67667941cd4e14ba29abd1542a9c5f\"]}, \"GET\": {}"        
+           
         The caller is expected to have verified the legitimacy of EventDict
 
         :param row:
@@ -3290,7 +3344,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def subHandleGotoPosition(self, row, eventDict):
         '''
         Called from handlePathStyledEventTypes(). Event dict looks like this::
+        
            {\"position\": [\"2\"]}, \"GET\": {}}"
+           
         The caller is expected to have verified the legitimacy of EventDict
 
         :param row:
@@ -3320,7 +3376,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def subHandleProblem(self, row, eventDict):
         '''
         Called from handlePathStyledEventTypes(). Event dict looks like this::
+        
            {\"location\": [\"i4x://Education/EDUC115N/combinedopenended/0d67667941cd4e14ba29abd1542a9c5f\"]}, \"GET\": {}}"
+           
         The caller is expected to have verified the legitimacy of EventDict
 
         :param row:
@@ -3350,9 +3408,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def subHandleSaveAnswer(self, row, eventDict):
         '''
         Called from handlePathStyledEventTypes(). Event dict looks like this::
+        
            {\"student_file\": [\"\"], 
             \"student_answer\": [\"Students will have to use higher level thinking to describe the...in the race. \"], 
-            \"can_upload_files\": [\"false\"]}, \"GET\": {}}"        
+            \"can_upload_files\": [\"false\"]}, \"GET\": {}}"
+                    
         The caller is expected to have verified the legitimacy of EventDict
 
         :param row:
@@ -3398,6 +3458,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def subHandleSaveGrade(self, row, postDict):
         '''
         Get something like::
+        
            "{\"POST\": {\"submission_id\": [\"60611\"], 
                         \"feedback\": [\"<p>This is a summary of a paper stating the positive effects of a certain hormone on face recognition for people with disrupted face processing [1].\\n<br>\\n<br>Face recognition is essential for social interaction and most people perform it effortlessly. But a surprisingly high number of people \\u2013 one in forty \\u2013 are impaired since birth in their ability to recognize faces [2]. This condition is called 'developmental prosopagnosia'. Its cause isn\\u2"        
 
@@ -3419,6 +3480,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def subHandleProblemCheckInPath(self, row, answersDict):
         '''
         Get dict like this::
+        
            {\"input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1\": [\"choice_3\"]}, 
             \"GET\": {}}"        
 
@@ -3455,6 +3517,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleAjaxLogin(self, record, row, event, eventType):
         '''
         Events look like this::
+        
             "{\"POST\": {\"password\": \"********\", \"email\": [\"emil.smith@gmail.com\"], \"remember\": [\"true\"]}, \"GET\": {}}"        
 
         :param record:
@@ -3601,6 +3664,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
              }
     
         But also::
+        
             {"username": "RobbieH", 
              "host": "class.stanford.edu", 
             ...
@@ -3704,6 +3768,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         Given the 'event' field of an event of type problem_check, problem_check_fail, problem_save...,
         extract the course ID. Ex from save_problem_check::
+        
             "event": {"success": "correct", "correct_map": {"i4x-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_2_1": {"hint": "", "hintmode": null,...
 
         :param event:
@@ -3978,9 +4043,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def extractOpenEdxHash(self, idStr):
         '''
         Given a string, such as::
+        
             i4x-Medicine-HRP258-videoalpha-7cd4bf0813904612bcd583a73ade1d54
-            or:
+            
+        or::
+        
             input_i4x-Medicine-HRP258-problem-98ca37dbf24849debcc29eb36811cb68_3_1_choice_3'
+            
         extract and return the 32 bit hash portion. If none is found,
         return None. Method takes any string and finds a 32 bit hex number.
         It is up to the caller to ensure that the return is meaningful. As
@@ -4005,7 +4074,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         set the resource_display_name in the given row. The value
         passed in may have the actual hash embedded in a larger
         string, as in::
+        
             input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_2_1
+            
         We fish it out of there.            
 
         :param row: current row's values
@@ -4027,6 +4098,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         Given a string believed to be the best course name
         snippet from a log entry, use the modulestoreImporter's
         facilities to get a canonical name. Inputs look like::
+        
             Medicine/HRP258/Statistics_in_Medicine
             /courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/sequential/1b3ac347ca064b3eaaddbc27d4200964/goto_position
 

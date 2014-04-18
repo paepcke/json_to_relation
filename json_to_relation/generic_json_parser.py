@@ -65,6 +65,7 @@ class GenericJSONParser(object):
         instance to build a schema of typed SQL columns. Fill the passed-in
         row with values from the JSON string. The following mappings from
         Python values are used::
+        
        	    ('null', None)
     		('boolean', <true orfFalse>)
     		('number', <int or Decimal>)
@@ -80,7 +81,6 @@ class GenericJSONParser(object):
 		:param row: partially filled array of values.
 		:type row: List<<any>>
 		:return: array of values. Fills into the passed-in row array
-
 		:rtype: [<any>]
         '''
         self.jsonToRelationConverter.bumpLineCounter()

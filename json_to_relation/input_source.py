@@ -1,6 +1,10 @@
 '''
 Created on Sep 14, 2013
 
+Possible sources for JSON objects. These are
+files on the local file system, URLs linking to
+JSON strings, and MongoDB collections.
+
 @author: paepcke
 '''
 import StringIO

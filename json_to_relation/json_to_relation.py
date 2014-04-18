@@ -9,6 +9,14 @@
 '''
 Created on Sep 14, 2013
 
+Given a source with JSON structures, derive a schema, and construct 
+a relational table. Source can be a local file name, a URL, a
+StringIO pseudofile, or a Unix pipe.
+
+JSON structures in the source must be one per line. That is, each line in 
+the source must be a self contained JSON object. Pretty printed strings
+won't work. 
+
 @author: paepcke
 
 Modifications:
@@ -101,6 +109,7 @@ class JSONToRelation(object):
         If schemaHints is provided, it is a Dict mapping column names to ColDataType.
         The column names in schemaHints must match the corresponding (fully nested)
         key names in the JSON objects::
+        
             schemaHints dict: {'msg.length' : ColDataType.INT,
                                'chunkSize' : ColDataType.INT}
         
@@ -553,12 +562,12 @@ class JSONToRelation(object):
         Create a possibly multivalued INSERT statement from what is
         stored in self.currOutTable, self.currInsertSig, and self.currValsArray.
         Example return::
+        
            INSERT INTO myTable (col2, col2) VALUES
               ('foo',10),
               ('bar',20);
 
         :return: a fully formed SQL INSERT statement, possibly including multiple values. None if nothing to insert.
-
         :rtype: {String | None}
         '''
         

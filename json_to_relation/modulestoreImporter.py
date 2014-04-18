@@ -1,6 +1,10 @@
 '''
 Created on Nov 30, 2013
 
+Imports result of a query to the modulestore. Purpose is
+to resolve OpenEdX hashes, like videos and modules into
+human readable form.
+
 @author: paepcke
 '''
 from UserDict import DictMixin
@@ -232,6 +236,7 @@ class ModulestoreImporter(DictMixin):
         '''
         Export the dict hash --> org/category/... to 
         CSV with header::
+        
             'name_hash','org','short_course_name','category','revision','display_name'
 
         :param outFilePath: fully qualified name of .csv output file
@@ -270,13 +275,14 @@ class ModulestoreImporter(DictMixin):
         '''
         Export the dict shortCourseName --> canonicalName to
         CSV with header::
+        
             'course_short_name',course_name
 
         :param outFilePath: fully qualified name of .csv output file
         :type outFilePath: {String | File}
         :param addHeader: whether or not to add a header line
         :type addHeader: Bool
-        @raise ValueError: when modulestore JSON could not be parsed.
+        :raise ValueError: when modulestore JSON could not be parsed.
         '''
 
         if not isinstance(outFilePath, basestring):
@@ -338,10 +344,13 @@ class ModulestoreImporter(DictMixin):
         '''
         Given the JSON file path passed into __init__(), read that file,
         and extract a dict::
+        
              OpenEdxHashNum --> {org, short_course_name, category, revision, display_name}
+             
         That dict is stored in self.hashLookup().
         Input is the raw JSON from the modulestore. Sample lines, all regarding
         the same class, HRP259::
+        
 			 { "_id" : { "tag" : "i4x", "org" : "Medicine", "course" : "HRP259", "category" : "about", "name" : "video", "revision" : null } }
 			 { "_id" : { "tag" : "i4x", "org" : "Medicine", "course" : "HRP259", "category" : "chapter", "name" : "495757ee7b25401599b1ef0495b068e4", "revision" : null } }
 			 { "_id" : { "tag" : "i4x", "org" : "Medicine", "course" : "HRP259", "category" : "course", "name" : "Fall2013", "revision" : null } }
