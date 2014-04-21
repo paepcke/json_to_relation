@@ -158,11 +158,6 @@ fi
 
 echo `date`": Done constructing amalgam from certificates_generatedcertificate and auth_user." | tee --append $LOG_FILE
 
-#*********
-echo "Skipping addAnon."
-exit 0
-#*********
-
 # ----------------- Fill in the Screen Name Hash Column anon_screen_name ----------
 
 # Get directory in which this script is running,
