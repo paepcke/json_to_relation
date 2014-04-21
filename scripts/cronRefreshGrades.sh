@@ -172,9 +172,9 @@ echo `date`": About to add anon_screen_name to UserGrade TSV..." | tee --append 
 
 if [ ! -z $LOCAL_MYSQL_PASSWD ]
 then
-    $currScriptsDir/addAnonToUserGradeTable.py -u $LOCAL_USERNAME -w $LOCAL_MYSQL_PASSWD $targetFile $SCREEN_NAME_POS
+    $currScriptsDir/addAnonToUserGradeTable.py -l $LOG_FILE -u $LOCAL_USERNAME -w $LOCAL_MYSQL_PASSWD $targetFile $SCREEN_NAME_POS
 else
-    $currScriptsDir/addAnonToUserGradeTable.py -u $LOCAL_USERNAME $targetFile $SCREEN_NAME_POS
+    $currScriptsDir/addAnonToUserGradeTable.py -l $LOG_FILE -u $LOCAL_USERNAME $targetFile $SCREEN_NAME_POS
 fi
 
 echo `date`": Done adding anon_screen_name to UserGrade TSV..." | tee --append $LOG_FILE
