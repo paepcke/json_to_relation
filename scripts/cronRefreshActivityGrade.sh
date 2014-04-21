@@ -141,7 +141,7 @@ then
 fi
 
 #****************
-echo "LATEST_DATE in current ActivityGrade: '$LATEST_DATE'"
+echo "LATEST_DATE in current ActivityGrade: '$LATEST_DATE'" | tee --append $LOG_FILE
 #exit 0
 #****************
 
