@@ -134,7 +134,14 @@ SCREEN_NAME_POS=1
 
 echo `date`": About to construct amalgam of certificates_generatedcertificate and auth_user into "$targetFile"..." | tee --append $LOG_FILE
 
+# The SELECT...UNION ALL SELECT... in the following MySQL
+# statement gets a column name header as the 0th row in the
+# TSV file that the statement produces:
 tmpTableCmd="USE edxprod; \
+             SELECT 'name', 'screen_name', 'grade', \
+                    'course_id', 'distinction', 'status', \
+                    'user_int_id' \
+             UNION ALL \
              SELECT name, auth_user.username as screen_name, grade, \
                     course_id, distinction, status, \
                     auth_user.id as user_int_id \
@@ -150,6 +157,11 @@ else
 fi
 
 echo `date`": Done constructing amalgam from certificates_generatedcertificate and auth_user." | tee --append $LOG_FILE
+
+#*********
+echo "Skipping addAnon."
+exit 0
+#*********
 
 # ----------------- Fill in the Screen Name Hash Column anon_screen_name ----------
 
