@@ -142,11 +142,11 @@ tmpTableCmd="USE edxprod; \
              FROM certificates_generatedcertificate RIGHT OUTER JOIN auth_user \
              ON certificates_generatedcertificate.user_id = auth_user.id;"
 
-if [ -z $MYSQL_PWD ]
+if [ -z $LOCAL_MYSQL_PASSWD ]
 then
     mysql -u $LOCAL_USERNAME edxprod -e "$tmpTableCmd"
 else
-    mysql -u $LOCAL_USERNAME -p$MYSQL_PWD edxprod -e "$tmpTableCmd"
+    mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD edxprod -e "$tmpTableCmd"
 fi
 
 echo `date`": Done constructing amalgam from certificates_generatedcertificate and auth_user." | tee --append $LOG_FILE
