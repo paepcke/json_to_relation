@@ -29,16 +29,16 @@ class MySQLDB(object):
     def __init__(self, host='127.0.0.1', port=3306, user='root', passwd='', db='mysql'):
         '''
         
-        @param host: MySQL host
-        @type host: string
-        @param port: MySQL host's port
-        @type port: int
-        @param user: user to log in as
-        @type user: string
-        @param passwd: password to use for given user
-        @type passwd: string
-        @param db: database to connect to within server
-        @type db: string
+        :param host: MySQL host
+        :type host: string
+        :param port: MySQL host's port
+        :type port: int
+        :param user: user to log in as
+        :type user: string
+        :param passwd: password to use for given user
+        :type passwd: string
+        :param db: database to connect to within server
+        :type db: string
         '''
         
         # If all arguments are set to None, we are unittesting:
@@ -78,10 +78,11 @@ class MySQLDB(object):
         Create new table, given its name, and schema.
         The schema is a dict mappingt column names to 
         column types. Example: {'col1' : 'INT', 'col2' : 'TEXT'}
-        @param tableName: name of new table
-        @type tableName: String
-        @param schema: dictionary mapping column names to column types
-        @type schema: Dict<String,String>
+
+        :param tableName: name of new table
+        :type tableName: String
+        :param schema: dictionary mapping column names to column types
+        :type schema: Dict<String,String>
         '''
         colSpec = ''
         for colName, colVal in schema.items():
@@ -97,8 +98,9 @@ class MySQLDB(object):
     def dropTable(self, tableName):
         '''
         Delete table safely. No errors
-        @param tableName: name of table
-        @type tableName: String
+
+        :param tableName: name of table
+        :type tableName: String
         '''
         cursor = self.connection.cursor()
         try:
@@ -110,8 +112,9 @@ class MySQLDB(object):
     def truncateTable(self, tableName):
         '''
         Delete all table rows. No errors
-        @param tableName: name of table
-        @type tableName: String
+
+        :param tableName: name of table
+        :type tableName: String
         '''
         cursor = self.connection.cursor()
         try:
@@ -124,10 +127,11 @@ class MySQLDB(object):
         '''
         Given a dictionary mapping column names to column values,
         insert the data into a specified table
-        @param tblName: name of table to insert into
-        @type tblName: String
-        @param colnameValueDict: mapping of column name to column value
-        @type colnameValueDict: Dict<String,Any>
+
+        :param tblName: name of table to insert into
+        :type tblName: String
+        :param colnameValueDict: mapping of column name to column value
+        :type colnameValueDict: Dict<String,Any>
         '''
         colNames, colValues = zip(*colnameValueDict.items())
         cursor = self.connection.cursor()
@@ -148,14 +152,14 @@ class MySQLDB(object):
         is set up to allow the op (load-infile=1 for both mysql and
         mysqld in my.cnf).
 
-        @param tblName: table into which to insert
-        @type tblName: string
-        @param colNameTuple: tuple containing column names in proper order, i.e. \
+        :param tblName: table into which to insert
+        :type tblName: string
+        :param colNameTuple: tuple containing column names in proper order, i.e. \
 	   corresponding to valueTupleArray orders.
-        @type colNameTuple: (str[,str[...]])
-        @param valueTupleArray: array of n-tuples, which hold the values. Order of\
+        :type colNameTuple: (str[,str[...]])
+        :param valueTupleArray: array of n-tuples, which hold the values. Order of\
            values must corresond to order of column names in colNameTuple.
-        @type valueTupleArray: [(<anyMySQLCompatibleTypes>[<anyMySQLCompatibleTypes,...]])
+        :type valueTupleArray: [(<anyMySQLCompatibleTypes>[<anyMySQLCompatibleTypes,...]])
         '''
         tmpCSVFile = tempfile.NamedTemporaryFile(dir='/tmp',prefix='userCountryTmp',suffix='.csv')
         for valueTuple in valueTupleArray:
@@ -172,17 +176,18 @@ class MySQLDB(object):
     def update(self, tblName, colName, newVal, fromCondition=None):
         '''
         Update one column with a new value.
-        @param tblName: name of table in which update is to occur
-        @type tblName: String
-        @param colName: column whose value is to be changed
-        @type colName: String
-        @param newVal: value acceptable to MySQL for the given column 
-        @type newVal: type acceptable to MySQL for the given column 
-        @param fromCondition: optionally condition that selects which rows to update.\
+
+        :param tblName: name of table in which update is to occur
+        :type tblName: String
+        :param colName: column whose value is to be changed
+        :type colName: String
+        :param newVal: value acceptable to MySQL for the given column 
+        :type newVal: type acceptable to MySQL for the given column 
+        :param fromCondition: optionally condition that selects which rows to update.\
                       if None, the named column in all rows are updated to\
                       the given value. Syntax must conform to what may be in\
                       a MySQL FROM clause (don't include the 'FROM' keyword)
-        @type fromCondition: String
+        :type fromCondition: String
         '''
         cursor = self.connection.cursor()
         try:
@@ -201,8 +206,9 @@ class MySQLDB(object):
         MySQL typing. Example: (10, 'My Poem') ---> '10, "My Poem"'
         Note that ','.join(map(str,myList)) won't work:
         (10, 'My Poem') ---> '10, My Poem'
-        @param colVals: list of column values destined for a MySQL table
-        @type colVals: <any>
+
+        :param colVals: list of column values destined for a MySQL table
+        :type colVals: <any>
         '''
         resList = []
         for el in colVals:
@@ -216,8 +222,9 @@ class MySQLDB(object):
         '''
         Query iterator. Given a query, return one result for each
         subsequent call.
-        @param queryStr: query
-        @type queryStr: String
+
+        :param queryStr: query
+        :type queryStr: String
         '''
         cursor = self.connection.cursor()
         # For if caller never exhausts the results by repeated calls:

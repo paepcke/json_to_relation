@@ -44,10 +44,12 @@ class Utils(object):
         semicolons. Escapes commas and single quotes. Backslash is
         replaced by double backslash. This is needed for unicode, like
         \0245 (invented example)
-        @param unsafeStr: string that possibly contains unsafe chars
-        @type unsafeStr: String
-        @return: same string, with unsafe chars properly replaced or escaped
-        @rtype: String
+
+        :param unsafeStr: string that possibly contains unsafe chars
+        :type unsafeStr: String
+        :return: same string, with unsafe chars properly replaced or escaped
+
+        :rtype: String
         '''
         #return unsafeStr.replace("'", "\\'").replace('\n', "; ").replace('\r', "; ").replace(',', "\\,").replace('\\', '\\\\')
         if unsafeStr is None or not isinstance(unsafeStr, basestring) or len(unsafeStr) == 0:
@@ -71,8 +73,9 @@ class Utils(object):
         is placed in class variable hashMapper. The Creation can fail,
         so that variable may remain None after calling this method.
         Callers must check for this condition. 
-        @param cls: this class instance; passed transparently by Python
-        @type cls: Utils
+
+        :param cls: this class instance; passed transparently by Python
+        :type cls: Utils
         '''
         # Create a facility that can map resource name hashes
         # to human-readable strings:
@@ -90,11 +93,13 @@ class Utils(object):
         Given a module or sequence id hash, possibly 
         embedded in another string, return a human readable
         resolution if possible. Example input::
+        
            i4x://Medicine/HRP258/sequential/99b37c2c139b45cab9a06fb49ff6594f
-        @param cls: this class instance; passed transparently by Python
-        @type cls: Utils
-        @param moduleID: the sequence or module hash, possibly embedded in a string 
-        @type moduleID: String
+
+        :param cls: this class instance; passed transparently by Python
+        :type cls: Utils
+        :param moduleID: the sequence or module hash, possibly embedded in a string 
+        :type moduleID: String
         '''
         if Utils.hashMapper is None:
             # Try to create the facility that maps resource ids to 
@@ -114,19 +119,24 @@ class Utils(object):
     def extractOpenEdxHash(cls, idStr):
         '''
         Given a string, such as::
+        
             i4x-Medicine-HRP258-videoalpha-7cd4bf0813904612bcd583a73ade1d54
-            or:
+            
+        or::
+        
             input_i4x-Medicine-HRP258-problem-98ca37dbf24849debcc29eb36811cb68_3_1_choice_3'
+            
         extract and return the 32 bit hash portion. If none is found,
         return None. Method takes any string and finds a 32 bit hex number.
         It is up to the caller to ensure that the return is meaningful. As
         a minimal check, the method does ensure that there is at most one 
         qualifying string present; we know that this is the case with problem_id
         and other strings.
-        @param cls: this class instance; passed transparently by Python
-        @type cls: Utils
-        @param idStr: problem, module, video ID and others that might contain a 32 bit OpenEdx platform hash
-        @type idStr: string
+
+        :param cls: this class instance; passed transparently by Python
+        :type cls: Utils
+        :param idStr: problem, module, video ID and others that might contain a 32 bit OpenEdx platform hash
+        :type idStr: string
         '''
         if idStr is None:
             return None

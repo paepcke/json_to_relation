@@ -9,6 +9,14 @@
 '''
 Created on Sep 14, 2013
 
+Given a source with JSON structures, derive a schema, and construct 
+a relational table. Source can be a local file name, a URL, a
+StringIO pseudofile, or a Unix pipe.
+
+JSON structures in the source must be one per line. That is, each line in 
+the source must be a self contained JSON object. Pretty printed strings
+won't work. 
+
 @author: paepcke
 
 Modifications:
@@ -101,6 +109,7 @@ class JSONToRelation(object):
         If schemaHints is provided, it is a Dict mapping column names to ColDataType.
         The column names in schemaHints must match the corresponding (fully nested)
         key names in the JSON objects::
+        
             schemaHints dict: {'msg.length' : ColDataType.INT,
                                'chunkSize' : ColDataType.INT}
         
@@ -112,24 +121,24 @@ class JSONToRelation(object):
         form. However, parsers may call startNewTable() to build any new tables
         they wish.
         
-        @param jsonSource: subclass of InputSource that wraps containing JSON structures, or a URL to such a source
-        @type jsonSource: {InPipe | InString | InURI | InMongoDB} (InMongoDB not implemented)
-        @param destination: instruction to were resulting rows are to be directed
-        @type destination: {OutputPipe | OutputFile }
-        @param schemaHints: Dict mapping col names to data types (optional). Affects the default (main) table.
-        @type schemaHints: OrderedDict<String,ColDataTYpe>
-        @param jsonParserInstance: a parser that takes one JSON string, and returns a CSV row, or other
+        :param jsonSource: subclass of InputSource that wraps containing JSON structures, or a URL to such a source
+        :type jsonSource: {InPipe | InString | InURI | InMongoDB} (InMongoDB not implemented)
+        :param destination: instruction to were resulting rows are to be directed
+        :type destination: {OutputPipe | OutputFile }
+        :param schemaHints: Dict mapping col names to data types (optional). Affects the default (main) table.
+        :type schemaHints: OrderedDict<String,ColDataTYpe>
+        :param jsonParserInstance: a parser that takes one JSON string, and returns a CSV row, or other
                                    desired output, like SQL dump statements. Parser also must inform this 
                                    parent object of any generated column names.
-        @type jsonParserInstance: {GenericJSONParser | EdXTrackLogJSONParser | CourseraTrackLogJSONParser}
-        @param loggingLevel: level at which logging output is show. 
-        @type loggingLevel: {logging.DEBUG | logging.WARN | logging.INFO | logging.ERROR | logging.CRITICAL}
-        @param logFile: path to file where log is to be written. Default is None: log to stdout.
+        :type jsonParserInstance: {GenericJSONParser | EdXTrackLogJSONParser | CourseraTrackLogJSONParser}
+        :param loggingLevel: level at which logging output is show. 
+        :type loggingLevel: {logging.DEBUG | logging.WARN | logging.INFO | logging.ERROR | logging.CRITICAL}
+        :param logFile: path to file where log is to be written. Default is None: log to stdout.
                         A warning is logged if logFile is None and the destination is OutputPipe. In this
                         case logging messages will be mixed in with the data output
-        @type logFile: String
-        @param progressEvery: number of JSON object to process before reporting the number in a log info msg. If None, no reporting
-        @type  progressEvery: {int | None}
+        :type logFile: String
+        :param progressEvery: number of JSON object to process before reporting the number in a log info msg. If None, no reporting
+        :type  progressEvery: {int | None}
         @raise ValueErrer: when value of jsonParserInstance is neither None, nor an instance of GenericJSONParser,
                         nor one of its subclasses.
         @raise ValueError: when jsonSource is not an instance of InPipe, InString, InURI, or InMongoDB  
@@ -249,8 +258,9 @@ class JSONToRelation(object):
     def setParser(self, parserInstance):
         '''
         Set the parser instance to use for upcoming calls to the convert() method.
-        @param parserInstance: must be instance of GenericJSONParser or one of its subclasses 
-        @type parserInstance: {GenericJSONParser | subclass}
+
+        :param parserInstance: must be instance of GenericJSONParser or one of its subclasses 
+        :type parserInstance: {GenericJSONParser | subclass}
         '''
         self.jsonParserInstance = parserInstance
 
@@ -266,10 +276,11 @@ class JSONToRelation(object):
         subsequent addition generates ALTER table, which might be expensive. So,
         completeness of the schemaHintsNewTable dict is recommended for MySQL
         load file outputs.
-        @param tableName: name by which parser will refer to this table.
-        @type tableName: String
-        @param schemaHintsNewTable: dict that map column names to SQL types
-        @type schemaHintsNewTable: [Ordered]Dict<String,ColumnSpec>
+
+        :param tableName: name by which parser will refer to this table.
+        :type tableName: String
+        :param schemaHintsNewTable: dict that map column names to SQL types
+        :type schemaHintsNewTable: [Ordered]Dict<String,ColumnSpec>
         '''
         self.destination.startNewTable(tableName, schemaHintsNewTable)
         
@@ -286,10 +297,11 @@ class JSONToRelation(object):
         Given a schema hint dictionary, set the given table's schema
         to the given dictionary. Any schema fragments already defined
         for table tableName will be removed
-        @param schemaHints: dict mapping column names to ColumnSpec instances
-        @type schemaHints: [Ordered]Dict<String,ColumnSpec>
-        @param tableName: name of table whose schema is to be changed. None changes the main (default) table's schema
-        @type tableName: String
+
+        :param schemaHints: dict mapping column names to ColumnSpec instances
+        :type schemaHints: [Ordered]Dict<String,ColumnSpec>
+        :param tableName: name of table whose schema is to be changed. None changes the main (default) table's schema
+        :type tableName: String
         '''
         if tableName is None:
             tableName = self.mainTableName
@@ -299,12 +311,14 @@ class JSONToRelation(object):
         '''
         Given a column name, and a table name, return the ColumnSpec for that column in that table.
         If tableName is None, the table is assumed to be the main (default) table.
-        @param colName: name of column whose ColumnSpec instance is wanted
-        @type colName: String
-        @param tableName: name of table of which the column is a part 
-        @type tableName: {String | None}
-        @return: a ColumnSpec object that contains the SQL type name of the column
-        @rtype: ColumnSpec
+
+        :param colName: name of column whose ColumnSpec instance is wanted
+        :type colName: String
+        :param tableName: name of table of which the column is a part 
+        :type tableName: {String | None}
+        :return: a ColumnSpec object that contains the SQL type name of the column
+
+        :rtype: ColumnSpec
         @raise KeyError: if either the table or the column don't exist.  
         '''
         if tableName is None:
@@ -332,12 +346,13 @@ class JSONToRelation(object):
         in the __init__() call. Create a MySQL schema as the JSON is read.
         Convert each JSON object into the requested output format (e.g. CSV),
         and deliver it to the destination (e.g. a file)
-        @param prependColHeader: If true, the final destination, if it is stdout or a file,
+
+        :param prependColHeader: If true, the final destination, if it is stdout or a file,
                 will have the column names prepended. Note that this option requires that
                 the output file is first written to a temp file, and then merged with the
                 completed column name header row to the final destination that was specified
                 by the client. 
-        @type prependColHeader: Boolean
+        :type prependColHeader: Boolean
         '''
         savedFinalOutDest = None
         if self.destination.getOutputFormat() != self.destination.OutputFormat.SQL_INSERT_STATEMENTS: 
@@ -402,8 +417,9 @@ class JSONToRelation(object):
         Pushes the given string straight to the output (pipe or file).
         No error checking is done. Used by underlying parsers 
         for SQL other than INSERT statements, such as DROP, CREATE. 
-        @param whatToWrite: a complete SQL statement.
-        @type whatToWrite: String
+
+        :param whatToWrite: a complete SQL statement.
+        :type whatToWrite: String
         '''
         self.destination.write(whatToWrite)
         
@@ -413,10 +429,11 @@ class JSONToRelation(object):
         one table. For CSV outputs the target table is implied: there is only
         one. But for parsers that generate INSERT statements, the targets
         might be different tables on each call. 
-        @param row: either an array of CSV values, or a triplet (tableName, insertSig, valsArray) (from MySQL INSERT-generating parsers)
-        @type row: {[<any>] | (String, String, [<any>])}
-        @param outFd: subclass of OutputDisposition
-        @type outFd: subclass of OutputDisposition
+
+        :param row: either an array of CSV values, or a triplet (tableName, insertSig, valsArray) (from MySQL INSERT-generating parsers)
+        :type row: {[<any>] | (String, String, [<any>])}
+        :param outFd: subclass of OutputDisposition
+        :type outFd: subclass of OutputDisposition
         '''
         #****************************
         #if row.count('eventID') > 1:
@@ -440,10 +457,10 @@ class JSONToRelation(object):
         Ex.: 'col1,col2'. The filledNewRow may also be the string 'FLUSH', which
         triggers flushing all buffers.
         
-        @param filledNewRow: the list of values for one row, possibly including empty fields  
-        @type filledNewRow: {(String,String,List<<any>>) | List<<any>> | String}
-        @param outFd: an instance of a class that writes to the destination
-        @type outFd: OutputDisposition
+        :param filledNewRow: the list of values for one row, possibly including empty fields  
+        :type filledNewRow: {(String,String,List<<any>>) | List<<any>> | String}
+        :param outFd: an instance of a class that writes to the destination
+        :type outFd: OutputDisposition
         '''
         # We handle 'rows' destined for MySQL dumps differently
         # from rows destined to CSV. Parsers that generate dump
@@ -475,8 +492,8 @@ class JSONToRelation(object):
         If insertInfo is the string 'FLUSH', then an INSERT statement is
         returned for any held-back prior values. 
         
-        @param insertInfo: information on what to generate for MySQL dumps
-        @type insertInfo: {(String, String, [<any>]) | String)}
+        :param insertInfo: information on what to generate for MySQL dumps
+        :type insertInfo: {(String, String, [<any>]) | String)}
         '''
         try:
             (tableName, insertSig, valsArray) = insertInfo
@@ -545,11 +562,13 @@ class JSONToRelation(object):
         Create a possibly multivalued INSERT statement from what is
         stored in self.currOutTable, self.currInsertSig, and self.currValsArray.
         Example return::
+        
            INSERT INTO myTable (col2, col2) VALUES
               ('foo',10),
               ('bar',20);
-        @return: a fully formed SQL INSERT statement, possibly including multiple values. None if nothing to insert.
-        @rtype: {String | None}
+
+        :return: a fully formed SQL INSERT statement, possibly including multiple values. None if nothing to insert.
+        :rtype: {String | None}
         '''
         
         try:
@@ -575,10 +594,12 @@ class JSONToRelation(object):
         an INSERT statement. Ex: [['foo',10],['bar',20]]. Returns
         a StringIO string file containing a legal INSERT statement's
         VALUES part: ('foo',10),('bar',20)
-        @param valsArrays: array of values arrays
-        @type valsArrays: [[<any>]]
-        @return: IOString string file with legal VALUES section of INSERT statement
-        @rtype: IOString
+
+        :param valsArrays: array of values arrays
+        :type valsArrays: [[<any>]]
+        :return: IOString string file with legal VALUES section of INSERT statement
+
+        :rtype: IOString
         '''
         # Build the values part:
         valsFileStr = StringIO()
@@ -618,10 +639,12 @@ class JSONToRelation(object):
         '''
         Returns an ordered list of ColumnSpec instances.
         Each such instance holds column name and SQL type.
-        @param tableName: name of table for which schema is wanted. None: the main (default) table. 
-        @type tableName: String
-        @return: ordered list of column information
-        @rtype: (ColumnSpec) 
+
+        :param tableName: name of table for which schema is wanted. None: the main (default) table. 
+        :type tableName: String
+        :return: ordered list of column information
+
+        :rtype: (ColumnSpec) 
         '''
         if tableName is None:
             tableName = self.mainTableName
@@ -630,9 +653,11 @@ class JSONToRelation(object):
     def getColHeaders(self, tableName=None):
         '''
         Returns a list of column header names collected so far.
-        @return: list of column headers that were discovered so far by an 
+
+        :return: list of column headers that were discovered so far by an 
                  associated JSON parser descending into a JSON structure.
-        @rtype: [String]
+
+        :rtype: [String]
         '''
         headers = []
         for colSpec in self.getSchema(tableName):
@@ -644,8 +669,10 @@ class JSONToRelation(object):
         Returns the position of the next new column that
         may need to be added when a previously unseen JSON
         label is encountered.
-        @return: position in schema where the next new discovered column header is to go.
-        @rtype: int 
+
+        :return: position in schema where the next new discovered column header is to go.
+
+        :rtype: int 
         '''
         return self.nextNewColPos
     
@@ -659,8 +686,8 @@ class JSONToRelation(object):
         when held-back INSERT data needs to be flushed
         to server. Ex: ['foo', 10] returns 7.
         
-        @param valueArray: array of mixed-type values to be INSERTed into MySQL at some point
-        @type valueArray: [<any>]
+        :param valueArray: array of mixed-type values to be INSERTed into MySQL at some point
+        :type valueArray: [<any>]
         '''
         arrSize = 0
         for val in valueArray:
@@ -679,10 +706,12 @@ class JSONToRelation(object):
         and dollar sign. Identifiers with other chars must be quoted.
         Quote characters embedded within the identifiers must be
         doubled to be escaped. 
-        @param proposedMySQLName: input name
-        @type proposedMySQLName: String
-        @return: the possibly modified, legal MySQL identifier
-        @rtype: String
+
+        :param proposedMySQLName: input name
+        :type proposedMySQLName: String
+        :return: the possibly modified, legal MySQL identifier
+
+        :rtype: String
         '''
         if JSONToRelation.LEGAL_MYSQL_ATTRIBUTE_PATTERN.match(proposedMySQLName) is not None:
             return proposedMySQLName

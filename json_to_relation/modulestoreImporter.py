@@ -1,6 +1,10 @@
 '''
 Created on Nov 30, 2013
 
+Imports result of a query to the modulestore. Purpose is
+to resolve OpenEdX hashes, like videos and modules into
+human readable form.
+
 @author: paepcke
 '''
 from UserDict import DictMixin
@@ -53,11 +57,11 @@ class ModulestoreImporter(DictMixin):
         Python dict containing OpenEdx hash codes to display_name mappings
         is missing, then the modulestore is refreshed from S3.
 
-        @param jsonFileName: file path to JSON file that contains an excerpt
+        :param jsonFileName: file path to JSON file that contains an excerpt
                     of modulestore, the OpenEdx course db. This file is
                     created using script cronRefreshModuleStore.sh.
-        @type jsonFileName: String
-        @param useCache: if True, and a file hashLookup.pkl exists in this
+        :type jsonFileName: String
+        :param useCache: if True, and a file hashLookup.pkl exists in this
                         file's 'data' subdirectory, treat .pkl file as a 
                         pickled dict that maps OpenEdx hashes to display
                         names. That file would have been created by an
@@ -65,14 +69,14 @@ class ModulestoreImporter(DictMixin):
                         If False, or the pickle file is missing, then
                         the cache is created by accessing the modulestore
                         MongoDB on S3.
-        @type useCache: Bool
-        @param pickleCachePath: destination for cache of the hash-->info dict.
+        :type useCache: Bool
+        :param pickleCachePath: destination for cache of the hash-->info dict.
                                 Default is data/hashLookup.pkl 
-        @type pickleCachePath: String
-        @param parent: the caller object. If provided, that object must provide
+        :type pickleCachePath: String
+        :param parent: the caller object. If provided, that object must provide
                methods logInfo(), logWarn(), logDebug(), and logError(). If this
                argument is left at None, no logging is done.
-        @type parent: GenericJSONParser
+        :type parent: GenericJSONParser
         @raise OSError: when there is a problem calling the cronRefreshModuleStore.sh script.
         @raise ValueError: when modulestore JSON could not be parsed.
         '''
@@ -148,10 +152,12 @@ class ModulestoreImporter(DictMixin):
         Given a 32-bit OpenEdx hash string, return
         a corresponding display_name. If none found,
         returns None.
-        @param hashStr: string of 32 hex digits
-        @type hashStr: string
-        @return: a display name as was used on the course Web site
-        @rtype: {String | None} 
+
+        :param hashStr: string of 32 hex digits
+        :type hashStr: string
+        :return: a display name as was used on the course Web site
+
+        :rtype: {String | None} 
         '''
         infoDict = self.hashLookup.get(hashStr, None)
         if infoDict is None:
@@ -163,10 +169,12 @@ class ModulestoreImporter(DictMixin):
         Given a 32-bit OpenEdx hash string, return
         a corresponding 'org' entry. If none found,
         returns None
-        @param hashStr: string of 32 hex digits
-        @type hashStr: string
-        @return: the organization that offered the class or resource
-        @rtype: {String | None} 
+
+        :param hashStr: string of 32 hex digits
+        :type hashStr: string
+        :return: the organization that offered the class or resource
+
+        :rtype: {String | None} 
         '''
         infoDict = self.hashLookup.get(hashStr, None)
         if infoDict is None:
@@ -178,10 +186,12 @@ class ModulestoreImporter(DictMixin):
         Given a 32-bit OpenEdx hash string, return
         a corresponding 'org' entry. If none found,
         returns None
-        @param hashStr: string of 32 hex digits
-        @type hashStr: string
-        @return: the short name of the course associated with the hash. Ex: 'HRP258'
-        @rtype: {String | None} 
+
+        :param hashStr: string of 32 hex digits
+        :type hashStr: string
+        :return: the short name of the course associated with the hash. Ex: 'HRP258'
+
+        :rtype: {String | None} 
         '''
         infoDict = self.hashLookup.get(hashStr, None)
         if infoDict is None:
@@ -193,10 +203,12 @@ class ModulestoreImporter(DictMixin):
         Given a 32-bit OpenEdx hash string, return
         a corresponding 'org' entry. If none found,
         returns None
-        @param hashStr: string of 32 hex digits
-        @type hashStr: string
-        @return: the category associated with the hash. Ex.: 'problem', 'vertical', 'video'
-        @rtype: {String | None} 
+
+        :param hashStr: string of 32 hex digits
+        :type hashStr: string
+        :return: the category associated with the hash. Ex.: 'problem', 'vertical', 'video'
+
+        :rtype: {String | None} 
         '''
         infoDict = self.hashLookup.get(hashStr, None)
         if infoDict is None:
@@ -208,10 +220,12 @@ class ModulestoreImporter(DictMixin):
         Given a 32-bit OpenEdx hash string, return
         a corresponding 'org' entry. If none found,
         returns None
-        @param hashStr: string of 32 hex digits
-        @type hashStr: string
-        @return: the revision of the resource associated with the hash
-        @rtype: {String | None} 
+
+        :param hashStr: string of 32 hex digits
+        :type hashStr: string
+        :return: the revision of the resource associated with the hash
+
+        :rtype: {String | None} 
         '''
         infoDict = self.hashLookup.get(hashStr, None)
         if infoDict is None:
@@ -222,12 +236,13 @@ class ModulestoreImporter(DictMixin):
         '''
         Export the dict hash --> org/category/... to 
         CSV with header::
+        
             'name_hash','org','short_course_name','category','revision','display_name'
 
-        @param outFilePath: fully qualified name of .csv output file
-        @type outFilePath: {String | File}
-        @param addHeader: whether or not to add a header line
-        @type addHeader: Bool
+        :param outFilePath: fully qualified name of .csv output file
+        :type outFilePath: {String | File}
+        :param addHeader: whether or not to add a header line
+        :type addHeader: Bool
         @raise ValueError: when modulestore JSON could not be parsed.
         '''
 
@@ -260,12 +275,14 @@ class ModulestoreImporter(DictMixin):
         '''
         Export the dict shortCourseName --> canonicalName to
         CSV with header::
+        
             'course_short_name',course_name
-        @param outFilePath: fully qualified name of .csv output file
-        @type outFilePath: {String | File}
-        @param addHeader: whether or not to add a header line
-        @type addHeader: Bool
-        @raise ValueError: when modulestore JSON could not be parsed.
+
+        :param outFilePath: fully qualified name of .csv output file
+        :type outFilePath: {String | File}
+        :param addHeader: whether or not to add a header line
+        :type addHeader: Bool
+        :raise ValueError: when modulestore JSON could not be parsed.
         '''
 
         if not isinstance(outFilePath, basestring):
@@ -308,11 +325,12 @@ class ModulestoreImporter(DictMixin):
         Connects to S3 modulestore MongoDB and loads an
         excerpt into the jsonFileName's directory, where
         the methods above can find it.
-        @param jsonFileName: target name of JSON file into which the modstore excerpt
+
+        :param jsonFileName: target name of JSON file into which the modstore excerpt
                is to be loaded. The underlying script, cronRefreshModuleStore.sh,
                is hard-coded to link the JSON file to modulestore_latest.json. So
                only the directory part of jsonFileName is used.
-        @type jsonFileName: String
+        :type jsonFileName: String
         @raise OSError: when there is a problem calling the cronRefreshModuleStore.sh script.
         '''
         self.logInfo("About to pull module store from S3 (useCache=%s; jsonFileName=%s..." % (self.useCache, self.jsonFileName))
@@ -326,10 +344,13 @@ class ModulestoreImporter(DictMixin):
         '''
         Given the JSON file path passed into __init__(), read that file,
         and extract a dict::
+        
              OpenEdxHashNum --> {org, short_course_name, category, revision, display_name}
+             
         That dict is stored in self.hashLookup().
         Input is the raw JSON from the modulestore. Sample lines, all regarding
         the same class, HRP259::
+        
 			 { "_id" : { "tag" : "i4x", "org" : "Medicine", "course" : "HRP259", "category" : "about", "name" : "video", "revision" : null } }
 			 { "_id" : { "tag" : "i4x", "org" : "Medicine", "course" : "HRP259", "category" : "chapter", "name" : "495757ee7b25401599b1ef0495b068e4", "revision" : null } }
 			 { "_id" : { "tag" : "i4x", "org" : "Medicine", "course" : "HRP259", "category" : "course", "name" : "Fall2013", "revision" : null } }

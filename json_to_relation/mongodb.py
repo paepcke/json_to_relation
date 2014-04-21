@@ -1,4 +1,8 @@
+'''
+Very simple Python interface to MongoDB.
 
+@Author: paepcke
+'''
 
 from pymongo import MongoClient
 
@@ -14,7 +18,9 @@ class MongoDB(object):
     and find_one(). The query() method makes it very convenient to
     to request only particular sets of fields (columns in relational 
     terms). Example::
+    
         myMongoDb.query({'lname' : 'Doe'}, ('fname', 'lname', 'age'))
+        
     '''
     
     # Map of query strings to MongoDB cursors. Administered
@@ -26,10 +32,11 @@ class MongoDB(object):
     def __init__(self, host="localhost", ssl_keyfile=None, dbName="test", collection="test_collection", port=27017, user=None, pwd=""):
         '''
         Create a connection to the MongoDB demon on the given host/port.
-        @param host: host name where MongoDB demon is running. Can be IP address as string.
-        @type host: String
-        @param port: MongoDB demon's port
-        @type port: int
+
+        :param host: host name where MongoDB demon is running. Can be IP address as string.
+        :type host: String
+        :param port: MongoDB demon's port
+        :type port: int
         '''
         self.host       = host
         self.port       = port
@@ -54,8 +61,9 @@ class MongoDB(object):
         '''
         Establish a default database within MongoDB for subsequent calls 
         to other methods of this class.
-        @param dbName: MongoDB database name
-        @type dbName: String
+
+        :param dbName: MongoDB database name
+        :type dbName: String
         '''
         self.dbName = dbName
         self.db = self.client[dbName]
@@ -64,7 +72,8 @@ class MongoDB(object):
         '''
         Obtain the name of the MongoDB database that is
         currently the default for calls to methods of this class.
-        @rtype: String
+
+        :rtype: String
         '''
         return self.dbName
 
@@ -72,8 +81,9 @@ class MongoDB(object):
         '''
         Establish a default MongoDB collection for subsequent calls to 
         other methods of this class.
-        @param collName: MongoDB collection name
-        @type collName: String
+
+        :param collName: MongoDB collection name
+        :type collName: String
         '''
         self.coll = self.db[collName]
         
@@ -81,7 +91,8 @@ class MongoDB(object):
         '''
         Obtain the name of the MongoDB collection that is
         currently the default for calls to methods of this class.
-        @rtype: String
+
+        :rtype: String
         '''
         return self.coll.name
         
@@ -105,17 +116,18 @@ class MongoDB(object):
         and/or collection that are not the default. After the method returns, the default
         database and collection values will still be untouched. 
         
-        @param mongoQuery: MangoDB query
-        @type mongoQuery: Dict<String,<any>>
-        @param colNameTuple: a possibly empty tuple of field/column names to retrieve for each result document
-        @type colNameTuple: (String)
-        @param limit: maximum number of documents to return
-        @type limit: int
-        @param db: name of MongoDB database other than the current default
-        @type db: String
-        @param collection: name of MongoDB collection other than the current default
-        @type collection: String
-        @rtype: {generator<ResultDict>} 
+        :param mongoQuery: MangoDB query
+        :type mongoQuery: Dict<String,<any>>
+        :param colNameTuple: a possibly empty tuple of field/column names to retrieve for each result document
+        :type colNameTuple: (String)
+        :param limit: maximum number of documents to return
+        :type limit: int
+        :param db: name of MongoDB database other than the current default
+        :type db: String
+        :param collection: name of MongoDB collection other than the current default
+        :type collection: String
+
+        :rtype: {generator<ResultDict>} 
         '''
         with newMongoDB(self, db) as db, newMongoColl(self, collection) as coll:
             # Turn the list of column names to return into
@@ -168,10 +180,12 @@ class MongoDB(object):
         method AND at least one result has been extracted. That's
         because the first call to query() only returns a generator.
         This isn't good. 
-        @param queryDict: Same query that was provided to the query() method
-        @type queryDict: Dict<String,<any>>
-        @return: number of results, taking into account limit provided to query(). None if no result has been pulled from query()
-        @rtype: {int | None}
+
+        :param queryDict: Same query that was provided to the query() method
+        :type queryDict: Dict<String,<any>>
+        :return: number of results, taking into account limit provided to query(). None if no result has been pulled from query()
+
+        :rtype: {int | None}
         '''
         try:
             cursor = MongoDB.queryCursors[str(queryDict)]
@@ -185,10 +199,11 @@ class MongoDB(object):
         Remove all documents from a collection. The affected database/collection
         are the current defaults, if database/collection are None, else the specified
         database/collection is affected.
-        @param db: Name of MongoDB database, or None
-        @type db: String
-        @param collection: Name of MongoDB collection, or None
-        @type collection: String
+
+        :param db: Name of MongoDB database, or None
+        :type db: String
+        :param collection: Name of MongoDB collection, or None
+        :type collection: String
         '''
         with newMongoDB(self, db) as db, newMongoColl(self, collection) as coll:
             coll.remove()
@@ -198,10 +213,11 @@ class MongoDB(object):
         Remove a collection from the database. The affected database/collection
         are the current defaults, if database/collection are None, else the specified
         database/collection is affected.
-        @param db: Name of MongoDB database, or None
-        @type db: String
-        @param collection: Name of MongoDB collection, or None
-        @type collection: String
+
+        :param db: Name of MongoDB database, or None
+        :type db: String
+        :param collection: Name of MongoDB collection, or None
+        :type collection: String
         '''
         with newMongoDB(self, db) as db, newMongoColl(self, collection) as coll:
             coll.drop()
@@ -210,12 +226,13 @@ class MongoDB(object):
     def insert(self, doc_or_docs, db=None, collection=None):
         '''
         Insert the given dictionary into a MongoDB collection.
-        @param doc_or_docs: Dictionary whose entries are the documents
-        @type doc_or_docs: Dict<String,<any>>
-        @param db: Name of MongoDB database, or None
-        @type db: String
-        @param collection: Name of MongoDB collection, or None
-        @type collection: String
+
+        :param doc_or_docs: Dictionary whose entries are the documents
+        :type doc_or_docs: Dict<String,<any>>
+        :param db: Name of MongoDB database, or None
+        :type db: String
+        :param collection: Name of MongoDB collection, or None
+        :type collection: String
         '''
         with newMongoDB(self, db) as db, newMongoColl(self, collection) as coll:
             coll.insert(doc_or_docs)

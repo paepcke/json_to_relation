@@ -15,7 +15,7 @@ import unittest
 
 from edxTrackLogJSONParser import EdXTrackLogJSONParser
 from input_source import InURI
-from json_to_relation import JSONToRelation
+from json_to_relation.json_to_relation import JSONToRelation
 from locationManager import LocationManager
 from modulestoreImporter import ModulestoreImporter
 from output_disposition import OutputDisposition, ColDataType, TableSchemas, \

@@ -1,6 +1,9 @@
 '''
 Created on Nov 3, 2013
 
+Manages fast lookup of countries, given words that *might* be countries.
+
+
 @author: paepcke
 '''
 import os
