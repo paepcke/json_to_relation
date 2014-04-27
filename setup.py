@@ -2,7 +2,7 @@ import multiprocessing
 from setuptools import setup, find_packages
 setup(
     name = "json_to_relation",
-    version = "0.2",
+    version = "0.3",
     packages = find_packages(),
 
     # Dependencies on other packages:
