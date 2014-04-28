@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export FORUM_EXTRACT_ROOT=/home/paepcke/EclipseWorkstations/forum_etl
+
 # Pull the latest EdX Forum dump from deploy.prod.class.stanford.edu to datastage. 
 # Untar, and load into datastage EdxForum.contents. Two options:
 # 
@@ -30,9 +32,9 @@ tar -zxvf forum-latest.tar.gz
 # Symbolically link the result to forum-latest:
 # ln -s using backticks.
 
- rm forum-latest
+ rm --force forum-latest
  ln -s `ls -t -r -d forum-[0-9]* | tail -1` forum-latest
 
 # Anonymize and load:
-python extractor.py --anonymize $PWD/forum-latest/app*/contents.bson
+python $FORUM_EXTRACT_ROOT/src/forum_etl/extractor.py --anonymize $PWD/forum-latest/app*/contents.bson
 
