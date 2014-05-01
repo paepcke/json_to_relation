@@ -1,7 +1,10 @@
 #!/bin/bash
 
+export FORUM_EXTRACT_ROOT=/home/paepcke/EclipseWorkstations/forum_etl
+
 # Pull the latest EdX Forum dump from deploy.prod.class.stanford.edu to datastage. 
-# Untar, and load into datastage Edx.Forum****
+# Untar, and load into datastage EdxForum.contents. Two options:
+# 
 
 scp deploy.prod.class.stanford.edu:/data/dump/forum-latest.tar.gz \
     ~dataman/Data/FullDumps/EdxForum
@@ -22,15 +25,16 @@ tar -zxvf forum-latest.tar.gz
 # 'forum-' and are are followed by nothing but 
 # digits (forum-[0-9]*)
 #
-# Grab the first line (head -1). Now we have
+# Grab the first line (tail -1). Now we have
 # just the directory name that resulted from the
 # tar -x above.
 #
 # Symbolically link the result to forum-latest:
 # ln -s using backticks.
 
- ln -s `ls -t -r -d forum-[0-9]* | head -1` forum-latest
+ rm --force forum-latest
+ ln -s `ls -t -r -d forum-[0-9]* | tail -1` forum-latest
 
 # Anonymize and load:
-#python extractor.py
+python $FORUM_EXTRACT_ROOT/src/forum_etl/extractor.py --anonymize $PWD/forum-latest/app*/contents.bson
 
