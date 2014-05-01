@@ -28,7 +28,7 @@ USAGE='Usage: '`basename $0`' [-u localUbuntuUser][-p][-pLocalMySQLRootPwd]'
 # file .ssh/mysql_root with the password.
 
 # Array of tables to get from edxprod (NOTE: no commas between tables!):
-TABLES=(courseware_studentmodule courseware_studentmodulehistory auth_user certificates_generatedcertificate)
+TABLES=(courseware_studentmodule courseware_studentmodulehistory auth_user certificates_generatedcertificate auth_userprofile external_auth_externalauthmap)
 
 MYSQL_PASSWD=''
 MYSQL_USERNAME=root
