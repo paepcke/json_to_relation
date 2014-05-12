@@ -386,7 +386,8 @@ SELECT event_type,
        video_code,
        time,
        course_display_name,
-       anon_screen_name
+       anon_screen_name,
+       video_id
 FROM Edx.EdxTrackEvent
 WHERE  CHAR_LENGTH(video_code) > 0 OR
        CHAR_LENGTH(video_current_time) > 0 OR
