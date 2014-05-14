@@ -1,6 +1,6 @@
 #!/bin/bash
 
-EDX_PLATFORM_DUMP_MACHINE = jenkins.prod.class.stanford.edu
+EDX_PLATFORM_DUMP_MACHINE=jenkins.prod.class.stanford.edu
 
 export FORUM_EXTRACT_ROOT=/home/paepcke/EclipseWorkspaces/forum_etl
 export PYMYSQL_UTILS_ROOT=/home/paepcke/EclipseWorkspaces/pymysql_utils

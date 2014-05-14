@@ -15,7 +15,7 @@
 # Stats:
 #    courseware_studentmodule loading: ~1hr45min (w/o index building)
 
-EDX_PLATFORM_DUMP_MACHINE = jenkins.prod.class.stanford.edu
+EDX_PLATFORM_DUMP_MACHINE=jenkins.prod.class.stanford.edu
 
 USAGE='Usage: '`basename $0`' [-u localUbuntuUser][-p][-pLocalMySQLRootPwd]'
 
