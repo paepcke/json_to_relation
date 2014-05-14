@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Copies latest edxprod database with all its tables from
-# deploy.prod.class.stanford.edu:/data/dump, and imports
+# Stanford's platform instance table dump machine, and imports
 # a selection of tables into local MySQL's db 'edxprod'. Password-less
 # login must have been arranged to the remote machine so
 # that scp works.
@@ -15,6 +15,7 @@
 # Stats:
 #    courseware_studentmodule loading: ~1hr45min (w/o index building)
 
+EDX_PLATFORM_DUMP_MACHINE = jenkins.prod.class.stanford.edu
 
 USAGE='Usage: '`basename $0`' [-u localUbuntuUser][-p][-pLocalMySQLRootPwd]'
 
@@ -28,7 +29,7 @@ USAGE='Usage: '`basename $0`' [-u localUbuntuUser][-p][-pLocalMySQLRootPwd]'
 # file .ssh/mysql_root with the password.
 
 # Array of tables to get from edxprod (NOTE: no commas between tables!):
-TABLES=(courseware_studentmodule courseware_studentmodulehistory auth_user certificates_generatedcertificate auth_userprofile external_auth_externalauthmap)
+TABLES=(courseware_studentmodule courseware_studentmodulehistory auth_user certificates_generatedcertificate auth_userprofile external_auth_externalauthmap student_anonymoususerid)
 
 MYSQL_PASSWD=''
 MYSQL_USERNAME=root
@@ -136,7 +137,7 @@ echo `date`": Begin refreshing edxprod."  | tee --append $LOG_FILE
 echo "----------"
 # ------------------ Copy full edxprod dump from prod machine to datastage -------------------
 
-scp deploy.prod.class.stanford.edu:/data/dump/edxapp-latest.sql.gz \
+scp $EDX_PLATFORM_DUMP_MACHINE:/data/dump/edxapp-latest.sql.gz \
     $EDXPROD_DUMP_DIR/
 
 # ------------------ Ensure Existence of Local Database -------------------
