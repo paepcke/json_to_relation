@@ -374,14 +374,13 @@ BEGIN
 
     SET @tblFilling = CONCAT(
        
---    'DROP TABLE IF EXISTS ', tblName,';',
     ' CREATE TABLE ',tblName, 
     ' SELECT idInt2Anon(user_int_id) AS anon_screen_name,'
     '        student_anonymoususerid.anonymous_user_id AS ext_anon_name '
-    ' FROM UserGrade '
+    ' FROM EdxPrivate.UserGrade '
     'JOIN edxprod.student_anonymoususerid '
-    '   ON UserGrade.user_int_id = edxprod.student_anonymoususerid.user_id '
-    'WHERE UserGrade.course_id=\'',the_course_name,'\'; '
+    '   ON EdxPrivate.UserGrade.user_int_id = edxprod.student_anonymoususerid.user_id '
+    'WHERE EdxPrivate.UserGrade.course_id=\'',the_course_name,'\'; '
     );
 
 --    SELECT @tblFilling;
