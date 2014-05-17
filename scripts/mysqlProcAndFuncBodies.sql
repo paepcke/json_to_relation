@@ -493,7 +493,7 @@ WHERE  CHAR_LENGTH(video_code) > 0 OR
 
 DROP VIEW IF EXiSTS Demographics;
 CREATE VIEW Demographics AS
-SELECT anon_screen_name, 
+SELECT EdxPrivate.UserGrade.anon_screen_name, 
        gender,
        year_of_birth,
        Year(CURDATE())-year_of_birth AS curr_age,
@@ -509,7 +509,12 @@ SELECT anon_screen_name,
 	  WHEN 'other' THEN 'Other'
 	  WHEN ''      THEN 'User withheld'
 	  WHEN 'NULL'  THEN 'Signup before level collected'
-       END
+       END,
+       Edx.UserCountry.three_letter_country AS country_three_letters,
+       Edx.UserCountry.country AS country_name
+       
 FROM edxprod.auth_userprofile
  JOIN EdxPrivate.UserGrade
-   ON EdxPrivate.UserGrade.user_int_id = edxprod.auth_userprofile.user_id;
+   ON EdxPrivate.UserGrade.user_int_id = edxprod.auth_userprofile.user_id
+ JOIN Edx.UserCountry
+   ON Edx.UserCountry.anon_screen_name = EdxPrivate.UserGrade.anon_screen_name;
