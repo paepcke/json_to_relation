@@ -516,5 +516,5 @@ SELECT EdxPrivate.UserGrade.anon_screen_name,
 FROM edxprod.auth_userprofile
  JOIN EdxPrivate.UserGrade
    ON EdxPrivate.UserGrade.user_int_id = edxprod.auth_userprofile.user_id
- JOIN Edx.UserCountry
+ LEFT JOIN Edx.UserCountry
    ON Edx.UserCountry.anon_screen_name = EdxPrivate.UserGrade.anon_screen_name;
