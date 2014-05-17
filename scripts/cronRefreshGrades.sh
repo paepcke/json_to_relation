@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # Specific to Stanford installation.
-# Refreshes the EdxPrivate.UserGrade table. Logs into edxprod via
-# goldengate.class.stanford.edu, and retrieves a subset of
+# Refreshes the EdxPrivate.UserGrade table. Retrieves a subset of
 # columns from tables auth_user and certificates_generatedcertificate. Drops
 # the local EdxPrivate.UserGrade table, and recreates it empty.
 # Loads the auth_user/certificates_generatedcertificate excerpt into 
