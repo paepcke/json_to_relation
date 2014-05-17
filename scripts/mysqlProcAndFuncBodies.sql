@@ -358,6 +358,40 @@ BEGIN
       return @ext_id;
 END//
 
+#--------------------------
+# createExtIdMapByCourse
+#-----------
+
+# Procedure to create a table of mappings between anon_screen_name,
+# and the external anon id used for Qualtrix and Piazza. The mapping
+# will contain all students of one course.
+# Input: course name, and name of table to dump to.
+
+DROP PROCEDURE IF EXISTS createExtIdMapByCourse;
+CREATE PROCEDURE `createExtIdMapByCourse`(IN the_course_name varchar(255), IN tblName varchar(255))
+BEGIN
+    SET @the_table_name := tblName;
+
+    SET @tblFilling = CONCAT(
+       
+--    'DROP TABLE IF EXISTS ', tblName,';',
+    ' CREATE TABLE ',tblName, 
+    ' SELECT idInt2Anon(user_int_id) AS anon_screen_name,'
+    '        student_anonymoususerid.anonymous_user_id AS ext_anon_name '
+    ' FROM UserGrade '
+    'JOIN edxprod.student_anonymoususerid '
+    '   ON UserGrade.user_int_id = edxprod.student_anonymoususerid.user_id '
+    'WHERE UserGrade.course_id=\'',the_course_name,'\'; '
+    );
+
+--    SELECT @tblFilling;
+
+    PREPARE filling_stmt FROM @tblFilling;
+    EXECUTE filling_stmt;
+    DEALLOCATE PREPARE filling_stmt;
+
+END//
+
 # Restore standard delimiter:
 delimiter ;
 
