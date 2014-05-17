@@ -364,8 +364,15 @@ END//
 
 # Procedure to create a table of mappings between anon_screen_name,
 # and the external anon id used for Qualtrix and Piazza. The mapping
-# will contain all students of one course.
-# Input: course name, and name of table to dump to.
+# will contain all students of a given course specification.
+# Course specification is course name that can contain MySQL 
+# wildcards.
+#
+# Example: createExtIdMapByCourse('Engineering/Solar/Fall2013', 'myTable')
+#
+# If the table already exists: error
+#
+# Input: course name spec, and name of table to dump to.
 
 DROP PROCEDURE IF EXISTS createExtIdMapByCourse;
 CREATE PROCEDURE `createExtIdMapByCourse`(IN the_course_name varchar(255), IN tblName varchar(255))
@@ -380,7 +387,7 @@ BEGIN
     ' FROM EdxPrivate.UserGrade '
     'JOIN edxprod.student_anonymoususerid '
     '   ON EdxPrivate.UserGrade.user_int_id = edxprod.student_anonymoususerid.user_id '
-    'WHERE EdxPrivate.UserGrade.course_id=\'',the_course_name,'\'; '
+    'WHERE EdxPrivate.UserGrade.course_id LIKE \'',the_course_name,'\'; '
     );
 
 --    SELECT @tblFilling;
