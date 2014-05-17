@@ -481,3 +481,35 @@ WHERE  CHAR_LENGTH(video_code) > 0 OR
        CHAR_LENGTH(video_seek_type) > 0 OR
        CHAR_LENGTH(video_new_speed) > 0 OR
        CHAR_LENGTH(video_old_speed) > 0;
+
+#--------------------------
+# Demographics
+#------------
+
+# View over edxprod.auth_userprofile. Provides
+# gender, year of birth, dynamically computed
+# age at time of SELECT, and level of education.
+# Each row is for one anon_screen_name.
+
+DROP VIEW IF EXiSTS Demographics;
+CREATE VIEW Demographics AS
+SELECT anon_screen_name, 
+       gender,
+       year_of_birth,
+       Year(CURDATE())-year_of_birth AS curr_age,
+       CASE level_of_education 
+          WHEN 'p' THEN 'Doctorate'
+	  WHEN 'm' THEN 'Masters or professional degree'
+	  WHEN 'b' THEN 'Bachelors'
+	  WHEN 'a' THEN 'Associates'
+	  WHEN 'hs' THEN 'Secondary/High School'
+	  WHEN 'jhs' THEN 'Junior secondary/junior high/middle School'
+	  WHEN 'el'  THEN 'Elementary/Primary School'
+	  WHEN 'none' THEN 'None'
+	  WHEN 'other' THEN 'Other'
+	  WHEN ''      THEN 'User withheld'
+	  WHEN 'NULL'  THEN 'Signup before level collected'
+       END
+FROM edxprod.auth_userprofile
+ JOIN EdxPrivate.UserGrade
+   ON EdxPrivate.UserGrade.user_int_id = edxprod.auth_userprofile.user_id;
