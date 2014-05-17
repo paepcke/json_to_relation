@@ -164,7 +164,7 @@ class AnonAndModIDAdder(object):
                 self.parseStateJSON(studmodTuple[AnonAndModIDAdder.PARTS_CORRECTNESS_INDEX])
             
             studmodTuple[AnonAndModIDAdder.PARTS_CORRECTNESS_INDEX] = partsCorrectness
-            studmodTuple[AnonAndModIDAdder.ANON_SCREEN_NAME_INDEX] = ','.join(answers)
+            studmodTuple[AnonAndModIDAdder.ANSWERS_INDEX] = ','.join(answers)
             studmodTuple[AnonAndModIDAdder.NUM_ATTEMPTS_INDEX] = numAttempts
             
             rowBatch.append(studmodTuple)

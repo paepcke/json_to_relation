@@ -1,12 +1,17 @@
 #!/bin/bash
 
-export FORUM_EXTRACT_ROOT=/home/paepcke/EclipseWorkstations/forum_etl
+EDX_PLATFORM_DUMP_MACHINE=jenkins.prod.class.stanford.edu
+
+export FORUM_EXTRACT_ROOT=/home/paepcke/EclipseWorkspaces/forum_etl
+export PYMYSQL_UTILS_ROOT=/home/paepcke/EclipseWorkspaces/pymysql_utils
+
+export PYTHONPATH=$PYMYSQL_UTILS_ROOT:$PYTHONPATH
 
 # Pull the latest EdX Forum dump from deploy.prod.class.stanford.edu to datastage. 
 # Untar, and load into datastage EdxForum.contents. Two options:
 # 
 
-scp deploy.prod.class.stanford.edu:/data/dump/forum-latest.tar.gz \
+scp $EDX_PLATFORM_DUMP_MACHINE:/data/dump/forum-latest.tar.gz \
     ~dataman/Data/FullDumps/EdxForum
 cd ~dataman/Data/FullDumps/EdxForum/
 tar -zxvf forum-latest.tar.gz

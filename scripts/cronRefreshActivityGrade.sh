@@ -127,9 +127,11 @@ echo `date`": Start updating table ActivityGrade..."  | tee --append $LOG_FILE
 
 if [ ! -z $MYSQL_PWD ]
 then
+    mysql -u $USERNAME -p$MYSQL_PWD < cronRefreshActivityGradeCrTable.sql
     LATEST_DATE=`mysql -u $USERNAME -p$MYSQL_PWD --silent --skip-column-names Edx -e \
 	  "SELECT MAX(last_submit) FROM ActivityGrade;"`
 else
+    mysql -u $USERNAME  < cronRefreshActivityGradeCrTable.sql
     LATEST_DATE=`mysql -u $USERNAME --silent --skip-column-names Edx -e \
 	  "SELECT MAX(last_submit) FROM ActivityGrade;"`
 fi

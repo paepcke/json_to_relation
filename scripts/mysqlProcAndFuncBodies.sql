@@ -314,6 +314,50 @@ BEGIN
     return @anonId;
 END//
 
+
+#--------------------------
+# idExt2Anon
+#-----------
+
+# Given the 32 char anonymized UID used
+# for outside services, such as Qualtrix
+# or Piazza, return the corresponding
+# anon_screen_name.
+
+DROP FUNCTION IF EXISTS idExt2Anon//
+
+CREATE FUNCTION idExt2Anon(extId varchar(32)) 
+RETURNS varchar(40)
+BEGIN
+      SELECT user_id INTO @int_id
+      FROM edxprod.student_anonymoususerid
+      WHERE anonymous_user_id = extId;
+
+      SELECT idInt2Anon(@int_id) INTO @anon_id;
+      return @anon_id;
+END//
+
+#--------------------------
+# idAnon2Ext
+#-----------
+
+# Given the 40 char anon_screen_name, return
+# the corresponding anonymized UID used by
+# outside services, such as Qualtrix or Piazza
+
+DROP FUNCTION IF EXISTS idAnon2Ext//
+
+CREATE FUNCTION idAnon2Ext(anonId varchar(40)) 
+RETURNS varchar(32)
+BEGIN
+      SELECT idAnon2Int(anonId) INTO @int_id;
+      SELECT anonymous_user_id INTO @ext_id
+      FROM edxprod.student_anonymoususerid
+      WHERE user_id = @int_id;
+      
+      return @ext_id;
+END//
+
 # Restore standard delimiter:
 delimiter ;
 
@@ -386,7 +430,8 @@ SELECT event_type,
        video_code,
        time,
        course_display_name,
-       anon_screen_name
+       anon_screen_name,
+       video_id
 FROM Edx.EdxTrackEvent
 WHERE  CHAR_LENGTH(video_code) > 0 OR
        CHAR_LENGTH(video_current_time) > 0 OR
