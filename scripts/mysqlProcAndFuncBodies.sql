@@ -509,7 +509,7 @@ SELECT EdxPrivate.UserGrade.anon_screen_name,
 	  WHEN 'other' THEN 'Other'
 	  WHEN ''      THEN 'User withheld'
 	  WHEN 'NULL'  THEN 'Signup before level collected'
-       END,
+       END AS level_of_education,
        Edx.UserCountry.three_letter_country AS country_three_letters,
        Edx.UserCountry.country AS country_name
        
