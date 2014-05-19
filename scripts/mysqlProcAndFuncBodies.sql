@@ -344,16 +344,39 @@ END//
 # Given the 40 char anon_screen_name, return
 # the corresponding anonymized UID used by
 # outside services, such as Qualtrix or Piazza
+# For testing:
+#Testing idAnon2Ext():
+#
+#   one row of student_anonuserid:
+#   284347 | 5cbdc8b38171f3641845cb17784de87b | Engineering/CVX101/Winter2014
+#
+#   Using idInt2Anon():
+#   284347 int = 0686bef338f8c6f0696cc7d4b0650daf2473f59d anon
+# 
+#   idAnon2Ext('0686bef338f8c6f0696cc7d4b0650daf2473f59d', 'Engineering/CVX101/Winter2014')
+#   should be: 5cbdc8b38171f3641845cb17784de87b
 
 DROP FUNCTION IF EXISTS idAnon2Ext//
 
-CREATE FUNCTION idAnon2Ext(anonId varchar(40)) 
+DROP FUNCTION IF EXISTS idAnon2Ext;
+CREATE FUNCTION idAnon2Ext(the_anon_id varchar(40), the_course_id varchar(255)) 
 RETURNS varchar(32)
 BEGIN
-      SELECT idAnon2Int(anonId) INTO @int_id;
+      SELECT -1 INTO @int_id;
+      SELECT user_int_id INTO @int_id
+      FROM EdxPrivate.UserGrade
+      WHERE anon_screen_name = the_anon_id
+        AND course_id = the_course_id;
+
+      IF @int_id < 0
+      THEN 
+          RETURN null;
+      END IF;
+        
       SELECT anonymous_user_id INTO @ext_id
       FROM edxprod.student_anonymoususerid
-      WHERE user_id = @int_id;
+      WHERE user_id = @int_id
+        AND course_id = the_course_id;
       
       return @ext_id;
 END//
