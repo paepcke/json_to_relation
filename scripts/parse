@@ -1,0 +1,493 @@
+#!/usr/bin/python
+# Course export parsing script to create 'modulestore' file by scraping course export data 
+# from edX; to be used to sync with Stanford's data scrubbing scripts if you don't want to
+# spin up your own OpenEdX instance just to get modulestore information
+#
+# Developed in Python 2.7. Please report any bugs to the author.
+# 
+# Github repo: https://github.com/kk415kk/datascrub
+# README: https://github.com/kk415kk/datascrub/README.md
+#
+# Author: Kevin Kao
+# Email: kkao@berkeley.edu
+# Creation Date: 4/26/14
+# Last Updated: 5/14/14
+# Version: 0.05b
+import sys, os, glob, json, tarfile, shutil, requests
+import xml.etree.ElementTree as ET
+import stat
+from multiprocessing import Pool
+from xml.etree.ElementTree import tostring
+from stat import *
+
+# SETTINGS
+PRETTIFY_JSON = False
+EXTRACT_TO = "unzipped_exports"
+OPTION = False
+
+# Removes all slashes from file path
+def clean(word):
+	if word[0] == "/":
+		word = word[1:len(word)]
+	if word[len(word)-1] == "/":
+		word = word[0:len(word)-1]
+	return word
+
+def info(help=False):
+	if not help:
+		print "Invalid arguments. " \
+			"Usage: ./parse [arg || -m arg1 arg2 ...]"
+	else:
+		print "=========== HELP =========="
+	print "[Options]:"
+	print "-m args\t: Used to specify multiple file paths to single course export folders"
+	print "-h\t: Used for help page"
+	print "NOTE: If no options are specified, the script defaults to -az\n"
+	print "Example usages:"
+	print "./parse folder"
+	print "./parse -m folder/courseExport1.zip folder/courseExport2.zip ..."
+
+	if help:
+		print "==========================="
+
+def update():
+	script_url = 'https://raw.githubusercontent.com/kk415kk/datascrub/master/parse'
+	req = requests.get(script_url)
+	if req.ok:
+		print "Updating script..."
+		update = req.text
+		original_script = file("parse", "r")
+		if update == original_script.read():
+			print "No updates necessary!"
+			pass
+		else:
+			mode = int(os.stat(os.path.join(os.getcwd(), "parse"))[ST_MODE])
+
+			new_script = file("parse","w")
+			new_script.write(req.text)
+
+			fd = os.open("parse", os.O_RDWR)
+			os.fchmod(fd, mode)
+			os.close(fd)
+			print "Updated successfully!"
+
+def log(logfile, entry):
+	logfile.write(str(entry))
+	logfile.write("\n")
+
+def processFiles():
+	print ""
+
+
+#############################################################################
+# To better understand parser:
+#	- a COURSE has a list of CHAPTERS --> ('course' folder)
+#	- each CHAPTER has a list of SEQUENTIALS --> ('chapter' folder)
+#		- NOTE: it's possible that a CHAPTER contains modules as well
+#	- each SEQUENTIAL has a list of verticals --> ('sequential' folder)
+#		- NOTE: it's possible that a SEQUENTIAL contains modules as well
+#	- each VERTICAL has a list of modules --> ('video, 'html', etc..)
+#############################################################################
+
+###### MAIN METHOD #####
+def main():
+	output = []
+	arglen = len(sys.argv)
+	arglist = sys.argv[1:]
+
+	# parse arguments
+	if arglen < 2:
+		info()
+		exit(1)
+	elif arglen == 2:
+		if arglist[0] == "-m":
+			info()
+			exit(1)
+		if arglist[0] == "-h" or arglist[0] == "--help":
+			info(True)
+			exit(0)
+		if arglist[0] == "-u" or arglist[0] == "--update":
+			update()
+			exit()
+		pass
+	else:
+		assert arglist[0] == "-m"
+		global OPTION
+		OPTION = True
+
+	print "Starting modulestore generator..."
+
+	# make a directory for tar files to be extracted to
+	try:
+		os.makedirs(EXTRACT_TO)
+	except OSError:
+		pass
+
+	# if no options are specified, then try to extract all folders in the specified file path
+	if not OPTION:
+		course_exports = clean(arglist[0])
+		root_folder = os.path.join(os.getcwd(), course_exports)
+		if not os.path.exists(root_folder):
+			print "Invalid file path: " + root_folder	
+			exit(1)
+
+		# extract tarfiles to folder_of_parser/EXTRACT_TO
+		files = os.listdir(os.getcwd() + "/" + course_exports)
+
+		for archive in files:
+			path_to_archive = os.getcwd() + "/" + course_exports + "/" + archive
+			if archive.endswith(".tar.gz") or archive.endswith(".zip"):
+				print "Extracting course " + str(archive) + "..."
+				archive = tarfile.open(path_to_archive, 'r:gz')
+				archive.extractall(os.getcwd() + "/" + EXTRACT_TO);
+	else:
+	# if option -m arg1 arg2 ... was specified, try to extract all course exports from each file path
+		for path_to_archive in arglist[1:]:
+			if not os.path.exists(os.path.join(os.getcwd(), clean(path_to_archive))):
+				print "Invalid file path: " + path_to_archive
+				exit(1)
+			if os.path.isdir(path_to_archive):
+				print "Invalid file path: " + path_to_archive
+				print "File path should be to a specific .zip file, not a folder. Perhaps you meant to run without the -m parameter?"
+				print "Run ./parse --help for help"
+				exit(1)
+			print "Extracting course " + path_to_archive + "..."
+			archive = tarfile.open(path_to_archive, 'r:gz')
+			archive.extractall(os.getcwd() + "/" + EXTRACT_TO)
+
+	courses = os.listdir(os.getcwd() + "/" +  EXTRACT_TO)
+
+	try:
+		outfile = file("test_modulestore.json", "w")
+		logfile = open("logfile.log", "w")
+		logfile.write("Starting logfile:\n")
+	except:
+		print "Error in creating modulestore.json and logfile. Please check permissions."
+		exit(1)
+
+
+	# pool = Pool(processes=4)
+	# pool.map(processFiles, courses)
+
+	for course_export in courses:
+		if os.path.isdir(os.path.join(os.getcwd(), EXTRACT_TO, course_export)):
+			######################################################################################################
+			## This dictionary is used for linking purposes
+			## INFORMATION:
+			## 	"chapter" stores a dictionary in this format:
+			##		{ chapterHash : [chapterDisplayName, [list of sequentials/modules]] }
+			## 	"sequential" stores a dictionary in this format:
+			##		{ sequentialHash : [seqDisplayName, [list of verticals/modules], ("chapter", chapterHash)] }
+			## 	"vertical" stores a dictionary in this format:
+			##		{ verticalHash : [verDisplayName, [list of modules], ("sequential", seqHash)] }
+			##	
+			## For modules, there are several kinds, including problems, videos, html, etc...
+			## To generalize for the future, these are not explicitly added into the dictionary.
+			## They will be added dynamically as the parser discovers new module types in the export.
+			##	"module_type" stores a dictionary in this format:
+			##		{ moduleHash : [moduleDisplayName, [], ("chapter/seq/vert", chapHash/seqHash/vertHash )] }
+			##
+			## Module types will be kept track of in a list to dynamically find folders in exports
+			#######################################################################################################
+			content_linker = { "chapter" : {},	"sequential" : {},	"vertical" : {} }
+			module_list = []
+
+			# grab root folder of course export
+			root_folder = os.path.dirname(os.path.join(os.getcwd(), EXTRACT_TO, course_export))
+
+			if not os.path.exists(root_folder):
+				print "Invalid file path: " + root_folder	
+				exit(1)
+
+			# parse for course information first
+			sys.stdout.write("Parsing course information for ")
+			tree = ET.parse(os.path.join(EXTRACT_TO, course_export, "course.xml"))
+			root = tree.getroot()
+			course = root.attrib["course"]
+			org = root.attrib["org"]
+			tag = "i4x"
+			sys.stdout.write(str(course) + "...\n")
+
+			# parse 'about' folder of course export
+			sys.stdout.write("Parsing 'about' folder...\t")
+			try:
+				f = open(os.path.join(os.getcwd(), EXTRACT_TO, course_export, "about", "overview.html"), "r")
+				entry_dict = { "_id" : {"tag" : tag, "org" : org, "course" : course, "category" : "about", \
+							"name" : "overview", "revision" : None }, "definition" : { "children" : [], \
+							"data": f.read() }, "metadata" : {} }
+				output.append(entry_dict)
+				sys.stdout.write("success!\n")
+			except Exception as err:
+				log(logfile, err)
+				sys.stdout.write("failure... :(\n")
+
+			# parse 'chapter' folder of course export
+			sys.stdout.write("Parsing 'chapter' folder...\t")
+			try:
+				files = os.listdir(os.path.join(os.getcwd(), EXTRACT_TO, course_export, "chapter"))
+				for chapter_file in files:
+					tree = ET.parse(os.path.join(os.getcwd(), EXTRACT_TO, course_export, "chapter", chapter_file))
+					root = tree.getroot()
+
+					chapter = chapter_file.replace(".xml", "")
+					display_name = chapter
+					if "display_name" in root.attrib:
+						display_name = root.attrib["display_name"]
+
+					entry_dict = { "_id" : { "tag" : tag, "org" : org, "course" : course, "category" : "chapter", \
+								"name" : chapter, "revision" : None }, "definition" : { \
+								"children" : [], "data": {} }, "metadata" : { "start" : "", "xml_attributes" : \
+								{ "filename" : [] }, "display_name" : display_name } }
+					if "start" in root.attrib:
+						entry_dict["metadata"]["start"] = root.attrib["start"]
+					entry_dict["metadata"]["xml_attributes"]["filename"].append("chapter/" + chapter_file)
+					
+					# update content_linker
+					content_linker["chapter"][chapter] = [ display_name, []]
+
+					for child_elem in root:
+						# update content_linker
+						content_linker["chapter"][chapter][1].append((child_elem.tag, child_elem.attrib["url_name"]))
+						if not child_elem.tag in content_linker:
+							content_linker[child_elem.tag] = {}
+							# add to list of module_types if not there
+							if not child_elem.tag in module_list:
+								module_list.append(child_elem.tag)
+						content_linker[child_elem.tag][child_elem.attrib["url_name"]] = [ None, [], ("chapter", chapter)]
+
+						child = tag + "://" + org + "/" + course + "/"+ child_elem.tag +"/" + child_elem.attrib["url_name"]
+						entry_dict["definition"]["children"].append(child)
+					output.append(entry_dict)
+				sys.stdout.write("success!\n")
+			except Exception as err:
+				log(logfile, err)
+				sys.stdout.write("failure... :(\n")
+
+			# parse 'course' folder of course export
+			# also involves 'policies' folder
+			# incomplete metadata and definition
+			sys.stdout.write("Parsing 'course' folder...\t")
+
+			files = os.listdir(os.path.join(os.getcwd(), EXTRACT_TO, course_export, "course"))
+
+			if len(files) != 1:
+				print "Strange error with multiple files in course folder. Please contact author of script."
+				print "Include the list of files with your email: "
+				print files
+				exit(1)
+
+			alt_course_name = files[0].replace(".xml", "")
+
+			tree = ET.parse(os.path.join(os.getcwd(), EXTRACT_TO, course_export, "course", files[0]))
+			root = tree.getroot()
+			data_dict = { "textbooks" : [], "grading_policy" : {}, "wiki_slug" : "" }
+			entry_dict = { "_id" : { "tag" : tag, "org" : org, "course" : course, "category" : "course", \
+						"name" : files[0].replace(".xml", ""), "revision" : None }, "definition" : { \
+						"children" : [], "data": data_dict }, "metadata" : { "start" : "", "xml_attributes" : \
+						{ "filename" : [] }, "display_name" : "", "advanced_modules" : [], "tabs" : []} } 
+			if "start" in root.attrib:
+				entry_dict["metadata"]["start"] = root.attrib["start"]
+			entry_dict["metadata"]["xml_attributes"]["filename"].append("course/" + files[0])
+			entry_dict["metadata"]["xml_attributes"]["display_name"] =  root.attrib["display_name"]
+			
+			# store chapters and wiki slug into entry
+			for chapter in root:
+				if chapter.tag == "chapter":
+					child = tag + "://" + org + "/" + course + "/chapter/" + chapter.attrib["url_name"]
+					entry_dict["definition"]["children"].append(child)
+				if chapter.tag == "wiki" and "slug" in chapter.attrib:
+					entry_dict["definition"]["data"]["wiki_slug"] = chapter.attrib["slug"]
+			sys.stdout.write("success!\n")
+
+
+			# let's take care of the policy.json in policies folder first
+			sys.stdout.write("Parsing 'policies' folder...\t")
+			try:
+				files = os.listdir(os.path.join(os.getcwd(), EXTRACT_TO, course_export, "policies", alt_course_name))
+			except:
+				print "Something went wrong with the parsing of 'policy' folder. Please contact author."
+				exit(1)
+
+			for json_file in files:
+				# policy.json stores information about tabs/metadata
+				json_data = open(os.path.join(os.getcwd(), EXTRACT_TO, course_export, "policies", alt_course_name, json_file), 'r')
+				if json_file == "policy.json":
+					COURSE_INFO = json.load(json_data)
+					key = "course" + "/" + clean(alt_course_name)
+					entry_dict["metadata"]["tabs"] = COURSE_INFO[key]["tabs"]
+					entry_dict["metadata"]["discussion_topics"] = COURSE_INFO[key]["discussion_topics"]
+				# grading_policy stores information
+				elif json_file == "grading_policy.json":
+					GRADER_CONTENTS = json.load(json_data)
+					entry_dict["definition"]["data"]["grading_policy"]["GRADE_CUTOFFS"] \
+						= GRADER_CONTENTS["GRADE_CUTOFFS"]
+					entry_dict["definition"]["data"]["grading_policy"]["GRADER"] \
+		                = GRADER_CONTENTS["GRADER"]
+				else:
+					print "Unexpected file: " + str(json_file)
+					print "Please contact author of script and include name of the file."
+					exit(1)
+				json_data.close()
+			output.append(entry_dict)
+			sys.stdout.write("success!\n")
+
+			# parse 'sequential' folder of course export
+			sys.stdout.write("Parsing 'sequential' folder...\t")
+			try:
+				files = os.listdir(os.path.join(os.getcwd(), EXTRACT_TO, course_export, "sequential"))
+				for sequential_file in files:
+					tree = ET.parse(os.path.join(os.getcwd(), EXTRACT_TO, course_export, "sequential", sequential_file))
+					root = tree.getroot()
+
+					sequential = sequential_file.replace(".xml", "")
+					display_name = sequential
+					if "display_name" in root.attrib:
+						display_name = root.attrib["display_name"]
+
+					entry_dict = { "_id" : { "tag" : tag, "org" : org, "course" : course, "category" : "sequential", \
+							"name" : sequential, "revision" : None }, "definition" : { \
+							"children" : [], "data": {} }, "metadata" : { "start" : "", "xml_attributes" : \
+							{ "filename" : ["sequential/" + sequential_file] }, "display_name" : display_name } }
+
+					# update content_linker
+					content_linker["sequential"][sequential][0] = display_name
+
+					# store verticals into children of entry
+					for child_elem in root:
+						child = tag + "://" + org + "/" + course + "/" + child_elem.tag + "/" + child_elem.attrib["url_name"]
+						entry_dict["definition"]["children"].append(child)
+						
+						# update content_linker
+						content_linker["sequential"][sequential][1].append((child_elem.tag, child_elem.attrib["url_name"]))
+						if not child_elem.tag in content_linker:
+							content_linker[child_elem.tag] = {}
+							# add to list of module_types if not there
+							if not child_elem.tag in module_list: 
+								module_list.append(child_elem.tag)
+						content_linker[child_elem.tag][child_elem.attrib["url_name"]] = [ None, [], ("sequential", sequential)]
+					output.append(entry_dict)
+				sys.stdout.write("success!\n")
+			except Exception as err:
+				log(logfile, err)
+				sys.stdout.write("failure... :(\n")
+
+			
+			# parse 'vertical' folder of course export
+			# verticals have no file name (???)
+			try:
+				sys.stdout.write("Parsing 'vertical' folder...\t")
+				files = os.listdir(os.path.join(os.getcwd(), EXTRACT_TO, course_export, "vertical"))
+				for vertical_file in files:
+					tree = ET.parse(os.path.join(os.getcwd(), EXTRACT_TO, course_export, "vertical", vertical_file))
+					root = tree.getroot()
+
+					vertical = vertical_file.replace(".xml", "")
+					display_name = vertical
+					if "display_name" in root.attrib:
+						display_name = root.attrib["display_name"]
+
+					entry_dict = { "_id" : { "tag" : tag, "org" : org, "course" : course, "category" : "vertical", \
+							"name" : vertical, "revision" : None }, "definition" : { \
+							"children" : [], "data": {} }, "metadata" : { "start" : "", "xml_attributes" : \
+							{ "filename" : ["vertical/" + vertical_file] }, "display_name" : display_name } }
+
+					# update content_linker
+					if not vertical in content_linker["vertical"]:
+						content_linker["vertical"][vertical] = [ None, [], None ]
+					content_linker["vertical"][vertical][0] = display_name
+
+					# store modules into children of entry
+					for module in root:
+						module_type = module.tag
+						module_name = module.attrib["url_name"]
+
+						child = tag + "://" + org + "/" + course + "/" + module_type + "/" + module_name
+						entry_dict["definition"]["children"].append(child)
+						
+						# update content_linker
+						# content_linker["vertical"][vertical][0] = display_name
+						content_linker["vertical"][vertical][1].append((module_type, module_name))
+						if not module_type in content_linker:
+							content_linker[module_type] = {}
+						content_linker[module_type][module_name] = [ None, [], ("vertical", vertical)] 
+						
+						# add to list of module_types if not there
+						if not module_type in module_list: 
+							module_list.append(module_type)
+					output.append(entry_dict)
+				sys.stdout.write("success!\n")
+			except Exception as err:
+				log(logfile, err)
+				sys.stdout.write("failure... :(\n")
+
+			# parse each module type's folder of course export
+			# have to determine how to read "data" in for diff. module types
+			try:
+				for module in module_list:
+					sys.stdout.write("Parsing module '" + str(module) + "'...\t")
+					try:
+						module_type = str(module)
+						files = os.listdir(os.path.join(os.getcwd(), EXTRACT_TO, course_export, module_type))
+						
+						for module_file in files:
+							if module_file.endswith('.xml'):
+								name = module_file.replace(".xml", "")
+								
+								data = ""
+								tree = ET.parse(os.path.join(os.getcwd(), EXTRACT_TO, course_export, module_type, module_file))
+								root = tree.getroot()
+
+								if module_type == "problem":
+									data = ET.tostring(root)
+								elif module_type == "video":
+									# xml attributes will be parsed below
+									pass
+								elif module_type == "html":
+									# add html contents to data
+									filePath = os.path.join(os.getcwd(), EXTRACT_TO, course_export, module_type, name + ".html")
+									if os.path.isfile(filePath):
+										html_data = open(filePath)
+										data = html_data.read()
+								else:
+									pass
+
+								# display_name of a module is the display_name of its vertical
+								module_parent = content_linker[module_type][name][2][0]
+								module_parent_hash = content_linker[module_type][name][2][1]
+								
+								if "display_name" not in root.attrib:
+									display_name = content_linker[module_parent][module_parent_hash][0]
+								else: 
+									display_name = root.attrib["display_name"]
+								
+								content_linker[module_type][name][0] = display_name
+
+								f = open(os.path.join(os.getcwd(), EXTRACT_TO, course_export, module_type, module_file), "r")
+								entry_dict = { "_id" : { "tag" : tag, "org" : org, "course" : course, "category" : module_type, \
+					                    "name" : name, "revision" : None }, "definition" : { \
+					                    "data": data }, "metadata" : { "xml_attributes" : \
+					                    { "filename" : [ module_type + "/" + module_file ] }, "display_name" : display_name } }
+					            
+								for attribute in root.attrib:
+									entry_dict["metadata"]["xml_attributes"][attribute] = root.attrib[attribute]
+								
+								output.append(entry_dict)
+						sys.stdout.write("success!\n")					
+					except OSError:
+						print "No '" + module_type + "' folder in this course..."
+						pass
+			except Exception as err:
+				log(logfile, err)
+				sys.stdout.write("failure... :(\n")
+
+			if PRETTIFY_JSON:
+				json.dump( output, outfile, sort_keys=True, indent=4, separators=(',', ': ') )
+			else:
+				json.dump( output, outfile, sort_keys=True )
+
+	# remove unzipped course export folder from disk to clear space	
+	sys.stdout.write("Clearing space from extracted course exports...\t")
+	shutil.rmtree(os.path.join(os.getcwd(), EXTRACT_TO))
+	print "success!\n"
+
+if __name__ == '__main__': main()
