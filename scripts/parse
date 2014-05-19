@@ -7,6 +7,8 @@
 # 
 # Github repo: https://github.com/kk415kk/datascrub
 # README: https://github.com/kk415kk/datascrub/README.md
+# NOTES: If the script does not have run permissions, please run "chmod +x parse" to give it 
+# executable permissions.
 #
 # Author: Kevin Kao
 # Email: kkao@berkeley.edu
