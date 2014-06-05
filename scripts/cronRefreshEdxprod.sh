@@ -6,6 +6,10 @@
 # login must have been arranged to the remote machine so
 # that scp works.
 #
+# The -n CL option causes the already existing local copy
+# of edxapp-latest.sql.gz to be used to find the tables, 
+# rather than copying a new one from the backup server.
+#
 # To add tables that are to be included in the load, modify
 # below as follows:
 #
@@ -17,7 +21,7 @@
 
 EDX_PLATFORM_DUMP_MACHINE=jenkins.prod.class.stanford.edu
 
-USAGE='Usage: '`basename $0`' [-u localUbuntuUser][-p][-pLocalMySQLRootPwd]'
+USAGE='Usage: '`basename $0`' [-u localUbuntuUser][-p][-pLocalMySQLRootPwd][-n]'
 
 # If -u is omitted, then unix 'whoami' is used.
 # If option -p is provided, script will request password for
@@ -29,7 +33,15 @@ USAGE='Usage: '`basename $0`' [-u localUbuntuUser][-p][-pLocalMySQLRootPwd]'
 # file .ssh/mysql_root with the password.
 
 # Array of tables to get from edxprod (NOTE: no commas between tables!):
-TABLES=(courseware_studentmodule courseware_studentmodulehistory auth_user certificates_generatedcertificate auth_userprofile external_auth_externalauthmap student_anonymoususerid)
+TABLES=(courseware_studentmodule \
+        courseware_studentmodulehistory \
+        auth_user \
+        certificates_generatedcertificate \
+        auth_userprofile \
+        external_auth_externalauthmap \
+        student_anonymoususerid \
+        student_courseenrollment\
+       )
 
 MYSQL_PASSWD=''
 MYSQL_USERNAME=root
@@ -37,12 +49,13 @@ UBUNTU_USERNAME=`whoami`
 EDXPROD_DUMP_DIR=/home/dataman/Data/FullDumps/EdxAppPlatformDbs
 LOG_FILE=/home/dataman/Data/EdX/NonTransformLogs/refreshEdxprod.log
 needLocalPasswd=false
+# Want to pull a fresh copy of edxapp-latest.sql.gz from backup server,
+# unless find the -n option further down:
+COPY_FROM_PLATFORM_BACKUP=1
 
 # Get directory in which this script is running,
 # and where its support scripts therefore live:
 currScriptsDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-
 
 # ------------------ Process Commandline Options -------------------
 
@@ -52,7 +65,7 @@ currScriptsDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 for arg in $@
 do
    # The sed -r option enables extended regex, which
-   # makes the '+' metachar wor. The -n option
+   # makes the '+' metachar work. The -n option
    # says to print only if pattern matches:
    MYSQL_PASSWD=`echo $arg | sed -r -n 's/-p(.+)/\1/p'`
    if [ -z $MYSQL_PASSWD ]
@@ -70,7 +83,7 @@ done
 # to drop into \? branch:
 NEXT_ARG=0
 
-while getopts ":pu:" opt
+while getopts ":pnu:" opt
 do
   case $opt in
     p)
@@ -80,6 +93,10 @@ do
     u)
       UBUNTU_USERNAME=$OPTARG
       NEXT_ARG=$((NEXT_ARG + 2))
+      ;;
+    n)
+      COPY_FROM_PLATFORM_BACKUP=0
+      NEXT_ARG=$((NEXT_ARG + 1))
       ;;
     \?)
       # If $MYSQL_PASSWD is set, we *assume* that 
@@ -137,8 +154,12 @@ echo `date`": Begin refreshing edxprod."  | tee --append $LOG_FILE
 echo "----------"
 # ------------------ Copy full edxprod dump from prod machine to datastage -------------------
 
-scp $EDX_PLATFORM_DUMP_MACHINE:/data/dump/edxapp-latest.sql.gz \
-    $EDXPROD_DUMP_DIR/
+if [[ COPY_FROM_PLATFORM_BACKUP -eq 1 ]]
+then
+    echo `date`": Begin copying edxapp-latest.sql.gz from backup server."
+    scp $EDX_PLATFORM_DUMP_MACHINE:/data/dump/edxapp-latest.sql.gz \
+	$EDXPROD_DUMP_DIR/
+fi
 
 # ------------------ Ensure Existence of Local Database -------------------
 
