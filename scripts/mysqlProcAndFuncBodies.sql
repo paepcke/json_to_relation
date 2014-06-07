@@ -2,8 +2,8 @@
 # tracking log database and others.
 
 # NOTE: these functions and procedures need to be
-#       defined in both the Edx and EdxPrivate
-#       databases. I tried defining them once
+#       defined in all the databases where they
+#       are needed. I tried defining them once
 #       in Edx, and then replicating a row
 #       in mysql.proc, changing only the database
 #       column content. But it got to crufty, and
@@ -11,6 +11,11 @@
 #
 #       Instead this file is 'source'ed into 
 #       MySQL twice by defineMySQLProcedures.sh.
+
+# NOTE: any function that should only exist in EdxPrivate
+#       has a DROP...<DB>.funcName  statement right after 
+#       its definition. Where <DB> is any db where 
+#       this file might be sourced.
 
 # Set the statement delimiter to something other than ';'
 # so the procedure can use ';':
@@ -323,6 +328,12 @@ END//
 # for outside services, such as Qualtrix
 # or Piazza, return the corresponding
 # anon_screen_name.
+#
+# We drop this function from the public
+# part of the database by DROPping it
+# from Edx, EdxForum, and EdxPiazza right
+# after the definition. This way this file
+# can be sourced anywhere.
 
 DROP FUNCTION IF EXISTS idExt2Anon//
 
@@ -336,6 +347,11 @@ BEGIN
       SELECT idInt2Anon(@int_id) INTO @anon_id;
       return @anon_id;
 END//
+
+DROP FUNCTION IF EXISTS Edx.idExt2Anon//
+DROP FUNCTION IF EXISTS EdxForum.idExt2Anon//
+#DROP FUNCTION IF EXISTS EdxPiazza.idExt2Anon//
+
 
 #--------------------------
 # idAnon2Ext
@@ -379,6 +395,59 @@ BEGIN
       return @ext_id;
       
 END//
+
+#--------------------------
+# isUserEvent
+#-----------
+
+# Returns 1 if given user event was generated
+# by the class participant, rather than the server
+# or instructor.
+
+DROP FUNCTION IF EXISTS isUserEvent //
+CREATE FUNCTION isUserEvent (an_event_type varchar(255))
+RETURNS BOOL
+BEGIN
+    IF 	 an_event_type = 'book' OR 
+	 an_event_type = 'fullscreen' OR 
+	 an_event_type = 'hide_transcript' OR 
+	 an_event_type = 'hide_transcript' OR 
+	 an_event_type = 'load_video' OR 
+	 an_event_type = 'not_fullscreen' OR 
+	 an_event_type = 'oe_feedback_response_selected' OR 
+	 an_event_type = 'oe_hide_question' OR 
+	 an_event_type = 'oe_show_question' OR 
+	 an_event_type = 'oe_show_full_feedback' OR 
+	 an_event_type = 'oe_show_respond_to_feedback' OR 
+	 an_event_type = 'page_close' OR 
+	 an_event_type = 'pause_video' OR 
+	 an_event_type = 'peer_grading_hide_question' OR 
+	 an_event_type = 'peer_grading_show_question' OR 
+	 an_event_type = 'play_video' OR 
+	 an_event_type = 'problem_check' OR 
+	 an_event_type = 'problem_check_fail' OR 
+	 an_event_type = 'problem_fail' OR 
+	 an_event_type = 'problem_graded' OR 
+	 an_event_type = 'problem_reset' OR 
+	 an_event_type = 'problem_save' OR 
+	 an_event_type = 'problem_show' OR 
+	 an_event_type = 'rubric_select' OR 
+	 an_event_type = 'seek_video' OR 
+	 an_event_type = 'seq_goto' OR 
+	 an_event_type = 'seq_next' OR 
+	 an_event_type = 'seq_prev' OR 
+	 an_event_type = 'save_problem_check_fail' OR 
+	 an_event_type = 'show_transcript' OR 
+	 an_event_type = 'speed_change_video' OR 
+	 an_event_type = 'staff_grading_hide_question' OR 
+	 an_event_type = 'staff_grading_show_question'
+
+   THEN
+       RETURN 1;
+   ELSE
+       RETURN 0;
+   END IF;
+END;//
 
 #--------------------------
 # createExtIdMapByCourse
