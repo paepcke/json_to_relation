@@ -358,15 +358,13 @@ END//
 
 DROP FUNCTION IF EXISTS idAnon2Ext//
 
-DROP FUNCTION IF EXISTS idAnon2Ext;
-CREATE FUNCTION idAnon2Ext(the_anon_id varchar(40), the_course_id varchar(255)) 
+CREATE FUNCTION idAnon2Ext(the_anon_id varchar(42))
 RETURNS varchar(32)
 BEGIN
       SELECT -1 INTO @int_id;
       SELECT user_int_id INTO @int_id
       FROM EdxPrivate.UserGrade
-      WHERE anon_screen_name = the_anon_id
-        AND course_id = the_course_id;
+      WHERE anon_screen_name = the_anon_id;
 
       IF @int_id < 0
       THEN 
@@ -376,9 +374,10 @@ BEGIN
       SELECT anonymous_user_id INTO @ext_id
       FROM edxprod.student_anonymoususerid
       WHERE user_id = @int_id
-        AND course_id = the_course_id;
-      
+        AND CHAR_LENGTH(course_id) = 0;
+
       return @ext_id;
+      
 END//
 
 #--------------------------
