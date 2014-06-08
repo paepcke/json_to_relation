@@ -1,64 +1,64 @@
-getQuarterStartDate = function(thisYear, quarter) {
+// ------------------  Class CourseInfoExtractor ----------------------
+
+//Class definition/constructor:
+function CourseInfoExtractor() {
+    this.allQuartersArr = ["fall", "winter", "spring", "summer"];
+}
+
+CourseInfoExtractor.prototype.getQuarterStartDate = function(thisYear, quarter) {
     switch (quarter) {
     case "fall":
 	return(thisYear     + "-09-10T07:59:00Z");
 	break;
     case "winter":
-	return((thisYear+1) + "-01-01T07:59:00Z");
+	return((Number(thisYear)+1) + "-01-01T07:59:00Z");
 	break;
     case "spring":
-	return((thisYear+1) + "-03-01T07:59:00Z");
+	return((Number(thisYear)+1) + "-03-01T07:59:00Z");
 	break;
     case "summer":
-	return((thisYear+1) + "-06-15T07:59:00Z");
+	return((Number(thisYear)+1) + "-06-15T07:59:00Z");
 	break;
     }
 }
 
-getQuarterFromDate = function(dateStr) {
+CourseInfoExtractor.prototype.getQuarterFromDate = function(dateStr) {
     
 }
 
-getQuartersDuration = function(startCalDate, endCalDate) {
+CourseInfoExtractor.prototype.getQuartersDuration = function(startCalDate, endCalDate) {
     startDate = new Date(startCalDate);
     endDate   = new Date(endCalDate);
     numQuarters = 0;
     
 }
 
-getNextQuarter = function(thisQuarter) {
-    // Relies on thisQuarter being one of 
-    // "fall", "winter", "spring", or "summer".
-    // No error check
-    // Fake a static, local variable:
-    if ( typeof getNextQuarter.allQuartersArr == 'undefined' ) {
-        // allQuartersArr has not been defined yet:
-        getNextQuarter.allQuartersArr = ["fall", "winter", "spring", "summer"];
+CourseInfoExtractor.prototype.getNextQuarter = function(thisQuarter) {
+    thisQuarterIndx = this.allQuartersArr.indexOf(thisQuarter);
+    if (thisQuarterIndx == this.allQuartersArr.length - 1) {
+	return this.allQuartersArr[0];
     }
-    quartersArr = getNextQuarter.allQuartersArr;
-    thisQuarterIndx = quartersArr.indexOf(thisQuarter);
-    if (thisQuarterIndx == quartersArr.length - 1) {
-	return quartersArr[0];
-    }
-    return(quartersArr[thisQuarterIndx + 1])
+    return(this.allQuartersArr[thisQuarterIndx + 1])
 }
 
-createCourseCSV = function(year, quarterToDo) {
+CourseInfoExtractor.prototype.createCourseCSV = function(academicYear, quartersToDo) {
     // Create CSV with course info, and print to stdout.
     // If "year" is 0, include all years on record.
     // If "quarter" is "all", include all quarters.
 
+    this.year = academicYear;
+    this.quartersToDo  = quartersToDo;
     var quartersToCover = [];
-    if (quarterToDo == 'all') {
+    if (this.quartersToDo == 'all') {
 	quartersToCover = ["fall", "winter", "spring", "summer"];
     } else {
-	quartersToCover.push(quarterToDo);
+	quartersToCover.push(this.quartersToDo);
     }
 
     var quarterStartDate;
     var nextQuarterStartDate;
     var moreYearsToDo = true;
-    var thisAcademicYear = year;
+    var thisAcademicYear = this.year;
     var currYear = new Date().getFullYear();
     var theQuarterIndx  = 0;
     var nextQuarterIndx = 1;
@@ -81,8 +81,8 @@ createCourseCSV = function(year, quarterToDo) {
 
     while (moreYearsToDo) {
 	var currQuarter = quartersToCover[theQuarterIndx];
-	quarterStartDate = getQuarterStartDate(thisAcademicYear, currQuarter);
-	nextQuarterStartDate = getQuarterStartDate(thisAcademicYear, getNextQuarter(currQuarter));
+	quarterStartDate = this.getQuarterStartDate(thisAcademicYear, currQuarter);
+	nextQuarterStartDate = this.getQuarterStartDate(thisAcademicYear, this.getNextQuarter(currQuarter));
 
 	//***********
 	//print("Quarter start     : " + quarterStartDate);
@@ -121,7 +121,7 @@ createCourseCSV = function(year, quarterToDo) {
 	    // Did all wanted quarters for current academic year:
 	    theQuarterIndx = 0;
 	    // Do just one year?
-	    if (year > 0) {
+	    if (this.year > 0) {
 		// We are to do just one academic year:
 		moreYearsToDo = false;
 		continue;
@@ -149,7 +149,7 @@ createCourseCSV = function(year, quarterToDo) {
 	// Still have quarters to do in current academic year.
 	// Calendar date increments, if switching from
         // Fall quarter to winter:
-	if (currQuarter == "fall" || year == 0) {
+	if (currQuarter == "fall" || this.year == 0) {
 	    // Just did fall quarter, or want all years for one 
 	    // Spring quarter happens in second
 	    // calendar year of the academic year:
