@@ -402,7 +402,9 @@ END//
 
 # Returns 1 if given user event was generated
 # by the class participant, rather than the server
-# or instructor.
+# or instructor. Some events are in fact emitted
+# by the server, but are an indication that participant
+# took an action. Ex.: problem_graded.
 
 DROP FUNCTION IF EXISTS isUserEvent //
 CREATE FUNCTION isUserEvent (an_event_type varchar(255))
@@ -425,9 +427,8 @@ BEGIN
 	 an_event_type = 'peer_grading_show_question' OR 
 	 an_event_type = 'play_video' OR 
 	 an_event_type = 'problem_check' OR 
-	 an_event_type = 'problem_check_fail' OR 
-	 an_event_type = 'problem_fail' OR 
 	 an_event_type = 'problem_graded' OR 
+	 an_event_type = 'problem_fail' OR 
 	 an_event_type = 'problem_reset' OR 
 	 an_event_type = 'problem_save' OR 
 	 an_event_type = 'problem_show' OR 
@@ -436,7 +437,6 @@ BEGIN
 	 an_event_type = 'seq_goto' OR 
 	 an_event_type = 'seq_next' OR 
 	 an_event_type = 'seq_prev' OR 
-	 an_event_type = 'save_problem_check_fail' OR 
 	 an_event_type = 'show_transcript' OR 
 	 an_event_type = 'speed_change_video' OR 
 	 an_event_type = 'staff_grading_hide_question' OR 
@@ -448,6 +448,41 @@ BEGIN
        RETURN 0;
    END IF;
 END;//
+
+#--------------------------
+# isEngagementEvent
+#-----------
+
+# Returns 1 if given event was generated
+# by the class participant during interaction
+# with a class element: video, a problem, or
+# work with peer grading.
+
+DROP FUNCTION IF EXISTS isEngagementEvent //
+CREATE FUNCTION isEngagementEvent (an_event_type varchar(255))
+RETURNS BOOL
+BEGIN
+    IF 	 an_event_type = 'load_video' OR 
+	 an_event_type = 'oe_feedback_response_selected' OR 
+	 an_event_type = 'pause_video' OR 
+	 an_event_type = 'peer_grading_hide_question' OR 
+	 an_event_type = 'peer_grading_show_question' OR 
+	 an_event_type = 'play_video' OR 
+	 an_event_type = 'problem_check' OR 
+	 an_event_type = 'problem_graded' OR 
+	 an_event_type = 'problem_save' OR 
+	 an_event_type = 'seek_video' OR 
+	 an_event_type = 'speed_change_video' OR 
+	 an_event_type = 'staff_grading_hide_question' OR 
+	 an_event_type = 'staff_grading_show_question'
+
+   THEN
+       RETURN 1;
+   ELSE
+       RETURN 0;
+   END IF;
+END;//
+
 
 #--------------------------
 # createExtIdMapByCourse
