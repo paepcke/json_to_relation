@@ -403,7 +403,23 @@ RealDate.prototype.getTimeNoTimezone = function() {
 
 RealDate.prototype.getMySqlDateStr = function() {
     // Return a MySQL datetime-legal string.
-    mySqlDateStr = [this.getYear(), this.getMonth(), this.getDay()].join("-");
+    year = this.getYear();
+    if (year == 0)
+	year = "0000";
+
+    month = this.getMonth();
+    if (month == 0)
+	month = "00";
+    else if (month < 10)
+	month = "0" + month;
+
+    day = this.getDay();
+    if (day == 0)
+	day = "00";
+    else if (day < 10)
+	day = "0" + day;
+
+    mySqlDateStr = [year, month, day].join("-");
     mySqlStr = mySqlDateStr + ' ' + this.getTimeNoTimezone();
     return mySqlStr;
 }
