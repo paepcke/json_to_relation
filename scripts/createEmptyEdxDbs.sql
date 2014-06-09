@@ -45,6 +45,17 @@ CREATE TABLE IF NOT EXISTS State (
     FOREIGN KEY(correct_map) REFERENCES CorrectMap(correct_map_id) ON DELETE CASCADE,
     FOREIGN KEY(input_state) REFERENCES InputState(input_state_id) ON DELETE CASCADE
     ) ENGINE=MyISAM;
+CREATE TABLE IF NOT EXISTS CourseInfo (
+    course_display_name varchar(255),
+    course_catalog_name varchar(255),
+    academic_year int,
+    quarter varchar(7),
+    num_quarters int,
+    is_internal tinyint,
+    enrollment_start datetime,
+    start_date datetime,
+    end_date datetime
+) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS Account (
     account_id VARCHAR(40) NOT NULL PRIMARY KEY,
     screen_name TEXT NOT NULL,
