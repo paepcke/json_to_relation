@@ -2,6 +2,9 @@
 
 //Class definition/constructor:
 function CourseInfoExtractor() {
+
+    this.stanfordEnrollDomain = "shib:https://idp.stanford.edu/";
+
     this.allQuartersArr = ["fall", "winter", "spring", "summer"];
     // To change start month/day of quarter starts, 
     // change the following four partial month-dayTtime strings:
@@ -219,7 +222,7 @@ CourseInfoExtractor.prototype.createCourseCSV = function(academicYear, quartersT
 	    enrollmentStartDate = new RealDate(enrollmentStartDate).getMySqlDateStr();
 
 	    isInternal = doc.metadata.enrollment_domain;
-	    if (isInternal != undefined || doc._id.org == "ohsx" || doc._id.org == "ohs") {
+	    if (isInternal == this.stanfordEnrollDomain || doc._id.org == "ohsx" || doc._id.org == "ohs") {
 		isInternal = 1;
 	    } else {
 		isInternal = 0;
