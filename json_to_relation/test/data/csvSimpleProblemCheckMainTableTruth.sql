@@ -1,3 +1,8 @@
+-- If loading this file from the Linux commandline or the
+-- MySQL shell, then first remove the '-- ' chars from the
+-- 'ALTER ENABLE KEYS' statements below. Keep those chars 
+-- in place if loading this .sql file via the manageEdxDb.py script,
+-- as you should.
 CREATE DATABASE IF NOT EXISTS Edx;
 CREATE DATABASE IF NOT EXISTS EdxPrivate;
 USE Edx;
@@ -56,7 +61,7 @@ CREATE TABLE IF NOT EXISTS Account (
     zipcode VARCHAR(255) NOT NULL,
     country VARCHAR(255) NOT NULL,
     gender VARCHAR(255) NOT NULL,
-    year_of_birth TINYINT NOT NULL,
+    year_of_birth INT NOT NULL,
     level_of_education VARCHAR(255) NOT NULL,
     goals TEXT NOT NULL,
     honor_code TINYINT NOT NULL,
@@ -75,7 +80,7 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     zipcode VARCHAR(255) NOT NULL,
     country VARCHAR(255) NOT NULL,
     gender VARCHAR(255) NOT NULL,
-    year_of_birth TINYINT NOT NULL,
+    year_of_birth INT NOT NULL,
     level_of_education VARCHAR(255) NOT NULL,
     goals TEXT NOT NULL,
     honor_code TINYINT NOT NULL,
@@ -154,7 +159,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     correctMap_fk VARCHAR(40) NOT NULL,
     answer_fk VARCHAR(40) NOT NULL,
     state_fk VARCHAR(40) NOT NULL,
-    load_info_fk INT NOT NULL,
+    load_info_fk VARCHAR(40) NOT NULL,
     FOREIGN KEY(correctMap_fk) REFERENCES CorrectMap(correct_map_id) ON DELETE CASCADE,
     FOREIGN KEY(answer_fk) REFERENCES Answer(answer_id) ON DELETE CASCADE,
     FOREIGN KEY(state_fk) REFERENCES State(state_id) ON DELETE CASCADE,
@@ -169,23 +174,23 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 SET sql_log_bin=0;
-LOAD DATA LOCAL INFILE '/tmp/oolalaEANe_C.sql_LoadInfoTable.csv' IGNORE INTO TABLE LoadInfo FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
-LOAD DATA LOCAL INFILE '/tmp/oolalaEANe_C.sql_InputStateTable.csv' IGNORE INTO TABLE InputState FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
-LOAD DATA LOCAL INFILE '/tmp/oolalaEANe_C.sql_StateTable.csv' IGNORE INTO TABLE State FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
-LOAD DATA LOCAL INFILE '/tmp/oolalaEANe_C.sql_CorrectMapTable.csv' IGNORE INTO TABLE CorrectMap FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
-LOAD DATA LOCAL INFILE '/tmp/oolalaEANe_C.sql_AnswerTable.csv' IGNORE INTO TABLE Answer FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
-LOAD DATA LOCAL INFILE '/tmp/oolalaEANe_C.sql_AccountTable.csv' IGNORE INTO TABLE Account FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
-LOAD DATA LOCAL INFILE '/tmp/oolalaEANe_C.sql_EdxTrackEventTable.csv' IGNORE INTO TABLE EdxTrackEvent FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalaXrDo3b.sql_LoadInfoTable.csv' IGNORE INTO TABLE LoadInfo FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalaXrDo3b.sql_InputStateTable.csv' IGNORE INTO TABLE InputState FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalaXrDo3b.sql_StateTable.csv' IGNORE INTO TABLE State FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalaXrDo3b.sql_CorrectMapTable.csv' IGNORE INTO TABLE CorrectMap FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalaXrDo3b.sql_AnswerTable.csv' IGNORE INTO TABLE Answer FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalaXrDo3b.sql_AccountTable.csv' IGNORE INTO TABLE Account FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalaXrDo3b.sql_EdxTrackEventTable.csv' IGNORE INTO TABLE EdxTrackEvent FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
 SET sql_log_bin=1;
-/*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
-/*!40000 ALTER TABLE `State` ENABLE KEYS */;
-/*!40000 ALTER TABLE `InputState` ENABLE KEYS */;
-/*!40000 ALTER TABLE `Answer` ENABLE KEYS */;
-/*!40000 ALTER TABLE `CorrectMap` ENABLE KEYS */;
-/*!40000 ALTER TABLE `LoadInfo` ENABLE KEYS */;
-/*!40000 ALTER TABLE `Account` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `State` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `Answer` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `CorrectMap` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `LoadInfo` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `Account` ENABLE KEYS */;
 UNLOCK TABLES;
-INSERT INTO EdxPrivate.Account (account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) SELECT account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails FROM Edx.Account;
+REPLACE INTO EdxPrivate.Account (account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) SELECT account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails FROM Edx.Account;
 DROP TABLE Edx.Account;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

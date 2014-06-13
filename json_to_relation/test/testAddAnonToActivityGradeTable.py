@@ -11,7 +11,7 @@ from collections import OrderedDict
 import datetime
 import unittest
 
-from addAnonToActivityGradeTable import AnonAndModIDAdder
+from json_to_relation.addAnonToActivityGradeTable import AnonAndModIDAdder
 from pymysql_utils.pymysql_utils import MySQLDB
 
 

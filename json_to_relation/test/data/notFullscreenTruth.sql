@@ -1,3 +1,8 @@
+-- If loading this file from the Linux commandline or the
+-- MySQL shell, then first remove the '-- ' chars from the
+-- 'ALTER ENABLE KEYS' statements below. Keep those chars 
+-- in place if loading this .sql file via the manageEdxDb.py script,
+-- as you should.
 CREATE DATABASE IF NOT EXISTS Edx;
 CREATE DATABASE IF NOT EXISTS EdxPrivate;
 USE Edx;
@@ -56,7 +61,7 @@ CREATE TABLE IF NOT EXISTS Account (
     zipcode VARCHAR(255) NOT NULL,
     country VARCHAR(255) NOT NULL,
     gender VARCHAR(255) NOT NULL,
-    year_of_birth TINYINT NOT NULL,
+    year_of_birth INT NOT NULL,
     level_of_education VARCHAR(255) NOT NULL,
     goals TEXT NOT NULL,
     honor_code TINYINT NOT NULL,
@@ -75,7 +80,7 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     zipcode VARCHAR(255) NOT NULL,
     country VARCHAR(255) NOT NULL,
     gender VARCHAR(255) NOT NULL,
-    year_of_birth TINYINT NOT NULL,
+    year_of_birth INT NOT NULL,
     level_of_education VARCHAR(255) NOT NULL,
     goals TEXT NOT NULL,
     honor_code TINYINT NOT NULL,
@@ -154,7 +159,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     correctMap_fk VARCHAR(40) NOT NULL,
     answer_fk VARCHAR(40) NOT NULL,
     state_fk VARCHAR(40) NOT NULL,
-    load_info_fk INT NOT NULL,
+    load_info_fk VARCHAR(40) NOT NULL,
     FOREIGN KEY(correctMap_fk) REFERENCES CorrectMap(correct_map_id) ON DELETE CASCADE,
     FOREIGN KEY(answer_fk) REFERENCES Answer(answer_id) ON DELETE CASCADE,
     FOREIGN KEY(state_fk) REFERENCES State(state_id) ON DELETE CASCADE,
@@ -169,18 +174,18 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('ceea8de6_9520_4564_9abb_a6897cf1a650','2013120502371386239850','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/notFullscreen.json');
+    ('3283ac728f1f47be04c37aa6947a7eb1da5c85fc','2014-06-12T15:13:01.268316','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/notFullscreen.json');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('45e31f38_a8c8_491b_a4b0_78511aa81cb6','c8d73896_66bc_481d_b9a5_92c083c08bb4','Mozilla/5.0 (Windows NT 6.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','browser','not_fullscreen','121.6.140.40','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/2b2015b2980d4acd8a94d97fde9a493b/','b1153dbe6380815b757b9f780cc9b7c9','2013-06-29T08:04:54.323284+00:00','48cd10de33f015577b531f58bcf50ea3336d5bb0','0:00:00','','','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/2b2015b2980d4acd8a94d97fde9a493b/','Medicine/HRP258/Statistics_in_Medicine','Module 5, part 1','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'i4x-Medicine-HRP258-videoalpha-c5cbefddbd55429b8a796a6521b9b752','html5','661.101013184','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','ceea8de6_9520_4564_9abb_a6897cf1a650');
-/*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
-/*!40000 ALTER TABLE `State` ENABLE KEYS */;
-/*!40000 ALTER TABLE `InputState` ENABLE KEYS */;
-/*!40000 ALTER TABLE `Answer` ENABLE KEYS */;
-/*!40000 ALTER TABLE `CorrectMap` ENABLE KEYS */;
-/*!40000 ALTER TABLE `LoadInfo` ENABLE KEYS */;
-/*!40000 ALTER TABLE `Account` ENABLE KEYS */;
+    ('db62a021_2439_46f8_84a4_8e6edde03e27','8690b910_8385_4610_9adf_13f3c52ac15e','Mozilla/5.0 (Windows NT 6.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','browser','not_fullscreen','121.6.140.40','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/2b2015b2980d4acd8a94d97fde9a493b/','b1153dbe6380815b757b9f780cc9b7c9','2013-06-29T08:04:54.323284+00:00','48cd10de33f015577b531f58bcf50ea3336d5bb0','0:00:00','','','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/2b2015b2980d4acd8a94d97fde9a493b/','Medicine/HRP258/Statistics_in_Medicine','Module 5, part 1','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'i4x-Medicine-HRP258-videoalpha-c5cbefddbd55429b8a796a6521b9b752','html5','661.101013184','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','3283ac728f1f47be04c37aa6947a7eb1da5c85fc');
+-- /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `State` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `Answer` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `CorrectMap` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `LoadInfo` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `Account` ENABLE KEYS */;
 UNLOCK TABLES;
-INSERT INTO EdxPrivate.Account (account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) SELECT account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails FROM Edx.Account;
+REPLACE INTO EdxPrivate.Account (account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) SELECT account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails FROM Edx.Account;
 DROP TABLE Edx.Account;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

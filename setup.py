@@ -1,5 +1,9 @@
 import multiprocessing
 from setuptools import setup, find_packages
+
+
+test_requirements = ['mongomock>=1.0.1', 'sentinels>=0.0.6', 'nose>=1.0', 'python-dateutil>=2.2']
+
 setup(
     name = "json_to_relation",
     version = "0.3",
@@ -7,6 +11,7 @@ setup(
 
     # Dependencies on other packages:
     setup_requires   = ['nose>=1.1.2'],
+    tests_require    = test_requirements,
     install_requires = ['ijson>=1.0', 
 			'pymongo>=2.6.2', 
 			#'pymysql3>=0.5', 
@@ -16,8 +21,7 @@ setup(
 			'unidecode>=0.04.14', 
 			'boto>=2.16.0',
 			'python-daemon>=1.5.5'
-			],
-    tests_require    = ['mongomock>=1.0.1', 'sentinels>=0.0.6', 'nose>=1.0'],
+			] + test_requirements,
 
     # Unit tests; they are initiated via 'python setup.py test'
     #test_suite       = 'json_to_relation/test',

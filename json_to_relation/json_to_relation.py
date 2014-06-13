@@ -358,9 +358,10 @@ class JSONToRelation(object):
         if self.destination.getOutputFormat() != self.destination.OutputFormat.SQL_INSERT_STATEMENTS: 
             if prependColHeader:
                 savedFinalOutDest = self.destination
-                (tmpFd, self.tmpFileName)  = tempfile.NamedTemporaryFile(suffix='.csv',prefix='jsonToRelationTmp')
-                os.close(tmpFd)
-                self.destination = OutputFile(self.tmpFileName)
+                tmpFd  = tempfile.NamedTemporaryFile(suffix='.csv',prefix='jsonToRelationTmp')
+                self.tmpFileName = tmpFd.name
+                tmpFd.close()
+                self.destination = OutputFile(self.tmpFileName, OutputDisposition.OutputFormat.CSV)
 
         with self.destination as outFd, self.jsonSource as inFd:
             for jsonStr in inFd:

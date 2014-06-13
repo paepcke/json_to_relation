@@ -1,3 +1,8 @@
+-- If loading this file from the Linux commandline or the
+-- MySQL shell, then first remove the '-- ' chars from the
+-- 'ALTER ENABLE KEYS' statements below. Keep those chars 
+-- in place if loading this .sql file via the manageEdxDb.py script,
+-- as you should.
 CREATE DATABASE IF NOT EXISTS Edx;
 CREATE DATABASE IF NOT EXISTS EdxPrivate;
 USE Edx;
@@ -56,7 +61,7 @@ CREATE TABLE IF NOT EXISTS Account (
     zipcode VARCHAR(255) NOT NULL,
     country VARCHAR(255) NOT NULL,
     gender VARCHAR(255) NOT NULL,
-    year_of_birth TINYINT NOT NULL,
+    year_of_birth INT NOT NULL,
     level_of_education VARCHAR(255) NOT NULL,
     goals TEXT NOT NULL,
     honor_code TINYINT NOT NULL,
@@ -75,7 +80,7 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     zipcode VARCHAR(255) NOT NULL,
     country VARCHAR(255) NOT NULL,
     gender VARCHAR(255) NOT NULL,
-    year_of_birth TINYINT NOT NULL,
+    year_of_birth INT NOT NULL,
     level_of_education VARCHAR(255) NOT NULL,
     goals TEXT NOT NULL,
     honor_code TINYINT NOT NULL,
@@ -154,7 +159,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     correctMap_fk VARCHAR(40) NOT NULL,
     answer_fk VARCHAR(40) NOT NULL,
     state_fk VARCHAR(40) NOT NULL,
-    load_info_fk INT NOT NULL,
+    load_info_fk VARCHAR(40) NOT NULL,
     FOREIGN KEY(correctMap_fk) REFERENCES CorrectMap(correct_map_id) ON DELETE CASCADE,
     FOREIGN KEY(answer_fk) REFERENCES Answer(answer_id) ON DELETE CASCADE,
     FOREIGN KEY(state_fk) REFERENCES State(state_id) ON DELETE CASCADE,
@@ -169,21 +174,21 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('91083f06_5777_4362_885d_8fd9033c66ce','2013120502371386239851','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemCheckInPath.json');
+    ('5104646c807396d822b162eeeb98a079f84f2bdb','2014-06-12T15:13:02.683870','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemCheckInPath.json');
 INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
-    ('3b359d39_1867_4010_9685_c18fe8e9174d','input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1','choice_3','Medicine/HRP258/Statistics_in_Medicine');
+    ('2a2c38b0_61ea_4880_a41c_ff39ddaaefe3','input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1','choice_3','Medicine/HRP258/Statistics_in_Medicine');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('52540690_1151_4d47_9d62_73846d8023e4','5978b246_279b_46d3_9d4e_1c4fb497fd26','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/courses/Medicine/HRP258/Statistics_in_Medicine/modx/i4x://Medicine/HRP258/problem/f0b292c175f54714b41a1b05d905dbd3/problem_check','46.12.124.66','','','2013-06-13T09:20:11.156214','3bbdb4f28c1831407f69180b754c28f5dd116cd7','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','Medicine/HRP259/Fall2013','Quiz','','',-1,-1,'input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','3b359d39_1867_4010_9685_c18fe8e9174d','','91083f06_5777_4362_885d_8fd9033c66ce'),
-    ('6b3112a2_ecc1_4cf4_83a4_c6d274f5fce4','5978b246_279b_46d3_9d4e_1c4fb497fd26','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/courses/Medicine/HRP258/Statistics_in_Medicine/modx/i4x://Medicine/HRP258/problem/f0b292c175f54714b41a1b05d905dbd3/problem_check','46.12.124.66','','','2013-06-13T09:20:11.156214','3bbdb4f28c1831407f69180b754c28f5dd116cd7','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','Medicine/HRP259/Fall2013','Quiz','','',-1,-1,'input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','3b359d39_1867_4010_9685_c18fe8e9174d','','91083f06_5777_4362_885d_8fd9033c66ce');
-/*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
-/*!40000 ALTER TABLE `State` ENABLE KEYS */;
-/*!40000 ALTER TABLE `InputState` ENABLE KEYS */;
-/*!40000 ALTER TABLE `Answer` ENABLE KEYS */;
-/*!40000 ALTER TABLE `CorrectMap` ENABLE KEYS */;
-/*!40000 ALTER TABLE `LoadInfo` ENABLE KEYS */;
-/*!40000 ALTER TABLE `Account` ENABLE KEYS */;
+    ('b9563a49_52ce_4918_9f56_2025597abc6b','fc96fac9_e66f_4b8c_82fd_ffabf1c7ee7e','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/courses/Medicine/HRP258/Statistics_in_Medicine/modx/i4x://Medicine/HRP258/problem/f0b292c175f54714b41a1b05d905dbd3/problem_check','46.12.124.66','','','2013-06-13T09:20:11.156214','3bbdb4f28c1831407f69180b754c28f5dd116cd7','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','Medicine/HRP-258/Spring2014','Quiz','','',-1,-1,'input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','2a2c38b0_61ea_4880_a41c_ff39ddaaefe3','','5104646c807396d822b162eeeb98a079f84f2bdb'),
+    ('3161e9df_207d_4b2e_8035_13a4544fe9f7','fc96fac9_e66f_4b8c_82fd_ffabf1c7ee7e','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/courses/Medicine/HRP258/Statistics_in_Medicine/modx/i4x://Medicine/HRP258/problem/f0b292c175f54714b41a1b05d905dbd3/problem_check','46.12.124.66','','','2013-06-13T09:20:11.156214','3bbdb4f28c1831407f69180b754c28f5dd116cd7','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','Medicine/HRP-258/Spring2014','Quiz','','',-1,-1,'input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','2a2c38b0_61ea_4880_a41c_ff39ddaaefe3','','5104646c807396d822b162eeeb98a079f84f2bdb');
+-- /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `State` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `Answer` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `CorrectMap` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `LoadInfo` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `Account` ENABLE KEYS */;
 UNLOCK TABLES;
-INSERT INTO EdxPrivate.Account (account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) SELECT account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails FROM Edx.Account;
+REPLACE INTO EdxPrivate.Account (account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) SELECT account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails FROM Edx.Account;
 DROP TABLE Edx.Account;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

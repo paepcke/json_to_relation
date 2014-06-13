@@ -6,14 +6,16 @@ import tempfile
 import unittest
 
 from json_to_relation.col_data_type import ColDataType
-from json_to_relation.input_source import InputSource, InURI, InString, InMongoDB, InPipe #@UnusedImport
+from json_to_relation.edxTrackLogJSONParser import EdXTrackLogJSONParser
+from json_to_relation.input_source import InputSource, InURI, InString, \
+    InMongoDB, InPipe #@UnusedImport
 from json_to_relation.json_to_relation import JSONToRelation
 from json_to_relation.output_disposition import ColumnSpec, OutputPipe, \
     OutputDisposition, OutputFile
 
 
 #from input_source import InURI
-TEST_ALL = True
+TEST_ALL = False
 
 class TestJSONToRelation(unittest.TestCase):
     
@@ -25,6 +27,8 @@ class TestJSONToRelation(unittest.TestCase):
                                             OutputPipe(OutputDisposition.OutputFormat.CSV),
                                             logFile=self.tmpLogFile.name
                                             )
+        edxJsonToRelParser = EdXTrackLogJSONParser(self.fileConverter, "EdxTrackEvent")
+        self.fileConverter.jsonParserInstance = edxJsonToRelParser
         # Remove various test output files if it exists:
         try:
             os.remove("testOutput.csv")
@@ -80,7 +84,7 @@ class TestJSONToRelation(unittest.TestCase):
         newName = self.fileConverter.ensureLegalIdentifierChars('fo"o\'bar')
         self.assertEqual("'fo\"o\'\'bar'", newName)
 
-    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")        
+    #******@unittest.skipIf(not TEST_ALL, "Temporarily disabled")        
     def test_simple_json(self):
         # Prints output to display, which we can't catch without
         # fuzzing with stdout. So just ensure no error happens: 
@@ -89,9 +93,10 @@ class TestJSONToRelation(unittest.TestCase):
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def test_simple_json_to_file(self):
         self.fileConverter = JSONToRelation(self.stringSource, 
-                                            OutputFile("testOutput.csv"),
-                                            outputFormat = OutputDisposition.OutputFormat.CSV,
+                                            OutputFile("testOutput.csv", OutputDisposition.OutputFormat.CSV)
                                             )
+        edxJsonToRelParser = EdXTrackLogJSONParser(self.fileConverter, "EdxTrackEvent")
+        self.fileConverter.jsonParserInstance = edxJsonToRelParser
         self.fileConverter.convert()
         expected = "asset,sainani.jpg,HRP258,c4x,Medicine,,image/jpeg,sainani.jpg,262144,/c4x/Medicine/HRP258/asset/sainani.jpg," +\
                     "22333,,2013-05-08T22:47:09.762Z,,ebcb2a60b0d6b7475c4e9a102b82637b\n" +\
@@ -102,9 +107,10 @@ class TestJSONToRelation(unittest.TestCase):
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def test_json_to_file_with_col_header(self):
         self.fileConverter = JSONToRelation(self.stringSource, 
-                                            OutputFile("testOutputWithHeader.csv"),
-                                            outputFormat = OutputDisposition.OutputFormat.CSV,
+                                            OutputFile("testOutputWithHeader.csv", OutputDisposition.OutputFormat.CSV),
                                             )
+        edxJsonToRelParser = EdXTrackLogJSONParser(self.fileConverter, "EdxTrackEvent")
+        self.fileConverter.jsonParserInstance = edxJsonToRelParser
         self.fileConverter.convert(prependColHeader=True)
         expected = '"""_id.category""","""_id.name""","""_id.course""","""_id.tag""","""_id.org""","""_id.revision""",contentType,' +\
                    'displayname,chunkSize,filename,length,import_path,"""uploadDate.$date""",thumbnail_location,md5\n' +\
@@ -119,9 +125,10 @@ class TestJSONToRelation(unittest.TestCase):
     def test_arrays(self):
         source = InURI(os.path.join(os.path.dirname(__file__),"data/jsonArray.json"))
         self.fileConverter = JSONToRelation(source, 
-                                            OutputFile("testArrays.csv"),
-                                            outputFormat = OutputDisposition.OutputFormat.CSV,
+                                            OutputFile("testArrays.csv", OutputDisposition.OutputFormat.CSV),
                                             )
+        edxJsonToRelParser = EdXTrackLogJSONParser(self.fileConverter, "EdxTrackEvent")
+        self.fileConverter.jsonParserInstance = edxJsonToRelParser
         self.fileConverter.convert(prependColHeader=True)
 
 
@@ -129,9 +136,10 @@ class TestJSONToRelation(unittest.TestCase):
     def test_embedded_json_strings_comma_escaping(self):
         source = InURI(os.path.join(os.path.dirname(__file__),"data/tinyEdXTrackLog.json"))
         self.fileConverter = JSONToRelation(source, 
-                                            OutputFile("testTinyEdXImport.csv"),
-                                            outputFormat = OutputDisposition.OutputFormat.CSV,
+                                            OutputFile("testTinyEdXImport.csv", OutputDisposition.OutputFormat.CSV),
                                             )
+        edxJsonToRelParser = EdXTrackLogJSONParser(self.fileConverter, "EdxTrackEvent")
+        self.fileConverter.jsonParserInstance = edxJsonToRelParser
         self.fileConverter.convert(prependColHeader=True)
     
     
@@ -139,9 +147,10 @@ class TestJSONToRelation(unittest.TestCase):
     def test_edX_tracking_import(self):
         source = InURI(os.path.join(os.path.dirname(__file__),"data/edxTrackLogSample.json"))
         self.fileConverter = JSONToRelation(source, 
-                                            OutputFile("testEdXImport.csv"),
-                                            outputFormat = OutputDisposition.OutputFormat.CSV,
+                                            OutputFile("testEdXImport.csv", OutputDisposition.OutputFormat.CSV),
                                             )
+        edxJsonToRelParser = EdXTrackLogJSONParser(self.fileConverter, "EdxTrackEvent")
+        self.fileConverter.jsonParserInstance = edxJsonToRelParser
         self.fileConverter.convert(prependColHeader=True)
 
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
@@ -150,10 +159,11 @@ class TestJSONToRelation(unittest.TestCase):
 
         print("Stress test: importing lots...")
         self.fileConverter = JSONToRelation(source, 
-                                            OutputFile("testEdXStressImport.csv"),
-                                            outputFormat = OutputDisposition.OutputFormat.CSV,
+                                            OutputFile("testEdXStressImport.csv", OutputDisposition.OutputFormat.CSV),
                                             progressEvery=10
                                             )
+        edxJsonToRelParser = EdXTrackLogJSONParser(self.fileConverter, "EdxTrackEvent")
+        self.fileConverter.jsonParserInstance = edxJsonToRelParser
         self.fileConverter.convert(prependColHeader=True)
         print("Stress test done")
         
@@ -161,10 +171,11 @@ class TestJSONToRelation(unittest.TestCase):
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def test_schema_hints(self):
         self.fileConverter = JSONToRelation(self.stringSource, 
-                                            OutputFile("testOutput.csv"),
-                                            outputFormat = OutputDisposition.OutputFormat.CSV,
+                                            OutputFile("testOutput.csv", OutputDisposition.OutputFormat.CSV),
                                             schemaHints = OrderedDict()
                                             )
+        edxJsonToRelParser = EdXTrackLogJSONParser(self.fileConverter, "EdxTrackEvent")
+        self.fileConverter.jsonParserInstance = edxJsonToRelParser
         self.fileConverter.convert()
         schema = self.fileConverter.getSchema()
         #print schema
@@ -174,11 +185,12 @@ class TestJSONToRelation(unittest.TestCase):
 
         self.stringSource = InURI(os.path.join(os.path.dirname(__file__),"data/twoJSONRecords.json"))
         self.fileConverter = JSONToRelation(self.stringSource, 
-                                            OutputFile("testOutput.csv"),
-                                            outputFormat = OutputDisposition.OutputFormat.CSV,
+                                            OutputFile("testOutput.csv", OutputDisposition.OutputFormat.CSV),
                                             schemaHints = OrderedDict({'chunkSize' : ColDataType.INT,
                                                            'length' : ColDataType.INT})
                                             )
+        edxJsonToRelParser = EdXTrackLogJSONParser(self.fileConverter, "EdxTrackEvent")
+        self.fileConverter.jsonParserInstance = edxJsonToRelParser
         self.fileConverter.convert()
         schema = self.fileConverter.getSchema()
         self.assertEqual(['TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'INT', 'TEXT', 'INT', 'TEXT', 'TEXT', 'TEXT', 'TEXT'],
