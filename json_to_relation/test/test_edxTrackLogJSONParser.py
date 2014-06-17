@@ -52,7 +52,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         if not os.path.exists(jsonModulestoreExcerpt):
             raise IOError('Neither OpenEdx hash-to-displayName JSON excerpt from modulestore, nor a cache thereof is available. You need to run cronRefreshModuleStore.sh')
         print("About to load modulestore JSON lookup dict from %s" % jsonModulestoreExcerpt)
-        ModulestoreImporter(jsonModulestoreExcerpt)
+        ModulestoreImporter(jsonModulestoreExcerpt, useCache=True)
         print('Done loading modulestore JSON lookup dict')
     
     def setUp(self):
@@ -1547,7 +1547,10 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                 fileLine = self.tmpFileNamePattern.sub("foo", fileLine)
                 expectedLine = self.tmpFileNamePattern.sub("foo", expectedLine)
                 
-                self.assertEqual(expectedLine.strip(), fileLine.strip())
+                try:
+                    self.assertEqual(expectedLine.strip(), fileLine.strip())
+                except:
+                    print(expectedLine + '\n' + fileLine)
             
             if strFile.readline() != "":
                 # expected is longer than what's in the file:
