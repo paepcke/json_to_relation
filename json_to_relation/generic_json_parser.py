@@ -38,6 +38,10 @@ class GenericJSONParser(object):
         self.totalLinesDoneSoFar = 0
         self.linesSinceLastProgReport = 0
         
+        # Set to True if unittesting, so that warnings are not
+        # printed:
+        self.unittesting = False
+        
         # Dict mapping table names into arrays of column names of that table.
         # These arrays are used with setValInRow() to place values into the
         # correct place in a value row. The entries in the dict get initialized
@@ -210,8 +214,9 @@ class GenericJSONParser(object):
             if value is None:
                 value = defaultVal
         except KeyError:
-            self.logWarn("Unanticipated field name '%s' intended for table '%s' (%s)" %\
-                         (colName, tableName, self.jsonToRelationConverter.makeFileCitation()))
+            if not self.unittesting:
+                self.logWarn("Unanticipated field name '%s' intended for table '%s' (%s)" %\
+                             (colName, tableName, self.jsonToRelationConverter.makeFileCitation()))
             return theRow
             
         targetPos = colSpec.colPos

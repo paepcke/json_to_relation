@@ -5,7 +5,7 @@
 -- as you should.
 CREATE DATABASE IF NOT EXISTS Edx;
 CREATE DATABASE IF NOT EXISTS EdxPrivate;
-USE Edx;
+USE test;
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
@@ -16,7 +16,6 @@ USE Edx;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-DROP TABLE IF EXISTS EdxTrackEvent, Answer, InputState, CorrectMap, State, Account, EdxPrivate.Account, LoadInfo;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE IF NOT EXISTS Answer (
@@ -173,10 +172,15 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `CorrectMap` DISABLE KEYS */;
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
-INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('341ec9bf78470a3f521855d1ba49ec600b36223b','2014-06-12T15:12:59.887063','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/isStudentCalibrated.json');
-INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('d87b69a4_e69d_4174_a64d_0eb86d7292e7','ef7e4ec5_3e5a_473e_a774_587ae41d889a','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/peergrading/ef6ba7f803bb46ebaaf008cde737e3e9/is_student_calibrated','82.9.126.47','','','2013-08-28T20:16:48.720470+00:00','961a46adbb8dbbc5e6fa3e0d7255eae62fc647b7','0:00:00','','','Education/EDUC115N/How_to_Learn_Math','Education/XEDUC115N/Summer2014','Peer Feedback Interface','','',-1,-1,'','','i4x://Education/EDUC115N/combinedopenended/d5b45f4cad82417d961a045e9c28f057','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','341ec9bf78470a3f521855d1ba49ec600b36223b');
+SET sql_log_bin=0;
+LOAD DATA LOCAL INFILE 'testOutput.csv_LoadInfoTable.csv' IGNORE INTO TABLE LoadInfo FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE 'testOutput.csv_InputStateTable.csv' IGNORE INTO TABLE InputState FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE 'testOutput.csv_StateTable.csv' IGNORE INTO TABLE State FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE 'testOutput.csv_CorrectMapTable.csv' IGNORE INTO TABLE CorrectMap FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE 'testOutput.csv_AnswerTable.csv' IGNORE INTO TABLE Answer FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE 'testOutput.csv_AccountTable.csv' IGNORE INTO TABLE Account FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE 'testOutput.csv_EdxTrackEventTable.csv' IGNORE INTO TABLE EdxTrackEvent FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+SET sql_log_bin=1;
 -- /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

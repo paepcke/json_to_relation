@@ -11,7 +11,7 @@ from collections import OrderedDict
 import datetime
 import unittest
 
-from addAnonToActivityGradeTable import AnonAndModIDAdder
+from scripts.addAnonToActivityGradeTable import AnonAndModIDAdder
 from pymysql_utils.pymysql_utils import MySQLDB
 
 
@@ -103,13 +103,13 @@ class TestAddAnonToActivityGrade(unittest.TestCase):
             for rowNum, row in enumerate(self.db.query('SELECT %s FROM ActivityGrade;' % self.allColNames)):
                 #print(row)
                 if rowNum == 0:
-                    self.assertEqual((0, 1, 'myCourse', '3', 10.0, 30.0, '', '', -1, datetime.datetime(2014, 1, 10, 4, 10, 45), datetime.datetime(2014, 2, 10, 10, 14, 40), 'modtype1', '', 'Guided Walkthrough', 'i4x://Carnegie/2013/chapter/1fee4bc0d5384cb4aa7a0d65f3ac5d9b'), 
+                    self.assertEqual((0, 1, 'myCourse', '3', 10.0, 30.0, '', '', -1, datetime.datetime(2014, 1, 10, 4, 10, 45), datetime.datetime(2014, 2, 10, 10, 14, 40), 'modtype1', 'None', 'Guided Walkthrough', 'i4x://Carnegie/2013/chapter/1fee4bc0d5384cb4aa7a0d65f3ac5d9b'), 
                                      row)
                 elif rowNum == 1:
-                    self.assertEqual((1, 2, 'myCourse', '5', 10.0, 50.0, '', '', -1, datetime.datetime(2014, 1, 10, 11, 30, 23), datetime.datetime(2014, 2, 10, 14, 30, 12), 'modtype2', '', 'Evaluation', 'i4x://Carnegie/2013/chapter/5d08d2bae3ac4047bf5abe1d8dd16ac3'),
+                    self.assertEqual((1, 2, 'myCourse', '5', 10.0, 50.0, '', '', -1, datetime.datetime(2014, 1, 10, 11, 30, 23), datetime.datetime(2014, 2, 10, 14, 30, 12), 'modtype2', 'None', 'Evaluation', 'i4x://Carnegie/2013/chapter/5d08d2bae3ac4047bf5abe1d8dd16ac3'),
                                      row)
                 elif rowNum == 2:
-                    self.assertEqual((2, 3, 'yourCourse', '8', 10.0, 80.0, '', '', -1, datetime.datetime(2014, 1, 10, 18, 34, 12), datetime.datetime(2014, 2, 10, 19, 10, 33), 'modtype2', '', 'Introduction', 'i4x://Carnegie/2013/chapter/9a9455cd30bd4c14819542bcd11bfcf8'),
+                    self.assertEqual((2, 3, 'yourCourse', '8', 10.0, 80.0, '', '', -1, datetime.datetime(2014, 1, 10, 18, 34, 12), datetime.datetime(2014, 2, 10, 19, 10, 33), 'modtype2', 'None', 'Introduction', 'i4x://Carnegie/2013/chapter/9a9455cd30bd4c14819542bcd11bfcf8'),
                                      row)         
         finally:
             self.db.close()

@@ -13,12 +13,12 @@ import sys
 import tempfile
 import unittest
 
-from edxTrackLogJSONParser import EdXTrackLogJSONParser
-from input_source import InURI
+from json_to_relation.edxTrackLogJSONParser import EdXTrackLogJSONParser
+from json_to_relation.input_source import InURI
 from json_to_relation.json_to_relation import JSONToRelation
-from locationManager import LocationManager
-from modulestoreImporter import ModulestoreImporter
-from output_disposition import OutputDisposition, ColDataType, TableSchemas, \
+from json_to_relation.locationManager import LocationManager
+from json_to_relation.modulestoreImporter import ModulestoreImporter
+from json_to_relation.output_disposition import OutputDisposition, ColDataType, TableSchemas, \
     ColumnSpec, OutputFile, OutputPipe # @UnusedImport
 
 
@@ -52,7 +52,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         if not os.path.exists(jsonModulestoreExcerpt):
             raise IOError('Neither OpenEdx hash-to-displayName JSON excerpt from modulestore, nor a cache thereof is available. You need to run cronRefreshModuleStore.sh')
         print("About to load modulestore JSON lookup dict from %s" % jsonModulestoreExcerpt)
-        ModulestoreImporter(jsonModulestoreExcerpt)
+        ModulestoreImporter(jsonModulestoreExcerpt, useCache=True)
         print('Done loading modulestore JSON lookup dict')
     
     def setUp(self):
@@ -61,8 +61,11 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         self.hashLookupDict = TestEdxTrackLogJSONParser.hashLookupDict  
         self.uuidRegex = '[a-f0-9]{8}_[a-f0-9]{4}_[a-f0-9]{4}_[a-f0-9]{4}_[a-f0-9]{12}'
         self.pattern   = re.compile(self.uuidRegex)
-        # Match yyyymmddhhmmss<8msecDigits>:
-        self.timestampRegex = r'[1-2][0-9][0-1][0-9][0-1][0-9][0-3][0-9][0-2][0-9][0-5][0-9][0-5][0-9][0-9]{8}'
+        # Match ISO 8601 strings:
+        #self.timestampRegex = r'[1-2][0-9][0-1][0-9][0-1][0-9][0-3][0-9][0-2][0-9][0-5][0-9][0-5][0-9][0-9]{8}'
+        #self.timestampRegex = r'[1-2][0-9]{3}-[0-1][1-9]-[0-3]{2}T[0-2][0-9]:[0-6][0-9]:[0-6][0-9].[0-9]{0:6}Z'
+        #self.timestampRegex = r'[1-2][0-9]{3}-[0-1][1-9]-[0-3]{2}T[0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{0,6}Z{0,1}'
+        self.timestampRegex = r'[1-2][0-9]{3}-[0-1][1-9]-[0-3][0-9]T[0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{0,6}Z{0,1}'
         self.timestampPattern = re.compile(self.timestampRegex)
         # Pattern that recognizes our tmp files. They start with
         # 'oolala', followed by random junk, followed by a period and
@@ -1545,7 +1548,10 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                 fileLine = self.tmpFileNamePattern.sub("foo", fileLine)
                 expectedLine = self.tmpFileNamePattern.sub("foo", expectedLine)
                 
-                self.assertEqual(expectedLine.strip(), fileLine.strip())
+                try:
+                    self.assertEqual(expectedLine.strip(), fileLine.strip())
+                except:
+                    print(expectedLine + '\n' + fileLine)
             
             if strFile.readline() != "":
                 # expected is longer than what's in the file:

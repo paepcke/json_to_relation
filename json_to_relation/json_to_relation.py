@@ -358,9 +358,13 @@ class JSONToRelation(object):
         if self.destination.getOutputFormat() != self.destination.OutputFormat.SQL_INSERT_STATEMENTS: 
             if prependColHeader:
                 savedFinalOutDest = self.destination
-                (tmpFd, self.tmpFileName)  = tempfile.NamedTemporaryFile(suffix='.csv',prefix='jsonToRelationTmp')
-                os.close(tmpFd)
-                self.destination = OutputFile(self.tmpFileName)
+                tmpFd  = tempfile.NamedTemporaryFile(suffix='.csv',prefix='jsonToRelationTmp')
+                self.tmpFileName = tmpFd.name
+                tmpFd.close()
+                self.destination = OutputFile(self.tmpFileName, OutputDisposition.OutputFormat.CSV)
+                # Need to transfer the table schemas that were added
+                # to self.destination before this point:
+                savedFinalOutDest.copySchemas(self.destination)
 
         with self.destination as outFd, self.jsonSource as inFd:
             for jsonStr in inFd:
@@ -404,12 +408,18 @@ class JSONToRelation(object):
         # we are to prepend the column header row:
         if prependColHeader and savedFinalOutDest is not None:
             try:
-                with open(self.destination.name, 'rb') as inFd, OutputDisposition(savedFinalOutDest) as finalOutFd:
+                #with open(self.destination.name, 'rb') as inFd, OutputDisposition(savedFinalOutDest) as finalOutFd:
+                with open(self.destination.name, 'rb') as inFd, savedFinalOutDest as finalOutFd:
                     colHeaders = self.getColHeaders()
                     self.pushToTable(colHeaders, finalOutFd)
                     shutil.copyfileobj(inFd, finalOutFd.fileHandle)
             finally:
-                self.tmpFileName.close() # This deletes the file
+                try:
+                    # Will fail for String file inputs, b/c strings 
+                    # don't get closed:
+                    self.tmpFileName.close() # This deletes the file
+                except:
+                    pass
                 
 
     def pushString(self, whatToWrite):
@@ -575,7 +585,7 @@ class JSONToRelation(object):
             if len(self.currValsArray) == 0:
                 # Nothing to INSERT:
                 res = None
-                return 
+                return res
             
             valsFileStr = self.constructValuesStr(self.currValsArray)
             

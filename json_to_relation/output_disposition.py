@@ -120,6 +120,15 @@ class OutputDisposition(object):
             return self.schemas[tableName].values()
         except ValueError:
             return None
+
+    def copySchemas(self, destDisposition):
+        '''
+        Given another instance of OutputDisposition, 
+        copy this instance's schemas to the destination.
+        :param destDisposition: another instance of OutputDisposition
+        :type destDisposition: OutputDisposition
+        '''
+        destDisposition.schemas = self.schemas
     
     def ensureColExistence(self, colName, colDataType, jsonToRelationConverter, tableName=None):
         '''
@@ -237,6 +246,9 @@ class OutputPipe(OutputDisposition):
         sys.stdout.write(whatToWrite)
         sys.stdout.flush()
 
+    def getCSVTableOutFileName(self, tableName):
+        return self.name
+
 
 class OutputFile(OutputDisposition):
     
@@ -275,6 +287,7 @@ class OutputFile(OutputDisposition):
         # Open the output file as 'append' and 'binary'
         # The latter is needed for Windows.
         self.fileHandle = open(fileName, options)
+        self.csvWriter = csv.writer(sys.stdout, dialect='excel', delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         if outputFormat == OutputDisposition.OutputFormat.CSV or\
             outputFormat == OutputDisposition.OutputFormat.SQL_INSERTS_AND_CSV:
             # Prepare for CSV files needed for the tables:
@@ -580,6 +593,9 @@ class TableSchemas(object):
     
     def __setitem__(self, tableName, colSpecsDict):
         self.allSchemas[tableName] = colSpecsDict
+        
+    def keys(self):
+        return self.allSchemas.keys()
 
     def addColSpec(self, tableName, colSpec):
         try:
