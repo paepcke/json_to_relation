@@ -64,7 +64,8 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         # Match ISO 8601 strings:
         #self.timestampRegex = r'[1-2][0-9][0-1][0-9][0-1][0-9][0-3][0-9][0-2][0-9][0-5][0-9][0-5][0-9][0-9]{8}'
         #self.timestampRegex = r'[1-2][0-9]{3}-[0-1][1-9]-[0-3]{2}T[0-2][0-9]:[0-6][0-9]:[0-6][0-9].[0-9]{0:6}Z'
-        self.timestampRegex = r'[1-2][0-9]{3}-[0-1][1-9]-[0-3]{2}T[0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{0,6}Z{0,1}'
+        #self.timestampRegex = r'[1-2][0-9]{3}-[0-1][1-9]-[0-3]{2}T[0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{0,6}Z{0,1}'
+        self.timestampRegex = r'[1-2][0-9]{3}-[0-1][1-9]-[0-3][0-9]T[0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{0,6}Z{0,1}'
         self.timestampPattern = re.compile(self.timestampRegex)
         # Pattern that recognizes our tmp files. They start with
         # 'oolala', followed by random junk, followed by a period and
