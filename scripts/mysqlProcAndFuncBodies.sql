@@ -9,12 +9,14 @@
 #       column content. But it got to crufty, and
 #       vulnerable to future MySQL version mods.
 #
-#       Instead this file is 'source'ed into 
-#       MySQL twice by defineMySQLProcedures.sh.
+#       Instead this file is 'source'ed 
+#       by defineMySQLProcedures.sh. into 
+#       MySQL for each database where they are
+#       to be used 
 
 # NOTE: any function that should only exist in EdxPrivate
-#       has a DROP...<DB>.funcName  statement right after 
-#       its definition. Where <DB> is any db where 
+#       has a DROP...<DB>.funcName  statement at the bottom
+#       of this file. There, <DB> is any db where 
 #       this file might be sourced.
 
 # Set the statement delimiter to something other than ';'
@@ -299,6 +301,26 @@ END//
 
 
 #--------------------------
+# idForum2Anon
+#-----------
+
+# Given a Forum uid,  return 
+# the corresponding hash-type user ID
+# that is used in Edx and EdxPrivate
+
+DROP FUNCTION IF EXISTS idForum2Anon//
+
+CREATE FUNCTION idForum2Anon(intId int(11))
+RETURNS varchar(40)
+BEGIN
+    SELECT anon_screen_name
+    FROM EdxPrivate.UserGrade
+    WHERE user_int_id  = intId
+    INTO @anonId;
+    return @anonId;
+END//
+
+#--------------------------
 # idInt2Anon
 #-----------
 
@@ -328,12 +350,6 @@ END//
 # for outside services, such as Qualtrix
 # or Piazza, return the corresponding
 # anon_screen_name.
-#
-# We drop this function from the public
-# part of the database by DROPping it
-# from Edx, EdxForum, and EdxPiazza right
-# after the definition. This way this file
-# can be sourced anywhere.
 
 DROP FUNCTION IF EXISTS idExt2Anon//
 
@@ -347,10 +363,6 @@ BEGIN
       SELECT idInt2Anon(@int_id) INTO @anon_id;
       return @anon_id;
 END//
-
-DROP FUNCTION IF EXISTS Edx.idExt2Anon//
-DROP FUNCTION IF EXISTS EdxForum.idExt2Anon//
-#DROP FUNCTION IF EXISTS EdxPiazza.idExt2Anon//
 
 
 #--------------------------
@@ -609,3 +621,35 @@ FROM edxprod.auth_userprofile
    ON EdxPrivate.UserGrade.user_int_id = edxprod.auth_userprofile.user_id
  LEFT JOIN Edx.UserCountry
    ON Edx.UserCountry.anon_screen_name = EdxPrivate.UserGrade.anon_screen_name;
+
+# ------------- Drop Functions that are only for EdxPrivate DB -----
+
+DROP FUNCTION IF EXISTS EdxPiazza.idForum2Anon;
+DROP FUNCTION IF EXISTS EdxForum.idForum2Anon;
+DROP FUNCTION IF EXISTS Edx.idForum2Anon;
+
+# ------------- Grant EXECUTE Privileges for User Level Functions -----
+
+GRANT EXECUTE ON FUNCTION Edx.idInt2Anon TO '%'@'%';
+GRANT EXECUTE ON FUNCTION Edx.idAnon2Int TO '%'@'%';
+GRANT EXECUTE ON FUNCTION Edx.idExt2Anon TO '%'@'%';
+GRANT EXECUTE ON FUNCTION Edx.idAnon2Ext TO '%'@'%';
+GRANT EXECUTE ON FUNCTION Edx.latestLog  TO '%'@'%';
+GRANT EXECUTE ON FUNCTION Edx.earliestLog  TO '%'@'%';
+GRANT EXECUTE ON FUNCTION Edx.isUserEvent  TO '%'@'%';
+
+GRANT EXECUTE ON FUNCTION EdxForum.idInt2Anon TO '%'@'%';
+GRANT EXECUTE ON FUNCTION EdxForum.idAnon2Int TO '%'@'%';
+GRANT EXECUTE ON FUNCTION EdxForum.idExt2Anon TO '%'@'%';
+GRANT EXECUTE ON FUNCTION EdxForum.idAnon2Ext TO '%'@'%';
+GRANT EXECUTE ON FUNCTION EdxForum.latestLog  TO '%'@'%';
+GRANT EXECUTE ON FUNCTION EdxForum.earliestLog  TO '%'@'%';
+GRANT EXECUTE ON FUNCTION EdxForum.isUserEvent  TO '%'@'%';
+
+GRANT EXECUTE ON FUNCTION EdxPiazza.idInt2Anon TO '%'@'%';
+GRANT EXECUTE ON FUNCTION EdxPiazza.idAnon2Int TO '%'@'%';
+GRANT EXECUTE ON FUNCTION EdxPiazza.idExt2Anon TO '%'@'%';
+GRANT EXECUTE ON FUNCTION EdxPiazza.idAnon2Ext TO '%'@'%';
+GRANT EXECUTE ON FUNCTION EdxPiazza.latestLog  TO '%'@'%';
+GRANT EXECUTE ON FUNCTION EdxPiazza.earliestLog  TO '%'@'%';
+GRANT EXECUTE ON FUNCTION EdxPiazza.isUserEvent  TO '%'@'%';

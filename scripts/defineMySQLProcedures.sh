@@ -6,6 +6,11 @@
 # Without args: runs as root with no pwd.
 # Obviously, then MySQL will complain if root
 # has a pwd.
+#
+# The function idInt2Anon() is dropped from all but
+# EdxPrivate to prevent Forum int IDs to be turned
+# into anon_screen_name. To let people to that,
+# give them GRANT EXECUTE ON EdxPrivate.idInt2Anon TO <userDef>
 
 USAGE="Usage: `basename $0` [-u username][-p][-pYourPwd]"
 
@@ -84,15 +89,18 @@ fi
 #*****************
 
 # Load the .sql file that contains the procedure
-# function bodies twice: once into each of Edx
-# and EdxPrivate:
+# function bodies several times: into each of Edx
+# and EdxPrivate, and into EdxForum, so that they
+# are available there:
 if [ -z $PASSWD ]
 then
     mysql -u $USERNAME -e "USE Edx; source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
     mysql -u $USERNAME -e "USE EdxPrivate; source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
     mysql -u $USERNAME -e "USE EdxForum; source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+    mysql -u $USERNAME -e "USE EdxPiazza; source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
 else
     mysql -u $USERNAME -p$PASSWD -e "USE Edx; source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
     mysql -u $USERNAME -p$PASSWD -e "USE EdxPrivate; source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
     mysql -u $USERNAME -p$PASSWD -e "USE EdxForum; source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+    mysql -u $USERNAME -p$PASSWD -e "USE EdxPiazza; source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
 fi
