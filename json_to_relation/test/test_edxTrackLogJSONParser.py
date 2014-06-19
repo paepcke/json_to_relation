@@ -58,6 +58,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
     def setUp(self):
         
         super(TestEdxTrackLogJSONParser, self).setUp()
+        self.currDir = os.path.dirname(__file__)
         self.hashLookupDict = TestEdxTrackLogJSONParser.hashLookupDict  
         self.uuidRegex = '[a-f0-9]{8}_[a-f0-9]{4}_[a-f0-9]{4}_[a-f0-9]{4}_[a-f0-9]{12}'
         self.pattern   = re.compile(self.uuidRegex)
@@ -78,9 +79,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         self.heartbeatEvent = '{"username": "", "host": "10.0.10.32", "event_source": "server", "event_type": "/heartbeat", "time": "2013-06-21T06:32:09.881521+00:00", "ip": "127.0.0.1", "event": "{\\"POST\\": {}, \\"GET\\": {}}", "agent": "ELB-HealthChecker/1.0", "page": null}'
 
         self.stringSource = None
-        self.curDir = os.path.dirname(__file__)
-
-        self.stringSource = InURI(os.path.join(self.curDir ,"data/twoJSONRecords.json"))
+        self.stringSource = InURI(os.path.join(self.currDir ,"data/twoJSONRecords.json"))
 
     def tearDown(self):
         if self.stringSource is not None:
@@ -139,17 +138,18 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         row = []
         edxParser.rescueBadJSON(badJSONStr, row=row)
         if UPDATE_TRUTH:
-            self.updateTruthFromString(str(row), os.path.join(self.curDir, 'data/rescueJSONTruth1.txt'))
+            self.updateTruthFromString(str(row), os.path.join(self.currDir, 'data/rescueJSONTruth1.txt'))
         else:
-            self.assertFileContentEquals(file('data/rescueJSONTruth1.txt'), str(row))
+            self.assertFileContentEquals(os.path.join(self.currDir, 'data/rescueJSONTruth1.txt'), 
+                                         str(row))
         
         badJSONStr = "{u'username': u'Magistra', u'event_source': u'server', u'event_type': u'/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/peergrading/ef6ba7f803bb46ebaaf008cde737e3e9/save_grade', u'ip': u'209.216.182.65', u'agent': u'Mozilla/5.0 (Windows NT 6.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.66 Safari/537.36', u'page': None, u'host': u'class.stanford.edu', u'time': u'2013-09-14T06:55:57.003501+00:00', u'event': u'{\"POST\": {\"submission_id\": [\"51255\"], \"feedback\": [\"The thumbs up does seem like a great idea. How do you think she manages to communicate to students that she does take each answer seriously? Is it that she takes time to record each way of thinking accurately? This seems very important in engaging all students.\"], \"rubric_scores[]\": [\"1\"], \"answer_unknown\": [\"false\"], \"location\": [\"i4x://Education/EDUC115N/combinedopenended/0d67667941cd4e14ba29abd1542a9c5f\"], \"submission_key\": [\"414b8d746627f6db8d705605b16'}"
         row = []
         edxParser.rescueBadJSON(badJSONStr, row=row)
         if UPDATE_TRUTH:
-            self.updateTruthFromString(str(row), os.path.join(self.curDir, 'data/rescueJSONTruth2.txt'))
+            self.updateTruthFromString(str(row), os.path.join(self.currDir, 'data/rescueJSONTruth2.txt'))
         else:
-            self.assertFileContentEquals(file('data/rescueJSONTruth2.txt'), str(row))
+            self.assertFileContentEquals(os.path.join(self.currDir, 'data/rescueJSONTruth2.txt'), str(row))
 
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testExtractCourseIDFromProblemXEvent(self):
@@ -249,7 +249,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testEdxHeartbeat(self):        
         # Test series of heartbeats that did not experience a server outage:
-        inputSourcePath = os.path.join(os.path.join(self.curDir, "data/edxHeartbeatEvent.json"))
+        inputSourcePath = os.path.join(os.path.join(self.currDir, "data/edxHeartbeatEvent.json"))
         inFileSource = InURI(inputSourcePath)
         resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
         # Just use the file name of the tmp file.
@@ -267,9 +267,10 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         # except for this heartbeat's IP's first-time-alive
         # record:
         if UPDATE_TRUTH:
-            self.updateTruth(dest.getFileName(), os.path.join(self.curDir, 'data/edxHeartbeatEventTruth.sql'))
+            self.updateTruth(dest.getFileName(), os.path.join(self.currDir, 'data/edxHeartbeatEventTruth.sql'))
         else:
-            self.assertFileContentEquals(file('data/edxHeartbeatEventTruth.sql'), dest.getFileName())
+            self.assertFileContentEquals(os.path.join(self.currDir, 'data/edxHeartbeatEventTruth.sql'), 
+                                         dest.getFileName())
         
         # Detecting server downtime:
         inputSourcePath = os.path.join(os.path.dirname(__file__),"data/edxHeartbeatEventDownTime.json")
@@ -287,9 +288,10 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         fileConverter.setParser(edxParser)
         fileConverter.convert(prependColHeader=False)
         if UPDATE_TRUTH:
-            self.updateTruth(dest.getFileName(), os.path.join(self.curDir, 'data/edxHeartbeatEventDownTimeTruth.sql'))
+            self.updateTruth(dest.getFileName(), os.path.join(self.currDir, 'data/edxHeartbeatEventDownTimeTruth.sql'))
         else:
-            self.assertFileContentEquals(file('data/edxHeartbeatEventDownTimeTruth.sql'), dest.getFileName())
+            self.assertFileContentEquals(os.path.join(self.currDir, 'data/edxHeartbeatEventDownTimeTruth.sql'), 
+                                         dest.getFileName())
 
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testTableCreationStatementConstruction(self):
@@ -301,9 +303,9 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         createStatement = edxParser.genOneCreateStatement('Answer', edxParser.schemaAnswerTbl, primaryKeyName='answer_id')
         
         if UPDATE_TRUTH:
-            self.updateTruthFromString(createStatement, os.path.join(self.curDir, 'data/answerTblCreateTruth.sql'))
+            self.updateTruthFromString(createStatement, os.path.join(self.currDir, 'data/answerTblCreateTruth.sql'))
         else:
-            self.assertFileContentEquals(file('data/answerTblCreateTruth.sql'), createStatement)
+            self.assertFileContentEquals(os.path.join(self.currDir, 'data/answerTblCreateTruth.sql'), createStatement)
        
         
     @unittest.skipIf(not PRINT_OUTS, "Temporarily disabled")
@@ -1499,10 +1501,10 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         '''
         Compares two file or string contents. First arg is either an open file or a string.
         That is the ground truth to compare to. Second argument is the same: file or string.
-        @param expected:
-        @type expected:
-        @param filePathOrStrToCompareTo:
-        @type filePathOrStrToCompareTo:
+        @param expected: the file that contains the ground truth
+        @type expected: {File | String }
+        @param filePathOrStrToCompareTo: the actual file as constructed by the module being tested
+        @type filePathOrStrToCompareTo: { File | String }
         '''
         # Ensure that 'expected' is a File-like object:
         if isinstance(expected, file):

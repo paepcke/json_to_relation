@@ -29,6 +29,7 @@ class TestJSONToRelation(unittest.TestCase):
     
     def setUp(self):
         super(TestJSONToRelation, self).setUp()
+        self.currDir = os.path.dirname(__file__)
         self.tmpLogFile = tempfile.NamedTemporaryFile()
         self.stringSource = InURI(os.path.join(os.path.dirname(__file__),"data/twoJSONRecords.json"))
         self.fileConverter = JSONToRelation(self.stringSource, 
@@ -107,7 +108,7 @@ class TestJSONToRelation(unittest.TestCase):
         edxJsonToRelParser = EdXTrackLogJSONParser(self.fileConverter, "EdxTrackEvent", useDisplayNameCache=True)
         self.fileConverter.jsonParserInstance = edxJsonToRelParser
         self.fileConverter.convert()
-        with open('data/simpleJsonToFileTruth.txt', 'r') as fd:
+        with open(os.path.join(self.currDir, 'data/simpleJsonToFileTruth.txt'), 'r') as fd:
             expected = fd.read()
 #         expected = "asset,sainani.jpg,HRP258,c4x,Medicine,,image/jpeg,sainani.jpg,262144,/c4x/Medicine/HRP258/asset/sainani.jpg," +\
 #                     "22333,,2013-05-08T22:47:09.762Z,,ebcb2a60b0d6b7475c4e9a102b82637b\n" +\

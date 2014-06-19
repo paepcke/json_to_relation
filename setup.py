@@ -20,7 +20,8 @@ setup(
 			'argparse>=1.2.1', 
 			'unidecode>=0.04.14', 
 			'boto>=2.16.0',
-			'python-daemon>=1.5.5'
+			'python-daemon>=1.5.5',
+			'online_learning_computations>=0.30'
 			] + test_requirements,
 
     # Unit tests; they are initiated via 'python setup.py test'

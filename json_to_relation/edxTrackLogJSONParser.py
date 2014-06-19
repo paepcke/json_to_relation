@@ -35,7 +35,7 @@ from generic_json_parser import GenericJSONParser
 from locationManager import LocationManager
 from modulestoreImporter import ModulestoreImporter
 from output_disposition import ColumnSpec
-
+from scripts.ipToCountry import IpCountryDict
 
 EDX_HEARTBEAT_PERIOD = 360 # seconds
 
@@ -175,8 +175,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # Fields common to every request:
         self.commonFldNames = ['agent','event_source','event_type','ip','page','session','time','username', 'course_id', 'course_display_name']
 
-        # A Country lookup facility:
+        # A Country abbreviation lookup facility:
         self.countryChecker = LocationManager()
+        
+        # An ip-country lookup facility:
+        self.ipCountryDict = IpCountryDict()
     
         # Lookup table from OpenEdx 32-bit hash values to
         # corresponding problem, course, or video display_names.
@@ -200,7 +203,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaHintsMainTable['agent'] = ColDataType.TEXT
         self.schemaHintsMainTable['event_source'] = ColDataType.TINYTEXT
         self.schemaHintsMainTable['event_type'] = ColDataType.TEXT
-        self.schemaHintsMainTable['ip'] = ColDataType.TINYTEXT
+        self.schemaHintsMainTable['ip_country'] = ColDataType.TINYTEXT
         self.schemaHintsMainTable['page'] = ColDataType.TEXT
         self.schemaHintsMainTable['session'] = ColDataType.TEXT
         self.schemaHintsMainTable['time'] = ColDataType.DATETIME
@@ -371,6 +374,15 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             colType = self.schemaInputStateTbl[colName]
             self.schemaInputStateTbl[colName] = ColumnSpec(colName, colType, self.jsonToRelationConverter)
 
+        # Schema for EventIp table:
+        self.schemaEventIpTbl = OrderedDict()
+        self.schemaEventIpTbl['event_table_id'] = ColDataType.UUID
+        self.schemaEventIpTbl['event_country_abbrev'] = ColDataType.TINYTEXT    # 3-letter countr code
+        # Turn the SQL data types in the dict to column spec objects:
+        for colName in self.schemaEventIpTbl.keys():
+            colType = self.schemaEventIpTbl[colName]
+            self.schemaEventIpTbl[colName] = ColumnSpec(colName, colType, self.jsonToRelationConverter)
+
         # Schema for Account table:
         self.schemaAccountTbl = OrderedDict()
         self.schemaAccountTbl['account_id'] = ColDataType.UUID
@@ -449,15 +461,15 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                          "/*!40101 SET character_set_client = utf8 */;\n"
         
         # Construct the SQL statement that precedes INSERT statements:
-        self.dumpInsertPreamble = "LOCK TABLES `%s` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE;\n" % self.mainTableName +\
+        self.dumpInsertPreamble = "LOCK TABLES `%s` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE, `EventIp` WRITE;\n" % self.mainTableName +\
                             	  "/*!40000 ALTER TABLE `%s` DISABLE KEYS */;\n" % self.mainTableName +\
                             	  "/*!40000 ALTER TABLE `State` DISABLE KEYS */;\n" +\
                             	  "/*!40000 ALTER TABLE `InputState` DISABLE KEYS */;\n" +\
                             	  "/*!40000 ALTER TABLE `Answer` DISABLE KEYS */;\n" +\
                             	  "/*!40000 ALTER TABLE `CorrectMap` DISABLE KEYS */;\n" +\
                             	  "/*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;\n" +\
-                            	  "/*!40000 ALTER TABLE `Account` DISABLE KEYS */;\n"
-             
+                            	  "/*!40000 ALTER TABLE `Account` DISABLE KEYS */;\n" +\
+                                  "/*!40000 ALTER TABLE `EventIp` DISABLE KEYS */;\n"
         
         # Add commented-out instructions for re-enabling keys.
         # The ENABLE KEYS instructions are therefore disabled in
@@ -473,10 +485,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                             		"-- /*!40000 ALTER TABLE `CorrectMap` ENABLE KEYS */;\n" +\
                             		"-- /*!40000 ALTER TABLE `LoadInfo` ENABLE KEYS */;\n" +\
                             		"-- /*!40000 ALTER TABLE `Account` ENABLE KEYS */;\n" +\
+                                    "-- /*!40000 ALTER TABLE `EventIp` ENABLE KEYS */;\n" +\
                             		"UNLOCK TABLES;\n"           
 
 
-        # In between Postscript1 and Postscript 2goes the Account table copy-to-private-db, and drop in Edx:
+        # In between Postscript1 and Postscript 2goes the Account and EventIp tables copy-to-private-db, and drop in Edx:
         self.dumpPostscript2 =  	"/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;\n" +\
 		                    	    "/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;\n" +\
 		                    	    "/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;\n" +\
@@ -1144,7 +1157,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     def handleCommonFields(self, record, row):
         self.currCourseDisplayName = None
         # Create a unique tuple key and event key  for this event:
-        self.setValInRow(row, '_id', self.getUniqueID())
+        event_tuple_id = self.getUniqueID()
+        self.setValInRow(row, '_id', event_tuple_id)
         self.setValInRow(row, 'event_id', self.getUniqueID())
         self.finishedRow = False
         for fldName in self.commonFldNames:
@@ -1185,6 +1199,19 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 if val is not None:
                     val = self.hashGeneral(val)
                 fldName = 'anon_screen_name'
+            elif fldName == 'ip':
+                ip  = val
+                # Col value is three-letter country code: 
+                val = self.ipCountryDict.get(val, None)
+                fldName = 'ip_country'
+                
+                # The event row id and IP address go into 
+                # a separate, temp table, to be transferred
+                # to EdxPrivate later:
+                eventIpDict = OrderedDict()
+                eventIpDict['event_table_id'] = event_tuple_id
+                eventIpDict['ip'] = ip          
+                self.pushEventIpInfo(eventIpDict)
                 
             self.setValInRow(row, fldName, val)
         # Add the foreign key that points to the current row in the load info table:
@@ -1760,6 +1787,21 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                     ]
                 self.jsonToRelationConverter.pushToTable(self.resultTriplet(inputStateValues, 'InputState', self.schemaInputStateTbl.keys()))
         return inputStateKeys
+        
+    def pushEventIpInfo(self, eventIpDict):
+        '''
+        Takes an ordered dict with two fields:
+        the _id field of the current main table event
+        under key event_table_id, and an IP address.
+        
+        :param eventCountryDict: dict with main table _id, and 3-char country code 
+        :type eventCountryDict: {String : String}
+        '''
+        self.jsonToRelationConverter.pushToTable(self.resultTriplet(eventIpDict.values(), 
+                                                                    'EventIp', 
+                                                                    self.schemaEventIpTbl.keys()))
+        return
+
         
     def pushAccountInfo(self, accountDict):
         '''
@@ -3588,10 +3630,15 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             self.jsonToRelationConverter.pushString(self.createCSVTableLoadCommands(outputDisposition))
         # Unlock tables, and return foreign key checking to its normal behavior:
         self.jsonToRelationConverter.pushString(self.dumpPostscript1)
+
         # Copy the temporary Account entries from
         # the tmp table in Edx to the final dest
         # in EdxPrivate:
         self.createMergeAccountTbl()
+        
+        # Same for the EventIp table:
+        self.createMergeEventIpTbl()
+        
         # Restore various defaults:
         self.jsonToRelationConverter.pushString(self.dumpPostscript2)
 
@@ -3633,6 +3680,22 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                         "DROP TABLE Edx.Account;\n" 
         self.jsonToRelationConverter.pushString(copyStatement)
         
+    def createMergeEventIpTbl(self):
+        '''
+        Called at the very end of a load: copies all the entries
+        from the temporary EventIp table in the Edx db to the permanent
+        EventIp table in EdxPrivate. Then DROPs the tmp Edx.EventIp table:
+        '''
+        colNameList = ''
+        for colName in self.schemaEventIpTbl.keys():
+            colNameList += colName + ','
+        # Snip off the last comma:
+        colNameList = colNameList[:-1]
+        
+        copyStatement = "REPLACE INTO EdxPrivate.EventIp (" + colNameList + ")" +\
+                        " SELECT " + colNameList + " FROM Edx.EventIp;\n" +\
+                        "DROP TABLE Edx.EventIp;\n" 
+        self.jsonToRelationConverter.pushString(copyStatement)
         
     def handleBadJSON(self, row, offendingText):
         '''
