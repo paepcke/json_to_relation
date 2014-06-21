@@ -35,7 +35,7 @@ from generic_json_parser import GenericJSONParser
 from locationManager import LocationManager
 from modulestoreImporter import ModulestoreImporter
 from output_disposition import ColumnSpec
-from scripts.ipToCountry import IpCountryDict
+from ipToCountry import IpCountryDict
 
 EDX_HEARTBEAT_PERIOD = 360 # seconds
 
@@ -377,7 +377,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # Schema for EventIp table:
         self.schemaEventIpTbl = OrderedDict()
         self.schemaEventIpTbl['event_table_id'] = ColDataType.UUID
-        self.schemaEventIpTbl['event_country_abbrev'] = ColDataType.TINYTEXT    # 3-letter countr code
+        self.schemaEventIpTbl['event_ip'] = ColDataType.TINYTEXT    # IP address of respective event
         # Turn the SQL data types in the dict to column spec objects:
         for colName in self.schemaEventIpTbl.keys():
             colType = self.schemaEventIpTbl[colName]
@@ -984,6 +984,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.createInputStateTable()
         self.createStateTable()
         self.createAccountTable()
+        self.createEventIpTable()
         self.createLoadInfoTable()        
         self.createMainTable()
         
@@ -1119,6 +1120,30 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # table will be written:
         self.jsonToRelationConverter.startNewTable('Account', self.schemaAccountTbl)
         
+    def createEventIpTable(self):
+        # Create a tmp EventIp tbl in the Edx db for the load
+        # process:
+        createStatement = self.genOneCreateStatement('EventIp', 
+                                                     self.schemaEventIpTbl, 
+                                                     primaryKeyName='event_table_id'
+                                                     ) 
+        self.jsonToRelationConverter.pushString(createStatement)
+        createStatement = self.genOneCreateStatement('EdxPrivate.EventIp', 
+                                                     self.schemaEventIpTbl, 
+                                                     primaryKeyName='event_table_id'
+                                                     ) 
+
+        # And one in db EdxPrivate, if it doesn't exist:
+        
+        
+        self.jsonToRelationConverter.pushString(createStatement)
+        # Tell the output module (output_disposition.OutputFile) that
+        # it needs to know about a new table. That module will create
+        # a CSV file and CSV writer to which rows destined for this
+        # table will be written:
+        self.jsonToRelationConverter.startNewTable('Account', self.schemaAccountTbl)
+        
+
 
     def createLoadInfoTable(self):
         createStatement = self.genOneCreateStatement('LoadInfo', 
@@ -1201,8 +1226,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 fldName = 'anon_screen_name'
             elif fldName == 'ip':
                 ip  = val
-                # Col value is three-letter country code: 
+                # Col value is to be three-letter country code;
+                # Get the triplet (2-letter-country-code, 3-letter-country-code, country): 
                 val = self.ipCountryDict.get(val, None)
+                if val is not None:
+                    val = val[1] # get 3-letter country code
                 fldName = 'ip_country'
                 
                 # The event row id and IP address go into 
@@ -1210,7 +1238,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 # to EdxPrivate later:
                 eventIpDict = OrderedDict()
                 eventIpDict['event_table_id'] = event_tuple_id
-                eventIpDict['ip'] = ip          
+                eventIpDict['event_ip'] = ip          
                 self.pushEventIpInfo(eventIpDict)
                 
             self.setValInRow(row, fldName, val)

@@ -22,7 +22,7 @@ from json_to_relation.output_disposition import OutputDisposition, ColDataType, 
     ColumnSpec, OutputFile, OutputPipe # @UnusedImport
 
 
-TEST_ALL = True
+TEST_ALL = False
 PRINT_OUTS = False  # Set True to get printouts of CREATE TABLE statements
 
 # The following is very Dangerous: If True, no tests are
@@ -1031,7 +1031,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
-    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
+    #*******@unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testVideoSpeedChange(self):
         testFilePath = os.path.join(os.path.dirname(__file__),"data/speedChangeVideo.json")
         stringSource = InURI(testFilePath)
@@ -1553,7 +1553,8 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
                 try:
                     self.assertEqual(expectedLine.strip(), fileLine.strip())
                 except:
-                    print(expectedLine + '\n' + fileLine)
+                    #print(expectedLine + '\n' + fileLine)
+                    raise
             
             if strFile.readline() != "":
                 # expected is longer than what's in the file:
