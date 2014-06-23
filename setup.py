@@ -15,7 +15,7 @@ setup(
     install_requires = ['ijson>=1.0', 
 			'pymongo>=2.6.2', 
 			#'pymysql3>=0.5', 
-			'pymysql_utils>=0.33',
+			'pymysql_utils>=0.48',
 			'configparser>=3.3.0r2', 
 			'argparse>=1.2.1', 
 			'unidecode>=0.04.14', 

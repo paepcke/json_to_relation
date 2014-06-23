@@ -90,6 +90,22 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     email TEXT NOT NULL,
     receive_emails VARCHAR(255) NOT NULL
     ) ENGINE=MyISAM;
+CREATE TABLE IF NOT EXISTS EventIp (
+    event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    event_ip VARCHAR(255) NOT NULL
+    ) ENGINE=MyISAM;
+CREATE TABLE IF NOT EXISTS EdxPrivate.EventIp (
+    event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    event_ip VARCHAR(255) NOT NULL
+    ) ENGINE=MyISAM;
+CREATE TABLE IF NOT EXISTS ABExperiment (
+    event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    group_id INT NOT NULL,
+    group_name VARCHAR(255) NOT NULL,
+    partition_id INT NOT NULL,
+    partition_name VARCHAR(255) NOT NULL,
+    child_module_id VARCHAR(255) NOT NULL
+    ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS LoadInfo (
     load_info_id VARCHAR(40) NOT NULL PRIMARY KEY,
     load_date_time DATETIME NOT NULL,
@@ -101,7 +117,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     agent TEXT NOT NULL,
     event_source VARCHAR(255) NOT NULL,
     event_type TEXT NOT NULL,
-    ip VARCHAR(255) NOT NULL,
+    ip_country VARCHAR(255) NOT NULL,
     page TEXT NOT NULL,
     session TEXT NOT NULL,
     time DATETIME NOT NULL,
@@ -165,7 +181,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     FOREIGN KEY(state_fk) REFERENCES State(state_id) ON DELETE CASCADE,
     FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id) ON DELETE CASCADE
     ) ENGINE=MyISAM;
-LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE;
+LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE, `EventIp` WRITE, `ABExperiment` WRITE;
 /*!40000 ALTER TABLE `EdxTrackEvent` DISABLE KEYS */;
 /*!40000 ALTER TABLE `State` DISABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` DISABLE KEYS */;
@@ -173,13 +189,17 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `CorrectMap` DISABLE KEYS */;
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
+/*!40000 ALTER TABLE `EventIp` DISABLE KEYS */;
+/*!40000 ALTER TABLE `ABExperiment` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('5104646c807396d822b162eeeb98a079f84f2bdb','2014-06-12T15:13:02.683870','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemCheckInPath.json');
+    ('5104646c807396d822b162eeeb98a079f84f2bdb','2014-06-23T08:06:15.019558','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemCheckInPath.json');
+INSERT INTO EventIp (event_table_id,event_ip) VALUES 
+    ('8f77a0fe_9b82_43cd_b39f_a9b5670087a1','46.12.124.66');
 INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
-    ('2a2c38b0_61ea_4880_a41c_ff39ddaaefe3','input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1','choice_3','Medicine/HRP258/Statistics_in_Medicine');
-INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('b9563a49_52ce_4918_9f56_2025597abc6b','fc96fac9_e66f_4b8c_82fd_ffabf1c7ee7e','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/courses/Medicine/HRP258/Statistics_in_Medicine/modx/i4x://Medicine/HRP258/problem/f0b292c175f54714b41a1b05d905dbd3/problem_check','46.12.124.66','','','2013-06-13T09:20:11.156214','3bbdb4f28c1831407f69180b754c28f5dd116cd7','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','Medicine/HRP-258/Spring2014','Quiz','','',-1,-1,'input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','2a2c38b0_61ea_4880_a41c_ff39ddaaefe3','','5104646c807396d822b162eeeb98a079f84f2bdb'),
-    ('3161e9df_207d_4b2e_8035_13a4544fe9f7','fc96fac9_e66f_4b8c_82fd_ffabf1c7ee7e','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/courses/Medicine/HRP258/Statistics_in_Medicine/modx/i4x://Medicine/HRP258/problem/f0b292c175f54714b41a1b05d905dbd3/problem_check','46.12.124.66','','','2013-06-13T09:20:11.156214','3bbdb4f28c1831407f69180b754c28f5dd116cd7','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','Medicine/HRP-258/Spring2014','Quiz','','',-1,-1,'input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','2a2c38b0_61ea_4880_a41c_ff39ddaaefe3','','5104646c807396d822b162eeeb98a079f84f2bdb');
+    ('d87157ca_b4a2_4447_aad0_7c8c9ff7fc8c','input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1','choice_3','Medicine/HRP258/Statistics_in_Medicine');
+INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
+    ('8f77a0fe_9b82_43cd_b39f_a9b5670087a1','1d06cc8d_f609_41ce_ad89_f8a54c46ca4f','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/courses/Medicine/HRP258/Statistics_in_Medicine/modx/i4x://Medicine/HRP258/problem/f0b292c175f54714b41a1b05d905dbd3/problem_check','GRC','','','2013-06-13T09:20:11.156214','3bbdb4f28c1831407f69180b754c28f5dd116cd7','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','Medicine/HRP259/Fall2013','Quiz','','',-1,-1,'input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','d87157ca_b4a2_4447_aad0_7c8c9ff7fc8c','','5104646c807396d822b162eeeb98a079f84f2bdb'),
+    ('431776e0_e195_4072_9e62_79ce557af7b4','1d06cc8d_f609_41ce_ad89_f8a54c46ca4f','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','/courses/Medicine/HRP258/Statistics_in_Medicine/modx/i4x://Medicine/HRP258/problem/f0b292c175f54714b41a1b05d905dbd3/problem_check','GRC','','','2013-06-13T09:20:11.156214','3bbdb4f28c1831407f69180b754c28f5dd116cd7','0:00:00','','','Medicine/HRP258/Statistics_in_Medicine','Medicine/HRP259/Fall2013','Quiz','','',-1,-1,'input_i4x-Medicine-HRP258-problem-f0b292c175f54714b41a1b05d905dbd3_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','d87157ca_b4a2_4447_aad0_7c8c9ff7fc8c','','5104646c807396d822b162eeeb98a079f84f2bdb');
 -- /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;
@@ -187,9 +207,13 @@ INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,se
 -- /*!40000 ALTER TABLE `CorrectMap` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `LoadInfo` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `Account` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `EventIp` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `ABExperiment` ENABLE KEYS */;
 UNLOCK TABLES;
 REPLACE INTO EdxPrivate.Account (account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) SELECT account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails FROM Edx.Account;
 DROP TABLE Edx.Account;
+REPLACE INTO EdxPrivate.EventIp (event_table_id,event_ip) SELECT event_table_id,event_ip FROM Edx.EventIp;
+DROP TABLE Edx.EventIp;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;

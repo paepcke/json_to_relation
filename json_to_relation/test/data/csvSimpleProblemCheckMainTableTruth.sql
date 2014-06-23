@@ -90,6 +90,22 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     email TEXT NOT NULL,
     receive_emails VARCHAR(255) NOT NULL
     ) ENGINE=MyISAM;
+CREATE TABLE IF NOT EXISTS EventIp (
+    event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    event_ip VARCHAR(255) NOT NULL
+    ) ENGINE=MyISAM;
+CREATE TABLE IF NOT EXISTS EdxPrivate.EventIp (
+    event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    event_ip VARCHAR(255) NOT NULL
+    ) ENGINE=MyISAM;
+CREATE TABLE IF NOT EXISTS ABExperiment (
+    event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    group_id INT NOT NULL,
+    group_name VARCHAR(255) NOT NULL,
+    partition_id INT NOT NULL,
+    partition_name VARCHAR(255) NOT NULL,
+    child_module_id VARCHAR(255) NOT NULL
+    ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS LoadInfo (
     load_info_id VARCHAR(40) NOT NULL PRIMARY KEY,
     load_date_time DATETIME NOT NULL,
@@ -101,7 +117,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     agent TEXT NOT NULL,
     event_source VARCHAR(255) NOT NULL,
     event_type TEXT NOT NULL,
-    ip VARCHAR(255) NOT NULL,
+    ip_country VARCHAR(255) NOT NULL,
     page TEXT NOT NULL,
     session TEXT NOT NULL,
     time DATETIME NOT NULL,
@@ -165,7 +181,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     FOREIGN KEY(state_fk) REFERENCES State(state_id) ON DELETE CASCADE,
     FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id) ON DELETE CASCADE
     ) ENGINE=MyISAM;
-LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE;
+LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE, `EventIp` WRITE, `ABExperiment` WRITE;
 /*!40000 ALTER TABLE `EdxTrackEvent` DISABLE KEYS */;
 /*!40000 ALTER TABLE `State` DISABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` DISABLE KEYS */;
@@ -173,14 +189,16 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `CorrectMap` DISABLE KEYS */;
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
+/*!40000 ALTER TABLE `EventIp` DISABLE KEYS */;
+/*!40000 ALTER TABLE `ABExperiment` DISABLE KEYS */;
 SET sql_log_bin=0;
-LOAD DATA LOCAL INFILE '/tmp/oolalaXrDo3b.sql_LoadInfoTable.csv' IGNORE INTO TABLE LoadInfo FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
-LOAD DATA LOCAL INFILE '/tmp/oolalaXrDo3b.sql_InputStateTable.csv' IGNORE INTO TABLE InputState FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
-LOAD DATA LOCAL INFILE '/tmp/oolalaXrDo3b.sql_StateTable.csv' IGNORE INTO TABLE State FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
-LOAD DATA LOCAL INFILE '/tmp/oolalaXrDo3b.sql_CorrectMapTable.csv' IGNORE INTO TABLE CorrectMap FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
-LOAD DATA LOCAL INFILE '/tmp/oolalaXrDo3b.sql_AnswerTable.csv' IGNORE INTO TABLE Answer FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
-LOAD DATA LOCAL INFILE '/tmp/oolalaXrDo3b.sql_AccountTable.csv' IGNORE INTO TABLE Account FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
-LOAD DATA LOCAL INFILE '/tmp/oolalaXrDo3b.sql_EdxTrackEventTable.csv' IGNORE INTO TABLE EdxTrackEvent FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalaZRDW2Z.sql_LoadInfoTable.csv' IGNORE INTO TABLE LoadInfo FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalaZRDW2Z.sql_InputStateTable.csv' IGNORE INTO TABLE InputState FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalaZRDW2Z.sql_StateTable.csv' IGNORE INTO TABLE State FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalaZRDW2Z.sql_CorrectMapTable.csv' IGNORE INTO TABLE CorrectMap FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalaZRDW2Z.sql_AnswerTable.csv' IGNORE INTO TABLE Answer FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalaZRDW2Z.sql_AccountTable.csv' IGNORE INTO TABLE Account FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
+LOAD DATA LOCAL INFILE '/tmp/oolalaZRDW2Z.sql_EdxTrackEventTable.csv' IGNORE INTO TABLE EdxTrackEvent FIELDS OPTIONALLY ENCLOSED BY "'" TERMINATED BY ','; 
 SET sql_log_bin=1;
 -- /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `State` ENABLE KEYS */;
@@ -189,9 +207,13 @@ SET sql_log_bin=1;
 -- /*!40000 ALTER TABLE `CorrectMap` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `LoadInfo` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `Account` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `EventIp` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `ABExperiment` ENABLE KEYS */;
 UNLOCK TABLES;
 REPLACE INTO EdxPrivate.Account (account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) SELECT account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails FROM Edx.Account;
 DROP TABLE Edx.Account;
+REPLACE INTO EdxPrivate.EventIp (event_table_id,event_ip) SELECT event_table_id,event_ip FROM Edx.EventIp;
+DROP TABLE Edx.EventIp;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;

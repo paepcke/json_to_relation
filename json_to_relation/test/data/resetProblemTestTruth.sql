@@ -90,6 +90,22 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     email TEXT NOT NULL,
     receive_emails VARCHAR(255) NOT NULL
     ) ENGINE=MyISAM;
+CREATE TABLE IF NOT EXISTS EventIp (
+    event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    event_ip VARCHAR(255) NOT NULL
+    ) ENGINE=MyISAM;
+CREATE TABLE IF NOT EXISTS EdxPrivate.EventIp (
+    event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    event_ip VARCHAR(255) NOT NULL
+    ) ENGINE=MyISAM;
+CREATE TABLE IF NOT EXISTS ABExperiment (
+    event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    group_id INT NOT NULL,
+    group_name VARCHAR(255) NOT NULL,
+    partition_id INT NOT NULL,
+    partition_name VARCHAR(255) NOT NULL,
+    child_module_id VARCHAR(255) NOT NULL
+    ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS LoadInfo (
     load_info_id VARCHAR(40) NOT NULL PRIMARY KEY,
     load_date_time DATETIME NOT NULL,
@@ -101,7 +117,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     agent TEXT NOT NULL,
     event_source VARCHAR(255) NOT NULL,
     event_type TEXT NOT NULL,
-    ip VARCHAR(255) NOT NULL,
+    ip_country VARCHAR(255) NOT NULL,
     page TEXT NOT NULL,
     session TEXT NOT NULL,
     time DATETIME NOT NULL,
@@ -165,7 +181,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     FOREIGN KEY(state_fk) REFERENCES State(state_id) ON DELETE CASCADE,
     FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id) ON DELETE CASCADE
     ) ENGINE=MyISAM;
-LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE;
+LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE, `EventIp` WRITE, `ABExperiment` WRITE;
 /*!40000 ALTER TABLE `EdxTrackEvent` DISABLE KEYS */;
 /*!40000 ALTER TABLE `State` DISABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` DISABLE KEYS */;
@@ -173,23 +189,27 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `CorrectMap` DISABLE KEYS */;
 /*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
+/*!40000 ALTER TABLE `EventIp` DISABLE KEYS */;
+/*!40000 ALTER TABLE `ABExperiment` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('ceb00e6e701f66aea476a22cc565420cd4a052ed','2014-06-12T15:13:06.069571','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/resetProblemTest.json');
+    ('ceb00e6e701f66aea476a22cc565420cd4a052ed','2014-06-23T08:06:27.036060','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/resetProblemTest.json');
+INSERT INTO EventIp (event_table_id,event_ip) VALUES 
+    ('af10530e_30af_42c3_8dcd_98c35fc3b155','24.43.226.3');
 INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
-    ('1981da3d_b07e_4252_9491_9a6e5fabc37d','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','choice_2','reset_problem');
+    ('0f039e89_1ad5_4f25_99d4_0296df4a75e0','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','choice_2','reset_problem');
 INSERT INTO CorrectMap (correct_map_id,answer_identifier,correctness,npoints,msg,hint,hintmode,queuestate) VALUES 
-    ('86cd7de4_f028_44ae_bacb_dbe7f9e8f1b5','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','incorrect',-1,'','','','');
+    ('ea994410_2de1_4d15_a511_a8e5d8391a43','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','incorrect',-1,'','','','');
 INSERT INTO InputState (input_state_id,problem_id,state) VALUES 
-    ('4bdc7a88_9129_452c_a19c_8df001e52ae2','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','');
+    ('7a70e6c8_2556_45ea_8892_82ae00532b46','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','');
 INSERT INTO State (state_id,seed,done,problem_id,student_answer,correct_map,input_state) VALUES 
-    ('60de7aff_fe27_40d1_b910_6df38c52de62',811,'True','','1981da3d_b07e_4252_9491_9a6e5fabc37d','86cd7de4_f028_44ae_bacb_dbe7f9e8f1b5','4bdc7a88_9129_452c_a19c_8df001e52ae2');
+    ('83672602_8c94_4130_a294_ffd2590fd684',811,'True','','0f039e89_1ad5_4f25_99d4_0296df4a75e0','ea994410_2de1_4d15_a511_a8e5d8391a43','7a70e6c8_2556_45ea_8892_82ae00532b46');
 INSERT INTO InputState (input_state_id,problem_id,state) VALUES 
-    ('d6e6b316_2081_4a2c_8507_81ce0673c2b1','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','');
+    ('0a5d5bfc_584a_4eb9_9ab9_410414934437','i4x-HMC-MyCS-problem-d457165577d34e5aac6fbb55c8b7ad33_2_1','');
 INSERT INTO State (state_id,seed,done,problem_id,student_answer,correct_map,input_state) VALUES 
-    ('73888b10_0555_42d3_a64b_2a39dafc85d4',93,'False','','','','d6e6b316_2081_4a2c_8507_81ce0673c2b1');
-INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('98a8eb31_9e8c_4869_b3ac_4f5ef13e262f','f4ae88db_6f95_4467_9bdb_34df3cb532c7','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','reset_problem','24.43.226.3','x_module','','2013-06-12T21:54:33.936342','d9d408778a34b923abce3db9836068b9df6a2fcc','0:00:00','','','reset_problem','','Turing and Artificial Intelligence','','',-1,-1,'i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','60de7aff_fe27_40d1_b910_6df38c52de62','ceb00e6e701f66aea476a22cc565420cd4a052ed'),
-    ('6a09b7fc_eee9_40ca_93bf_073e5cc3768b','f4ae88db_6f95_4467_9bdb_34df3cb532c7','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','reset_problem','24.43.226.3','x_module','','2013-06-12T21:54:33.936342','d9d408778a34b923abce3db9836068b9df6a2fcc','0:00:00','','','reset_problem','','Turing and Artificial Intelligence','','',-1,-1,'i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','73888b10_0555_42d3_a64b_2a39dafc85d4','ceb00e6e701f66aea476a22cc565420cd4a052ed');
+    ('399a0f1d_e509_400f_b3d3_9c9286149415',93,'False','','','','0a5d5bfc_584a_4eb9_9ab9_410414934437');
+INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
+    ('af10530e_30af_42c3_8dcd_98c35fc3b155','d2780cc0_f040_4986_91f7_1ee3235fd252','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','reset_problem','USA','x_module','','2013-06-12T21:54:33.936342','d9d408778a34b923abce3db9836068b9df6a2fcc','0:00:00','','','reset_problem','','Turing and Artificial Intelligence','','',-1,-1,'i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','83672602_8c94_4130_a294_ffd2590fd684','ceb00e6e701f66aea476a22cc565420cd4a052ed'),
+    ('15a2d18d_e293_416b_beb1_859575e0bf42','d2780cc0_f040_4986_91f7_1ee3235fd252','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','server','reset_problem','USA','x_module','','2013-06-12T21:54:33.936342','d9d408778a34b923abce3db9836068b9df6a2fcc','0:00:00','','','reset_problem','','Turing and Artificial Intelligence','','',-1,-1,'i4x://HMC/MyCS/problem/d457165577d34e5aac6fbb55c8b7ad33','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','399a0f1d_e509_400f_b3d3_9c9286149415','ceb00e6e701f66aea476a22cc565420cd4a052ed');
 -- /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;
@@ -197,9 +217,13 @@ INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip,page,se
 -- /*!40000 ALTER TABLE `CorrectMap` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `LoadInfo` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `Account` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `EventIp` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `ABExperiment` ENABLE KEYS */;
 UNLOCK TABLES;
 REPLACE INTO EdxPrivate.Account (account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) SELECT account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails FROM Edx.Account;
 DROP TABLE Edx.Account;
+REPLACE INTO EdxPrivate.EventIp (event_table_id,event_ip) SELECT event_table_id,event_ip FROM Edx.EventIp;
+DROP TABLE Edx.EventIp;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;

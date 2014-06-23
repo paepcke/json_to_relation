@@ -34,8 +34,7 @@ nosetests.xml
 .project
 .pydevproject
 .~lock*
-testOutput.csv
-testOutputWithHeader.csv
+json_to_relation/test/*.csv
 os
 pymysql
 sys

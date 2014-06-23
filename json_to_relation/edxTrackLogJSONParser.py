@@ -35,7 +35,7 @@ from generic_json_parser import GenericJSONParser
 from locationManager import LocationManager
 from modulestoreImporter import ModulestoreImporter
 from output_disposition import ColumnSpec
-from ipToCountry import IpCountryDict
+from pymysql_utils.ipToCountry import IpCountryDict
 
 EDX_HEARTBEAT_PERIOD = 360 # seconds
 
@@ -102,6 +102,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                     :                   # colon that separates key and value
                                     (.*)                # all of the rest of the string.
                                     """, re.VERBOSE)
+    
     
     # Picking (likely) zip codes out of a string:
     zipCodePattern = re.compile(r'[^0-9]([0-9]{5})')
@@ -173,7 +174,18 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # each line; Build the schema:
         
         # Fields common to every request:
-        self.commonFldNames = ['agent','event_source','event_type','ip','page','session','time','username', 'course_id', 'course_display_name']
+        self.commonFldNames = ['agent',
+                               'event_source',
+                               'event_type',
+                               'ip',
+                               'page',
+                               'session',
+                               'time',
+                               'username', 
+                               'course_id', 
+                               'course_display_name',
+                               'context'
+                               ]
 
         # A Country abbreviation lookup facility:
         self.countryChecker = LocationManager()
@@ -383,6 +395,19 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             colType = self.schemaEventIpTbl[colName]
             self.schemaEventIpTbl[colName] = ColumnSpec(colName, colType, self.jsonToRelationConverter)
 
+        # Schema for AB Experiment Events table:
+        self.schemaABExperimentTbl = OrderedDict()
+        self.schemaABExperimentTbl['event_table_id'] = ColDataType.UUID
+        self.schemaABExperimentTbl['group_id'] = ColDataType.INT
+        self.schemaABExperimentTbl['group_name'] = ColDataType.TINYTEXT
+        self.schemaABExperimentTbl['partition_id'] = ColDataType.INT
+        self.schemaABExperimentTbl['partition_name'] = ColDataType.TINYTEXT
+        self.schemaABExperimentTbl['child_module_id'] = ColDataType.TINYTEXT
+        # Turn the SQL data types in the dict to column spec objects:
+        for colName in self.schemaABExperimentTbl.keys():
+            colType =  self.schemaABExperimentTbl[colName]
+            self.schemaABExperimentTbl[colName] = ColumnSpec(colName, colType, self.jsonToRelationConverter)
+
         # Schema for Account table:
         self.schemaAccountTbl = OrderedDict()
         self.schemaAccountTbl['account_id'] = ColDataType.UUID
@@ -461,7 +486,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                          "/*!40101 SET character_set_client = utf8 */;\n"
         
         # Construct the SQL statement that precedes INSERT statements:
-        self.dumpInsertPreamble = "LOCK TABLES `%s` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE, `EventIp` WRITE;\n" % self.mainTableName +\
+        self.dumpInsertPreamble = "LOCK TABLES `%s` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE, `EventIp` WRITE, `ABExperiment` WRITE;\n" % self.mainTableName +\
                             	  "/*!40000 ALTER TABLE `%s` DISABLE KEYS */;\n" % self.mainTableName +\
                             	  "/*!40000 ALTER TABLE `State` DISABLE KEYS */;\n" +\
                             	  "/*!40000 ALTER TABLE `InputState` DISABLE KEYS */;\n" +\
@@ -469,7 +494,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                             	  "/*!40000 ALTER TABLE `CorrectMap` DISABLE KEYS */;\n" +\
                             	  "/*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;\n" +\
                             	  "/*!40000 ALTER TABLE `Account` DISABLE KEYS */;\n" +\
-                                  "/*!40000 ALTER TABLE `EventIp` DISABLE KEYS */;\n"
+                                  "/*!40000 ALTER TABLE `EventIp` DISABLE KEYS */;\n" +\
+                                  "/*!40000 ALTER TABLE `ABExperiment` DISABLE KEYS */;\n"
         
         # Add commented-out instructions for re-enabling keys.
         # The ENABLE KEYS instructions are therefore disabled in
@@ -486,6 +512,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                             		"-- /*!40000 ALTER TABLE `LoadInfo` ENABLE KEYS */;\n" +\
                             		"-- /*!40000 ALTER TABLE `Account` ENABLE KEYS */;\n" +\
                                     "-- /*!40000 ALTER TABLE `EventIp` ENABLE KEYS */;\n" +\
+                                    "-- /*!40000 ALTER TABLE `ABExperiment` ENABLE KEYS */;\n" +\
                             		"UNLOCK TABLES;\n"           
 
 
@@ -666,7 +693,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             # For any event other than heartbeat, we need to look
             # at the event field, which is an embedded JSON *string*
             # Turn that string into a (nested) Python dict. Though
-            # *sometimes* the even *is* a dict, not a string, as in
+            # *sometimes* the event *is* a dict, not a string, as in
             # problem_check_fail:
             try:
                 eventJSONStrOrDict = record['event']
@@ -874,7 +901,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 self.handleReceiveEmail(record, row, event)
                 return
                 
+            # A/B Test Events:
+            elif eventType == 'assigned_user_to_partition' or eventType == 'child_render':
+                self.handleABExperimentEvent(record, row, event)
+                return
             
+            # Event type values that start with slash:
             elif eventType[0] == '/':
                 self.handlePathStyledEventTypes(record, row, event)
                 return
@@ -985,6 +1017,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.createStateTable()
         self.createAccountTable()
         self.createEventIpTable()
+        self.createABExperimentTable()
         self.createLoadInfoTable()        
         self.createMainTable()
         
@@ -1143,6 +1176,17 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # table will be written:
         self.jsonToRelationConverter.startNewTable('Account', self.schemaAccountTbl)
         
+    def createABExperimentTable(self):
+        createStatement = self.genOneCreateStatement('ABExperiment', 
+                                                     self.schemaABExperimentTbl,
+                                                     primaryKeyName='event_table_id'
+                                                     ) 
+        self.jsonToRelationConverter.pushString(createStatement)
+        # Tell the output module (output_disposition.OutputFile) that
+        # it needs to know about a new table. That module will create
+        # a CSV file and CSV writer to which rows destined for this
+        # table will be written:
+        self.jsonToRelationConverter.startNewTable('ABExperiment', self.schemaABExperimentTbl)
 
 
     def createLoadInfoTable(self):
@@ -1240,6 +1284,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 eventIpDict['event_table_id'] = event_tuple_id
                 eventIpDict['event_ip'] = ip          
                 self.pushEventIpInfo(eventIpDict)
+            elif fldName == 'context':
+                pass #******
+            
                 
             self.setValInRow(row, fldName, val)
         # Add the foreign key that points to the current row in the load info table:
@@ -1830,6 +1877,21 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                                                     self.schemaEventIpTbl.keys()))
         return
 
+    def pushABExperimentInfo(self, abExperimentDict):
+        '''
+        Takes an ordered dict with  fields:
+           - 'event_table_id' : EdxTrackEvent _id field
+           - 'group_id'       : experimental group's ID
+           - 'group_name'     : experimental group's name
+           - 'partition_id'   : experimental partition's id
+           - 'partition_name' : experimental partition's name
+           - 'child_module_id': id of module within partition that was served to a participant
+
+        :param abExperimentDict: Ordered dict with all required ABExperiment table column values 
+        :type abExperimentDict: {STRING : STRING, STRING : INT, STRING : STRING, STRING : INT, STRING : STRING, STRING : STRING} 
+        '''
+        self.jsonToRelationConverter.pushToTable(self.resultTriplet(abExperimentDict.values(), 'ABExperiment', self.schemaABExperimentTbl.keys()))
+        return
         
     def pushAccountInfo(self, accountDict):
         '''
@@ -3306,6 +3368,34 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
         return row
         
+        
+    def handleABExperimentEvent(self, record, row, event):
+        
+        if event is None:
+            self.logWarn("Track log line %s: missing event text in event type assigned_user_to_partition or child_id." %\
+                         (self.jsonToRelationConverter.makeFileCitation()))
+            return row
+        
+        eventDict = self.ensureDict(event)
+        if eventDict is None:
+            self.logWarn("Track log line %s: event is not a dict in assigned_user_to_partition or child_id event: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
+        if len(row) < 1:
+            self.logWarn("Track log line %s: encountered empty partial row while processing assigned_user_to_partition or child_id: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
+        currEventRowId = row[0]
+        abExpDict = OrderedDict()
+        abExpDict['event_table_id']  = currEventRowId
+        abExpDict['group_id']        = eventDict.get('group_id', -1)
+        abExpDict['group_name']      = eventDict.get('group_name', '')
+        abExpDict['partition_id']    = eventDict.get('partition_id', -1)
+        abExpDict['partition_name']  = eventDict.get('partition_name', '')
+        abExpDict['child_module_id'] = eventDict.get('child_id', '')
+
+        self.pushABExperimentInfo(abExpDict)
+        return row
 
     def handlePathStyledEventTypes(self, record, row, event):
         '''
