@@ -5,6 +5,7 @@ Created on Oct 2, 2013
 
 Modifications:
 
+* Jun 23, 2014: Added support for AB Experiment events
 * Dec 28, 2013: Col load_info_fk in EdxTrackEvent now properly typed to varchar(40) to match LoadInfo.load_info_id's type uses REPLACE INTO, rather than INSERT INTO
 * Dec 28, 2013: Fixed some epydoc comment format errors.  
 
@@ -398,6 +399,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # Schema for AB Experiment Events table:
         self.schemaABExperimentTbl = OrderedDict()
         self.schemaABExperimentTbl['event_table_id'] = ColDataType.UUID
+        self.schemaABExperimentTbl['event_type'] = ColDataType.TINYTEXT
         self.schemaABExperimentTbl['group_id'] = ColDataType.INT
         self.schemaABExperimentTbl['group_name'] = ColDataType.TINYTEXT
         self.schemaABExperimentTbl['partition_id'] = ColDataType.INT
@@ -466,6 +468,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         loadInfoDict['load_date_time'] = self.jsonToRelationConverter.loadDateTime
         loadInfoDict['load_file'] = self.jsonToRelationConverter.loadFile
         self.currLoadInfoFK = self.pushLoadInfo(loadInfoDict)
+        self.currContext = None;
         
     def setupMySqlDumpControlInstructions(self):
 
@@ -906,6 +909,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 self.handleABExperimentEvent(record, row, event)
                 return
             
+            elif eventType == 'edx_course_enrollment_activated' or eventType == 'edx_course_enrollment_deactivated':
+                self.handleCourseEnrollActivatedDeactivated(record, row, event) 
+            
             # Event type values that start with slash:
             elif eventType[0] == '/':
                 self.handlePathStyledEventTypes(record, row, event)
@@ -1272,9 +1278,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 ip  = val
                 # Col value is to be three-letter country code;
                 # Get the triplet (2-letter-country-code, 3-letter-country-code, country): 
-                val = self.ipCountryDict.get(val, None)
-                if val is not None:
-                    val = val[1] # get 3-letter country code
+                val = self.getThreeLetterCountryCode(ip)
                 fldName = 'ip_country'
                 
                 # The event row id and IP address go into 
@@ -1282,11 +1286,50 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 # to EdxPrivate later:
                 eventIpDict = OrderedDict()
                 eventIpDict['event_table_id'] = event_tuple_id
-                eventIpDict['event_ip'] = ip          
+                eventIpDict['event_ip'] = ip
                 self.pushEventIpInfo(eventIpDict)
             elif fldName == 'context':
-                pass #******
-            
+                # Handle here all fields of the context dict
+                # that are common. Then set self.currContext
+                # to the context value, i.e. the dict inside.
+                # These are course_id, org_id, and user_id.
+                # We leave out the user_id, b/c we don't want
+                # it in the tables: they have anon_screen_name
+                # instead. With self.currContextDict, all field
+                # handlers can grab what they need in their context:
+                
+                self.currContextDict = self.ensureDict(val)
+
+                if self.currContextDict is not None:
+                    theCourseId = self.currContextDict.get('course_id', None)
+                    val = theCourseId
+                    fldName = 'course_display_name'
+                    
+                    # Fill in the organization:
+                    theOrg = self.currContextDict.get('org_id', None)
+                    self.setValInRow(row, 'organization', theOrg)
+
+                    # When a participant who is assigned to an AB experiment
+                    # triggers an event, the context field course_user_tags
+                    # contains a dict with user_id, course_id, key, and value,
+                    # where key is the experiment partition, and value is 
+                    # the experiment group_id to which the participant is
+                    # was assigned.
+                    
+                    abTestInfo = self.currContextDict.get('course_user_tags', None)
+                    if abTestInfo is not None:
+                        abTestDictInfoDict = self.ensureDict(abTestInfo)
+                        if abTestDictInfoDict is not None:
+                            # Use handleAbExperiment(), passing the
+                            # abTestInfo as if it were an event. The
+                            # method will then add a row to the ABExperiment
+                            # table:
+                            self.handleAbExperiment(record, row, abTestDictInfoDict)
+
+                    # Make course_id available for places where rows are added to the Answer table.
+                    # We stick the course_id there for convenience.
+                    self.currCourseID = theCourseId
+                    self.currCourseDisplayName = theCourseId
                 
             self.setValInRow(row, fldName, val)
         # Add the foreign key that points to the current row in the load info table:
@@ -1881,6 +1924,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         Takes an ordered dict with  fields:
            - 'event_table_id' : EdxTrackEvent _id field
+           - 'event_type      : type of event that caused need for this row
            - 'group_id'       : experimental group's ID
            - 'group_name'     : experimental group's name
            - 'partition_id'   : experimental partition's id
@@ -2221,7 +2265,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             return row
 
         valsDict = self.ensureDict(event) 
-        if event is None:
+        if valsDict is None:
             self.logWarn("Track log line %s: event is not a dict in video play/pause: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
@@ -3239,6 +3283,52 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 
         return row
 
+    def handleCourseEnrollActivatedDeactivated(self, record, row, event):
+        '''
+        Handles events edx_course_enrollment_activated, and edx_course_enrollment_deactivated.
+        Checks the context field. If it contains a 'path' field, then
+        its value is placed in the 'page' column.
+        
+        :param record:
+        :type record:
+        :param row:
+        :type row:
+        :param event:
+        :type event:
+        '''
+        event = self.ensureDict(event) 
+        if event is None:
+            self.logWarn("Track log line %s: event is not a dict in edx_course_enrollment_(de)activated event: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
+        self.setValInRow(row, 'hintmode', event.get('mode', None))
+        self.setValInRow(row, 'session', event.get('session', None))
+        
+        if self.currContext is not None:
+            pathToUiButton = self.currContext.get('path', None)
+            self.setValInRow(row, 'page', pathToUiButton)
+        return row
+
+    def handleCourseEnrollUpgradeOrSucceeded(self, record, row, event):
+        '''
+        Handles events edx_course_enrollment_upgrade_clicked, and 
+        edx_course_enrollment_upgrade_succeeded, and edx_course_enrollment_deactivated.
+        Checks the context field. If it contains a 'mode' field, then
+        its value is placed in the 'hintmode' column.
+        
+        :param record:
+        :type record:
+        :param row:
+        :type row:
+        :param event:
+        :type event:
+        '''
+
+        if self.currContext is not None:
+            pathToUiButton = self.currContext.get('mode', None)
+            self.setValInRow(row, 'hintmode', pathToUiButton)
+        return row
+
     def handleProblemGraded(self, record, row, event):
         '''
         Events look like this::
@@ -3385,9 +3475,15 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             self.logWarn("Track log line %s: encountered empty partial row while processing assigned_user_to_partition or child_id: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
+        try:
+            eventType = record['event_type']
+        except KeyError:
+            eventType = None
+        
         currEventRowId = row[0]
         abExpDict = OrderedDict()
         abExpDict['event_table_id']  = currEventRowId
+        abExpDict['event_type']      = eventType
         abExpDict['group_id']        = eventDict.get('group_id', -1)
         abExpDict['group_name']      = eventDict.get('group_name', '')
         abExpDict['partition_id']    = eventDict.get('partition_id', -1)
@@ -4102,7 +4198,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.setValInRow(row, 'event_source', event_source)
         self.setValInRow(row, 'event_type', event_type)
         self.setValInRow(row, 'time', time)
-        self.setValInRow(row, 'ip', ip)
+        self.setValInRow(row, 'ip_country', self.getThreeLetterCountryCode(ip))
         self.setValInRow(row, 'badly_formatted', self.makeInsertSafe(event))
     
     def tryJSONExtraction(self, pattern, theStr):
@@ -4313,3 +4409,24 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             if string.find(trackLogStr, shortCourseName) > -1:
                 return self.hashMapper[shortCourseName]
         return None
+    
+    def getThreeLetterCountryCode(self, ipAddr):
+        '''
+        Given an ip address string, return the corresponding
+        3-letter country code, or None if no country found.
+        This method could easily be modified to return the 2-letter code, 
+        or the full country name.
+        
+        :param ipAddr: IP address whose assigned country is to be found
+        :type ipAddr: String
+        :return: a three-letter country code
+        :rtype: String
+        '''
+        
+        # Get the triplet (2-letter-country-code, 3-letter-country-code, country): 
+        val = self.ipCountryDict.get(ipAddr, None)
+        if val is not None:
+            return val[1] # get 3-letter country code
+        else:
+            return None
+        

@@ -100,7 +100,6 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.EventIp (
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS ABExperiment (
     event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
-    event_type VARCHAR(255) NOT NULL,
     group_id INT NOT NULL,
     group_name VARCHAR(255) NOT NULL,
     partition_id INT NOT NULL,
@@ -193,13 +192,11 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `EventIp` DISABLE KEYS */;
 /*!40000 ALTER TABLE `ABExperiment` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('873bf38d416fe5730c7cdf598bf057b92e632a1c','2014-06-23T19:40:36.125749','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/abExpChildRender.json');
+    ('a55c32e2f90fd80ffd80224e48c5b316b3c2f1c6','2014-06-23T10:51:17.444723','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/enrollActivated.json');
 INSERT INTO EventIp (event_table_id,event_ip) VALUES 
-    ('4c0ef588_a88a_4489_9e7c_ad85db9a018e','24.5.14.103');
-INSERT INTO ABExperiment (event_table_id,event_type,group_id,group_name,partition_id,partition_name,child_module_id) VALUES 
-    ('4c0ef588_a88a_4489_9e7c_ad85db9a018e','child_render',-1,'',-1,'','child_module_10');
+    ('ba5561e5_5e12_4419_bbea_8a87de61b7a9','USA');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('4c0ef588_a88a_4489_9e7c_ad85db9a018e','a5bf8de9_7e93_4445_b01e_6fd6fab4e882','Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:21.0) Gecko/20100101 Firefox/21.0','browser','child_render','USA','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/53b0357680d24191a60156e74e184be3/','009e5b5e1bd4ab5a800cafc48bad9e44','2013-06-08T23:29:58.346222','f975dd005d3db177274710127ed9ee82db4d6b5d','0:00:00','','','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/53b0357680d24191a60156e74e184be3/','Medicine/HRP258/Statistics_in_Medicine','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','873bf38d416fe5730c7cdf598bf057b92e632a1c');
+    ('ba5561e5_5e12_4419_bbea_8a87de61b7a9','dcadf073_db2b_4ca7_8af3_ea0d253ba01d','Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:21.0) Gecko/20100101 Firefox/21.0','browser','edx_course_enrollment_activated','USA','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/53b0357680d24191a60156e74e184be3/','Django123','2013-06-08T23:29:58.346222','f975dd005d3db177274710127ed9ee82db4d6b5d','0:00:00','','','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/53b0357680d24191a60156e74e184be3/','edX/DemoX/Demo_Course','','edX','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','audit','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','a55c32e2f90fd80ffd80224e48c5b316b3c2f1c6');
 -- /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

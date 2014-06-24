@@ -188,7 +188,7 @@ class GenericJSONParser(object):
         '''
         Given a column name, a value and a partially filled row,
         add the column to the row, or set the value in an already
-        existing row. Uses the JSONToRelation instance passed to 
+        existing column. Uses the JSONToRelation instance passed to 
         __init__() to obtain current schema. 
 
         :param theRow: list of values in their proper column positions
