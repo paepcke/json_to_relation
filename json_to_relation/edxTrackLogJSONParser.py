@@ -637,7 +637,19 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             try:
                 eventType = record['event_type']
             except KeyError:
-                raise KeyError("No event type")
+                # New-type event, in which the event_type is a field
+                # called 'name' within the 'event' field:
+                try:
+                    event = record['event']
+                except KeyError:
+                    # No event record at all:
+                    raise KeyError("No event field")
+                event = self.ensureDict(event)
+                if event is None:
+                    raise KeyError("No properly formatted event field")
+                eventType = event.get('name', None)
+                if eventType is None:
+                    raise KeyError("No event type field; cannot determine tye type of event.")
             
             # Check whether we had a server downtime:
             try:
@@ -848,7 +860,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             # Instructor events:
             elif eventType in ['list-students',  'dump-grades',  'dump-grades-raw',  'dump-grades-csv',
                                'dump-grades-csv-raw', 'dump-answer-dist-csv', 'dump-graded-assignments-config',
-                               'list-staff',  'list-instructors',  'list-beta-testers']:
+                               'list-staff',  'list-instructors',  'list-beta-testers'
+                               ]:
                 # These events have no additional info. The event_type says it all,
                 # and that's already been stuck into the table:
                 return
@@ -909,26 +922,18 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 self.handleABExperimentEvent(record, row, event)
                 return
             
-            elif eventType == 'edx_course_enrollment_activated' or eventType == 'edx_course_enrollment_deactivated':
+            elif eventType == 'edx.course.enrollment.activated' or eventType == 'edx.course.enrollment.deactivated':
                 self.handleCourseEnrollActivatedDeactivated(record, row, event) 
+                return
+            
+            # Forum events:
+            elif eventType == 'edx.forum.searched':
+                self.handleForumEvent(record, row, event)
+                return
             
             # Event type values that start with slash:
             elif eventType[0] == '/':
                 self.handlePathStyledEventTypes(record, row, event)
-                return
-            
-            # Some instructor events only have common fields, which 
-            # we handled earlier in handleCommonFields():
-            elif eventType == 'dump_answer_dist_csv' or\
-                 eventType == 'dump_graded_assignments_config' or\
-                 eventType == 'dump_grades' or\
-                 eventType == 'dump_grades_csv' or\
-                 eventType == 'dump_grades_csv_raw' or\
-                 eventType == 'dump_grades_raw' or\
-                 eventType == 'list_beta_testers' or\
-                 eventType == 'list_instructors' or\
-                 eventType == 'list_staff' or\
-                 eventType == 'list_students':
                 return
             
             else:
@@ -3471,6 +3476,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         accountDict['email'] = None
         accountDict['receive_emails'] = receive_emails
 
+#************** push to account???
+
         return row
         
         
@@ -3589,6 +3596,20 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             return self.subHandleProblemCheckInPath(row, postDict)
         elif verb == 'save_grade':
             return self.subHandleSaveGrade(row, postDict)
+        
+    def handleForumEvent(self, record, row, event):
+
+        eventDict = self.ensureDict(event) 
+        if eventDict is None:
+            self.logWarn("Track log line %s: event is not a dict in path-styled event: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
+        
+        self.setValInRow(row, 'submission_id', str(event.get('query', None)))
+        self.setValInRow(row, 'page', str(event.get('page', None)))
+        self.setValInRow(row, 'success', str(event.get('total_results', None)))
+        
+        return row
         
     def subHandleIsStudentCalibrated(self, row, eventDict):
         '''
