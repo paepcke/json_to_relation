@@ -100,6 +100,7 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.EventIp (
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS ABExperiment (
     event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    event_type VARCHAR(255) NOT NULL,
     group_id INT NOT NULL,
     group_name VARCHAR(255) NOT NULL,
     partition_id INT NOT NULL,
@@ -159,7 +160,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     success VARCHAR(255) NOT NULL,
     answer_id TEXT NOT NULL,
     hint TEXT NOT NULL,
-    hintmode VARCHAR(255) NOT NULL,
+    mode VARCHAR(255) NOT NULL,
     msg TEXT NOT NULL,
     npoints TINYINT NOT NULL,
     queuestate TEXT NOT NULL,
@@ -192,11 +193,11 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `EventIp` DISABLE KEYS */;
 /*!40000 ALTER TABLE `ABExperiment` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('43a452e2b439917cb238fe1eb561241c20f8f4fb','2014-06-23T08:06:33.090030','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/seekVideoOther.json');
+    ('43a452e2b439917cb238fe1eb561241c20f8f4fb','2014-06-25T11:29:50.766040','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/seekVideoOther.json');
 INSERT INTO EventIp (event_table_id,event_ip) VALUES 
-    ('8a516bbf_1bb0_4aed_8076_b5a6a5fe5204','61.202.56.98');
-INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('8a516bbf_1bb0_4aed_8076_b5a6a5fe5204','dc49eb0d_a162_42f5_be65_b769848f07d2','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.72 Safari/537.36','browser','seek_video','JPN','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/6c618930f54340c29400b1c442357b9c/8220e922ccbd4e82bbda867c9abae5db/','f4e3f627d8cc389b89e674b0fcfa0251','2013-07-25T09:37:07.901686+00:00','40bf83897918255ee97fdd625a4e6786b48b74f5','0:00:00','','','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/6c618930f54340c29400b1c442357b9c/8220e922ccbd4e82bbda867c9abae5db/','Medicine/HRP258/Statistics_in_Medicine','Module 3, part 2','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'i4x-Medicine-HRP258-videoalpha-5ce998d44e594af3ab0344505e022f86','html5','','','167.734143','168','slide_seek','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','43a452e2b439917cb238fe1eb561241c20f8f4fb');
+    ('e08e09ed_5850_43ea_84ae_e0a5018e5f93','61.202.56.98');
+INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,mode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
+    ('e08e09ed_5850_43ea_84ae_e0a5018e5f93','05c6c8b5_1dfe_4dca_b6f9_d8dbac92bd61','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.72 Safari/537.36','browser','seek_video','JPN','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/6c618930f54340c29400b1c442357b9c/8220e922ccbd4e82bbda867c9abae5db/','f4e3f627d8cc389b89e674b0fcfa0251','2013-07-25T09:37:07.901686+00:00','40bf83897918255ee97fdd625a4e6786b48b74f5','0:00:00','','','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/6c618930f54340c29400b1c442357b9c/8220e922ccbd4e82bbda867c9abae5db/','Medicine/HRP258/Statistics_in_Medicine','Module 3, part 2','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'i4x-Medicine-HRP258-videoalpha-5ce998d44e594af3ab0344505e022f86','html5','','','167.734143','168','slide_seek','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','43a452e2b439917cb238fe1eb561241c20f8f4fb');
 -- /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

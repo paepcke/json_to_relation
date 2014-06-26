@@ -100,6 +100,7 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.EventIp (
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS ABExperiment (
     event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    event_type VARCHAR(255) NOT NULL,
     group_id INT NOT NULL,
     group_name VARCHAR(255) NOT NULL,
     partition_id INT NOT NULL,
@@ -159,7 +160,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     success VARCHAR(255) NOT NULL,
     answer_id TEXT NOT NULL,
     hint TEXT NOT NULL,
-    hintmode VARCHAR(255) NOT NULL,
+    mode VARCHAR(255) NOT NULL,
     msg TEXT NOT NULL,
     npoints TINYINT NOT NULL,
     queuestate TEXT NOT NULL,
@@ -192,11 +193,11 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `EventIp` DISABLE KEYS */;
 /*!40000 ALTER TABLE `ABExperiment` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('341ec9bf78470a3f521855d1ba49ec600b36223b','2014-06-23T08:06:04.996410','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/isStudentCalibrated.json');
+    ('341ec9bf78470a3f521855d1ba49ec600b36223b','2014-06-25T11:29:25.081319','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/isStudentCalibrated.json');
 INSERT INTO EventIp (event_table_id,event_ip) VALUES 
-    ('6bf5b53f_b247_4cde_8b3b_c51db818cd17','82.9.126.47');
-INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('6bf5b53f_b247_4cde_8b3b_c51db818cd17','31ab6889_0807_48fb_a1ad_3733a90f8daa','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/peergrading/ef6ba7f803bb46ebaaf008cde737e3e9/is_student_calibrated','GBR','','','2013-08-28T20:16:48.720470+00:00','961a46adbb8dbbc5e6fa3e0d7255eae62fc647b7','0:00:00','','','Education/EDUC115N/How_to_Learn_Math','Education/EDUC115N/How_to_Learn_Math','Peer Feedback Interface','','',-1,-1,'','','i4x://Education/EDUC115N/combinedopenended/d5b45f4cad82417d961a045e9c28f057','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','341ec9bf78470a3f521855d1ba49ec600b36223b');
+    ('091d1bcc_8402_4885_95e1_40160637636b','82.9.126.47');
+INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,mode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
+    ('091d1bcc_8402_4885_95e1_40160637636b','18b2a398_ac1e_40ec_b0d6_a5a61aa73c1d','Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/peergrading/ef6ba7f803bb46ebaaf008cde737e3e9/is_student_calibrated','GBR','','','2013-08-28T20:16:48.720470+00:00','961a46adbb8dbbc5e6fa3e0d7255eae62fc647b7','0:00:00','','','Education/EDUC115N/How_to_Learn_Math','Education/XEDUC115N/Summer2014','Peer Feedback Interface','','',-1,-1,'','','i4x://Education/EDUC115N/combinedopenended/d5b45f4cad82417d961a045e9c28f057','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','341ec9bf78470a3f521855d1ba49ec600b36223b');
 -- /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

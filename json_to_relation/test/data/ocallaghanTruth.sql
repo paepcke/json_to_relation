@@ -100,6 +100,7 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.EventIp (
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS ABExperiment (
     event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    event_type VARCHAR(255) NOT NULL,
     group_id INT NOT NULL,
     group_name VARCHAR(255) NOT NULL,
     partition_id INT NOT NULL,
@@ -159,7 +160,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     success VARCHAR(255) NOT NULL,
     answer_id TEXT NOT NULL,
     hint TEXT NOT NULL,
-    hintmode VARCHAR(255) NOT NULL,
+    mode VARCHAR(255) NOT NULL,
     msg TEXT NOT NULL,
     npoints TINYINT NOT NULL,
     queuestate TEXT NOT NULL,
@@ -192,13 +193,13 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `EventIp` DISABLE KEYS */;
 /*!40000 ALTER TABLE `ABExperiment` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('35d8c63b3742638ed69193c5c7d87d838397efd1','2014-06-23T08:06:10.957190','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/ocallaghan.json');
+    ('35d8c63b3742638ed69193c5c7d87d838397efd1','2014-06-25T11:29:30.555156','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/ocallaghan.json');
 INSERT INTO EventIp (event_table_id,event_ip) VALUES 
-    ('54338db8_2590_4d3b_acd8_69b32bb07f72','153.107.97.164');
+    ('8c678e9f_1921_42ac_9624_40ce1a3e431f','153.107.97.164');
 INSERT INTO Account (account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) VALUES 
-    ('cc6359a2_f4fb_434f_af45_3ac0d4e5380f','Baz','Barry O\'Callaghan','c61c41736a76d40819e63516cc1c337959f84b6e','','','','m',1981,'a','Expand my Knowledge. ',1,1,'Education/EDUC115N/How_to_Learn_Math','','bazocallaghan@gmail.com','');
-INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('54338db8_2590_4d3b_acd8_69b32bb07f72','d2d6c0a6_c4de_4566_9aaf_be9ab02ac96b','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','server','/create_account','AUS','','','2013-07-11T04:15:39.373794+00:00','9c1185a5c5e9fc54612808977ee8f548b2258d31','0:00:00','','','/create_account','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','35d8c63b3742638ed69193c5c7d87d838397efd1');
+    ('c8a8c510_b6e8_4691_be3f_546e8054ac3e','Baz','Barry O\'Callaghan','c61c41736a76d40819e63516cc1c337959f84b6e','','','','m',1981,'a','Expand my Knowledge. ',1,1,'Education/EDUC115N/How_to_Learn_Math','','bazocallaghan@gmail.com','');
+INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,mode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
+    ('8c678e9f_1921_42ac_9624_40ce1a3e431f','39aa037c_7a74_4696_a3c3_65e01fe707c1','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36','server','/create_account','AUS','','','2013-07-11T04:15:39.373794+00:00','9c1185a5c5e9fc54612808977ee8f548b2258d31','0:00:00','','','/create_account','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','35d8c63b3742638ed69193c5c7d87d838397efd1');
 -- /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

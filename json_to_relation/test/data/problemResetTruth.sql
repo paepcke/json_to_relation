@@ -100,6 +100,7 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.EventIp (
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS ABExperiment (
     event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    event_type VARCHAR(255) NOT NULL,
     group_id INT NOT NULL,
     group_name VARCHAR(255) NOT NULL,
     partition_id INT NOT NULL,
@@ -159,7 +160,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     success VARCHAR(255) NOT NULL,
     answer_id TEXT NOT NULL,
     hint TEXT NOT NULL,
-    hintmode VARCHAR(255) NOT NULL,
+    mode VARCHAR(255) NOT NULL,
     msg TEXT NOT NULL,
     npoints TINYINT NOT NULL,
     queuestate TEXT NOT NULL,
@@ -192,11 +193,11 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `EventIp` DISABLE KEYS */;
 /*!40000 ALTER TABLE `ABExperiment` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('652d21038eb7cc1dcd266e40e60e48876e32045d','2014-06-23T08:06:22.016967','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemReset.json');
+    ('652d21038eb7cc1dcd266e40e60e48876e32045d','2014-06-25T11:29:40.770734','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemReset.json');
 INSERT INTO EventIp (event_table_id,event_ip) VALUES 
-    ('44a367cd_e09b_4e68_92e1_aee6b2db129f','117.58.245.202');
-INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('44a367cd_e09b_4e68_92e1_aee6b2db129f','09c04fa9_3f44_4365_94d9_4b20dadf2bd0','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36','browser','problem_reset','BGD','https://class.stanford.edu/courses/Engineering/QMSE01/Quantum_Mechanics_for_Scientists_and_Engineers/courseware/b2994ac964ae438aa4556d3df52a2506/1f2294fa31e340deac3904a95f8109df/','cd29f0ec437a61b624c06177fd2d5dd5','2013-10-21T06:20:17.903607+00:00','59359eeb2df5f009edcb21a9478177acbaae28aa','0:00:00','','','https://class.stanford.edu/courses/Engineering/QMSE01/Quantum_Mechanics_for_Scientists_and_Engineers/courseware/b2994ac964ae438aa4556d3df52a2506/1f2294fa31e340deac3904a95f8109df/','Engineering/QMSE01/Quantum_Mechanics_for_Scientists_and_Engineers','Quiz 4.1.1 Q3','','',-1,-1,'input_i4x-Engineering-QMSE01-problem-dce5fe9e04be4bc1932efb05a2d6db68_2_1=2','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','652d21038eb7cc1dcd266e40e60e48876e32045d');
+    ('d66f9cc0_eb72_4cd4_8f52_26f63ab1f424','117.58.245.202');
+INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,mode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
+    ('d66f9cc0_eb72_4cd4_8f52_26f63ab1f424','f9adfc99_77ec_487f_aac0_49fcd0e7579c','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36','browser','problem_reset','BGD','https://class.stanford.edu/courses/Engineering/QMSE01/Quantum_Mechanics_for_Scientists_and_Engineers/courseware/b2994ac964ae438aa4556d3df52a2506/1f2294fa31e340deac3904a95f8109df/','cd29f0ec437a61b624c06177fd2d5dd5','2013-10-21T06:20:17.903607+00:00','59359eeb2df5f009edcb21a9478177acbaae28aa','0:00:00','','','https://class.stanford.edu/courses/Engineering/QMSE01/Quantum_Mechanics_for_Scientists_and_Engineers/courseware/b2994ac964ae438aa4556d3df52a2506/1f2294fa31e340deac3904a95f8109df/','Engineering/QMSE01/Quantum_Mechanics_for_Scientists_and_Engineers','Quiz 4.1.1 Q3','','',-1,-1,'input_i4x-Engineering-QMSE01-problem-dce5fe9e04be4bc1932efb05a2d6db68_2_1=2','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','652d21038eb7cc1dcd266e40e60e48876e32045d');
 -- /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

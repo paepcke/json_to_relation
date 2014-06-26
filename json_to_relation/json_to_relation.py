@@ -368,6 +368,9 @@ class JSONToRelation(object):
 
         with self.destination as outFd, self.jsonSource as inFd:
             for jsonStr in inFd:
+                # Skip empty rows:
+                if jsonStr == '\n' or len(jsonStr) == 0:
+                    continue
                 newRow = []
                 try:
                     # processOneJSONObject will call pushtToTable() for all 

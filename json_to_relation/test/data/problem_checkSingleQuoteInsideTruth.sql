@@ -100,6 +100,7 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.EventIp (
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS ABExperiment (
     event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    event_type VARCHAR(255) NOT NULL,
     group_id INT NOT NULL,
     group_name VARCHAR(255) NOT NULL,
     partition_id INT NOT NULL,
@@ -159,7 +160,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     success VARCHAR(255) NOT NULL,
     answer_id TEXT NOT NULL,
     hint TEXT NOT NULL,
-    hintmode VARCHAR(255) NOT NULL,
+    mode VARCHAR(255) NOT NULL,
     msg TEXT NOT NULL,
     npoints TINYINT NOT NULL,
     queuestate TEXT NOT NULL,
@@ -192,13 +193,13 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `EventIp` DISABLE KEYS */;
 /*!40000 ALTER TABLE `ABExperiment` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('a4ccdb99868304fcd09e8854d76d1bbdd781684b','2014-06-23T08:06:17.983132','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problem_checkSingleQuoteInside.json');
+    ('a4ccdb99868304fcd09e8854d76d1bbdd781684b','2014-06-25T11:29:37.121608','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problem_checkSingleQuoteInside.json');
 INSERT INTO EventIp (event_table_id,event_ip) VALUES 
-    ('ac923c9c_451a_4d40_a37e_d540addad192','76.7.198.45');
+    ('0a37f7ed_c7e4_402e_b79e_855b8e92bf02','76.7.198.45');
 INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
-    ('46a1621e_8d31_4d70_8984_6cbb29132172','input_i4x-Medicine-HRP258-problem-9f73ff5f71564b25856ec67ec52786b3_2_1','He hadn\'t seen','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/468e5aba519448da8d0e299d2d55804e/');
-INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('ac923c9c_451a_4d40_a37e_d540addad192','74540631_de8e_4ebe_9a91_23a0f128c1ac','Mozilla/5.0 (iPad; CPU OS 6_1_3 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10B329 Safari/8536.25','browser','problem_check','USA','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/468e5aba519448da8d0e299d2d55804e/','f08b13a546e6069de166c8cdbb75df61','2013-06-18T04:09:33.140025+00:00','fffe752ba639a6ab3859e3fcccd54fa87e3e6eea','0:00:00','','','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/468e5aba519448da8d0e299d2d55804e/','Medicine/HRP258/Statistics_in_Medicine','Quiz','','',-1,-1,'input_i4x-Medicine-HRP258-problem-9f73ff5f71564b25856ec67ec52786b3_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','46a1621e_8d31_4d70_8984_6cbb29132172','','a4ccdb99868304fcd09e8854d76d1bbdd781684b');
+    ('5545fe46_66a1_4de5_b40b_2acfa6870d3c','input_i4x-Medicine-HRP258-problem-9f73ff5f71564b25856ec67ec52786b3_2_1','He hadn\'t seen','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/468e5aba519448da8d0e299d2d55804e/');
+INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,mode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
+    ('0a37f7ed_c7e4_402e_b79e_855b8e92bf02','87394549_9f83_4e4b_bf3c_85411fb763f6','Mozilla/5.0 (iPad; CPU OS 6_1_3 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10B329 Safari/8536.25','browser','problem_check','USA','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/468e5aba519448da8d0e299d2d55804e/','f08b13a546e6069de166c8cdbb75df61','2013-06-18T04:09:33.140025+00:00','fffe752ba639a6ab3859e3fcccd54fa87e3e6eea','0:00:00','','','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/468e5aba519448da8d0e299d2d55804e/','Medicine/HRP258/Statistics_in_Medicine','Quiz','','',-1,-1,'input_i4x-Medicine-HRP258-problem-9f73ff5f71564b25856ec67ec52786b3_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','5545fe46_66a1_4de5_b40b_2acfa6870d3c','','a4ccdb99868304fcd09e8854d76d1bbdd781684b');
 -- /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

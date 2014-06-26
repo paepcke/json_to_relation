@@ -100,6 +100,7 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.EventIp (
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS ABExperiment (
     event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    event_type VARCHAR(255) NOT NULL,
     group_id INT NOT NULL,
     group_name VARCHAR(255) NOT NULL,
     partition_id INT NOT NULL,
@@ -159,7 +160,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     success VARCHAR(255) NOT NULL,
     answer_id TEXT NOT NULL,
     hint TEXT NOT NULL,
-    hintmode VARCHAR(255) NOT NULL,
+    mode VARCHAR(255) NOT NULL,
     msg TEXT NOT NULL,
     npoints TINYINT NOT NULL,
     queuestate TEXT NOT NULL,
@@ -192,14 +193,14 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `EventIp` DISABLE KEYS */;
 /*!40000 ALTER TABLE `ABExperiment` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('1c99836ca4da21d34692539a679e1b3a5773cac7','2014-06-23T08:05:51.954146','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/courseIdGetsProbId.json');
+    ('1c99836ca4da21d34692539a679e1b3a5773cac7','2014-06-25T11:29:11.999127','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/courseIdGetsProbId.json');
 INSERT INTO EventIp (event_table_id,event_ip) VALUES 
-    ('783bd08b_d7e0_4fa2_b3a8_f28de2718a2f','95.172.88.5');
+    ('786baa22_d28a_41d7_a7e6_c624ec9720e8','95.172.88.5');
 INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
-    ('c620a441_e963_4ead_99c9_559787001c97','input_i4x-Education-EDUC115N-problem-7cf69c2a55444dcdbed81d1a235b7681_2_1','choice_1','Education/EDUC115N/How_to_Learn_Math');
-INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('783bd08b_d7e0_4fa2_b3a8_f28de2718a2f','fd339916_3a34_4f11_ab08_7f71396dc202','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/problem/7cf69c2a55444dcdbed81d1a235b7681/problem_check','GBR','','','2013-08-20T11:29:58.775276+00:00','b4b32c885683787a9733a5acf11088232967a2cf','0:00:00','','','Education/EDUC115N/How_to_Learn_Math','Education/EDUC115N/How_to_Learn_Math','Question 3.1','','',-1,-1,'input_i4x-Education-EDUC115N-problem-7cf69c2a55444dcdbed81d1a235b7681_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','c620a441_e963_4ead_99c9_559787001c97','','1c99836ca4da21d34692539a679e1b3a5773cac7'),
-    ('e8b9f944_9b5e_4d83_93e9_5279f4218d6c','fd339916_3a34_4f11_ab08_7f71396dc202','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/problem/7cf69c2a55444dcdbed81d1a235b7681/problem_check','GBR','','','2013-08-20T11:29:58.775276+00:00','b4b32c885683787a9733a5acf11088232967a2cf','0:00:00','','','Education/EDUC115N/How_to_Learn_Math','Education/EDUC115N/How_to_Learn_Math','Question 3.1','','',-1,-1,'input_i4x-Education-EDUC115N-problem-7cf69c2a55444dcdbed81d1a235b7681_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','c620a441_e963_4ead_99c9_559787001c97','','1c99836ca4da21d34692539a679e1b3a5773cac7');
+    ('d4b980be_40a0_4559_a061_f046406b9c6f','input_i4x-Education-EDUC115N-problem-7cf69c2a55444dcdbed81d1a235b7681_2_1','choice_1','Education/EDUC115N/How_to_Learn_Math');
+INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,mode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
+    ('786baa22_d28a_41d7_a7e6_c624ec9720e8','56375c0d_173a_4cae_a18c_9c323573fc0f','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/problem/7cf69c2a55444dcdbed81d1a235b7681/problem_check','GBR','','','2013-08-20T11:29:58.775276+00:00','b4b32c885683787a9733a5acf11088232967a2cf','0:00:00','','','Education/EDUC115N/How_to_Learn_Math','Education/XEDUC115N/Summer2014','Question 3.1','','',-1,-1,'input_i4x-Education-EDUC115N-problem-7cf69c2a55444dcdbed81d1a235b7681_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','d4b980be_40a0_4559_a061_f046406b9c6f','','1c99836ca4da21d34692539a679e1b3a5773cac7'),
+    ('783cfab2_5230_40f6_b9e7_2137815d41ba','56375c0d_173a_4cae_a18c_9c323573fc0f','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36','server','/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/problem/7cf69c2a55444dcdbed81d1a235b7681/problem_check','GBR','','','2013-08-20T11:29:58.775276+00:00','b4b32c885683787a9733a5acf11088232967a2cf','0:00:00','','','Education/EDUC115N/How_to_Learn_Math','Education/XEDUC115N/Summer2014','Question 3.1','','',-1,-1,'input_i4x-Education-EDUC115N-problem-7cf69c2a55444dcdbed81d1a235b7681_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','d4b980be_40a0_4559_a061_f046406b9c6f','','1c99836ca4da21d34692539a679e1b3a5773cac7');
 -- /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

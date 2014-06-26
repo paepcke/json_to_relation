@@ -1518,14 +1518,14 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
-    #*****@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testABExperimentSomeEventAfterAssignmentToGroup(self):
-
+ 
         # Fire two events: an assigned_user_to_partition event
         # followed by a fullscreen event:
         testFilePath = os.path.join(os.path.dirname(__file__),"data/fullScreenForAbExperimentStudent.json")
         stringSource = InURI(testFilePath)
-        
+         
         resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
         # Just use the file name of the tmp file.
         resultFileName = resultFile.name
@@ -1539,7 +1539,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
-        
+         
         truthFile = open(os.path.join(os.path.dirname(__file__),"data/fullScreenForAbExperimentStudentTruth.sql"), 'r')
         if UPDATE_TRUTH:
             self.updateTruth(dest.name, truthFile.name)
@@ -1570,6 +1570,34 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
+
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def testInstructorEventsOnlyCommonFields(self):
+ 
+        # Several instructor events have only the common fields; event field is empty.
+        # Examples: dump_answer_dist_csv, dump_grades, list_beta_testers, list_students:
+        testFilePath = os.path.join(os.path.dirname(__file__),"data/eventsWithOnlyCommonFields.json")
+        stringSource = InURI(testFilePath)
+         
+        resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+        # Just use the file name of the tmp file.
+        resultFileName = resultFile.name
+        resultFile.close()
+        dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+        fileConverter = JSONToRelation(stringSource,
+                                       dest,
+                                       mainTableName='EdxTrackEvent'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        fileConverter.setParser(edxParser)
+        fileConverter.convert()
+        dest.close()
+         
+        truthFile = open(os.path.join(os.path.dirname(__file__),"data/eventsWithOnlyCommonFieldsTruth.sql"), 'r')
+        if UPDATE_TRUTH:
+            self.updateTruth(dest.name, truthFile.name)
+        else:
+            self.assertFileContentEquals(truthFile, dest.name)
 
 #     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
 #     def testHuntDupKey(self):

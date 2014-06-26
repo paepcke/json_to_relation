@@ -50,3 +50,4 @@ subprocess
 gpg
 modulestore_*
 hashLookup.pkl
+*.csv

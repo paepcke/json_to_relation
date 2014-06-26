@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS CorrectMap (
     npoints INT,
     msg TEXT,
     hint TEXT,
-    hintmode TINYTEXT,
+    mode TINYTEXT,
     queuestate TEXT
     );
 CREATE TABLE IF NOT EXISTS InputState (
@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS Event (
     success TINYTEXT,
     answer_id TEXT,
     hint TEXT,
-    hintmode TINYTEXT,
+    mode TINYTEXT,
     correctness TINYTEXT,
     msg TEXT,
     npoints TINYINT,
@@ -117,6 +117,6 @@ CREATE TABLE IF NOT EXISTS Event (
     FOREIGN KEY(account_fk) REFERENCES Account(account_id)
     );
 START TRANSACTION;
-INSERT INTO Event (event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,hintmode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted) VALUES 
+INSERT INTO Event (event_id,agent,event_source,event_type,ip,page,session,time,username,downtime_for,student_id,instructor_id,course_id,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,mode,correctness,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted) VALUES 
     ('a9adf4ab_6e1f_48a3_9448_8f7f3cbf7da9','Mozilla/5.0 (Windows NT 6.2; WOW64; rv:24.0) Gecko/20100101 Firefox/24.0','server','/courses/Medicine/SciWrite/Fall2013/modx/i4x://Medicine/SciWrite/peergrading/49cf74c88d6e45d6a9d94b73b99b8757/save_grade','110.174.221.211',null,null,'2013-10-21T06:03:04.302702+00:00','Dully','0:00:00',null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,'{"POST": {"submission_id": ["60834"], "feedback": ["<p>Children represent the future and ensuring their healthy growth and development should be a major concern of all societies. Growth and development in children proceed concurrently and include not only physical aspect but also intellectual, emotional, and social aspect. Many factors such as genetic, environmental, nutritional, social, and psychological <span data-time="1382331306257" data-username="Peer Feedback" data-userid="1" data-cid="2" clas');
 COMMIT;

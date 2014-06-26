@@ -120,7 +120,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
     problemGradedComplexPattern = re.compile(r'aria-describedby=[\\"]*(input[^\\">]*)[\\"]*[>nStatus\\:\s"]*([iIn]{0,2}correct)')
 
     # isolate '-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_2_1":' from:
-    # ' {"success": "correct", "correct_map": {"i4x-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_2_1": {"hint": "", "hintmode": null'
+    # ' {"success": "correct", "correct_map": {"i4x-Medicine-HRP258-problem-8dd11b4339884ab78bc844ce45847141_2_1": {"hint": "", "mode": null'
     problemXFindCourseID = re.compile(r'[^-]*([^:]*)')
 
     # Isolate 32-bit hash inside any string, e.g.:
@@ -291,7 +291,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaHintsMainTable['success'] = ColDataType.TINYTEXT
         self.schemaHintsMainTable['answer_id'] = ColDataType.TEXT
         self.schemaHintsMainTable['hint'] = ColDataType.TEXT
-        self.schemaHintsMainTable['hintmode'] = ColDataType.TINYTEXT
+        self.schemaHintsMainTable['mode'] = ColDataType.TINYTEXT
         self.schemaHintsMainTable['msg'] = ColDataType.TEXT
         self.schemaHintsMainTable['npoints'] = ColDataType.TINYINT
         self.schemaHintsMainTable['queuestate'] = ColDataType.TEXT
@@ -474,15 +474,15 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
         # Preamble for MySQL dumps to make loads fast:
         self.dumpPreamble       = "/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;\n" +\
-                        		  "/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;\n" +\
-                        		  "/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;\n" +\
-                        		  "/*!40101 SET NAMES utf8 */;\n" +\
-                        		  "/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;\n" +\
-                        		  "/*!40103 SET TIME_ZONE='+00:00' */;\n" +\
-                        		  "/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;\n" +\
-                        		  "/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n" +\
-                        		  "/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;\n" +\
-                        		  "/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;\n"
+                                  "/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;\n" +\
+                                  "/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;\n" +\
+                                  "/*!40101 SET NAMES utf8 */;\n" +\
+                                  "/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;\n" +\
+                                  "/*!40103 SET TIME_ZONE='+00:00' */;\n" +\
+                                  "/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;\n" +\
+                                  "/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n" +\
+                                  "/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;\n" +\
+                                  "/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;\n"
             
         # Preamble to table creation:
         self.dumpTableCreationPreamble = "/*!40101 SET @saved_cs_client     = @@character_set_client */;\n" +\
@@ -490,13 +490,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
         # Construct the SQL statement that precedes INSERT statements:
         self.dumpInsertPreamble = "LOCK TABLES `%s` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE, `EventIp` WRITE, `ABExperiment` WRITE;\n" % self.mainTableName +\
-                            	  "/*!40000 ALTER TABLE `%s` DISABLE KEYS */;\n" % self.mainTableName +\
-                            	  "/*!40000 ALTER TABLE `State` DISABLE KEYS */;\n" +\
-                            	  "/*!40000 ALTER TABLE `InputState` DISABLE KEYS */;\n" +\
-                            	  "/*!40000 ALTER TABLE `Answer` DISABLE KEYS */;\n" +\
-                            	  "/*!40000 ALTER TABLE `CorrectMap` DISABLE KEYS */;\n" +\
-                            	  "/*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;\n" +\
-                            	  "/*!40000 ALTER TABLE `Account` DISABLE KEYS */;\n" +\
+                                  "/*!40000 ALTER TABLE `%s` DISABLE KEYS */;\n" % self.mainTableName +\
+                                  "/*!40000 ALTER TABLE `State` DISABLE KEYS */;\n" +\
+                                  "/*!40000 ALTER TABLE `InputState` DISABLE KEYS */;\n" +\
+                                  "/*!40000 ALTER TABLE `Answer` DISABLE KEYS */;\n" +\
+                                  "/*!40000 ALTER TABLE `CorrectMap` DISABLE KEYS */;\n" +\
+                                  "/*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;\n" +\
+                                  "/*!40000 ALTER TABLE `Account` DISABLE KEYS */;\n" +\
                                   "/*!40000 ALTER TABLE `EventIp` DISABLE KEYS */;\n" +\
                                   "/*!40000 ALTER TABLE `ABExperiment` DISABLE KEYS */;\n"
         
@@ -508,26 +508,26 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # be uncommented (remove just the '-- '!. Normally,
         # the manageEdxDb.py script will do the re-enabling.
         self.dumpPostscript1    =   "-- /*!40000 ALTER TABLE `%s` ENABLE KEYS */;\n" % self.mainTableName +\
-                            		"-- /*!40000 ALTER TABLE `State` ENABLE KEYS */;\n" +\
-                            		"-- /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;\n" +\
-                            		"-- /*!40000 ALTER TABLE `Answer` ENABLE KEYS */;\n" +\
-                            		"-- /*!40000 ALTER TABLE `CorrectMap` ENABLE KEYS */;\n" +\
-                            		"-- /*!40000 ALTER TABLE `LoadInfo` ENABLE KEYS */;\n" +\
-                            		"-- /*!40000 ALTER TABLE `Account` ENABLE KEYS */;\n" +\
+                                    "-- /*!40000 ALTER TABLE `State` ENABLE KEYS */;\n" +\
+                                    "-- /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;\n" +\
+                                    "-- /*!40000 ALTER TABLE `Answer` ENABLE KEYS */;\n" +\
+                                    "-- /*!40000 ALTER TABLE `CorrectMap` ENABLE KEYS */;\n" +\
+                                    "-- /*!40000 ALTER TABLE `LoadInfo` ENABLE KEYS */;\n" +\
+                                    "-- /*!40000 ALTER TABLE `Account` ENABLE KEYS */;\n" +\
                                     "-- /*!40000 ALTER TABLE `EventIp` ENABLE KEYS */;\n" +\
                                     "-- /*!40000 ALTER TABLE `ABExperiment` ENABLE KEYS */;\n" +\
-                            		"UNLOCK TABLES;\n"           
+                                    "UNLOCK TABLES;\n"           
 
 
         # In between Postscript1 and Postscript 2goes the Account and EventIp tables copy-to-private-db, and drop in Edx:
-        self.dumpPostscript2 =  	"/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;\n" +\
-		                    	    "/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;\n" +\
-		                    	    "/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;\n" +\
-		                    	    "/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;\n" +\
-		                    	    "/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;\n" +\
-		                    	    "/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;\n" +\
-		                    	    "/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;\n" +\
-		                    	    "/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;\n"
+        self.dumpPostscript2 =      "/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;\n" +\
+                                    "/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;\n" +\
+                                    "/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;\n" +\
+                                    "/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;\n" +\
+                                    "/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;\n" +\
+                                    "/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;\n" +\
+                                    "/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;\n" +\
+                                    "/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;\n"
 
         
     def processOneJSONObject(self, jsonStr, row):
@@ -917,6 +917,20 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 self.handlePathStyledEventTypes(record, row, event)
                 return
             
+            # Some instructor events only have common fields, which 
+            # we handled earlier in handleCommonFields():
+            elif eventType == 'dump_answer_dist_csv' or\
+                 eventType == 'dump_graded_assignments_config' or\
+                 eventType == 'dump_grades' or\
+                 eventType == 'dump_grades_csv' or\
+                 eventType == 'dump_grades_csv_raw' or\
+                 eventType == 'dump_grades_raw' or\
+                 eventType == 'list_beta_testers' or\
+                 eventType == 'list_instructors' or\
+                 eventType == 'list_staff' or\
+                 eventType == 'list_students':
+                return
+            
             else:
                 self.logWarn("Unknown event type '%s' in tracklog row %s" % (eventType, self.jsonToRelationConverter.makeFileCitation()))
                 return
@@ -1039,19 +1053,19 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
         CREATE TABLE myTable
             col1 VARCHAR(40) NOT NULL Primary Key,
-			col2 TEXT,
-			col3 INT,
-			col4 VARCHAR(32),
-			FOREIGN KEY(col3) REFERENCES OtherTable(int_col_name_there),
-			FOREIGN KEY(col4) REFERENCES YetOtherTable(varchar_col_name_there),
-			);
-			
-		Example for the optional foreign key specification parameter
-		that would create the above example::
-		
-		{'OtherTable' : ('col3', 'int_col_name_there'),
-		 'YetOtherTable : ('col4', 'varchar_col_name_there')
-		 }
+            col2 TEXT,
+            col3 INT,
+            col4 VARCHAR(32),
+            FOREIGN KEY(col3) REFERENCES OtherTable(int_col_name_there),
+            FOREIGN KEY(col4) REFERENCES YetOtherTable(varchar_col_name_there),
+            );
+            
+        Example for the optional foreign key specification parameter
+        that would create the above example::
+        
+        {'OtherTable' : ('col3', 'int_col_name_there'),
+         'YetOtherTable : ('col4', 'varchar_col_name_there')
+         }
 
         :param tableName: name of table to be created
         :type tableName: String
@@ -1302,8 +1316,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
                 if self.currContextDict is not None:
                     theCourseId = self.currContextDict.get('course_id', None)
-                    val = theCourseId
-                    fldName = 'course_display_name'
+                    self.setValInRow(row, 'course_display_name', theCourseId)
                     
                     # Fill in the organization:
                     theOrg = self.currContextDict.get('org_id', None)
@@ -1320,16 +1333,18 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                     if abTestInfo is not None:
                         abTestDictInfoDict = self.ensureDict(abTestInfo)
                         if abTestDictInfoDict is not None:
-                            # Use handleAbExperiment(), passing the
+                            # Use handleABExperimentEvent(), passing the
                             # abTestInfo as if it were an event. The
                             # method will then add a row to the ABExperiment
                             # table:
-                            self.handleAbExperiment(record, row, abTestDictInfoDict)
+                            self.handleABExperimentEvent(record, row, abTestDictInfoDict)
 
                     # Make course_id available for places where rows are added to the Answer table.
                     # We stick the course_id there for convenience.
                     self.currCourseID = theCourseId
                     self.currCourseDisplayName = theCourseId
+                # We took care of all fields in the context element, so go on to next common field:
+                continue
                 
             self.setValInRow(row, fldName, val)
         # Add the foreign key that points to the current row in the load info table:
@@ -1392,83 +1407,83 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         The problem_check event comes in two flavors (assertained by observation):
         The most complex is this one::
         
-		  {       
-		    "success": "correct",
-		    "correct_map": {
-		        "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {
-		            "hint": "",
-		            "hintmode": null,
-		            "correctness": "correct",
-		            "msg": "",
-		            "npoints": null,
-		            "queuestate": null
-		        },
-		        "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": {
-		            "hint": "",
-		            "hintmode": null,
-		            "correctness": "correct",
-		            "msg": "",
-		            "npoints": null,
-		            "queuestate": null
-		        }
-		    },
-		    "attempts": 2,
-		    "answers": {
-		        "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": "choice_0",
-		        "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": "choice_3"
-		    },
-		    "state": {
-		        "student_answers": {
-		            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": "choice_3",
-		            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": "choice_1"
-		        },
-		        "seed": 1,
-		        "done": true,
-		        "correct_map": {
-		            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {
-		                "hint": "",
-		                "hintmode": null,
-		                "correctness": "incorrect",
-		                "msg": "",
-		                "npoints": null,
-		                "queuestate": null
-		            },
-		            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": {
-		                "hint": "",
-		                "hintmode": null,
-		                "correctness": "incorrect",
-		                "msg": "",
-		                "npoints": null,
-		                "queuestate": null
-		            }
-		        },
-		        "input_state": {
-		            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {},
-		            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": {}
-		        }
-		    },
-		    "problem_id": "i4x://Medicine/HRP258/problem/e194bcb477104d849691d8b336b65ff6"
-		  }
-		  
-		The simpler version is like this, in which the answers are styled as HTTP GET parameters::
-		
-		  {"username": "smitch", 
-		   "host": "class.stanford.edu", 
-		   "session": "75a8c9042ba10156301728f61e487414", 
-		   "event_source": "browser", 
-		   "event_type": "problem_check", 
-		   "time": "2013-08-04T06:27:13.660689+00:00", 
-		   "ip": "66.172.116.216", 
-		   "event": "\"input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_2_1=choice_2&
-		               input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_3_1=choice_2\"", 
-		   "agent": "Mozilla/5.0 (Windows NT 6.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36", 
-		   "page": "https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/de472d1448a74e639a41fa584c49b91e/ed52812e4f96445383bfc556d15cb902/"
-		   }	        
+          {       
+            "success": "correct",
+            "correct_map": {
+                "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {
+                    "hint": "",
+                    "mode": null,
+                    "correctness": "correct",
+                    "msg": "",
+                    "npoints": null,
+                    "queuestate": null
+                },
+                "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": {
+                    "hint": "",
+                    "hintmode": null,
+                    "correctness": "correct",
+                    "msg": "",
+                    "npoints": null,
+                    "queuestate": null
+                }
+            },
+            "attempts": 2,
+            "answers": {
+                "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": "choice_0",
+                "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": "choice_3"
+            },
+            "state": {
+                "student_answers": {
+                    "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": "choice_3",
+                    "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": "choice_1"
+                },
+                "seed": 1,
+                "done": true,
+                "correct_map": {
+                    "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {
+                        "hint": "",
+                        "hintmode": null,
+                        "correctness": "incorrect",
+                        "msg": "",
+                        "npoints": null,
+                        "queuestate": null
+                    },
+                    "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": {
+                        "hint": "",
+                        "hintmode": null,
+                        "correctness": "incorrect",
+                        "msg": "",
+                        "npoints": null,
+                        "queuestate": null
+                    }
+                },
+                "input_state": {
+                    "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {},
+                    "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": {}
+                }
+            },
+            "problem_id": "i4x://Medicine/HRP258/problem/e194bcb477104d849691d8b336b65ff6"
+          }
+          
+        The simpler version is like this, in which the answers are styled as HTTP GET parameters::
+        
+          {"username": "smitch", 
+           "host": "class.stanford.edu", 
+           "session": "75a8c9042ba10156301728f61e487414", 
+           "event_source": "browser", 
+           "event_type": "problem_check", 
+           "time": "2013-08-04T06:27:13.660689+00:00", 
+           "ip": "66.172.116.216", 
+           "event": "\"input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_2_1=choice_2&
+                       input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_3_1=choice_2\"", 
+           "agent": "Mozilla/5.0 (Windows NT 6.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1500.95 Safari/537.36", 
+           "page": "https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/de472d1448a74e639a41fa584c49b91e/ed52812e4f96445383bfc556d15cb902/"
+           }            
 
         We handle the complex version here, but call problemCheckSimpleCase() 
         for the simple case.
 
-		:param record:
+        :param record:
         :type record:
         :param row:
         :type row:
@@ -1580,8 +1595,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         Handle the simple case of problem_check type events. 
         Their event field has this form::
         
-		   "event": "\"input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_2_1=choice_2&
-		               input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_3_1=choice_2\"", 
+           "event": "\"input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_2_1=choice_2&
+                       input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_3_1=choice_2\"", 
         The problems and proposed solutions are styled like HTTP GET request parameters.        
 
         :param row:
@@ -1643,25 +1658,25 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         Get dicts like this::
         
-		{"i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {
-		        "hint": "",
-		        "hintmode": null,
-		        "correctness": "correct",
-		        "msg": "",
-		        "npoints": null,
-		        "queuestate": null
-		    },
-		    "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": {
-		        "hint": "",
-		        "hintmode": null,
-		        "correctness": "correct",
-		        "msg": "",
-		        "npoints": null,
-		        "queuestate": null
-		    }
-		}
-		
-		The above has two correctmaps.
+        {"i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {
+                "hint": "",
+                "hintmode": null,
+                "correctness": "correct",
+                "msg": "",
+                "npoints": null,
+                "queuestate": null
+            },
+            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": {
+                "hint": "",
+                "hintmode": null,
+                "correctness": "correct",
+                "msg": "",
+                "npoints": null,
+                "queuestate": null
+            }
+        }
+        
+        The above has two correctmaps.
 
         :param correctMapsDict: dict of CorrectMap dicts
         :type correctMapsDict: Dict<String, Dict<String,String>>
@@ -1682,9 +1697,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             hint = oneCorrectMapDict.get('hint', '')
             if hint is None:
                 hint = ''
-            hintmode = oneCorrectMapDict.get('hintmode', '')
-            if hintmode is None:
-                hintmode = ''
+            mode = oneCorrectMapDict.get('hintmode', '')
+            if mode is None:
+                mode = ''
             correctness = oneCorrectMapDict.get('correctness', '')
             if correctness is None:
                 correctness = ''
@@ -1717,7 +1732,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                 npoints,
                                 msg,
                                 hint,
-                                hintmode,
+                                mode,
                                 queuestate]
             self.jsonToRelationConverter.pushToTable(self.resultTriplet(correctMapValues, 'CorrectMap', self.schemaCorrectMapTbl.keys()))
         # Return the array of RorrectMap row unique ids we just
@@ -1768,36 +1783,36 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         We get a structure like this::
         
-	    {   
-	        "student_answers": {
-	            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": "choice_3",
-	            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": "choice_1"
-	        },
-	        "seed": 1,
-	        "done": true,
-	        "correct_map": {
-	            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {
-	                "hint": "",
-	                "hintmode": null,
-	                "correctness": "incorrect",
-	                "msg": "",
-	                "npoints": null,
-	                "queuestate": null
-	            },
-	            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": {
-	                "hint": "",
-	                "hintmode": null,
-	                "correctness": "incorrect",
-	                "msg": "",
-	                "npoints": null,
-	                "queuestate": null
-	            }
-	        },
-	        "input_state": {
-	            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {},
-	            "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": {}
-	        }
-	    }        
+        {   
+            "student_answers": {
+                "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": "choice_3",
+                "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": "choice_1"
+            },
+            "seed": 1,
+            "done": true,
+            "correct_map": {
+                "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {
+                    "hint": "",
+                    "hintmode": null,
+                    "correctness": "incorrect",
+                    "msg": "",
+                    "npoints": null,
+                    "queuestate": null
+                },
+                "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": {
+                    "hint": "",
+                    "hintmode": null,
+                    "correctness": "incorrect",
+                    "msg": "",
+                    "npoints": null,
+                    "queuestate": null
+                }
+            },
+            "input_state": {
+                "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_3_1": {},
+                "i4x-Medicine-HRP258-problem-e194bcb477104d849691d8b336b65ff6_2_1": {}
+            }
+        }        
 
         :param stateDict:
         :type stateDict:
@@ -2069,11 +2084,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         Gets a event string like this::
         
-		   "\"input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_2_1=13.4&
-		      input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_3_1=2.49&
-		      input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_4_1=13.5&
-		      input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_5_1=3\""        
-		           
+           "\"input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_2_1=13.4&
+              input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_3_1=2.49&
+              input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_4_1=13.5&
+              input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_5_1=3\""        
+                   
         After splitting this string on '&', and then each result on '=', we add the 
         problemID/solution pairs to the Answer table:
 
@@ -3301,7 +3316,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             self.logWarn("Track log line %s: event is not a dict in edx_course_enrollment_(de)activated event: '%s'" %\
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
-        self.setValInRow(row, 'hintmode', event.get('mode', None))
+        self.setValInRow(row, 'mode', event.get('mode', None))
         self.setValInRow(row, 'session', event.get('session', None))
         
         if self.currContext is not None:
@@ -3314,7 +3329,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         Handles events edx_course_enrollment_upgrade_clicked, and 
         edx_course_enrollment_upgrade_succeeded, and edx_course_enrollment_deactivated.
         Checks the context field. If it contains a 'mode' field, then
-        its value is placed in the 'hintmode' column.
+        its value is placed in the 'mode' column.
         
         :param record:
         :type record:
@@ -3326,17 +3341,17 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
         if self.currContext is not None:
             pathToUiButton = self.currContext.get('mode', None)
-            self.setValInRow(row, 'hintmode', pathToUiButton)
+            self.setValInRow(row, 'mode', pathToUiButton)
         return row
 
     def handleProblemGraded(self, record, row, event):
         '''
         Events look like this::
         
-     		'[...#8217;t improve or get worse. Calculate the 95% confidence interval for the true proportion of heart disease patients who improve their fitness using this particular exercise regimen. Recall that proportions are normally distributed with a standard error of </p><p>\\\\[ \\\\sqrt{\\\\frac{p(1-p)}{n}} \\\\]</p><p>(You may use the observed proportion to calculate the standard error.)</p><span><form class=\\\"choicegroup capa_inputtype\\\" id=\\\"inputtype_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\"><div class=\\\"indicator_container\\\">\\n    </div><fieldset><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_0\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_0\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" value=\\\"choice_0\\\"/> 66%\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_1\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_1\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" value=\\\"choice_1\\\"/> 66%-70%\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_2\\\" class=\\\"choicegroup_correct\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_2\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" value=\\\"choice_2\\\" checked=\\\"true\\\"/> 50%-84%\\n\\n            \\n            <span class=\\\"sr\\\" aria-describedby=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_2\\\">Status: correct</span>\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_3\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_...        
-    		]'
+             '[...#8217;t improve or get worse. Calculate the 95% confidence interval for the true proportion of heart disease patients who improve their fitness using this particular exercise regimen. Recall that proportions are normally distributed with a standard error of </p><p>\\\\[ \\\\sqrt{\\\\frac{p(1-p)}{n}} \\\\]</p><p>(You may use the observed proportion to calculate the standard error.)</p><span><form class=\\\"choicegroup capa_inputtype\\\" id=\\\"inputtype_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\"><div class=\\\"indicator_container\\\">\\n    </div><fieldset><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_0\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_0\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" value=\\\"choice_0\\\"/> 66%\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_1\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_1\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" value=\\\"choice_1\\\"/> 66%-70%\\n\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_2\\\" class=\\\"choicegroup_correct\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_2\\\" aria-describedby=\\\"answer_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" value=\\\"choice_2\\\" checked=\\\"true\\\"/> 50%-84%\\n\\n            \\n            <span class=\\\"sr\\\" aria-describedby=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_2\\\">Status: correct</span>\\n        </label><label for=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1_choice_3\\\"><input type=\\\"radio\\\" name=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_1\\\" id=\\\"input_i4x-Medicine-HRP258-problem-fc217b7c689a40938dd55ebc44cb6f9a_4_...        
+            ]'
 
-    	:param record:
+        :param record:
         :type record:
         :param row:
         :type row:
@@ -3480,6 +3495,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         except KeyError:
             eventType = None
         
+        # Give the ABExperiment table row we are constructing
+        # the same key as the current row in EdxTrackEvent:
         currEventRowId = row[0]
         abExpDict = OrderedDict()
         abExpDict['event_table_id']  = currEventRowId
