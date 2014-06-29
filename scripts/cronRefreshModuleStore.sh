@@ -100,14 +100,16 @@ echo `date`": Start refreshing modulestore extract..."  | tee --append $LOG_FILE
 # For testing can limit number of returned records by replacing
 # the --eval line below like this (adds the .limit(10) clause):
 #   --eval "\"printjson(db.modulestore.find({}, {'_id' : 1, 'metadata.display_name' : 1}).limit(10).toArray())\"" \
-ssh goldengate.class.stanford.edu \
-	        mongo \
-            	stanford-edx-prod.m0.mongolayer.com:27017/stanford-edx-prod \
-	    	-u readonly \
-	    	-p$PASSWD \
-                --quiet \
-	    	--eval "\"printjson(db.modulestore.find({}, {'_id' : 1, 'metadata.display_name' : 1}).toArray())\"" \
-                > $targetFile
+#ssh goldengate.class.stanford.edu \
+# ssh jenkins.prod.class.stanford.edu \
+# 	        mongo \
+#             	stanford-edx-prod.m0.mongolayer.com:27017/stanford-edx-prod \
+# 	    	-u readonly \
+# 	    	-p$PASSWD \
+#                 --quiet \
+# 	    	--eval "\"printjson(db.modulestore.find({}, {'_id' : 1, 'metadata.display_name' : 1}).toArray())\"" \
+#                 > $targetFile
+mongo --quiet --eval "printjson(db.modulestore.find({}, {'_id' : 1, 'metadata.display_name' : 1}).toArray())" > $targetFile
 
 # ------------------ Make Available in Well Known Location -------------------
 
