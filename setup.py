@@ -15,13 +15,13 @@ setup(
     install_requires = ['ijson>=1.0', 
 			'pymongo>=2.6.2', 
 			#'pymysql3>=0.5', 
-			'pymysql_utils>=0.48',
+			'pymysql_utils>=0.49',
 			'configparser>=3.3.0r2', 
 			'argparse>=1.2.1', 
 			'unidecode>=0.04.14', 
 			'boto>=2.16.0',
-			'python-daemon>=1.5.5',
-			'online_learning_computations>=0.30'
+			'python-daemon>=1.5.5'
+			#'online_learning_computations>=0.30'
 			] + test_requirements,
 
     # Unit tests; they are initiated via 'python setup.py test'
