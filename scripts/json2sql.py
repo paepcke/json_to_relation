@@ -14,10 +14,10 @@ source_dir = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "../json_
 source_dir.extend(sys.path)
 sys.path = source_dir
 
-from json_to_relation.edxTrackLogJSONParser import EdXTrackLogJSONParser
-from json_to_relation.input_source import InURI
-from json_to_relation.json_to_relation import JSONToRelation
-from json_to_relation.output_disposition import OutputDisposition, OutputFile
+from edxTrackLogJSONParser import EdXTrackLogJSONParser
+from input_source import InURI
+from json_to_relation import JSONToRelation
+from output_disposition import OutputDisposition, OutputFile
 
 
 # Transforms a single .json OpenEdX tracking log file to
