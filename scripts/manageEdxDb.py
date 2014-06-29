@@ -88,6 +88,7 @@ import subprocess
 import sys
 
 import boto
+#import boto.connection 
 
 # Add json_to_relation source dir to $PATH
 # for duration of this execution:
@@ -95,8 +96,12 @@ source_dir = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "../json_
 source_dir.extend(sys.path)
 sys.path = source_dir
 
-from mysqldb import MySQLDB
+from pymysql_utils.pymysql_utils import MySQLDB
 
+# Error info only available after 
+# exceptions. Else undefined. Set
+# to None to make Eclipse happy:
+sys.last_value = None
 
 class TrackLogPuller(object):
     '''
@@ -132,7 +137,13 @@ class TrackLogPuller(object):
     # from the load() method will put its log entries.
     LOAD_LOG_DIR = ''
     
-    TRACKING_LOG_FILE_NAME_PATTERN = re.compile(r'tracking.log-[0-9]{8}.gz$')
+    # The following commented pattern only covered 
+    # log file names from before someone suddenly 
+    # changed the file name format. The pattern below
+    # covers both:
+    # TRACKING_LOG_FILE_NAME_PATTERN = re.compile(r'tracking.log-[0-9]{8}.gz$')
+    TRACKING_LOG_FILE_NAME_PATTERN = re.compile(r'tracking.log-[0-9]{8}[-0-9]*.gz$')
+    
     SQL_FILE_NAME_PATTERN = re.compile(r'.sql$')
     FILE_DATE_PATTERN = re.compile(r'[^-]*-([0-9]*)[^.]*\.gz')
 
@@ -226,10 +237,14 @@ class TrackLogPuller(object):
         if rLogFileKeyObjs is None:
             return rfileObjsToGet
         
+        # This logInfo call runs the same loop
+        # as the subsequent 'for' loop, just to
+        # get the number of files to examine. But
+        # who cares:
         self.logInfo("Examining %d remote tracking log files." % self.getNumOfRemoteTrackingLogFiles())
         for rlogFileKeyObj in rLogFileKeyObjs:
             # Get paths like:
-            #   tracking/app10/tracking.log-20130609.gz
+            #   tracking/app10/tracking.log-20130609.gzq
             #   tracking/app10/tracking.log-20130610-errors
             rLogPath = str(rlogFileKeyObj.name)
             # If this isn't a tracking log file, skip:
