@@ -541,8 +541,8 @@ class TrackLogPuller(object):
             if dryRun:
                 self.logInfo("Would download file %s from S3" % rfileNameToPull)
             else:
-                self.logInfo("Establishing connection to Amazon S3")
                 if self.tracking_log_bucket is None:
+                    self.logInfo("Establishing connection to Amazon S3")
                     # No connection has been established yet to S3:
                     if not self.openS3Connection():
                         try:
@@ -562,7 +562,9 @@ class TrackLogPuller(object):
                 try:
                     os.makedirs(os.path.dirname(localDest))
                 except OSError as e:
-                    self.logErr('Error while trying to write track log file to local (%s): %s' % (localDest, `e`))
+                    #self.logErr('Error while trying to write track log file to local (%s): %s' % (localDest, `e`))
+                    # Dir already exists; fine
+                    pass
                 fileKey.get_contents_to_filename(localDest)
         if dryRun:
             self.logInfo("Would have pulled OpenEdX tracking log files from S3 as per above listings.")
