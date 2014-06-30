@@ -151,7 +151,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     success VARCHAR(255) NOT NULL,
     answer_id TEXT NOT NULL,
     hint TEXT NOT NULL,
-    hintmode VARCHAR(255) NOT NULL,
+    mode VARCHAR(255) NOT NULL,
     msg TEXT NOT NULL,
     npoints TINYINT NOT NULL,
     queuestate TEXT NOT NULL,
