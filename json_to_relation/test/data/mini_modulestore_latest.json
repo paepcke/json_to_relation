@@ -1,0 +1,62 @@
+[
+	{
+		"_id" : {
+			"tag" : "i4x",
+			"org" : "Medicine",
+			"course" : "HRP258",
+			"category" : "about",
+			"name" : "effort",
+			"revision" : null
+		}
+	},
+	{
+		"_id" : {
+			"tag" : "i4x",
+			"org" : "Education",
+			"course" : "EDUC115N",
+			"category" : "about",
+			"name" : "effort",
+			"revision" : null
+		}
+	},
+	{
+		"_id" : {
+			"tag" : "i4x",
+			"org" : "Medicine",
+			"course" : "HRP258",
+			"category" : "video",
+			"name" : "c89417444f4443f9a34039be3054962e",
+			"revision" : null
+		},
+		"metadata" : {
+			"display_name" : "Module One video"
+		}
+	},
+	{
+		"_id" : {
+			"tag" : "i4x",
+			"org" : "Medicine",
+			"course" : "HRP258",
+			"category" : "problem",
+			"name" : "8dd11b4339884ab78bc844ce45847141",
+			"revision" : null
+		},
+		"metadata" : {
+			"display_name" : "Quiz"
+		}
+	},
+	{
+		"_id" : {
+			"tag" : "i4x",
+			"org" : "Medicine",
+			"course" : "HRP258",
+			"category" : "sequential",
+			"name" : "53b0357680d24191a60156e74e184be3",
+			"revision" : null
+		},
+		"metadata" : {
+			"display_name" : "Module 1: Introduction to datasets"
+		}
+	}
+
+]

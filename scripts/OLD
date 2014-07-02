@@ -1,5 +1,15 @@
+/*
+* If sourced into mongo client this JavaScript code, 
+* prints selected metadata about courses in csv format
+* to stdout.: 'mongo < modstoreMilker.js'.
+* 
+* 
+* 
+*/
+
 var year = '2013';
-var quarter = 'fall';
+//var quarter = 'fall';
+var quarter = 'all';
 
 
 var quartersToCover;
@@ -48,10 +58,10 @@ print("course_display_name,year,quarter,start_date,end_date");
 while (moreYearsToDo) {
     var thisYear = String(parseInt(thisYear) + 1);
     var nextYear = String(parseInt(thisYear) + 1);
-    var fallQuarterStartDate   = thisYear + "-09-10T07:59:00";
-    var winterQuarterStartDate = nextYear + "-01-01T07:59:00";
-    var springQuarterStartDate = nextYear + "-03-01T07:59:00";
-    var summerQuarterStartDate = nextYear + "-06-15T07:59:00";
+    var fallQuarterStartDate   = thisYear + "-09-01T00:00:00";
+    var winterQuarterStartDate = nextYear + "-12-01T00:00:00";
+    var springQuarterStartDate = nextYear + "-03-01T00:00:00";
+    var summerQuarterStartDate = nextYear + "-06-01T00:00:00";
 
     var currQuarter = quartersToCover[theQuarterIndx];
 

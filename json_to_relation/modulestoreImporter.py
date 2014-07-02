@@ -45,11 +45,14 @@ class ModulestoreImporter(DictMixin):
     
     To save time for Python clients, the hash-to-info dict is pickled to a file
     as a cache. Clients may choose to use this cache as part of instance construction.
+    
+    Look for string 'non-Stanford' for modifications needed in installations
+    other than Stanford.
     '''
 
     hashLookupCache = None
 
-    def __init__(self, jsonFileName, useCache=False, pickleCachePath=None, parent=None):
+    def __init__(self, jsonFileName, useCache=True, pickleCachePath=None, parent=None):
         '''
         Prepares instance for subsequent calls to getDisplayName() or
         export(). Preparations include looking for either the given file
@@ -67,8 +70,9 @@ class ModulestoreImporter(DictMixin):
                         names. That file would have been created by an
                         earlier instantiation of this class. 
                         If False, or the pickle file is missing, then
-                        the cache is created by accessing the modulestore
-                        MongoDB on S3.
+                        the cache is created by accessing the file
+                        modulestore_latest.json in the data subdirectory.
+                        That file is created when running cronRefreshModuleStore.sh.
         :type useCache: Bool
         :param pickleCachePath: destination for cache of the hash-->info dict.
                                 Default is data/hashLookup.pkl 
@@ -102,10 +106,14 @@ class ModulestoreImporter(DictMixin):
             os.makedirs(os.path.dirname(self.pickleCachePath))
         
         if not useCache and not os.path.exists(str(jsonFileName)):
+            # NOTE: non-Stanford installation: comment the line
+            # below, and uncomment the error throw:
             self.importModstore(jsonFileName)
             #raise IOError("File %s does not exist. Try setting useCache=True to use possibly existing cache; if that fails, must run cronRefreshModuleStore.sh" % jsonFileName)
         elif useCache and not os.path.exists(self.pickleCachePath):
             if not os.path.exists(jsonFileName):
+                # NOTE: non-Stanford installation: comment the line
+                # below, and uncomment the error throw:
                 # Have neither a cache file nor a json file:
                 self.importModstore(jsonFileName)
                 # raise IOError("Neither cache file %s nor JSON file %s exist. You need to run cronRefreshModuleStore.sh" % (self.pickleCachePath, jsonFileName))
@@ -243,7 +251,7 @@ class ModulestoreImporter(DictMixin):
         :type outFilePath: {String | File}
         :param addHeader: whether or not to add a header line
         :type addHeader: Bool
-        @raise ValueError: when modulestore JSON could not be parsed.
+        :raise ValueError: when modulestore JSON could not be parsed.
         '''
 
         if not isinstance(outFilePath, basestring):
@@ -338,7 +346,7 @@ class ModulestoreImporter(DictMixin):
         modstoreRefreshScriptDir = os.path.join(thisProgsDir, '../scripts')
         shellCommand = [os.path.join(modstoreRefreshScriptDir, 'cronRefreshModuleStore.sh'), os.path.dirname(jsonFileName)]
         subprocess.call(shellCommand)
-        self.logInfo("Done pulling module store from S3")
+        self.logInfo("Done pulling module store from platform backup server.")
  
     def loadModstoreFromJSON(self):
         '''
