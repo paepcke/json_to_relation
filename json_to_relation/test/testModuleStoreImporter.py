@@ -33,7 +33,10 @@ class TestModulestoreImporter(unittest.TestCase):
         # Save current, full-size modulestore_latest.json
         # (preserving its symlink):
         TestModulestoreImporter.savedModStoreLatest = TestModulestoreImporter.currModStoreLatest + '.SAVED'
-        shutil.move(TestModulestoreImporter.currModStoreLatest, TestModulestoreImporter.savedModStoreLatest)
+        try:
+            shutil.move(TestModulestoreImporter.currModStoreLatest, TestModulestoreImporter.savedModStoreLatest)
+        except IOError:
+            pass
         
         # Do the replacement with the test version:
         testModStoreLatest  = os.path.join(currDir, 'data', 'mini_modulestore_latest.json')
@@ -52,7 +55,10 @@ class TestModulestoreImporter(unittest.TestCase):
     def tearDownClass(cls):
         # Put the true, full size modulestore_latest.json back
         # into its place (preserving its symlink):
-        shutil.move(TestModulestoreImporter.savedModStoreLatest, TestModulestoreImporter.currModStoreLatest)
+        try:
+            shutil.move(TestModulestoreImporter.savedModStoreLatest, TestModulestoreImporter.currModStoreLatest)
+        except IOError:
+            print('NOTE: no modulestore_latest.json found in <projRoot>/json_to_relation/data; run scripts/cronRefreshModuleStore.sh.')
         
         # If hashLookup.pkl existed at the the outset, and was saved,
         # restore it:
