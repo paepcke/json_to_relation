@@ -169,15 +169,17 @@ mongo modulestore --quiet --eval "$MONGO_CMD" > $TMP_FILE
 #exit 0
 #************
 
-MYSQL_CMD="LOAD DATA INFILE '"$TMP_FILE"' INTO TABLE Edx.CourseInfo \
+MYSQL_CMD="LOAD DATA LOCAL INFILE '"$TMP_FILE"' INTO TABLE Edx.CourseInfo \
            FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
            LINES TERMINATED BY '\n' \
            IGNORE 1 LINES;"
 
 #************
+#echo "TMP_FILE: $TMP_FILE"
+#ls -l $TMP_FILE
 #echo $MYSQL_CMD
 #exit 0
-#************
+************
 
 echo `date`": Truncating current CourseInfo table, and importing new modulestore."
 if $needPasswd
@@ -218,7 +220,7 @@ fi
 
 if [ -s $targetFile ]
 then
-    ln $targetFile $TARGET_DIR/modulestore_latest.json
+    ln -s $targetFile $TARGET_DIR/modulestore_latest.json
 else
     rm $targetFile
     exit 1
@@ -226,6 +228,7 @@ fi
 
 # Remove old hash lookup pickle file to force ModulestoreImporter
 # to re-build that hash:
+echo `date`": Removing old ModulestoreImporter cash pickle file if exists; OK if it does not."
 rm $TARGET_DIR/hashLookup.pkl
 
 # ------------------ Signout -------------------
