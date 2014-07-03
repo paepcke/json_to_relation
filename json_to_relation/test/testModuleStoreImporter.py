@@ -91,7 +91,7 @@ class TestModulestoreImporter(unittest.TestCase):
         # Some of the tests create a temporary
         # pickle file; remove it:
         try:
-            os.remove(self.pickleCachePath)
+            os.remove(TestModulestoreImporter.hashLookupPicklePath)
         except:
             pass
 

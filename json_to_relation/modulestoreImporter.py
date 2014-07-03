@@ -11,7 +11,7 @@ from UserDict import DictMixin
 import csv
 import json
 import os
-import pickle
+import cPickle
 import re
 import subprocess
 
@@ -134,7 +134,7 @@ class ModulestoreImporter(DictMixin):
             else:
                 try:
                     with open(self.pickleCachePath, 'r') as pickleFd:
-                        self.hashLookup = pickle.load(pickleFd)
+                        self.hashLookup = cPickle.load(pickleFd)
                         ModulestoreImporter.hashLookupCache = self.hashLookup
                 except IOError:
                     cacheAccessSucceeded = False
@@ -149,7 +149,7 @@ class ModulestoreImporter(DictMixin):
         # Save the lookup in a quick-to-load Python pickle file for future use
         # when option useCache is true.
         with open(self.pickleCachePath, 'w') as pickleFd:
-            pickle.dump(self.hashLookup, pickleFd)
+            cPickle.dump(self.hashLookup, pickleFd)
         # Also save it in a class var to share with other instances:
         ModulestoreImporter.hashLookupCache = self.hashLookup
 
