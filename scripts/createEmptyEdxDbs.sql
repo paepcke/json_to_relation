@@ -8,9 +8,14 @@
 
 DROP DATABASE IF EXISTS Edx;
 DROP DATABASE IF EXISTS EdxPrivate;
+DROP DATABASE IF EXISTS EdxForum;
+DROP DATABASE IF EXISTS EdxPiazza;
 
 CREATE DATABASE IF NOT EXISTS Edx;
 CREATE DATABASE IF NOT EXISTS EdxPrivate;
+CREATE DATABASE IF NOT EXISTS EdxForum;
+CREATE DATABASE IF NOT EXISTS EdxPiazza;
+
 USE Edx;
 CREATE TABLE IF NOT EXISTS Answer (
     answer_id VARCHAR(40) NOT NULL PRIMARY KEY,
@@ -173,3 +178,60 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     FOREIGN KEY(state_fk) REFERENCES State(state_id) ON DELETE CASCADE,
     FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id) ON DELETE CASCADE
     ) ENGINE=MyISAM;                            
+
+USE EdxForum;
+CREATE TABLE IF NOT EXISTS contents (
+    `anon_screen_name` varchar(40),
+    `type` varchar(20) NOT NULL,
+    `anonymous` varchar(10) NOT NULL,
+    `anonymous_to_peers` varchar(10) NOT NULL,
+    `at_position_list` varchar(200) NOT NULL,
+    `user_int_id` int(11) NOT NULL,
+    `body` varchar(2500) NOT NULL,
+    `course_display_name` varchar(100) NOT NULL,
+    `created_at` datetime NOT NULL,
+    `votes` varchar(200) NOT NULL,
+    `count` int(11) NOT NULL,
+    `down_count` int(11) NOT NULL,
+    `up_count` int(11) NOT NULL,
+    `up` varchar(200) DEFAULT NULL,
+    `down` varchar(200) DEFAULT NULL,
+    `comment_thread_id` varchar(255) DEFAULT NULL,
+    `parent_id` varchar(255) DEFAULT NULL,
+    `parent_ids` varchar(255) DEFAULT NULL,
+    `sk` varchar(255) DEFAULT NULL
+    ) ENGINE=MyISAM;
+
+
+USE EdxPiazza;
+CREATE TABLE IF NOT EXISTS PiazzaUsers (
+    `anon_screen_name` varchar(40) NOT NULL DEFAULT 'anon_screen_name_redacted',
+    `user_int_id` int(11) NOT NULL,
+    `posts` int(11) NOT NULL DEFAULT 0,
+    `asks` int(11) NOT NULL DEFAULT 0,
+    `answers` int(11) NOT NULL DEFAULT 0,
+    `views` int(11) NOT NULL DEFAULT 0,
+    `days` int(11) NOT NULL DEFAULT 0
+)  ENGINE=MyISAM;
+
+CREATE TABLE IF NOT EXISTS contents (
+    `anon_screen_name` varchar(40) NOT NULL DEFAULT 'anon_screen_name_redacted',
+    `type` varchar(20) NOT NULL,
+    `anonymous` varchar(10) NOT NULL,
+    `user_int_id` int(11) NOT NULL,
+    `body` varchar(2500) NOT NULL,
+    `course_display_name` varchar(100) NOT NULL,
+    `created_at` datetime NOT NULL,
+    `votes` varchar(200) NOT NULL,
+    `count` int(11) NOT NULL,
+    `down_count` int(11) NOT NULL,
+    `up_count` int(11) NOT NULL,
+    `up` varchar(200) DEFAULT NULL,
+    `down` varchar(200) DEFAULT NULL,
+    `comment_thread_id` varchar(255) DEFAULT NULL,
+    `parent_id` varchar(255) DEFAULT NULL,
+    `parent_ids` varchar(255) DEFAULT NULL,
+    `sk` varchar(255) DEFAULT NULL,
+    `confusion` varchar(20) NOT NULL DEFAULT 'none'
+    `happiness` varchar(20) NOT NULL DEFAULT 'none'
+    ) ENGINE=MyISAM;
