@@ -549,7 +549,7 @@ DROP VIEW IF EXiSTS EventXtract;
 CREATE VIEW EventXtract AS
    SELECT anon_screen_name,
 	  event_type,
-	  ip,
+	  ip_country,
 	  time,
 	  course_display_name,
 	  resource_display_name,
