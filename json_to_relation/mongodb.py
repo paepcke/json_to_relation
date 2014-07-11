@@ -121,6 +121,7 @@ class MongoDB(object):
         :param mongoQuery: MangoDB query
         :type mongoQuery: Dict<String,<any>>
         :param colNameTuple: a possibly empty tuple of field/column names to retrieve for each result document
+            If empty, all fields are returned.
         :type colNameTuple: (String)
         :param limit: maximum number of documents to return
         :type limit: int
@@ -128,8 +129,8 @@ class MongoDB(object):
         :type db: String
         :param collection: name of MongoDB collection other than the current default
         :type collection: String
-	:param wantMongoId: set to True if return results should include the MongoDb _id field.
-	:type wantMongoId: Boolean
+        :param wantMongoId: set to True if return results should include the MongoDb _id field.
+        :type wantMongoId: Boolean
 
         :rtype: {generator<ResultDict>} 
         '''
@@ -151,7 +152,7 @@ class MongoDB(object):
             # MongoDB insists on returning the '_id' field, even
             # if you don't ask for it. Suppress that behavior
             # unless wantMongoId is True.
-	    if not wantMongoId:
+            if not wantMongoId:
                 # Caller did not explicitly ask for the _id field,
                 # so suppress _id:
                 colsToReturn['_id'] = 0
