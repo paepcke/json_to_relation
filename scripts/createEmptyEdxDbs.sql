@@ -216,7 +216,7 @@ CREATE TABLE IF NOT EXISTS PiazzaUsers (
 )  ENGINE=MyISAM;
 
 CREATE TABLE IF NOT EXISTS contents (
-    `forum_post_id` int NOT NULL DEFAULT -1,
+    `forum_post_id` varchar(40) NOT NULL DEFAULT 'none',
     `anon_screen_name` varchar(40) NOT NULL DEFAULT 'anon_screen_name_redacted',
     `type` varchar(20) NOT NULL,
     `anonymous` varchar(10) NOT NULL,
