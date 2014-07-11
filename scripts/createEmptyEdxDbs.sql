@@ -220,7 +220,7 @@ CREATE TABLE IF NOT EXISTS contents (
     `anon_screen_name` varchar(40) NOT NULL DEFAULT 'anon_screen_name_redacted',
     `type` varchar(20) NOT NULL,
     `anonymous` varchar(10) NOT NULL,
-    `user_int_id` int(11) NOT NULL,
+    `forum_int_id` bigint UNSIGNED NOT NULL,
     `body` varchar(2500) NOT NULL,
     `course_display_name` varchar(100) NOT NULL,
     `created_at` datetime NOT NULL,

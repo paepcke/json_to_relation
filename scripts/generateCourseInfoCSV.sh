@@ -3,6 +3,8 @@
 # Given a year and the name of a quarter ('fall', 'winter', etc.),
 # write CSV to stdout that contains course name, year, quarter,
 # start date, and end date of the course. One course per line.
+# Without a -y argument, all years are exported; without a -q
+# all quarters (of each requested year) are exported.
 
 USAGE="Usage: generateCourseInfoCSV.sh [-y yyyy] [-q {fall | winter | spring | summer}]"
 

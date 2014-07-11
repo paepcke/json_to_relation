@@ -349,7 +349,8 @@ END//
 # Given the 32 char anonymized UID used
 # for outside services, such as Qualtrix
 # or Piazza, return the corresponding
-# anon_screen_name.
+# anon_screen_name. The 32 char uids are
+# LTI: learning technology interchange.
 
 DROP FUNCTION IF EXISTS idExt2Anon//
 
@@ -406,6 +407,25 @@ BEGIN
 
       return @ext_id;
       
+END//
+
+#--------------------------
+# idForum2Anon
+#-----------
+
+# Given the anonymized uid used in the 
+# Forum data, return the corresponding 
+# anon_screen_name. We reverse the arithmetic
+# used to scramble user_int_id, then look
+# the result up in the private lookup table.
+
+DROP FUNCTION IF EXISTS idForum2Anon//
+CREATE FUNCTION idForum2Anon(forumId bigint) 
+RETURNS varchar(40)
+BEGIN
+      SELECT (forumId - 5.0)/2.0 INTO @user_int_id;
+      SELECT idInt2Anon(@user_int_id) INTO @anon_id;
+      return @anon_id;
 END//
 
 #--------------------------
