@@ -96,7 +96,7 @@ class MongoDB(object):
         '''
         return self.coll.name
         
-    def query(self, mongoQuery, colNameTuple=(), limit=0, db=None, collection=None):
+    def query(self, mongoQuery, colNameTuple=(), limit=0, db=None, collection=None, wantMongoId=True):
         '''
         Method for querying the database. The mongoQuery parameter is a 
         dictionary conforming to the MongoDB query conventions. This query
@@ -105,8 +105,10 @@ class MongoDB(object):
         The colNameTuple contains a list of field (a.k.a. relational column) names.
         Result documents will contain only those fields. In contrast to MangoDB
         convention, the _id field is not automatically returned in the result dictionaries.
-        This field is only included if the caller lists it in colNameTuple. If colNameTuple
-        is an empty tuple, the entirety of each document is returned for each query result.
+        This field is only included if the caller sets wantMongoId to True
+
+	If colNameTuple is an empty tuple, the entirety of each document is returned 
+	for each query result. The rule for the Mongo _id field still holds in this case.
         
         The limit parameter determines how many documents will be returned. A value of zero
         returns the entire result set. A value of 1 makes the method's behavior analogous to
@@ -126,6 +128,8 @@ class MongoDB(object):
         :type db: String
         :param collection: name of MongoDB collection other than the current default
         :type collection: String
+	:param wantMongoId: set to True if return results should include the MongoDb _id field.
+	:type wantMongoId: Boolean
 
         :rtype: {generator<ResultDict>} 
         '''
@@ -143,18 +147,13 @@ class MongoDB(object):
             colsToReturn = {}
             for colName in colNameTuple:
                 colsToReturn[colName] = 1
+
             # MongoDB insists on returning the '_id' field, even
             # if you don't ask for it. Suppress that behavior
-            # iff (i) caller did specify at least one col name (i.e.
-            #     didn't just pass in an empty tuple to get all
-            #     columns, but also (ii) did *not* ask for '_id'
-            try:
-                if len(colsToReturn) > 0 and colsToReturn['_id']:
-                    pass
-            except KeyError:
+            # unless wantMongoId is True.
+	    if not wantMongoId:
                 # Caller did not explicitly ask for the _id field,
-                # yet did ask for at least *one* col name. So 
-                # suppress _id:
+                # so suppress _id:
                 colsToReturn['_id'] = 0
                 
             if len(colsToReturn) > 0:

@@ -6,7 +6,7 @@ test_requirements = ['mongomock>=1.0.1', 'sentinels>=0.0.6', 'nose>=1.0', 'pytho
 
 setup(
     name = "json_to_relation",
-    version = "0.3",
+    version = "0.4",
     packages = find_packages(),
 
     # Dependencies on other packages:
