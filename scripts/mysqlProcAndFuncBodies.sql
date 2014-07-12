@@ -424,7 +424,7 @@ CREATE FUNCTION idForum2Anon(forumId bigint)
 RETURNS varchar(40)
 BEGIN
       SELECT (forumId - 5.0)/2.0 INTO @user_int_id;
-      SELECT idInt2Anon(@user_int_id) INTO @anon_id;
+      SELECT EdxPrivate.idInt2Anon(@user_int_id) INTO @anon_id;
       return @anon_id;
 END//
 
