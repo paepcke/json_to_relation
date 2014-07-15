@@ -7,10 +7,10 @@
 # Obviously, then MySQL will complain if root
 # has a pwd.
 #
-# The function idInt2Anon() is dropped from all but
+# The function idForum2Anon() is dropped from all but
 # EdxPrivate to prevent Forum int IDs to be turned
 # into anon_screen_name. To let people to that,
-# give them GRANT EXECUTE ON EdxPrivate.idInt2Anon TO <userDef>
+# give them GRANT EXECUTE ON EdxPrivate.idForum2Anon TO <userDef>
 
 USAGE="Usage: `basename $0` [-u username][-p][-pYourPwd]"
 
@@ -94,13 +94,15 @@ fi
 # are available there:
 if [ -z $PASSWD ]
 then
-    mysql -u $USERNAME -e "USE Edx; source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
-    mysql -u $USERNAME -e "USE EdxPrivate; source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
-    mysql -u $USERNAME -e "USE EdxForum; source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
-    mysql -u $USERNAME -e "USE EdxPiazza; source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+    mysql -u $USERNAME Edx        -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+    mysql -u $USERNAME EdxPrivate -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+    mysql -u $USERNAME EdxForum   -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+    mysql -u $USERNAME EdxPiazza  -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+    mysql -u $USERNAME unittest   -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
 else
-    mysql -u $USERNAME -p$PASSWD -e "USE Edx; source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
-    mysql -u $USERNAME -p$PASSWD -e "USE EdxPrivate; source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
-    mysql -u $USERNAME -p$PASSWD -e "USE EdxForum; source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
-    mysql -u $USERNAME -p$PASSWD -e "USE EdxPiazza; source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+    mysql -u $USERNAME -p$PASSWD Edx        -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+    mysql -u $USERNAME -p$PASSWD EdxPrivate -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+    mysql -u $USERNAME -p$PASSWD EdxForum   -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+    mysql -u $USERNAME -p$PASSWD EdxPiazza  -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+    mysql -u $USERNAME -p$PASSWD unittest   -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
 fi

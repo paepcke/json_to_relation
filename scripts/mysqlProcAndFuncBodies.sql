@@ -19,6 +19,8 @@
 #       of this file. There, <DB> is any db where 
 #       this file might be sourced.
 
+USE Edx;
+
 # Set the statement delimiter to something other than ';'
 # so the procedure can use ';':
 delimiter //
@@ -197,6 +199,51 @@ BEGIN
    END IF;
 END//
 
+#--------------------------
+# functionExists
+#----------------
+
+# Given a fully qualified function name, return 1 if 
+# the function exists in the respective db, else returns 0.
+# Example: SELECT functionExists('Edx.idInt2Anon');
+
+DROP FUNCTION IF EXISTS functionExists//
+CREATE FUNCTION functionExists(fully_qualified_funcname varchar(255))
+RETURNS BOOL
+BEGIN
+    SELECT SUBSTRING_INDEX(fully_qualified_funcname,'.',1) INTO @the_db_name;
+    SELECT SUBSTRING_INDEX(fully_qualified_funcname,'.',-1) INTO @the_func_name;
+    IF ((SELECT COUNT(*)
+         FROM information_schema.routines
+         WHERE ROUTINE_TYPE = 'FUNCTION'
+           AND ROUTINE_SCHEMA = @the_db_name 
+    	   AND ROUTINE_NAME = @the_func_name) > 0)
+   THEN
+       RETURN 1;
+   ELSE
+       RETURN 0;
+   END IF;
+END//
+
+#--------------------------
+# grantExecuteIfExists
+#---------------------
+
+# Given a fully qualified function name, check whether
+# the function exists. If it does, grant EXECUTE on it for
+# everyone. Example: CALL grantExecuteIfExists('Edx.idInt2Anon');
+
+DROP PROCEDURE IF EXISTS grantExecuteIfExists//
+CREATE PROCEDURE grantExecuteIfExists(IN fully_qual_func_name varchar(255))
+BEGIN
+   IF functionExists(fully_qual_func_name)
+   THEN
+      SELECT CONCAT('GRANT EXECUTE ON FUNCTION ', fully_qual_func_name, " TO '%'@'%'")
+        INTO @stmt;
+      PREPARE stmt FROM @stmt;
+      EXECUTE stmt;
+   END IF;
+END//
 
 #--------------------------
 # latestLog
@@ -297,27 +344,6 @@ BEGIN
     WHERE anon_screen_name = anonId
     INTO @intId;
     return @intId;
-END//
-
-
-#--------------------------
-# idForum2Anon
-#-----------
-
-# Given a Forum uid,  return 
-# the corresponding hash-type user ID
-# that is used in Edx and EdxPrivate
-
-DROP FUNCTION IF EXISTS idForum2Anon//
-
-CREATE FUNCTION idForum2Anon(intId int(11))
-RETURNS varchar(40)
-BEGIN
-    SELECT anon_screen_name
-    FROM EdxPrivate.UserGrade
-    WHERE user_int_id  = intId
-    INTO @anonId;
-    return @anonId;
 END//
 
 #--------------------------
@@ -677,6 +703,9 @@ FROM edxprod.auth_userprofile
  LEFT JOIN Edx.UserCountry
    ON Edx.UserCountry.anon_screen_name = EdxPrivate.UserGrade.anon_screen_name;
 
+
+
+
 # ------------- Drop Functions that are only for EdxPrivate DB -----
 
 DROP FUNCTION IF EXISTS EdxPiazza.idForum2Anon;
@@ -685,26 +714,42 @@ DROP FUNCTION IF EXISTS Edx.idForum2Anon;
 
 # ------------- Grant EXECUTE Privileges for User Level Functions -----
 
-GRANT EXECUTE ON FUNCTION Edx.idInt2Anon TO '%'@'%';
-GRANT EXECUTE ON FUNCTION Edx.idAnon2Int TO '%'@'%';
-GRANT EXECUTE ON FUNCTION Edx.idExt2Anon TO '%'@'%';
-GRANT EXECUTE ON FUNCTION Edx.idAnon2Ext TO '%'@'%';
-GRANT EXECUTE ON FUNCTION Edx.latestLog  TO '%'@'%';
-GRANT EXECUTE ON FUNCTION Edx.earliestLog  TO '%'@'%';
-GRANT EXECUTE ON FUNCTION Edx.isUserEvent  TO '%'@'%';
+CALL grantExecuteIfExists('Edx.idInt2Anon');
+CALL grantExecuteIfExists('Edx.idAnon2Int');
+CALL grantExecuteIfExists('Edx.idExt2Anon');
+CALL grantExecuteIfExists('Edx.idAnon2Ext');
+CALL grantExecuteIfExists('Edx.latestLog');
+CALL grantExecuteIfExists('Edx.earliestLog');
+CALL grantExecuteIfExists('Edx.isUserEvent');
 
-GRANT EXECUTE ON FUNCTION EdxForum.idInt2Anon TO '%'@'%';
-GRANT EXECUTE ON FUNCTION EdxForum.idAnon2Int TO '%'@'%';
-GRANT EXECUTE ON FUNCTION EdxForum.idExt2Anon TO '%'@'%';
-GRANT EXECUTE ON FUNCTION EdxForum.idAnon2Ext TO '%'@'%';
-GRANT EXECUTE ON FUNCTION EdxForum.latestLog  TO '%'@'%';
-GRANT EXECUTE ON FUNCTION EdxForum.earliestLog  TO '%'@'%';
-GRANT EXECUTE ON FUNCTION EdxForum.isUserEvent  TO '%'@'%';
+CALL grantExecuteIfExists('EdxPrivate.idInt2Anon');
+CALL grantExecuteIfExists('EdxPrivate.idAnon2Int');
+CALL grantExecuteIfExists('EdxPrivate.idExt2Anon');
+CALL grantExecuteIfExists('EdxPrivate.idAnon2Ext');
+CALL grantExecuteIfExists('EdxPrivate.latestLog');
+CALL grantExecuteIfExists('EdxPrivate.earliestLog');
+CALL grantExecuteIfExists('EdxPrivate.isUserEvent');
 
-GRANT EXECUTE ON FUNCTION EdxPiazza.idInt2Anon TO '%'@'%';
-GRANT EXECUTE ON FUNCTION EdxPiazza.idAnon2Int TO '%'@'%';
-GRANT EXECUTE ON FUNCTION EdxPiazza.idExt2Anon TO '%'@'%';
-GRANT EXECUTE ON FUNCTION EdxPiazza.idAnon2Ext TO '%'@'%';
-GRANT EXECUTE ON FUNCTION EdxPiazza.latestLog  TO '%'@'%';
-GRANT EXECUTE ON FUNCTION EdxPiazza.earliestLog  TO '%'@'%';
-GRANT EXECUTE ON FUNCTION EdxPiazza.isUserEvent  TO '%'@'%';
+CALL grantExecuteIfExists('EdxForum.idInt2Anon');
+CALL grantExecuteIfExists('EdxForum.idAnon2Int');
+CALL grantExecuteIfExists('EdxForum.idExt2Anon');
+CALL grantExecuteIfExists('EdxForum.idAnon2Ext');
+CALL grantExecuteIfExists('EdxForum.latestLog');
+CALL grantExecuteIfExists('EdxForum.earliestLog');
+CALL grantExecuteIfExists('EdxForum.isUserEvent');
+
+CALL grantExecuteIfExists('EdxPiazza.idInt2Anon');
+CALL grantExecuteIfExists('EdxPiazza.idAnon2Int');
+CALL grantExecuteIfExists('EdxPiazza.idExt2Anon');
+CALL grantExecuteIfExists('EdxPiazza.idAnon2Ext');
+CALL grantExecuteIfExists('EdxPiazza.latestLog');
+CALL grantExecuteIfExists('EdxPiazza.earliestLog');
+CALL grantExecuteIfExists('EdxPiazza.isUserEvent');
+
+CALL grantExecuteIfExists('unittest.idInt2Anon');
+CALL grantExecuteIfExists('unittest.idAnon2Int');
+CALL grantExecuteIfExists('unittest.idExt2Anon');
+CALL grantExecuteIfExists('unittest.idAnon2Ext');
+CALL grantExecuteIfExists('unittest.latestLog');
+CALL grantExecuteIfExists('unittest.earliestLog');
+CALL grantExecuteIfExists('unittest.isUserEvent');
