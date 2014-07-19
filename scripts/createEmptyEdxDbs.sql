@@ -181,13 +181,13 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
 
 USE EdxForum;
 CREATE TABLE IF NOT EXISTS contents (
-    `forum_post_id` int NOT NULL DEFAULT -1,
+    `forum_post_id` varchar(40) NOT NULL,
     `anon_screen_name` varchar(40),
     `type` varchar(20) NOT NULL,
     `anonymous` varchar(10) NOT NULL,
     `anonymous_to_peers` varchar(10) NOT NULL,
     `at_position_list` varchar(200) NOT NULL,
-    `user_int_id` int(11) NOT NULL,
+    `forum_int_id` BIGINT UNSIGNED NOT NULL,
     `body` varchar(2500) NOT NULL,
     `course_display_name` varchar(100) NOT NULL,
     `created_at` datetime NOT NULL,

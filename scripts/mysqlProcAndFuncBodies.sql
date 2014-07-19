@@ -19,6 +19,8 @@
 #       of this file. There, <DB> is any db where 
 #       this file might be sourced.
 
+USE Edx;
+
 # Set the statement delimiter to something other than ';'
 # so the procedure can use ';':
 delimiter //
@@ -301,23 +303,44 @@ END//
 
 
 #--------------------------
+# idInt2Forum
+#------------
+
+# Given a user_int_id, as used to id users
+# in the platform tables, return 
+# the corresponding user ID as used
+# in the forum table.
+# This function should live in EdxPrivate.
+
+DROP FUNCTION IF EXISTS idInt2Forum//
+
+CREATE FUNCTION idInt2Forum(intId int(11))
+RETURNS varchar(40)
+BEGIN
+    DECLARE forumUid varchar(255);
+    SELECT HEX(AES_ENCRYPT(intId,@forumKey)) INTO forumUid;
+    return forumUid;
+END//
+
+#--------------------------
 # idForum2Anon
 #-----------
 
 # Given a Forum uid,  return 
-# the corresponding hash-type user ID
-# that is used in Edx and EdxPrivate
+# the corresponding user ID as used
+# in tables other than the forum contents tbl.
+# This function should live in EdxPrivate.
 
 DROP FUNCTION IF EXISTS idForum2Anon//
 
-CREATE FUNCTION idForum2Anon(intId int(11))
+CREATE FUNCTION idForum2Anon(forumId varchar(255))
 RETURNS varchar(40)
 BEGIN
-    SELECT anon_screen_name
-    FROM EdxPrivate.UserGrade
-    WHERE user_int_id  = intId
-    INTO @anonId;
-    return @anonId;
+    DECLARE theIntId INT;
+    DECLARE anonId varchar(255);
+    SELECT AES_DECRYPT(UNHEX(forumId),@forumKey) INTO theIntId;
+    SELECT idInt2Anon(theIntId) INTO anonId;
+    return anonId;
 END//
 
 #--------------------------
@@ -334,11 +357,12 @@ DROP FUNCTION IF EXISTS idInt2Anon//
 CREATE FUNCTION idInt2Anon(intId int(11))
 RETURNS varchar(40)
 BEGIN
+    DECLARE anonId varchar(255);
     SELECT anon_screen_name
     FROM EdxPrivate.UserGrade
     WHERE user_int_id  = intId
-    INTO @anonId;
-    return @anonId;
+    INTO anonId;
+    return anonId;
 END//
 
 
@@ -357,12 +381,13 @@ DROP FUNCTION IF EXISTS idExt2Anon//
 CREATE FUNCTION idExt2Anon(extId varchar(32)) 
 RETURNS varchar(40)
 BEGIN
+      DECLARE anonId varchar(255);
       SELECT user_id INTO @int_id
       FROM edxprod.student_anonymoususerid
       WHERE anonymous_user_id = extId;
 
-      SELECT idInt2Anon(@int_id) INTO @anon_id;
-      return @anon_id;
+      SELECT idInt2Anon(@int_id) INTO anonId;
+      return anonId;
 END//
 
 
@@ -407,25 +432,6 @@ BEGIN
 
       return @ext_id;
       
-END//
-
-#--------------------------
-# idForum2Anon
-#-----------
-
-# Given the anonymized uid used in the 
-# Forum data, return the corresponding 
-# anon_screen_name. We reverse the arithmetic
-# used to scramble user_int_id, then look
-# the result up in the private lookup table.
-
-DROP FUNCTION IF EXISTS idForum2Anon//
-CREATE FUNCTION idForum2Anon(forumId bigint) 
-RETURNS varchar(40)
-BEGIN
-      SELECT (forumId - 5.0)/2.0 INTO @user_int_id;
-      SELECT EdxPrivate.idInt2Anon(@user_int_id) INTO @anon_id;
-      return @anon_id;
 END//
 
 #--------------------------
@@ -683,6 +689,9 @@ DROP FUNCTION IF EXISTS EdxPiazza.idForum2Anon;
 DROP FUNCTION IF EXISTS EdxForum.idForum2Anon;
 DROP FUNCTION IF EXISTS Edx.idForum2Anon;
 
+# ------------- Random Init -----
+SELECT SHA2('idForum2Anon is the inverse of idAnon2Forum.',224) INTO @forumKey;
+
 # ------------- Grant EXECUTE Privileges for User Level Functions -----
 
 GRANT EXECUTE ON FUNCTION Edx.idInt2Anon TO '%'@'%';
@@ -708,3 +717,4 @@ GRANT EXECUTE ON FUNCTION EdxPiazza.idAnon2Ext TO '%'@'%';
 GRANT EXECUTE ON FUNCTION EdxPiazza.latestLog  TO '%'@'%';
 GRANT EXECUTE ON FUNCTION EdxPiazza.earliestLog  TO '%'@'%';
 GRANT EXECUTE ON FUNCTION EdxPiazza.isUserEvent  TO '%'@'%';
+
