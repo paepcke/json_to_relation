@@ -51,3 +51,4 @@ gpg
 modulestore_*
 hashLookup.pkl
 *.csv
+scripts/forumKeyPassphrase.txt

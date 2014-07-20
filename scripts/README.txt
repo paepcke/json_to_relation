@@ -20,6 +20,19 @@ In the descriptions below we try to indicate which scripts make
 assumptions about Stanford's OpenEdX platform instance. Some of these
 are likely present in any OpenEdX installation, but I'm not sure. 
 
+# ------------ Installation Customization ---------------
+
+- [****EXPLAIN .ssh pwd files *****]
+- Forum user ID keys are generated based on a passphrase that you
+  invent for your installation. Copy forumKeyPassphrase.txt.CHANGE_ME
+  to forumKeyPassphrase.txt, and place the (arbitrary) text into that
+  file.
+
+  Run 
+    defineMySQLProcedures.sh -u root -p
+  to install in your server a number of stored routines, as well as 
+  the forum user ID key that is created from the passphrase.
+
 # ------------ Public Scripts ---------------
 
 Script manageEdxDb.py: most used script.
@@ -93,16 +106,17 @@ dropping and re-creating these two databases. Reason: the
 script also defines stored procedures and functions needed
 for db administration.
 
-# ------------ Private Scripts ---------------
+Script defineMySQLProcedures.sh (re)-defines all required
+stored procedures/functions. Used by createEmptyEdxDbs, but can
+be used by itself.
+
+# ------------ (More or less) Private Scripts ---------------
 
 The json2sql.py scripts is used by transformGivenLogfiles.sh. 
 
 Script createIndexForTable.sh takes one table name and creates
 all indexes on that table, if it does not exist. Without args,
 it creates all indexes. Used by executeCSVLoad.sh
-
-Script defineMySQLProcedures.sh (re)-defines all required
-stored procedures/functions. Used by createEmptyEdxDbs.
 
 Script transformGivenLogfiles.sh in this directory runs the conversion
 of edX tracking log files to a relational model. Output is a set of
