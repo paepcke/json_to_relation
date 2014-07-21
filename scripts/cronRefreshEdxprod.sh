@@ -174,7 +174,8 @@ DUMP_FILE=$EDXPROD_DUMP_DIR/edxapp-latest.sql.gz
 # For each table we want, use script extractTableFromDump.sh
 # to pull out the table restoration commands into a separate
 # .sql file, load the file into database edxprod on the
-# datastage MySQL server, and build the indexes:
+# datastage MySQL server, and build the indexes that came
+# with the tables:
 
 for TABLE in ${TABLES[@]} 
 do
