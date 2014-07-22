@@ -1,15 +1,18 @@
 #!/bin/bash
 
+# Pull latest Forum dump from backup machine. Anonymize
+# the contents, and store in db EdxForum.contents. Assumes
+# this script is running in a place from which ../../forum_etl/...
+# is the path towards forum_etl/src/forum_etl/extractor.py
+
 EDX_PLATFORM_DUMP_MACHINE=jenkins.prod.class.stanford.edu
 
-export FORUM_EXTRACT_ROOT=/home/paepcke/EclipseWorkspaces/forum_etl
-export PYMYSQL_UTILS_ROOT=/home/paepcke/EclipseWorkspaces/pymysql_utils
+# Get directory in which this script is running,
+# and where its support scripts therefore live:
+CURR_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-export PYTHONPATH=$PYMYSQL_UTILS_ROOT:$PYTHONPATH
-
-# Pull the latest EdX Forum dump from deploy.prod.class.stanford.edu to datastage. 
+# Pull the latest EdX Forum dump from jenkins.prod.class.stanford.edu to datastage. 
 # Untar, and load into datastage EdxForum.contents. Two options:
-# 
 
 scp $EDX_PLATFORM_DUMP_MACHINE:/data/dump/forum-latest.tar.gz \
     ~dataman/Data/FullDumps/EdxForum
@@ -41,5 +44,5 @@ tar -zxvf forum-latest.tar.gz
  ln -s `ls -t -r -d forum-[0-9]* | tail -1` forum-latest
 
 # Anonymize and load:
-python $FORUM_EXTRACT_ROOT/src/forum_etl/extractor.py --anonymize $PWD/forum-latest/app*/contents.bson
+python $CURR_SCRIPT_DIR/../../forum_etl/src/forum_etl/extractor.py --anonymize $PWD/forum-latest/app*/contents.bson
 
