@@ -20,7 +20,8 @@ USAGE='Usage: '`basename $0`' [-u localMySQLUser][-p][-pLocalMySQLPwd]'
 
 LOG_FILE=/home/dataman/Data/EdX/NonTransformLogs/refreshUserGradeTable.log
 LOCAL_MYSQL_PASSWD=''
-targetFile=$HOME/MySQLTmp/userTable.tsv
+#targetFile=$HOME/MySQLTmp/userTable.tsv
+targetFile=/lfs/datastage/1/tmp/userTable.tsv
 LOCAL_USERNAME=`whoami`
 needLocalPasswd=false
 
