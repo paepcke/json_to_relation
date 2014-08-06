@@ -152,11 +152,13 @@ then
     mysql -u $MYSQL_USERNAME EdxPrivate -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
     mysql -u $MYSQL_USERNAME EdxForum   -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
     mysql -u $MYSQL_USERNAME EdxPiazza  -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+    mysql -u $MYSQL_USERNAME edxprod    -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
     mysql -u $MYSQL_USERNAME unittest   -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
 else
     mysql -u $MYSQL_USERNAME -p$PASSWD Edx        -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
     mysql -u $MYSQL_USERNAME -p$PASSWD EdxPrivate -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
     mysql -u $MYSQL_USERNAME -p$PASSWD EdxForum   -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
     mysql -u $MYSQL_USERNAME -p$PASSWD EdxPiazza  -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+    mysql -u $MYSQL_USERNAME -p$PASSWD edxprod    -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
     mysql -u $MYSQL_USERNAME -p$PASSWD unittest   -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
 fi

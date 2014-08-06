@@ -472,6 +472,20 @@ END//
 # idAnon2Ext
 #-----------
 
+# External user ids are LTI based IDs used by
+# the OpenEdX platform when participants are involved
+# in Qualtrix or Piazza. In some cases, the platform
+# creates one LTI for each participant, in other cases
+# a separate LTI is created for each course the participant
+# takes. Therefore there are two facilities for converting
+# anon_screen_names to LTI (a.k.a. 'External') user ids:
+# Function idAnon2Ext() takes an anon_screen_name, and 
+# a course_display_name, and returns an external Id.
+#
+# Procedure idAnon2Exts() instead just takes an anon_screen_name,
+# and fills a temporary memory table with all external uid/course name
+# pairs.
+#
 # Given the 40 char anon_screen_name, return
 # the corresponding anonymized UID used by
 # outside services, such as Qualtrix or Piazza
@@ -484,12 +498,11 @@ END//
 #   Using idInt2Anon():
 #   284347 int = 0686bef338f8c6f0696cc7d4b0650daf2473f59d anon
 # 
-#   idAnon2Ext('0686bef338f8c6f0696cc7d4b0650daf2473f59d', 'Engineering/CVX101/Winter2014')
+#   SELECT idAnon2Ext('0686bef338f8c6f0696cc7d4b0650daf2473f59d', 'Engineering/CVX101/Winter2014');
 #   should be: 5cbdc8b38171f3641845cb17784de87b
 
 DROP FUNCTION IF EXISTS idAnon2Ext//
-
-CREATE FUNCTION idAnon2Ext(the_anon_id varchar(42))
+CREATE FUNCTION idAnon2Ext(the_anon_id varchar(255), course_display_name varchar(255))
 RETURNS varchar(32)
 BEGIN
       SELECT -1 INTO @int_id;
@@ -497,18 +510,73 @@ BEGIN
       FROM EdxPrivate.UserGrade
       WHERE anon_screen_name = the_anon_id;
 
-      IF @int_id < 0
-      THEN 
+      IF @int_id >= 0
+      THEN
+          SELECT anonymous_user_id AS extId INTO @extId
+          FROM edxprod.student_anonymoususerid
+          WHERE user_id = @int_id
+	    AND course_id = course_display_name;
+          RETURN @extId;
+      ELSE
           RETURN null;
       END IF;
-        
-      SELECT anonymous_user_id INTO @ext_id
-      FROM edxprod.student_anonymoususerid
-      WHERE user_id = @int_id
-        AND CHAR_LENGTH(course_id) = 0;
 
-      return @ext_id;
-      
+END//
+
+#--------------------------
+# idAnon2Exts
+#------------
+
+# External user ids are LTI based IDs used by
+# the OpenEdX platform when participants are involved
+# in Qualtrix or Piazza. In some cases, the platform
+# creates one LTI for each participant, in other cases
+# a separate LTI is created for each course the participant
+# takes. Therefore there are two facilities for converting
+# anon_screen_names to LTI (a.k.a. 'External') user ids:
+# Function idAnon2Ext() takes an anon_screen_name, and 
+# a course_display_name, and returns an external Id.
+#
+# Procedure idAnon2Exts() instead just takes an anon_screen_name,
+# and fills a temporary memory table with all external uid/course name
+# pairs. The procedure creates a temporary in-memory table of
+# two columns:
+#
+#      ext_id, course_display_name
+#
+# The table is called ExtCourseTable, and is available after
+# the procedure call returns. The table is wiped and renewed with
+# every course. Each MySQL connection has its own temp table name space,
+# so no collision with other connections occurs.
+#
+# This is a *procedure*, so syntax is:
+#
+#    CALL idAnon2Exts(anon_screen_name);
+#
+# NOTE: the procedure does print its result. But this result cannot
+#       be used for further processing (a MySQL limitation). In particular
+#       the following does NOT work: SELECT ext_id FROM (CALL idAnon2Exts(...));
+
+DROP PROCEDURE IF EXISTS idAnon2Exts//
+CREATE PROCEDURE idAnon2Exts(the_anon_id varchar(255))
+BEGIN
+      DROP TEMPORARY TABLE IF EXISTS ExtCourseTable;      
+
+      SELECT -1 INTO @int_id;
+      SELECT user_int_id INTO @int_id
+      FROM EdxPrivate.UserGrade
+      WHERE anon_screen_name = the_anon_id;
+
+      IF @int_id >= 0
+      THEN
+          CREATE TEMPORARY TABLE ExtCourseTable engine=memory
+          SELECT anonymous_user_id AS extId, course_id as course_display_name
+          FROM edxprod.student_anonymoususerid
+          WHERE user_id = @int_id;
+      END IF;
+ 
+      SELECT * FROM ExtCourseTable;
+
 END//
 
 #--------------------------
