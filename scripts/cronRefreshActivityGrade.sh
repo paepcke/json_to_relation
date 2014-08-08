@@ -25,6 +25,9 @@ MYSQL_PWD=''
 LOG_FILE=/home/dataman/Data/EdX/NonTransformLogs/refreshActivityGradeTable.log
 USERNAME=`whoami`
 needLocalPasswd=false
+# Get directory in which this script is running,
+# and where its support scripts therefore live:
+currScriptsDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 if [ ! -f $LOG_FILE ]
 then
@@ -127,11 +130,11 @@ echo `date`": Start updating table ActivityGrade..."  | tee --append $LOG_FILE
 
 if [ ! -z $MYSQL_PWD ]
 then
-    mysql -u $USERNAME -p$MYSQL_PWD < cronRefreshActivityGradeCrTable.sql
+    mysql -u $USERNAME -p$MYSQL_PWD < $currScriptsDir/cronRefreshActivityGradeCrTable.sql
     LATEST_DATE=`mysql -u $USERNAME -p$MYSQL_PWD --silent --skip-column-names Edx -e \
 	  "SELECT MAX(last_submit) FROM ActivityGrade;"`
 else
-    mysql -u $USERNAME  < cronRefreshActivityGradeCrTable.sql
+    mysql -u $USERNAME  < $currScriptsDir/cronRefreshActivityGradeCrTable.sql
     LATEST_DATE=`mysql -u $USERNAME --silent --skip-column-names Edx -e \
 	  "SELECT MAX(last_submit) FROM ActivityGrade;"`
 fi
@@ -196,10 +199,6 @@ fi
 echo `date`": Done creating auxiliary table."  | tee --append $LOG_FILE
 
 # ----------------- Fill in the Module IDs' Human Readable Names and  anon_screen_name  Columns ----------
-
-# Get directory in which this script is running,
-# and where its support scripts therefore live:
-currScriptsDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 echo `date`": About to add percent_grade, resolve resource id, add anon_screen_name, and module_id..."  | tee --append $LOG_FILE
 
