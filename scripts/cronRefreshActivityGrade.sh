@@ -139,7 +139,7 @@ else
 	  "SELECT MAX(last_submit) FROM ActivityGrade;"`
 fi
 
-if [ $LATEST_DATE = NULL ]
+if [ -z "${LATEST_DATE}" ]
 then
     # No dated entry in ActivityGrade at all (likely table is empty):
     LATEST_DATE='0000-00-00 00:00:00'
@@ -168,7 +168,7 @@ tmpTableCmd="SET @emptyStr:=''; \
 SET @floatPlaceholder:=-1.0; \
 SET @intPlaceholder:=-1; \
 USE edxprod; \
-DROP TABLE StudentmoduleExcerpt; \
+DROP TABLE IF EXISTS StudentmoduleExcerpt; \
 CREATE TABLE StudentmoduleExcerpt \
 SELECT id AS activity_grade_id, \
        student_id, \
