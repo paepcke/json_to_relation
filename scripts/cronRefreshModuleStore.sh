@@ -179,7 +179,7 @@ MYSQL_CMD="LOAD DATA LOCAL INFILE '"$TMP_FILE"' INTO TABLE Edx.CourseInfo \
 #ls -l $TMP_FILE
 #echo $MYSQL_CMD
 #exit 0
-************
+#************
 
 echo `date`": Truncating current CourseInfo table, and importing new modulestore."
 if $needPasswd
