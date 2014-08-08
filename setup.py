@@ -28,6 +28,8 @@ setup(
     #test_suite       = 'json_to_relation/test',
     test_suite       = 'nose.collector', 
 
+    data_files = [('pymysql_utils/data', datafiles)],
+
     package_data = {
         # If any package contains *.txt or *.rst files, include them:
      #   '': ['*.txt', '*.rst'],
