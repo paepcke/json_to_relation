@@ -12,16 +12,13 @@ import sys
 
 from pymysql_utils.pymysql_utils import MySQLDB
 
-from ipToCountry import IpCountryDict
-
-
 # Add json_to_relation source dir to $PATH
 # for duration of this execution:
-source_dir = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../json_to_relation/json_to_relation/")]
+source_dir = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "../json_to_relation/")]
 source_dir.extend(sys.path)
 sys.path = source_dir
 
-
+from ipToCountry import IpCountryDict
 
 class UserCountryTableCreator(object):
 
@@ -41,11 +38,11 @@ class UserCountryTableCreator(object):
         
     def fillTable(self):
         values = []
-        for (user, ipStr) in self.db.query("SELECT DISTINCT anon_screen_name, ip FROM EventXtract"):
+        for (user, ip3LetterCountry) in self.db.query("SELECT DISTINCT anon_screen_name, ip_country FROM EventXtract"):
             try:
-                (twoLetterCode, threeLetterCode, country) = self.ipCountryXlater.lookupIP(ipStr)
-            except (ValueError,TypeError) as e:
-                sys.stderr.write("Could not look up one IP string (%s/%s): %s" % (user,ipStr,`e`))
+                (twoLetterCode, threeLetterCode, country) = self.ipCountryXlater.getBy3LetterCode(ip3LetterCountry)
+            except (ValueError,TypeError,KeyError) as e:
+                sys.stderr.write("Could not look up one country from (%s/%s): %s\n" % (user, ip3LetterCountry,`e`))
                 continue
             values.append(tuple(['%s'%user,'%s'%twoLetterCode,'%s'%threeLetterCode,'%s'%country]))
         

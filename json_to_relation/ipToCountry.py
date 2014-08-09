@@ -47,9 +47,13 @@ class IpCountryDict(unittest.TestCase):
         The arrays are just a few tuples long, so the scan through them
         is fast. The arrays are ordered by rising start and (therefore)
         end IP.
+        
+        We also construct a simpler dict that maps a country's three-letter
+        code to a tuple: (two-letter code, three-letter code, full country name).
         '''
         currKey = 0
         self.ipToCountryDict = {currKey : []}
+        self.threeLetterKeyedDict = {}
         if ipTablePath is None:
             tableSubPath = os.path.join('data/', 'ipToCountrySoftware77DotNet.csv')
             ipTablePath = os.path.join(os.path.dirname(__file__), tableSubPath)
@@ -69,6 +73,7 @@ class IpCountryDict(unittest.TestCase):
                                                        threeLetterCountry.strip('"'), 
                                                        country.strip('"'))
                                                     )
+                self.threeLetterKeyedDict[threeLetterCountry.strip('"')] = (twoLetterCountry.strip('"'), threeLetterCountry.strip('"'), country.strip('"'))
 
     def get(self, ipStr, default=None):
         '''
@@ -87,6 +92,9 @@ class IpCountryDict(unittest.TestCase):
             return self.lookupIP(ipStr)
         except KeyError:
             return None
+
+    def getBy3LetterCode(self, threeLetterCode):
+        return self.threeLetterKeyedDict[threeLetterCode]
 
     def lookupIP(self,ipStr):
         '''
