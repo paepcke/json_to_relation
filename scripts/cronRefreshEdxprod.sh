@@ -41,6 +41,10 @@ TABLES=(courseware_studentmodule \
         external_auth_externalauthmap \
         student_anonymoususerid \
         student_courseenrollment\
+        submissions_score\
+        submissions_scoresummary\
+        submissions_studentitem\
+        submissions_submission 
        )
 
 MYSQL_PASSWD=''
