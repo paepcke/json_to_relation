@@ -211,6 +211,27 @@ fi
 
 echo `date`": Done adding percent_grade, ..."  | tee --append $LOG_FILE
 
+echo `date`": Creating indexes ..."  | tee --append $LOG_FILE
+
+if [ -z $MYSQL_PWD ]
+then
+    mysql -u $USERNAME -e "CREATE INDEX ActGrdAnonSNIdx ON ActivityGrade (anon_screen_name);"
+    mysql -u $USERNAME -e "CREATE INDEX ActGrdCourseDisNmIdx ON ActivityGrade (course_display_name);"
+    mysql -u $USERNAME -e "CREATE INDEX ActGrdNumAttemptsIdx ON ActivityGrade (num_attempts);"
+    mysql -u $USERNAME -e "CREATE INDEX ActGrdModIdIdx ON ActivityGrade (module_id);"
+    mysql -u $USERNAME -e "CREATE INDEX ActGrdResDispNmIdx ON ActivityGrade (resource_display_name);"
+    mysql -u $USERNAME -e "CREATE INDEX ActGrdLastSubmitIdx ON ActivityGrade (last_submit);"           
+else
+    mysql -u $USERNAME -p$MYSQL_PWD -e "CREATE INDEX ActGrdAnonSNIdx ON ActivityGrade (anon_screen_name);"          
+    mysql -u $USERNAME -p$MYSQL_PWD -e "CREATE INDEX ActGrdCourseDisNmIdx ON ActivityGrade (course_display_name);"  
+    mysql -u $USERNAME -p$MYSQL_PWD -e "CREATE INDEX ActGrdNumAttemptsIdx ON ActivityGrade (num_attempts);"
+    mysql -u $USERNAME -p$MYSQL_PWD -e "CREATE INDEX ActGrdModIdIdx ON ActivityGrade (module_id);"                  
+    mysql -u $USERNAME -p$MYSQL_PWD -e "CREATE INDEX ActGrdResDispNmIdx ON ActivityGrade (resource_display_name);"  
+    mysql -u $USERNAME -p$MYSQL_PWD -e "CREATE INDEX ActGrdLastSubmitIdx ON ActivityGrade (last_submit);"           
+fi
+
+echo `date`": Done creating indexes ..."  | tee --append $LOG_FILE
+
 # ------------------ Cleanup -------------------
 
 # Commented block below removes the now no longer needed
