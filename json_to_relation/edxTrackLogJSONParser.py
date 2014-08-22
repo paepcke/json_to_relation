@@ -36,7 +36,7 @@ from generic_json_parser import GenericJSONParser
 from locationManager import LocationManager
 from modulestoreImporter import ModulestoreImporter
 from output_disposition import ColumnSpec
-from pymysql_utils.ipToCountry import IpCountryDict
+from ipToCountry import IpCountryDict
 
 EDX_HEARTBEAT_PERIOD = 360 # seconds
 
