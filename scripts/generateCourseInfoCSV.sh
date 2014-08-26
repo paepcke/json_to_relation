@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# In half-baked state, but likely close.
+#
 # Given a year and the name of a quarter ('fall', 'winter', etc.),
 # write CSV to stdout that contains course name, year, quarter,
 # start date, and end date of the course. One course per line.
@@ -93,7 +95,7 @@ QUERY='courseCursor = db.modulestore.find({"_id.category": "course",
 SCRIPT='var year = '$YEAR';
         var quarter = '\"$QUARTER\"';
         var quartersToCover;
-        if (quarter == 'all') {
+        if (quarter == "all") {
             quartersToCover = ["fall", "winter", "spring", "summer"];
         } else {
             quartersToCover = [quarter];
@@ -199,13 +201,20 @@ SCRIPT='var year = '$YEAR';
            }
        }
 '
+#********************
 echo $SCRIPT
+exit
+#********************
+
+
 
 # Create a bash command that invokes the Mongo shell
 # with the JavaScript as the command to run:
 cmd="mongo modulestore --quiet --eval '$SCRIPT'"
 
-#echo $cmd
+#****?echo $cmd
 
 # Run the command:
-eval $cmd
+#****?eval $cmd
+
+mongo modulestore --quiet --eval "${SCRIPT}"

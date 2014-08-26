@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Tests for modulestoreJavaScriptUtils.js</title>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+
+    <!-- <div width="600px"> -->
+    <!--   <form id=reqForm> -->
+    <!--     <input type="text" id="courseID" size="35" autofocus="autofocus"> -->
+    <!-- 	<input type="button" value="course_display_name"id="listClassesBtn"><br> -->
+	
+    <!--   </form> -->
+    <!-- </div> -->
+    
+    <p>
+      <!-- <input type="button"  -->
+      <!-- 	     value="Get Data" -->
+      <!-- 	     id="getDataBtn"> -->
+      <hr>
+      <span>
+	<input type="button" 
+	       value="Clear Result Pane"
+	       id="clrResultPane"
+	       onclick="clrUnittestOutArea()">
+
+	<span id="spanBackTab">
+	  <input type="button" 
+		 value="Run realDateUnittests()"
+		 id="realTimeUnitTestBtn"
+		 onclick="realDateUnittests()">
+	</span>
+	<span id="spanBackTab">
+	  <input type="button" 
+		 value="Run courseInfoUnittests()"
+		 id="courseInfoUnittestBtn"
+		 onclick="courseInfoExtractorUnittests()">
+	</span>
+
+      <br>
+      <hr>
+      <textarea rows="50" cols=100 id='outTxt'></textarea>
+
+      <script src="modulestoreJavaScriptUtils.js"></script>
+      <!-- ------------------------------------------------------------ -->
+
+      <script>
+	function clrUnittestOutArea() {
+	   txtArea = document.getElementById('outTxt');
+	   txtArea.value = '';
+	}
+	
+      </script>
+
+  </body>
+</html>

@@ -1,5 +1,18 @@
                    /* ************* Class CourseInfoExtractor *************** */
 
+/*
+Two ways to run the unittests at the end:
+   o Open file modulestoreJavaScriptUtilsTest.html in a browser
+     and use the buttons, or
+   o In the context of a Mongo shell:
+     * comment both print() functions in the two unittests
+       at the end of this file.
+     * Enter mongo from a terminal and:
+          load('/home/paepcke/EclipseWorkspaces/json_to_relation/scripts/modulestoreJavaScriptUtils.js');
+	  realDateUnittests();
+	  courseInfoExtractorUnittests();
+*/
+
 //Class definition/constructor:
 function CourseInfoExtractor() {
 
@@ -60,10 +73,10 @@ function CourseInfoExtractor() {
      	return("unknown");
          }
 
-         var dateMonth = dateObj.getMonth()
-         if (dateMonth >= this.fallQuarterStartMonth && dateMonth > this.winterQuarterStartMonth) {
+         var dateMonth = dateObj.getMonth();
+         if (dateMonth >= this.fallQuarterStartMonth && dateMonth < this.winterQuarterStartMonth) {
      	return "fall";
-         } else if (dateMonth >= this.winterQuarterStartMonth && dateMonth < this.springQuarterStartMonth) {
+         } else if (dateMonth == this.winterQuarterStartMonth || dateMonth < this.springQuarterStartMonth) {
      	return "winter";
          } else if (dateMonth >= this.springQuarterStartMonth && dateMonth < this.summerQuarterStartMonth) {
      	return "spring";
@@ -336,7 +349,11 @@ function RealDate(isoDateStr) {
     // Return an ISO date string.
 
     RealDate.prototype.toDateObj = function() {
-        return(new ISODate(this.theDate));
+	try {
+            return(new ISODate(this.theDate));
+	} catch(ReferenceError) {
+	    return(new Date(this.theDate));
+	}
     }
 
     //------------------------------
@@ -495,58 +512,63 @@ function RealDate(isoDateStr) {
 
 function realDateUnittests() {
 
+    function print(txt) {
+	txtArea = document.getElementById('outTxt');
+	txtArea.value += txt + '\n';
+    }
+
     print('Tests for class RealDate...');
 
     rd = new RealDate('2014-01-02T10:11:12Z');
 
     // Jan 2 instead of Jan1 because of conversion GMT->PST
     if (String(rd.toDateObj()) !== 'Thu Jan 02 2014 02:11:12 GMT-0800 (PST)')
-	raise("Conversion to ISO date failed.");
+	print("Conversion to ISO date failed.");
     else
 	print('toDateObj() OK.');
 
     if (rd.getYear() !== 2014)
-	raise("getYear() failed.");
+	print("getYear() failed.");
     else
 	print('getYear() OK.');
 
     if (rd.getFullYear() !== 2014)
-	raise("getFullYear() failed.");
+	print("getFullYear() failed.");
     else
 	print('getFullYear() OK.');
 
     if (rd.getMonth() !== 1)
-	raise("getMonth() failed.");
+	print("getMonth() failed.");
     else
 	print('getMonth() OK.');
 
     if (rd.getDay() !== 2)
-	raise("getDay() failed.");
+	print("getDay() failed.");
     else
 	print('getDay() OK.');
 
     if (rd.getTimeWithTimezone() !== '10:11:12Z')
-	raise("getTimeWithTimezone() failed.");
+	print("getTimeWithTimezone() failed.");
     else
 	print('getTimeWithTimezone() OK.');
 
     if (rd.getTimeNoTimezone() !== '10:11:12')
-	raise("getTimeNoTimezone() failed.");
+	print("getTimeNoTimezone() failed.");
     else
 	print('getTimeNoTimezone() OK.');
 
     if (rd.getMySqlDateStr() !== '2014-01-02 10:11:12')
-	raise("getMySqlDateStr() failed.");
+	print("getMySqlDateStr() failed.");
     else
 	print('getMySqlDateStr() OK.');
 
     if (rd.isNullDateObj(rd))
-	raise("isNullDateObj() failed.");
+	print("isNullDateObj() failed.");
     else
 	print('isNullDatObj() OK.');
 
     if (! rd.isNullDateStr('0000-00-00T00:00:00Z'))
-	raise("isNullDataStr() failed.");
+	print("isNullDataStr() failed.");
     else
 	print('isNullDateStr() OK.');
 
@@ -556,39 +578,54 @@ function realDateUnittests() {
 
 function courseInfoExtractorUnittests() {
 
+    print = function(txt) {
+	txtArea = document.getElementById('outTxt');
+	txtArea.value += txt + '\n';
+    }
+
     print('Tests for class CourseInfoExtractor...');
 
     ce = new CourseInfoExtractor(2013, 'winter');
 
     if (ce.getQuarterStartDate(2013, 'summer') !== '2014-06-01T00:00:00Z')
-	raise('getQuarterStartDate() failed.')
+	print('(1) getQuarterStartDate() failed (OK if in browser context).');
     else
-	print('getQuarterStartDate() OK.')
+	print('(1) getQuarterStartDate() OK.');
 
     if (ce.getQuarterFromDate('2014-03-02') !== 'spring')
-	raise('getQuarterFromDate() failed.')
+	print('(2) getQuarterFromDate() failed: computes ' + ce.getQuarterFromDate('2014-03-02') + ' should be spring');
     else
-	print('getQuarterFromDate() OK.')
+	print('(2) getQuarterFromDate() OK.');
+
+    if (ce.getQuarterFromDate('2014-02-30') !== 'winter')
+	print('(3) getQuarterFromDate() failed: computes ' + ce.getQuarterFromDate('2014-02-30') + ' should be winter');
+    else
+	print('(3) getQuarterFromDate() OK.');
+
+    if (ce.getQuarterFromDate('2014-06-30') !== 'summer')
+	print('(4) getQuarterFromDate() failed: computes ' + ce.getQuarterFromDate('2014-02-30') + ' should be summer');
+    else
+	print('(4) getQuarterFromDate() OK.');
 
     if (ce.getNumQuartersDuration('2013-01-02', '2013-01-02') != 1)
-	raise('getNumQuartersDuration() failed.')
+	print('getNumQuartersDuration() failed.');
     else
-	print('getNumQuartersDuration() OK.')
+	print('getNumQuartersDuration() OK.');
 
     if (ce.getNumQuartersDuration('2013-01-02', '2014-01-02') != 5)
-	raise('getNumQuartersDuration() failed.')
+	print('getNumQuartersDuration() failed.');
     else
-	print('getNumQuartersDuration() OK.')
+	print('getNumQuartersDuration() OK.');
 
     if (ce.getNumQuartersDuration('2013-01-02', '0000-00-00') != -1)
-	raise('getNumQuartersDuration() failed.')
+	print('getNumQuartersDuration() failed.');
     else
-	print('getNumQuartersDuration() OK.')
+	print('getNumQuartersDuration() OK.');
 
     if (ce.getNumQuartersDuration('10:30:11', '00:00:00') != -1)
-	raise('getNumQuartersDuration() failed.')
+	print('getNumQuartersDuration() failed.');
     else
-	print('getNumQuartersDuration() OK.')
+	print('getNumQuartersDuration() OK.');
 
     if (ce.getNextQuarter('winter') != 'spring')
 	print('getNextQuarter() failed.');
@@ -600,3 +637,4 @@ function courseInfoExtractorUnittests() {
     else
 	print('getNextQuarter() OK.');
 }
+
