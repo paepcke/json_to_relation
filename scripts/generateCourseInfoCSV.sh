@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# In half-baked state, but likely close.
-#
 # Given a year and the name of a quarter ('fall', 'winter', etc.),
 # write CSV to stdout that contains course name, year, quarter,
 # start date, and end date of the course. One course per line.
@@ -9,6 +7,8 @@
 # all quarters (of each requested year) are exported.
 #
 # Uses the modulestore MongoDB directly. Can be used from CL.
+#
+# Usable from CL, but also used by cronRefreshModulStore.sh.
 
 USAGE="Usage: generateCourseInfoCSV.sh [-y yyyy] [-q {fall | winter | spring | summer}]"
 

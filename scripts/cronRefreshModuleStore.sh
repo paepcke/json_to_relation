@@ -156,16 +156,11 @@ mongorestore --db modulestore modulestore.bson
 
 TMP_FILE=`mktemp`
 chmod a+r $TMP_FILE
-echo `date`": Loading JavaScript utils into local MongoDB; exporting csv to "$TMP_FILE"."
-MONGO_CMD="load('"$currScriptsDir/modulestoreJavaScriptUtils.js"'); \
-                  courseExporter = new CourseInfoExtractor(); \
-                  courseExporter.createCourseCSV(0,'all');"
 
-mongo modulestore --quiet --eval "$MONGO_CMD" > $TMP_FILE
+$currScriptsDir/generateCourseInfoCSV.sh > $TMP_FILE
 
 #************
 #echo "TMP_FILE: $TMP_FILE"
-#echo $MONGO_CMD
 #exit 0
 #************
 
