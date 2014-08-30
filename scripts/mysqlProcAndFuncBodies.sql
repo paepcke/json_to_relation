@@ -714,6 +714,7 @@ END//
 # Returns number of words in argument. Usage example
 #   SELECT SUM(wordcount(myCol)) FROM (SELECT myCol FROM myTable) AS Contents;
 # returns the number of words in an entire text column.
+# Taken from http://stackoverflow.com/questions/748276/using-sql-to-determine-word-count-stats-of-a-text-field
 
 CREATE FUNCTION wordcount(str TEXT)
        RETURNS INT
@@ -735,6 +736,39 @@ CREATE FUNCTION wordcount(str TEXT)
     RETURN wordCnt;
   END
 //
+
+#--------------------------
+# isTrueCourseName
+#-----------------
+
+# Takes a course_display_name, and returns 1 if the name is
+# likely to be a true OpenEdX course name. Else returns 0.
+# Filters out names that start with a digit, that contain the
+# word 'text' as an element in a name triplet: foo/test/bar.
+# Filters all known Stanford platform, team methods for 
+# polluting the course name space. 
+#
+# Intended to be one of only two places where this filter must
+# be maintained. The other is open_edx_class_export/scripts/filterCourseNames.sh,
+# which is used a filter in a Linux shell pipe.
+
+DROP FUNCTION IF EXISTS isTrueCourseName//
+CREATE FUNCTION isTrueCourseName(course_display_name varchar(255))
+RETURNS BOOL
+BEGIN
+    # Name starts with a zero?
+    IF ((SELECT course_display_name REGEXP '^[0-9]') = 1)
+    THEN
+        RETURN 0; 
+    END IF;
+    SELECT LOWER(course_display_name) INTO @courseIDLowCase;
+    IF ((SELECT @courseIDLowCase REGEXP 'jbau|janeu|sefu|davidu|caitlynx|josephtest|nickdupuniversity|nathanielu|gracelyou|sandbox|demo|sampleuniversity|.*zzz.*|/test/') = 1)
+    THEN
+        RETURN 0;
+    END IF;
+    RETURN 1;
+END//
+
 
 # Restore standard delimiter:
 delimiter ;

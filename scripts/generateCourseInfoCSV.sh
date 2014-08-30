@@ -124,14 +124,21 @@ echo   'var year = '$YEAR';
 	        break;
 	    }
             // Without the following print statement, Mongo ouputs
-            // the number 2 to stdout. Workaround:
-            // Print an empty line, and remove it later (see grep below):
+            // the number 2 to stdout, in spite of the --quiet option. 
+            // Workaround: Print an empty line, and remove it later (see grep below):
             print('');
 	}
 
 	var quarterStartDate;
 	var nextQuarterStartDate;
 	var thisYear = parseInt(year);
+        if (thisYear == 0) {
+            thisYear = '$DATA_SINCE';
+            // Same stupid need for an empty line
+            // to keep MongoDB from printing the 
+            // value of $DATA_SINCE:
+            print('');
+        }
 	var moreYearsToDo = true;
 	var currYear = new Date().getFullYear();
 	var theQuarterIndx  = 0;
@@ -139,13 +146,13 @@ echo   'var year = '$YEAR';
 
 	print("course_display_name,year,quarter,start_date,end_date");
 
-	var fallQuarterStartDate   = thisYear     + "-09-10T07:59:00Z";
-	var winterQuarterStartDate = thisYear+1 + "-01-01T07:59:00Z";
-	var springQuarterStartDate = thisYear+1 + "-03-01T07:59:00Z";
-	var summerQuarterStartDate = thisYear+1 + "-06-15T07:59:00Z";
-	var summerQuarterEndDate   = thisYear+1 + "-09-10T07:59:00Z";
-
 	while (moreYearsToDo) {
+
+	    var fallQuarterStartDate   = thisYear     + "-09-10T07:59:00Z";
+	    var winterQuarterStartDate = thisYear+1 + "-01-01T07:59:00Z";
+	    var springQuarterStartDate = thisYear+1 + "-03-01T07:59:00Z";
+	    var summerQuarterStartDate = thisYear+1 + "-06-15T07:59:00Z";
+	    var summerQuarterEndDate   = thisYear+1 + "-09-10T07:59:00Z";
 
 	    var currQuarter = quartersToCover[theQuarterIndx];
 	    switch (currQuarter) {
@@ -170,9 +177,12 @@ echo   'var year = '$YEAR';
 	    //************************
 	    //print("quarter: " + quarter);
 	    //print("currQuarter: " + currQuarter);
+            //print("quartersToCover:" + quartersToCover);
 	    //print("quarterStartDate: " + quarterStartDate);
 	    //print("nextQuarterStartDate: " + nextQuarterStartDate);
 	    //print("currYear: " + currYear);
+	    //print("thisYear: " + thisYear);
+	    //print("year: " + year);
 	    //print("theQuarterIndx: " + theQuarterIndx);
 	    //print("nextQuarterIndx: " + nextQuarterIndx);
 	    //************************
@@ -197,7 +207,7 @@ echo   'var year = '$YEAR';
 	    }
 	    // Done with one quarter
 
-	    if (quarter != "all") {
+	    if (quarter != "all" && year > 0) {
 	        moreYearsToDo = false;
 	        continue;
 	    }
@@ -224,7 +234,12 @@ echo   'var year = '$YEAR';
 	            continue;
 	        }
 	    }
-	}
+            //*************
+            //print("moreYearsToDo: " + moreYearsToDo);
+            //print("currQuarter: " + currQuarter);
+            //*************
+
+	} // end while(moreYearsToDo)
 	' > $JAVASCRIPT_FILE
 #********************
 #cat $JAVASCRIPT_FILE
