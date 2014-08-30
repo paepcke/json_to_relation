@@ -7,6 +7,8 @@
 # start date, and end date of the course. One course per line.
 # Without a -y argument, all years are exported; without a -q
 # all quarters (of each requested year) are exported.
+#
+# Uses the modulestore MongoDB directly. Can be used from CL.
 
 USAGE="Usage: generateCourseInfoCSV.sh [-y yyyy] [-q {fall | winter | spring | summer}]"
 
@@ -92,129 +94,157 @@ QUERY='courseCursor = db.modulestore.find({"_id.category": "course",
 '
 
 
-SCRIPT='var year = '$YEAR';
+# Place a Java script into a tmp file for subsequent input into
+# MongoDB: 
+
+JAVASCRIPT_FILE=mktemp
+echo   'var year = '$YEAR';
         var quarter = '\"$QUARTER\"';
-        var quartersToCover;
-        if (quarter == "all") {
-            quartersToCover = ["fall", "winter", "spring", "summer"];
-        } else {
-            quartersToCover = [quarter];
-            switch (quarter) {
-                case "fall":
-                    quartersToCover.append("winter");
-                    break;
-                case "winter":
-                    quartersToCover.append("spring");
-                    break;
-                case "spring":
-                    quartersToCover.append("summer");
-                    break;
-                case "summer":
-                    quartersToCover.append("fall");
-                    break;
-            }
-       }
+	var quartersToCover;
+	if (quarter == "all") {
+	    quartersToCover = ["fall", "winter", "spring", "summer"];
+            // Without the following print statement, Mongo ouputs
+            // the above array to stdout...who knows why. Workaround:
+            // Print an empty line, and remove it later  (see grep below):
+            print('');
+	} else {
+	    quartersToCover = [quarter];
+	    switch (quarter) {
+	    case "fall":
+	        quartersToCover.push("winter");
+	        break;
+	    case "winter":
+	        quartersToCover.push("spring");
+	        break;
+	    case "spring":
+	        quartersToCover.push("summer");
+	        break;
+	    case "summer":
+	        quartersToCover.push("fall");
+	        break;
+	    }
+            // Without the following print statement, Mongo ouputs
+            // the number 2 to stdout. Workaround:
+            // Print an empty line, and remove it later (see grep below):
+            print('');
+	}
 
-       var quarterStartDate;
-       var nextQuarterStartDate;
-       var thisYear = year;
-       var moreYearsToDo = true;
-       var currYear = new Date().getFullYear();
-       var theQuarterIndx  = 0;
-       var nextQuarterIndx = 1;
+	var quarterStartDate;
+	var nextQuarterStartDate;
+	var thisYear = parseInt(year);
+	var moreYearsToDo = true;
+	var currYear = new Date().getFullYear();
+	var theQuarterIndx  = 0;
+	var nextQuarterIndx = 1;
 
-       print("course_display_name,year,quarter,start_date,end_date");
+	print("course_display_name,year,quarter,start_date,end_date");
 
-       while (moreYearsToDo) {
-           var fallQuarterStartDate   = thisYear     + "-09-10T07:59:00Z";
-           var winterQuarterStartDate = (thisYear+1) + "-01-01T07:59:00Z";
-           var springQuarterStartDate = (thisYear+1) + "-03-01T07:59:00Z";
-           var summerQuarterStartDate = (thisYear+1) + "-06-15T07:59:00Z";
+	var fallQuarterStartDate   = thisYear     + "-09-10T07:59:00Z";
+	var winterQuarterStartDate = thisYear+1 + "-01-01T07:59:00Z";
+	var springQuarterStartDate = thisYear+1 + "-03-01T07:59:00Z";
+	var summerQuarterStartDate = thisYear+1 + "-06-15T07:59:00Z";
+	var summerQuarterEndDate   = thisYear+1 + "-09-10T07:59:00Z";
 
-           var currQuarter = quartersToCover[theQuarterIndx];
-           switch (currQuarter) {
-               case "fall":
-                   quarterStartDate = fallQuarterStartDate;
-                   nextQuarterStartDate = winterQuarterStartDate;
-                   break;
-               case "winter":
-                   quarterStartDate = winterQuarterStartDate;
-                   nextQuarterStartDate = springQuarterStartDate;
-                   break;
-               case "spring":
-                   quarterStartDate = springQuarterStartDate;
-                   nextQuarterStartDate = summerQuarterStartDate;
-                   break;
-               case "summer":
-                   quarterStartDate = fallQuarterStartDate;
-                   nextQuarterStartDate = winterQuarterStartDate;
-                   break;
-           }
+	while (moreYearsToDo) {
 
-           courseCursor = db.modulestore.find({"_id.category": "course",
-   	                                       "metadata.start": {$gte: quarterStartDate, $lt: nextQuarterStartDate}
-                                              },
-                      	                       {"metadata.start": true, "metadata.end": true}
-		         );
+	    var currQuarter = quartersToCover[theQuarterIndx];
+	    switch (currQuarter) {
+	    case "fall":
+	        quarterStartDate = fallQuarterStartDate;
+	        nextQuarterStartDate = winterQuarterStartDate;
+	        break;
+	    case "winter":
+	        quarterStartDate = winterQuarterStartDate;
+	        nextQuarterStartDate = springQuarterStartDate;
+	        break;
+	    case "spring":
+	        quarterStartDate = springQuarterStartDate;
+	        nextQuarterStartDate = summerQuarterStartDate;
+	        break;
+	    case "summer":
+	        quarterStartDate = summerQuarterStartDate;
+	        nextQuarterStartDate = summerQuarterEndDate;
+	        break;
+	    }
 
-           while (true) {
-              doc = courseCursor.hasNext() ? courseCursor.next() : null;
-              if (doc === null) {
-                 break;
-              }
-              print(doc._id.org +
-                    "/" + doc._id.course +
-                    "/" + doc._id.name +
-                    "," + year +
-                    "," + currQuarter +
-                    "," + doc.metadata.start +
-                    "," + doc.metadata.end);
-           }
-           // Done with one quarter
+	    //************************
+	    //print("quarter: " + quarter);
+	    //print("currQuarter: " + currQuarter);
+	    //print("quarterStartDate: " + quarterStartDate);
+	    //print("nextQuarterStartDate: " + nextQuarterStartDate);
+	    //print("currYear: " + currYear);
+	    //print("theQuarterIndx: " + theQuarterIndx);
+	    //print("nextQuarterIndx: " + nextQuarterIndx);
+	    //************************
+	    courseCursor = db.modulestore.find({"_id.category": "course",
+	   	                                "metadata.start": {$gte: quarterStartDate, $lt: nextQuarterStartDate}
+	                                       },
+	                      	               {"metadata.start": true, "metadata.end": true}
+					      );
 
-           if (quarter != "all") {
-               moreYearsToDo = false;
-               continue;
-           }
+	    while (true) {
+	        doc = courseCursor.hasNext() ? courseCursor.next() : null;
+	        if (doc === null) {
+	            break;
+	        }
+	        print(doc._id.org +
+	              "/" + doc._id.course +
+	              "/" + doc._id.name +
+	              "," + year +
+	              "," + currQuarter +
+	              "," + doc.metadata.start +
+	              "," + doc.metadata.end);
+	    }
+	    // Done with one quarter
 
-           // Doing multiple quarters. what is the next quarter?
-           theQuarterIndx += 1;
-           if (theQuarterIndx > quartersToCover.length() - 1) {
-               // Did all quarters of current academic year:
-               theQuarterIndx = 0;
-               // Do just one year?
-               if (year > 0) {
-                   // We are to do just one academic year:
-                   moreYearsToDo = false;
-                   continue;
-               }
-           }
+	    if (quarter != "all") {
+	        moreYearsToDo = false;
+	        continue;
+	    }
 
-           if (currQuarter == "fall") {
-               // Spring quarter happens in second
-               // calendar year of the academic year:
-               thisYear += 1;
-               if (thisYear > currYear) {
-                   moreYearsToDo = false;
-                   continue;
-               }
-           }
-       }
-'
+	    // Doing multiple quarters. what is the next quarter?
+	    theQuarterIndx += 1;
+	    if (theQuarterIndx > quartersToCover.length - 1) {
+	        // Did all quarters of current academic year:
+	        theQuarterIndx = 0;
+	        // Do just one year?
+	        if (year > 0) {
+	            // We are to do just one academic year:
+	            moreYearsToDo = false;
+	            continue;
+	        }
+	    }
+
+	    if (currQuarter == "fall") {
+	        // Spring quarter happens in second
+	        // calendar year of the academic year:
+	        thisYear += 1;
+	        if (thisYear > currYear) {
+	            moreYearsToDo = false;
+	            continue;
+	        }
+	    }
+	}
+	' > $JAVASCRIPT_FILE
 #********************
-echo $SCRIPT
-exit
+#cat $JAVASCRIPT_FILE
+#exit
 #********************
 
 
+# Run the JavaScript inside mongodb; output to stdout.
+# When Mongo processes the above Javascript, it outputs
+# two lines at the end: 'false', and 'bye', even with the 
+# --quiet flag. We need to suppress these to obtain a clean
+# .csv output.
+#
+# Additionally, to prevent Mongo from outputting the result of the first
+# Javascript conditional we had to add a newline in that
+# script (see above in the script). We need to suppress
+# this empty line as well
+# 
+# The following pipe into grep does these suppressions:
 
-# Create a bash command that invokes the Mongo shell
-# with the JavaScript as the command to run:
-cmd="mongo modulestore --quiet --eval '$SCRIPT'"
+mongo modulestore --quiet < $JAVASCRIPT_FILE | grep --invert-match "^false$\|^bye$\|^$"
 
-#****?echo $cmd
-
-# Run the command:
-#****?eval $cmd
-
-mongo modulestore --quiet --eval "${SCRIPT}"
+rm $JAVASCRIPT_FILE

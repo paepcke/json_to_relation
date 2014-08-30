@@ -707,6 +707,35 @@ BEGIN
 
 END//
 
+#--------------------------
+# wordcount
+#----------
+
+# Returns number of words in argument. Usage example
+#   SELECT SUM(wordcount(myCol)) FROM (SELECT myCol FROM myTable) AS Contents;
+# returns the number of words in an entire text column.
+
+CREATE FUNCTION wordcount(str TEXT)
+       RETURNS INT
+       DETERMINISTIC
+       SQL SECURITY INVOKER
+       NO SQL
+  BEGIN
+    DECLARE wordCnt, idx, maxIdx INT DEFAULT 0;
+    DECLARE currChar, prevChar BOOL DEFAULT 0;
+    SET maxIdx=char_length(str);
+    WHILE idx < maxIdx DO
+        SET currChar=SUBSTRING(str, idx, 1) RLIKE '[[:alnum:]]';
+        IF NOT prevChar AND currChar THEN
+            SET wordCnt=wordCnt+1;
+        END IF;
+        SET prevChar=currChar;
+        SET idx=idx+1;
+    END WHILE;
+    RETURN wordCnt;
+  END
+//
+
 # Restore standard delimiter:
 delimiter ;
 
