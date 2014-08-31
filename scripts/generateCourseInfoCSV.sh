@@ -148,11 +148,11 @@ echo   'var year = '$YEAR';
 
 	while (moreYearsToDo) {
 
-	    var fallQuarterStartDate   = thisYear     + "-09-10T07:59:00Z";
-	    var winterQuarterStartDate = thisYear+1 + "-01-01T07:59:00Z";
-	    var springQuarterStartDate = thisYear+1 + "-03-01T07:59:00Z";
-	    var summerQuarterStartDate = thisYear+1 + "-06-15T07:59:00Z";
-	    var summerQuarterEndDate   = thisYear+1 + "-09-10T07:59:00Z";
+	    var fallQuarterStartDate   = thisYear     + "-09-10T00:00:00Z";
+	    var winterQuarterStartDate = thisYear+1 + "-01-01T00:00:00Z";
+	    var springQuarterStartDate = thisYear+1 + "-03-01T00:00:00Z";
+	    var summerQuarterStartDate = thisYear+1 + "-06-15T00:00:00Z";
+	    var summerQuarterEndDate   = thisYear+1 + "-09-10T00:00:00Z";
 
 	    var currQuarter = quartersToCover[theQuarterIndx];
 	    switch (currQuarter) {

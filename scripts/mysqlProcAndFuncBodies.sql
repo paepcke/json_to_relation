@@ -748,9 +748,10 @@ CREATE FUNCTION wordcount(str TEXT)
 # Filters all known Stanford platform, team methods for 
 # polluting the course name space. 
 #
-# Intended to be one of only two places where this filter must
+# Intended to be one of 'only' three places where this filter must
 # be maintained. The other is open_edx_class_export/scripts/filterCourseNames.sh,
-# which is used a filter in a Linux shell pipe.
+# which is used a filter in a Linux shell pipe, and 
+# json_to_relation/scripts/modulestoreJavaScriptUtilsTest.js.
 
 DROP FUNCTION IF EXISTS isTrueCourseName//
 CREATE FUNCTION isTrueCourseName(course_display_name varchar(255))
