@@ -29,7 +29,7 @@ Two ways to run the unittests at the end:
 // in mysqlProcAndFuncBodies.sql.
 
 isTrueCourseName = function(courseName) {
-    re = new RegExp("^[0-9]+|jbauU|jbau|janeu|sefu|davidu|caitlynx|josephtest|nickdupuniversity|nathanielu|gracelyou|sandbox|demo|sampleuniversity|.*zzz.*|/test/")
+    re = new RegExp("^[0-9]+|jbauU|jbau|janeu|sefu|davidu|caitlynx|josephtest|nickdupuniversity|nathanielu|gracelyou|sandbox|demo|sampleuniversity|.*zzz.*|/test/|joeU")
     return !re.test(courseName.toLowerCase());
 }
 

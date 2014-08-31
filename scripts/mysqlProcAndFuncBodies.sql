@@ -763,7 +763,7 @@ BEGIN
         RETURN 0; 
     END IF;
     SELECT LOWER(course_display_name) INTO @courseIDLowCase;
-    IF ((SELECT @courseIDLowCase REGEXP 'jbau|janeu|sefu|davidu|caitlynx|josephtest|nickdupuniversity|nathanielu|gracelyou|sandbox|demo|sampleuniversity|.*zzz.*|/test/') = 1)
+    IF ((SELECT @courseIDLowCase REGEXP 'jbau|janeu|sefu|davidu|caitlynx|josephtest|nickdupuniversity|nathanielu|gracelyou|sandbox|demo|sampleuniversity|.*zzz.*|/test/|joeU') = 1)
     THEN
         RETURN 0;
     END IF;

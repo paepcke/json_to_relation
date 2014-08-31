@@ -157,13 +157,22 @@ mongorestore --db modulestore modulestore.bson
 TMP_FILE=`mktemp`
 chmod a+r $TMP_FILE
 
-$currScriptsDir/generateCourseInfoCSV.sh > $TMP_FILE
+# Create command that loads modulestoreJavaScriptUtils.js into 
+# MongoDB, creates a CourseInfoExtractor instance, and invokes
+# method createCourseCSV() on it. We give the method 0 for the
+# academic year, b/c we want a list of all years, and the string
+# 'all' to get all quarters of each year. The result, when the 
+# mongo application is run with this command to --eval is a
+# stream of course information in CSV format:
+mongoCmd="load('"${currScriptsDir}/modulestoreJavaScriptUtils.js"'); \
+          courseExtractor = new CourseInfoExtractor(); \
+          courseExtractor.createCourseCSV(0, 'all');"
+mongo modulestore --eval "$mongoCmd" > $TMP_FILE
 
 #************
-#echo "TMP_FILE: $TMP_FILE"
+#Echo "TMP_FILE: $TMP_FILE"
 #exit 0
 #************
-
 MYSQL_CMD="LOAD DATA LOCAL INFILE '"$TMP_FILE"' INTO TABLE Edx.CourseInfo \
            FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
            LINES TERMINATED BY '\n' \
