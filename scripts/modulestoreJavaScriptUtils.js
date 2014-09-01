@@ -29,7 +29,7 @@ Two ways to run the unittests at the end:
 // in mysqlProcAndFuncBodies.sql.
 
 isTrueCourseName = function(courseName) {
-    re = new RegExp("^[0-9]+|jbauU|jbau|janeu|sefu|davidu|caitlynx|josephtest|nickdupuniversity|nathanielu|gracelyou|sandbox|demo|sampleuniversity|.*zzz.*|/test/|joeU")
+    re = new RegExp("^[0-9]+|jbauU|jbau|janeu|sefu|davidu|caitlynx|josephtest|nickdupuniversity|nathanielu|gracelyou|sandbox|demo|sampleuniversity|joeu|grbuniversity|stanford_spcs/001/spcs_test_course1|stanford/exp1/experimental_assessment_test|on_campus_stanford_only_test_class|business/123/gsb-test|business/123/gsb-test|worldview/wvtest/worldview_testing|foundation/wtc01/wadhwani_test_course|gsb/af1/alfresco_testing|tocc/1/eqptest|monx/ab123/fall2014|internal/101/private_testing_course|testing_settings/for_non_display|monx/livetest/2014|monx/abtest/fall2014|openedx/testeduc2000c/2013_sept|grb/101/grb_test_course|online/bulldog/summer2014|testing/testing123/evergreen|stanford/xxxx/yyyy|.*zzz.*|/test/")
     return !re.test(courseName.toLowerCase());
 }
 
@@ -265,10 +265,10 @@ CourseInfoExtractor.prototype.createCourseCSV = function(academicYear, quartersT
 	    break;
 	}
 
-     	///**********
+     	//**********
      	//print("Quarter start     : " + quarterStartDate);
      	//print("Next Quarter start: " + nextQuarterStartDate);
-     	///**********
+     	//**********
 
      	// Get get course info for courses in
      	// one academic year, one particular quarter:
@@ -330,6 +330,10 @@ CourseInfoExtractor.prototype.createCourseCSV = function(academicYear, quartersT
      		  "," + endDate);
      	}
      	// Done with one quarter
+	if (currQuarter != "all" && this.year > 0) {
+	    moreYearsToDo = false;
+	    continue;
+	}
 
      	// What is the next quarter
      	// of the quarters we are supposed to cover?
@@ -358,15 +362,20 @@ CourseInfoExtractor.prototype.createCourseCSV = function(academicYear, quartersT
      		    moreYearsToDo = false;
      		    continue;
      		}
-     		// Do next year with same series of 
-     		// quarters we just did for this year:
-     		continue;
      	    }
+     	    // Do next year with same series of 
+     	    // quarters we just did for this year:
+	    //**************************
+	    //print('*********thisAcademicYear: ' + thisAcademicYear);
+	    //print('*********thisCalYear: ' + thisCalYear);
+	    //print('*********quartersToCover[theQuarterIndx]: ' + quartersToCover[theQuarterIndx]);
+	    //**************************
+     	    continue;
      	}
      	// Still have quarters to do in current academic year.
      	// Calendar date increments, if switching from
         // Fall quarter to winter:
-     	if (currQuarter == "fall" || this.year == 0) {
+     	if (currQuarter == "fall") {
      	    // Just did fall quarter, or want all years for one 
      	    // Spring quarter happens in second
      	    // calendar year of the academic year:
@@ -377,6 +386,11 @@ CourseInfoExtractor.prototype.createCourseCSV = function(academicYear, quartersT
      		continue;
      	    }
      	}
+	//**************************
+	//print('*********thisAcademicYear: ' + thisAcademicYear);
+	//print('*********thisCalYear: ' + thisCalYear);
+	//print('*********quartersToCover[theQuarterIndx]: ' + quartersToCover[theQuarterIndx]);
+	//**************************
     }
 }    
 

@@ -170,7 +170,7 @@ mongoCmd="load('"${currScriptsDir}/modulestoreJavaScriptUtils.js"'); \
 mongo modulestore --eval "$mongoCmd" > $TMP_FILE
 
 #************
-#Echo "TMP_FILE: $TMP_FILE"
+#echo "TMP_FILE: $TMP_FILE"
 #exit 0
 #************
 MYSQL_CMD="LOAD DATA LOCAL INFILE '"$TMP_FILE"' INTO TABLE Edx.CourseInfo \

@@ -197,6 +197,10 @@ echo   'var year = '$YEAR';
 	        if (doc === null) {
 	            break;
 	        }
+                course_display_name = doc._id.org + "/" + doc._id.course + "/" + doc._id.name;
+         	//************************
+                //print("course_display_name: " + course_display_name);
+                //************************
 	        print(doc._id.org +
 	              "/" + doc._id.course +
 	              "/" + doc._id.name +
