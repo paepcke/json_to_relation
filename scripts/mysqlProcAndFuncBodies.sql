@@ -716,6 +716,7 @@ END//
 # returns the number of words in an entire text column.
 # Taken from http://stackoverflow.com/questions/748276/using-sql-to-determine-word-count-stats-of-a-text-field
 
+DROP FUNCTION IF EXISTS wordcount;
 CREATE FUNCTION wordcount(str TEXT)
        RETURNS INT
        DETERMINISTIC
@@ -793,6 +794,29 @@ BEGIN
     ELSE
         RETURN 0;
     END IF;
+END//
+
+#--------------------------
+# enrollment
+#-----------
+
+# Takes a course name, and returns its enrollment
+# via courseware_studentmodule.
+
+DROP FUNCTION IF EXISTS enrollment//
+CREATE FUNCTION enrollment(course_display_name varchar(255))
+RETURNS INT
+BEGIN
+    # Name starts with a zero?
+    IF (SELECT isTrueCourseName(course_display_name) = 0)
+    THEN
+        RETURN -1; 
+    END IF;
+    SELECT COUNT(user_id) AS 'enrollment' 
+	   FROM edxprod.student_courseenrollment 
+	   WHERE course_id = course_display_name
+	   INTO @totalEnrollment;
+    RETURN @totalEnrollment;
 END//
 
 
