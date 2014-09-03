@@ -29,7 +29,7 @@ Two ways to run the unittests at the end:
 // in mysqlProcAndFuncBodies.sql.
 
 isTrueCourseName = function(courseName) {
-    re = new RegExp("^[0-9]+|jbauU|jbau|janeu|sefu|davidu|caitlynx|josephtest|nickdupuniversity|nathanielu|gracelyou|sandbox|demo|sampleuniversity|joeu|grbuniversity|stanford_spcs/001/spcs_test_course1|stanford/exp1/experimental_assessment_test|on_campus_stanford_only_test_class|business/123/gsb-test|business/123/gsb-test|worldview/wvtest/worldview_testing|foundation/wtc01/wadhwani_test_course|gsb/af1/alfresco_testing|tocc/1/eqptest|monx/ab123/fall2014|internal/101/private_testing_course|testing_settings/for_non_display|monx/livetest/2014|monx/abtest/fall2014|openedx/testeduc2000c/2013_sept|grb/101/grb_test_course|online/bulldog/summer2014|testing/testing123/evergreen|stanford/xxxx/yyyy|.*zzz.*|/test/")
+    re = new RegExp("^[0-9]+|^testtest|jbauU|jbau|janeu|sefu|davidu|caitlynx|josephtest|nickdupuniversity|nathanielu|gracelyou|monx/|sandbox|demo|sampleuniversity|joeu|grbuniversity|stanford_spcs/001/spcs_test_course1|stanford/exp1/experimental_assessment_test|on_campus_stanford_only_test_class|business/123/gsb-test|business/123/gsb-test|worldview/wvtest/worldview_testing|foundation/wtc01/wadhwani_test_course|gsb/af1/alfresco_testing|tocc/1/eqptest|monx/ab123/fall2014|internal/101/private_testing_course|testing_settings/for_non_display|monx/livetest/2014|monx/abtest/fall2014|openedx/testeduc2000c/2013_sept|grb/101/grb_test_course|online/bulldog/summer2014|testing/testing123/evergreen|stanford/xxxx/yyyy|.*zzz.*|/test/")
     return !re.test(courseName.toLowerCase());
 }
 
@@ -45,11 +45,11 @@ function CourseInfoExtractor() {
     this.allQuartersArr = ["fall", "winter", "spring", "summer"];
     // To change start month/day of quarter starts, 
     // change the following four partial month-dayTtime strings:
-    this.fallStartStr   = "-09-10T00:00:00Z";
-    this.winterStartStr = "-01-01T00:00:00Z";
+    this.fallStartStr   = "-09-01T00:00:00Z";
+    this.winterStartStr = "-12-01T00:00:00Z";
     this.springStartStr = "-03-01T00:00:00Z";
-    this.summerStartStr = "-06-15T00:00:00Z";
-    this.summerEndStr   = "-09-10T00:00:00Z";
+    this.summerStartStr = "-06-01T00:00:00Z";
+    this.summerEndStr   = "-08-31T00:00:00Z";
 
     // Create start months from above partial date strings:
     thisYear = new Date().getFullYear();
@@ -103,7 +103,7 @@ CourseInfoExtractor.prototype.getQuarterFromDate = function(dateStr) {
     var dateMonth = dateObj.getMonth();
     if (dateMonth >= this.fallQuarterStartMonth && dateMonth < this.winterQuarterStartMonth) {
      	return "fall";
-    } else if (dateMonth == this.winterQuarterStartMonth || dateMonth < this.springQuarterStartMonth) {
+    } else if (dateMonth >= this.winterQuarterStartMonth || dateMonth < this.springQuarterStartMonth) {
      	return "winter";
     } else if (dateMonth >= this.springQuarterStartMonth && dateMonth < this.summerQuarterStartMonth) {
      	return "spring";
@@ -600,14 +600,21 @@ RealDate.prototype.isNullDateStr = function(readDateStr) {
 // Return true/false if given maybeISODateStr is
 // a string conforming to ISO. Example: "2014-08-21T04:20:02"
 // returns true, while "2014-08-21 04:20:02" returns false.
-// Value of null returns null.
+// Value of null returns null. Just a date, like 2014-08-21
+// returns true.
 
 RealDate.prototype.isISOStr = function(maybeISODateStr) {
     if (maybeISODateStr === null || maybeISODateStr === undefined || maybeISODateStr === "null") {
 	return false;
     }
-    dateRegExpPattern = new RegExp("[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}");
-    return maybeISODateStr.match(dateRegExpPattern) != null;
+    dateTimeRegExpPattern = new RegExp("[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}");
+    dateTimeMatch = maybeISODateStr.match(dateTimeRegExpPattern);
+    if (dateTimeMatch != null) {
+	return dateTimeMatch;
+    }
+    dateOnlyRegExpPattern = new RegExp("[0-9]{4}-[0-9]{2}-[0-9]{2}");
+    dateOnlyMatch = maybeISODateStr.match(dateOnlyRegExpPattern);
+    return dateOnlyMatch != null;
 }
 
 /* ************* Unit Tests *************** */
