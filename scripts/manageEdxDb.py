@@ -736,11 +736,14 @@ class TrackLogPuller(object):
         # Finally, update the pre-computed table that stores
         # all of the course_display_names from EventXtract, and 
         # ActivityGrade, into AllCourseDisplayNames
-        makeCourseNameListScriptName = os.path.join(currDir, 'makeCourseNameListTable.sh')
-        try:
-            subprocess.call([makeCourseNameListScriptName])
-        except Exception as e:
-            self.logErr('Could not create table of all course_display_list: %s' % `e`)
+        # NOTE: this is commented b/c we don't need this table any more.
+        # The course name filters have taken its place. The makeCourseNamelistTable.sh
+        # file was moved to json_to_relation/scripts/Old.
+        #makeCourseNameListScriptName = os.path.join(currDir, 'makeCourseNameListTable.sh')
+        #try:
+        #    subprocess.call([makeCourseNameListScriptName])
+        #except Exception as e:
+        #    self.logErr('Could not create table of all course_display_list: %s' % `e`)
         
     # ----------------------------------------  Private Methods ----------------------
 
