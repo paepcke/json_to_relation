@@ -802,6 +802,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             
             elif eventType == 'play_video' or\
                  eventType == 'pause_video' or\
+                 eventType == 'stop_video' or\
                  eventType == 'load_video':
                 row = self.handleVideoPlayPause(record, row, event)
                 return
@@ -2274,10 +2275,14 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
             "{\"id\":\"i4x-Education-EDUC115N-videoalpha-c5f2fd6ee9784df0a26984977658ad1d\",\"code\":\"html5\",\"currentTime\":124.017784}"
             
+        For stop_video::
+
+            "{\"id\":\"i4x-Engineering-CS101-video-z57\",\"currentTime\":632.729,\"code\":\"mQNhppYqfBk\"}"
+
         For load_video::
         
             "{\"id\":\"i4x-Education-EDUC115N-videoalpha-003bc44b4fd64cb79cdfd459e93a8275\",\"code\":\"4GlF1t_5EwI\"}"
-            
+
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text in video play or pause." %\
