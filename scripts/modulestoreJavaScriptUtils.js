@@ -29,7 +29,7 @@ Two ways to run the unittests at the end:
 // in mysqlProcAndFuncBodies.sql.
 
 isTrueCourseName = function(courseName) {
-    re = new RegExp("^[0-9]+|^testtest|jbauU|jbau|janeu|sefu|davidu|caitlynx|josephtest|nickdupuniversity|nathanielu|gracelyou|monx/|sandbox|demo|sampleuniversity|joeu|grbuniversity|stanford_spcs/001/spcs_test_course1|stanford/exp1/experimental_assessment_test|on_campus_stanford_only_test_class|business/123/gsb-test|business/123/gsb-test|worldview/wvtest/worldview_testing|foundation/wtc01/wadhwani_test_course|gsb/af1/alfresco_testing|tocc/1/eqptest|monx/ab123/fall2014|internal/101/private_testing_course|testing_settings/for_non_display|monx/livetest/2014|monx/abtest/fall2014|openedx/testeduc2000c/2013_sept|grb/101/grb_test_course|online/bulldog/summer2014|testing/testing123/evergreen|stanford/xxxx/yyyy|.*zzz.*|/test/")
+    re = new RegExp("^[0-9]+|^testtest|jbauU|jbau|janeu|sefu|davidu|caitlynx|josephtest|nickdupuniversity|nathanielu|gracelyou|monx/|sandbox|demo|sampleuniversity|joeu|grbuniversity|stanford_spcs/001/spcs_test_course1|stanford/exp1/experimental_assessment_test|on_campus_stanford_only_test_class|business/123/gsb-test|business/123/gsb-test|worldview/wvtest/worldview_testing|foundation/wtc01/wadhwani_test_course|gsb/af1/alfresco_testing|tocc/1/eqptest|internal/101/private_testing_course|testing_settings/for_non_display|nickdup|openedx/testeduc2000c/2013_sept|grb/101/grb_test_course|online/bulldog/summer2014|testing/testing123/evergreen|stanford/xxxx/yyyy|.*zzz.*|/test/")
     return !re.test(courseName.toLowerCase());
 }
 

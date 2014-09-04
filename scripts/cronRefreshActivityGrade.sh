@@ -170,7 +170,7 @@ SET @intPlaceholder:=-1; \
 USE edxprod; \
 DROP TABLE IF EXISTS StudentmoduleExcerpt; \
 CREATE TABLE StudentmoduleExcerpt \
-SELECT id AS activity_grade_id, \
+SELECT id PRIMARY KEY AS activity_grade_id, \
        student_id, \
        course_id AS course_display_name, \
        grade, \

@@ -782,12 +782,13 @@ BEGIN
     SELECT @courseIDLowCase REGEXP 'stanford_spcs/001/spcs_test_course1|testing/testing123/evergreen' INTO @badNames_9;
     SELECT @courseIDLowCase REGEXP 'testing_settings/for_non_display|tocc/1/eqptest' INTO @badNames_10;
     SELECT @courseIDLowCase REGEXP 'worldview/wvtest/worldview_testing|stanford/xxxx/yyyy' INTO @badNames_11;
+    SELECT @courseIDLowCase REGEXP 'testtest|nickdup|monx/' INTO @badNames_12;
 
 
-    if ((@badNames_1 + @badNames_2 + @badNames_3 +
-         @badNames_4 + @badNames_5 + @badNames_6 +
-	 @badNames_7 + @badNames_8 + @badNames_9 +
-	 @badNames_10 + @badNames_11
+    if ((@badNames_1  + @badNames_2   + @badNames_3 +
+         @badNames_4  + @badNames_5   + @badNames_6 +
+	 @badNames_7  + @badNames_8   + @badNames_9 +
+	 @badNames_10 + @badNames_11  + @badNames_12
 	 ) = 0)
     THEN
         RETURN 1;

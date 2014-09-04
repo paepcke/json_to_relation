@@ -128,10 +128,18 @@ class AnonAndModIDAdder(object):
 
     def pullRowByRow(self):
         rowBatch = []
+        theQuery = "SELECT activity_grade_id,student_id,\
+                    	   course_display_name,grade,max_grade,percent_grade,\
+                    	   parts_correctness,answers,num_attempts,first_submit,\
+                    	   last_submit,module_type,anon_screen_name,\
+                    	   resource_display_name,module_id \
+                    FROM edxprod.StudentmoduleExcerpt \
+                    WHERE isTrueCourseName(course_display_name) = 1;"
         if self.db == 'unittest':
-            queryIt = self.mysqldbStudModule.query("SELECT %s FROM unittest.StudentmoduleExcerpt" % self.colSpec)
+            queryIt = self.mysqldbStudModule.query("SELECT %s FROM unittest.StudentmoduleExcerpt;" % self.colSpec)
         else:
-            queryIt = self.mysqldbStudModule.query("SELECT %s FROM edxprod.StudentmoduleExcerpt" % self.colSpec)
+            #**********queryIt = self.mysqldbStudModule.query("SELECT %s FROM edxprod.StudentmoduleExcerpt;" % self.colSpec)
+            queryIt = self.mysqldbStudModule.query(theQuery)
         for studmodTuple in queryIt:
             # Results return as tuples, but we need to change tuple items by index.
             # So must convert to list:
@@ -304,7 +312,10 @@ class AnonAndModIDAdder(object):
         if chopPos > 0:
             upToNum = jsonStateStr[chopPos+len(chopTxtMarker):]
             try:
-                numAttempts = int("".join(itertools.takewhile(str.isdigit, upToNum)))
+                # The 'str' part of 'str(upToNum)' is needed b/c
+                # the JSON is unicode, and isdigit() barfs when given
+                # unicode:
+                numAttempts = int("".join(itertools.takewhile(str.isdigit, str(upToNum))))
             except ValueError:
                 # Couldn't find the number of attempts.
                 # Just punt.
