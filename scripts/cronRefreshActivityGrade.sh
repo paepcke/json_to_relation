@@ -139,7 +139,7 @@ else
 	  "SELECT MAX(last_submit) FROM ActivityGrade;"`
 fi
 
-if [ -z "${LATEST_DATE}" ]
+if [[ "${LATEST_DATE}" == "NULL" ]]
 then
     # No dated entry in ActivityGrade at all (likely table is empty):
     LATEST_DATE='0000-00-00 00:00:00'
