@@ -76,7 +76,7 @@ CourseInfoExtractor.prototype.getQuarterStartDate = function(theYear, quarter) {
      	return(theYear     + this.fallStartStr);
      	break;
     case "winter":
-     	return((Number(theYear)+1) + this.winterStartStr);
+     	return(theYear     + this.winterStartStr);
      	break;
     case "spring":
      	return((Number(theYear)+1) + this.springStartStr);
@@ -240,7 +240,7 @@ CourseInfoExtractor.prototype.createCourseCSV = function(academicYear, quartersT
 
     while (moreYearsToDo) {
 	var fallQuarterStartDate   = thisAcademicYear   + this.fallStartStr;
-	var winterQuarterStartDate = thisAcademicYear+1 + this.winterStartStr;
+	var winterQuarterStartDate = thisAcademicYear   + this.winterStartStr;
 	var springQuarterStartDate = thisAcademicYear+1 + this.springStartStr;
 	var summerQuarterStartDate = thisAcademicYear+1 + this.summerStartStr;
 	var summerQuarterEndDate   = thisAcademicYear+1 + this.summerEndStr;
