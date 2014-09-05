@@ -179,6 +179,24 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id) ON DELETE CASCADE
     ) ENGINE=MyISAM;                            
 
+CREATE TABLE IF NOT EXISTS ActivityGrade (
+    activity_grade_id      int(11) 	 NOT NULL PRIMARY KEY,
+    student_id             int(11) 	 NOT NULL,
+    course_display_name    varchar(255)  NOT NULL,
+    grade                  double,
+    max_grade              double,     
+    percent_grade          double        NOT NULL,
+    parts_correctness      varchar(50),
+    answers                varchar(255)  NOT NULL,
+    num_attempts           int(11)       NOT NULL,
+    first_submit           datetime,
+    last_submit            datetime,
+    module_type            varchar(32)   NOT NULL,
+    anon_screen_name       varchar(40)   NOT NULL,
+    resource_display_name  varchar(255)  NOT NULL,
+    module_id              varchar(255)
+    ) ENGINE=MyISAM;
+
 USE EdxForum;
 CREATE TABLE IF NOT EXISTS contents (
     `forum_post_id` varchar(40) NOT NULL,

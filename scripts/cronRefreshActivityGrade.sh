@@ -169,8 +169,8 @@ SET @floatPlaceholder:=-1.0; \
 SET @intPlaceholder:=-1; \
 USE edxprod; \
 DROP TABLE IF EXISTS StudentmoduleExcerpt; \
-CREATE TABLE StudentmoduleExcerpt \
-SELECT id PRIMARY KEY AS activity_grade_id, \
+CREATE TABLE StudentmoduleExcerpt (activity_grade_id INT PRIMARY KEY) ENGINE=myISAM \
+SELECT id AS activity_grade_id, \
        student_id, \
        course_id AS course_display_name, \
        grade, \
