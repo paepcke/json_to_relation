@@ -14,12 +14,10 @@
 # invoke the script with various combinations of 
 # user ids and pwds on the commandline.
 
-USAGE='Usage: '`basename $0`' [-u localMySQLUser][-s remoteMySQLUser][-p][-pLocalMySQLPwd][-r][-rRemoteMySQLPwd]'
+USAGE='Usage: '`basename $0`' [-u localMySQLUser][-p][-pLocalMySQLPwd]'
 
 # If option -p is provided, script will request password for
 # local MySQL db.
-# if option -r is provided, script will request password for
-# remote edxprod repository off goldengate.
 
 MYSQL_PWD=''
 LOG_FILE=/home/dataman/Data/EdX/NonTransformLogs/refreshActivityGradeTable.log
@@ -139,7 +137,7 @@ else
 	  "SELECT MAX(last_submit) FROM ActivityGrade;"`
 fi
 
-if [ -z "${LATEST_DATE}" ]
+if [ "${LATEST_DATE}" == "NULL" ]
 then
     # No dated entry in ActivityGrade at all (likely table is empty):
     LATEST_DATE='0000-00-00 00:00:00'
