@@ -208,17 +208,17 @@ do
     elif [ $table == 'ActivityGrade' ]
     then
 	echo "Creating index on ActivityGrade(last_submit) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('activityGradeLast_submitIdx', '"${allTables[$table]}".Account', 'last_submit', NULL);"
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('activityGradeLast_submitIdx', '"${allTables[$table]}".ActivityGrade', 'last_submit', NULL);"
 	echo "Creating index on ActivityGrade(ActGrdAnonSNIdx) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('ActGrdAnonSNIdx', '"${allTables[$table]}".Account', 'anon_screen_name', 255);"
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('ActGrdAnonSNIdx', '"${allTables[$table]}".ActivityGrade', 'anon_screen_name', 255);"
 	echo "Creating index on ActivityGrade(course_display_name) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('ActGrdCourseDisNmIdx', '"${allTables[$table]}".Account', 'course_display_name', 255);"
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('ActGrdCourseDisNmIdx', '"${allTables[$table]}".ActivityGrade', 'course_display_name', 255);"
 	echo "Creating index on ActivityGrade(module_id) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('ActGrdModIdIdx', '"${allTables[$table]}".Account', 'module_id', 255);"
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('ActGrdModIdIdx', '"${allTables[$table]}".ActivityGrade', 'module_id', 255);"
 	echo "Creating index on ActivityGrade(resource_display_name) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('ActGrdResDispNmIdx', '"${allTables[$table]}".Account', 'resource_display_name', 255);"
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('ActGrdResDispNmIdx', '"${allTables[$table]}".ActivityGrade', 'resource_display_name', 255);"
 	echo "Creating index on ActivityGrade(num_attempts) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('ActGrdNumAttemptsIdx', '"${allTables[$table]}".Account', 'num_attempts', NULL);"
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('ActGrdNumAttemptsIdx', '"${allTables[$table]}".ActivityGrade', 'num_attempts', NULL);"
 	
     fi
 done
