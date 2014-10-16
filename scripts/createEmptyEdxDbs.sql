@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS Answer (
     problem_id VARCHAR(255) NOT NULL,
     answer TEXT NOT NULL,
     course_id VARCHAR(255) NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL PRIMARY KEY,
     answer_identifier TEXT NOT NULL,
@@ -32,12 +32,12 @@ CREATE TABLE IF NOT EXISTS CorrectMap (
     hint TEXT NOT NULL,
     hintmode VARCHAR(255) NOT NULL,
     queuestate TEXT NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS InputState (
     input_state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     problem_id VARCHAR(255) NOT NULL,
     state TEXT NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS State (
     state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT NOT NULL,
@@ -45,11 +45,8 @@ CREATE TABLE IF NOT EXISTS State (
     problem_id VARCHAR(255) NOT NULL,
     student_answer VARCHAR(40) NOT NULL,
     correct_map VARCHAR(40) NOT NULL,
-    input_state VARCHAR(40) NOT NULL,
-    FOREIGN KEY(student_answer) REFERENCES Answer(answer_id) ON DELETE CASCADE,
-    FOREIGN KEY(correct_map) REFERENCES CorrectMap(correct_map_id) ON DELETE CASCADE,
-    FOREIGN KEY(input_state) REFERENCES InputState(input_state_id) ON DELETE CASCADE
-    ) ENGINE=MyISAM;
+    input_state VARCHAR(40) NOT NULL
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS CourseInfo (
     course_display_name varchar(255),
     course_catalog_name varchar(255),
@@ -60,11 +57,11 @@ CREATE TABLE IF NOT EXISTS CourseInfo (
     enrollment_start datetime,
     start_date datetime,
     end_date datetime
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS EdxPrivate.EventIp (
     event_table_id varchar(40) NOT NULL PRIMARY KEY,
     event_ip varchar(16) NOT NULL DEFAULT ''
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS Account (
     account_id VARCHAR(40) NOT NULL PRIMARY KEY,
     screen_name TEXT NOT NULL,
@@ -83,7 +80,7 @@ CREATE TABLE IF NOT EXISTS Account (
     enrollment_action VARCHAR(255) NOT NULL,
     email TEXT NOT NULL,
     receive_emails VARCHAR(255) NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     account_id VARCHAR(40) NOT NULL PRIMARY KEY,
     screen_name TEXT NOT NULL,
@@ -102,12 +99,12 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     enrollment_action VARCHAR(255) NOT NULL,
     email TEXT NOT NULL,
     receive_emails VARCHAR(255) NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS LoadInfo (
     load_info_id VARCHAR(40) NOT NULL PRIMARY KEY,
     load_date_time DATETIME NOT NULL,
     load_file TEXT NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     _id VARCHAR(40) NOT NULL PRIMARY KEY,
     event_id VARCHAR(40) NOT NULL,
@@ -172,12 +169,8 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     correctMap_fk VARCHAR(40) NOT NULL,
     answer_fk VARCHAR(40) NOT NULL,
     state_fk VARCHAR(40) NOT NULL,
-    load_info_fk VARCHAR(40) NOT NULL,
-    FOREIGN KEY(correctMap_fk) REFERENCES CorrectMap(correct_map_id) ON DELETE CASCADE,
-    FOREIGN KEY(answer_fk) REFERENCES Answer(answer_id) ON DELETE CASCADE,
-    FOREIGN KEY(state_fk) REFERENCES State(state_id) ON DELETE CASCADE,
-    FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id) ON DELETE CASCADE
-    ) ENGINE=MyISAM;                            
+    load_info_fk VARCHAR(40) NOT NULL
+    ) ENGINE=InnoDB;                            
 
 CREATE TABLE IF NOT EXISTS ActivityGrade (
     activity_grade_id      int(11) 	 NOT NULL PRIMARY KEY,
@@ -195,7 +188,7 @@ CREATE TABLE IF NOT EXISTS ActivityGrade (
     anon_screen_name       varchar(40)   NOT NULL,
     resource_display_name  varchar(255)  NOT NULL,
     module_id              varchar(255)
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 
 USE EdxForum;
 CREATE TABLE IF NOT EXISTS contents (
@@ -219,7 +212,7 @@ CREATE TABLE IF NOT EXISTS contents (
     `parent_id` varchar(255) DEFAULT NULL,
     `parent_ids` varchar(255) DEFAULT NULL,
     `sk` varchar(255) DEFAULT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 
 
 USE EdxPiazza;
@@ -231,7 +224,7 @@ CREATE TABLE IF NOT EXISTS PiazzaUsers (
     `answers` int(11) NOT NULL DEFAULT 0,
     `views` int(11) NOT NULL DEFAULT 0,
     `days` int(11) NOT NULL DEFAULT 0
-)  ENGINE=MyISAM;
+)  ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS contents (
     `forum_post_id` varchar(40) NOT NULL DEFAULT 'none',
@@ -254,4 +247,4 @@ CREATE TABLE IF NOT EXISTS contents (
     `sk` varchar(255) DEFAULT NULL,
     `confusion` varchar(20) NOT NULL DEFAULT 'none'
     `happiness` varchar(20) NOT NULL DEFAULT 'none'
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
