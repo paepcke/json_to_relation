@@ -161,12 +161,30 @@ do
     if [ $table == 'EdxTrackEvent' ]
     then
 	# The '${allTables["$table"]}' parts below resolve to the database in which the respective table resides:
+
+	# If creating indexes on an already populated table, you would
+	# use the following for increased efficiency (one statement for
+	# all indexes). But if any of the index(es) exists, I think 
+	# this statement would bomb. So we instead use the form below,
+	# with one statement per index. On an empty table this is perfectly
+	# fast:
+	    # echo "Creating index on EdxTrackEvent(event_type) if needed..."
+	    # mysql -u $USERNAME $pwdOption Edx -e "ALTER TABLE EdxTrackEvent
+	    #   ADD INDEX EdxTrackEventIdxEvType (event_type(255)),
+	    #   ADD INDEX EdxTrackEventIdxIdxUname (anon_screen_name(40)),
+	    #   ADD INDEX EdxTrackEventIdxCourseDisplayName (course_display_name(255)),
+	    #   ADD INDEX EdxTrackEventIdxResourceDisplayName (resource_display_name(255)),
+	    #   ADD INDEX EdxTrackEventIdxSuccess (success(15)),
+	    #   ADD INDEX EdxTrackEventIdxTime (time),
+	    #   ADD INDEX EdxTrackEventIdxIP (ip_country(3)),
+	    #   ADD INDEX EdxTrackEventIdxCourseNameTime (course_display_name,time),
+	    #   ADD INDEX EdxTrackEventIdxVideoId (video_id(255));
+	    # COMMIT;"
+
 	echo "Creating index on EdxTrackEvent(event_type) if needed..."
 	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxEvType', '"${allTables[$table]}".EdxTrackEvent', 'event_type', 255);"
 	echo "Creating index on EdxTrackEvent(anon_screen_name) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxIdxUname', '"${allTables[$table]}".EdxTrackEvent', 'anon_screen_name', 255);"
-	echo "Creating index on EdxTrackEvent(course_id) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxCourseID', '"${allTables[$table]}".EdxTrackEvent', 'course_id', 255);"
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxIdxUname', '"${allTables[$table]}".EdxTrackEvent', 'anon_screen_name', 40);"
 	echo "Creating index on EdxTrackEvent(course_display_name) if needed..."
 	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxCourseDisplayName', '"${allTables[$table]}".EdxTrackEvent', 'course_display_name', 255);"
 	echo "Creating index on EdxTrackEvent(resource_display_name) if needed..."
@@ -176,7 +194,7 @@ do
 	echo "Creating index on EdxTrackEvent(time) if needed..."
 	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxTime', '"${allTables[$table]}".EdxTrackEvent', 'time', NULL);"
 	echo "Creating index on EdxTrackEvent(ip) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxIP', '"${allTables[$table]}".EdxTrackEvent', 'ip', 16);"
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxIP', '"${allTables[$table]}".EdxTrackEvent', 'ip_country', 3);"
 	echo "Creating index on EdxTrackEvent(course_display_name,time) if needed..."
 	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxCourseNameTime', '"${allTables[$table]}".EdxTrackEvent', 'course_display_name,time', NULL);"
 	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxVideoId', '"${allTables[$table]}".EdxTrackEvent', 'video_id', 255);"
@@ -192,7 +210,7 @@ do
 	echo "Creating index on Account(screen_name) if needed..."
 	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('AccountIdxUname', '"${allTables[$table]}".Account', 'screen_name', 255);"
 	echo "Creating index on Account(anon_screen_name) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('AccountIdxAnonUname', '"${allTables[$table]}".Account', 'anon_screen_name', 255);"
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('AccountIdxAnonUname', '"${allTables[$table]}".Account', 'anon_screen_name', 40);"
 	echo "Creating index on Account(zipcode) if needed..."
 	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('AccountIdxZip', '"${allTables[$table]}".Account', 'zipcode', 10);"
 	echo "Creating index on Account(country) if needed..."
@@ -210,7 +228,7 @@ do
 	echo "Creating index on ActivityGrade(last_submit) if needed..."
 	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('activityGradeLast_submitIdx', '"${allTables[$table]}".ActivityGrade', 'last_submit', NULL);"
 	echo "Creating index on ActivityGrade(ActGrdAnonSNIdx) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('ActGrdAnonSNIdx', '"${allTables[$table]}".ActivityGrade', 'anon_screen_name', 255);"
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('ActGrdAnonSNIdx', '"${allTables[$table]}".ActivityGrade', 'anon_screen_name', 40);"
 	echo "Creating index on ActivityGrade(course_display_name) if needed..."
 	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('ActGrdCourseDisNmIdx', '"${allTables[$table]}".ActivityGrade', 'course_display_name', 255);"
 	echo "Creating index on ActivityGrade(module_id) if needed..."
