@@ -229,3 +229,24 @@ CREATE TABLE IF NOT EXISTS contents (
     `confusion` varchar(20) NOT NULL DEFAULT 'none',
     `happiness` varchar(20) NOT NULL DEFAULT 'none'
     ) ENGINE=InnoDB;
+
+
+USE EdxPrivate;
+CREATE TABLE `UserGrade` (
+  `name` varchar(255) NOT NULL DEFAULT '',
+  `screen_name` varchar(255) NOT NULL DEFAULT '',
+  `grade` int(11) NOT NULL DEFAULT '0',
+  `course_id` varchar(255) NOT NULL DEFAULT '',
+  `distinction` tinyint(4) NOT NULL DEFAULT '0',
+  `status` varchar(50) NOT NULL DEFAULT '',
+  `user_int_id` int(11) NOT NULL,
+  `anon_screen_name` varchar(40) NOT NULL DEFAULT '',
+  PRIMARY KEY (`user_int_id`),
+  KEY `GradesUIDIdx` (`user_int_id`),
+  KEY `UserGradeGradeIdx` (`grade`),
+  KEY `UserGradeCourseIDIdx` (`course_id`),
+  KEY `UserGradeDistinctionIdx` (`distinction`),
+  KEY `UserGradeStatusIdx` (`status`),
+  KEY `UserGradeNameIdx` (`name`),
+  KEY `GradesAnonIdx` (`anon_screen_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1
