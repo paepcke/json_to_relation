@@ -226,6 +226,6 @@ CREATE TABLE IF NOT EXISTS contents (
     `parent_id` varchar(255) DEFAULT NULL,
     `parent_ids` varchar(255) DEFAULT NULL,
     `sk` varchar(255) DEFAULT NULL,
-    `confusion` varchar(20) NOT NULL DEFAULT 'none'
+    `confusion` varchar(20) NOT NULL DEFAULT 'none',
     `happiness` varchar(20) NOT NULL DEFAULT 'none'
     ) ENGINE=InnoDB;
