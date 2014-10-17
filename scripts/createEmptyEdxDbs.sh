@@ -111,3 +111,4 @@ else
     mysql -u $USERNAME -p$PASSWD < ${currScriptsDir}/createEmptyEdxDbs.sql
 fi
 $currScriptsDir/defineMySQLProcedures.sh -u $USERNAME -p$PASSWD
+$currScriptsDir/createIndexForTable.sh -u $USERNAME -p$PASSWD
