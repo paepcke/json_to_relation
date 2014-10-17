@@ -62,25 +62,6 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.EventIp (
     event_table_id varchar(40) NOT NULL PRIMARY KEY,
     event_ip varchar(16) NOT NULL DEFAULT ''
 ) ENGINE=InnoDB;
-CREATE TABLE IF NOT EXISTS Account (
-    account_id VARCHAR(40) NOT NULL PRIMARY KEY,
-    screen_name TEXT NOT NULL,
-    name TEXT NOT NULL,
-    anon_screen_name TEXT NOT NULL,
-    mailing_address TEXT NOT NULL,
-    zipcode VARCHAR(255) NOT NULL,
-    country VARCHAR(255) NOT NULL,
-    gender VARCHAR(255) NOT NULL,
-    year_of_birth TINYINT NOT NULL,
-    level_of_education VARCHAR(255) NOT NULL,
-    goals TEXT NOT NULL,
-    honor_code TINYINT NOT NULL,
-    terms_of_service TINYINT NOT NULL,
-    course_id TEXT NOT NULL,
-    enrollment_action VARCHAR(255) NOT NULL,
-    email TEXT NOT NULL,
-    receive_emails VARCHAR(255) NOT NULL
-    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     account_id VARCHAR(40) NOT NULL PRIMARY KEY,
     screen_name TEXT NOT NULL,
