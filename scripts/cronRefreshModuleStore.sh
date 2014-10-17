@@ -70,6 +70,12 @@ MYSQL_USERNAME=root
 # modulestore go:
 EDXPROD_DUMP_DIR=/home/dataman/Data/FullDumps/ModulestorePlatformDbs
 
+if [ ! -e $EDXPROD_DUMP_DIR ]
+then
+    mkdir $EDXPROD_DUMP_DIR
+fi
+
+
 # --------------------- Process Input Args -------------
 
 # Keep track of number of optional args the user provided:
