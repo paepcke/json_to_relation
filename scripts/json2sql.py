@@ -40,6 +40,8 @@ elif hostname == 'mono':
     LOCAL_LOG_STORE_ROOT = "/home/paepcke/Project/VPOL/Data/EdXTrackingOct22_2013/"
 elif hostname == 'datastage':
     LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/EdX"
+elif hostname == 'datastage2':
+    LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/EdX"
 
 def buildOutputFileName(inFilePath, destDir, fileStamp):
     '''
