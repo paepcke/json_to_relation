@@ -929,7 +929,7 @@ if __name__ == '__main__':
     parser.add_argument('--sqlSrc',
                         action='store',
                         help='For load: a string containing a space separated list with full paths to the .sql files to load;\n' +\
-                             '    default LOCAL_LOG_STORE_ROOT/tracking/CSV (on this machine:\n' +\
+                             '    one directory instead of files is acceptable. default LOCAL_LOG_STORE_ROOT/tracking/CSV (on this machine:\n' +\
                              '    %s.' % os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/CSV') +\
                              ')'
                              )
@@ -1013,7 +1013,7 @@ if __name__ == '__main__':
         (args.sqlSrc is None):
         tblCreator.logErr("For 'load' operation must either define LOCAL_LOG_STORE_ROOT or use command line option '--sqlSrc")             
         sys.exit(1)
-    
+        
     if args.user is None:
         tblCreator.user = getpass.getuser()
     else:
@@ -1135,6 +1135,14 @@ if __name__ == '__main__':
         # For loading, args.sqlSrc must be None, or a readable directory, or a sequence of readable .sql files.
         sqlFilesToLoad = None
         if args.sqlSrc is not None:
+            try:
+                if os.path.isdir(args.sqlSrc):
+                    allFiles = os.listdir(args.sqlSrc)
+                    allSqlFiles = filter(lambda fileName: os.path.splitext(fileName)[1] == '.sql', allFiles)
+                    allSqlFilesFullPaths = [os.path.join(args.sqlSrc, oneFile) for oneFile in allSqlFiles]
+                    args.sqlSrc = ' '.join(allSqlFilesFullPaths)
+            except:
+                pass
             # args.sqlSrc must be a string containing
             # one or more .sql file paths: 
             try:
