@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS LoadInfo (
     load_file TEXT NOT NULL
     ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS EdxTrackEvent (
-    _id VARCHAR(40) NOT NULL PRIMARY KEY,
+    _id VARCHAR(40) NOT NULL,
     event_id VARCHAR(40) NOT NULL,
     agent TEXT NOT NULL,
     event_source VARCHAR(255) NOT NULL,
@@ -151,11 +151,13 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     correctMap_fk VARCHAR(40) NOT NULL,
     answer_fk VARCHAR(40) NOT NULL,
     state_fk VARCHAR(40) NOT NULL,
-    load_info_fk VARCHAR(40) NOT NULL
+    load_info_fk VARCHAR(40) NOT NULL,
+    PRIMARY KEY(_id,quarter)
     ) 
+ENGINE=InnoDB
 PARTITION BY LIST COLUMNS(quarter) (
     PARTITION pAY2012_Spring VALUES IN ('spring2013'),
-    PARTITION pAY2012_Summer VALUES IN ('spring2013'),
+    PARTITION pAY2012_Summer VALUES IN ('summer2013'),
 
     PARTITION pAY2013_Fall VALUES IN ('fall2013'),
     PARTITION pAY2013_Winter VALUES IN ('winter2014'),
@@ -181,7 +183,7 @@ PARTITION BY LIST COLUMNS(quarter) (
     PARTITION pAY2017_Winter VALUES IN ('winter2018'),
     PARTITION pAY2017_Spring VALUES IN ('spring2018'),
     PARTITION pAY2017_Summer VALUES IN ('summer2018')
-) ENGINE=InnoDB;                            
+);
 
 CREATE TABLE IF NOT EXISTS ActivityGrade (
     activity_grade_id      int(11) 	 NOT NULL PRIMARY KEY,
