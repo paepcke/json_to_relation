@@ -180,7 +180,7 @@ PARTITION BY LIST COLUMNS(quarter) (
     PARTITION pAY2017_Fall VALUES IN ('fall2017'),
     PARTITION pAY2017_Winter VALUES IN ('winter2018'),
     PARTITION pAY2017_Spring VALUES IN ('spring2018'),
-    PARTITION pAY2017_Summer VALUES IN ('summer2018'),
+    PARTITION pAY2017_Summer VALUES IN ('summer2018')
 ) ENGINE=InnoDB;                            
 
 CREATE TABLE IF NOT EXISTS ActivityGrade (
