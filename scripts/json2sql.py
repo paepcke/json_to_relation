@@ -165,7 +165,7 @@ if __name__ == "__main__":
         						  ))
     except Exception as e:
         with open(logFile, 'w') as fd:
-            fd.write("In json2sql: could not create EdXTrackLogJSONParser: %s" % `e`)
+            fd.write("In json2sql: could not create EdXTrackLogJSONParser; infile: %s; outfile: %s; logfile: %s (%s)" % (InURI(args.inFilePath), outSQLFile, logFile, `e`))
         # Try to delete the .sql file that was created when 
         # the OutputFile instance was made in the JSONToRelation
         # instantiation statement above:
