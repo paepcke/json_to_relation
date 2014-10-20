@@ -3914,8 +3914,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             csvLoadCommands += "LOAD DATA LOCAL INFILE '%s' IGNORE INTO TABLE %s FIELDS OPTIONALLY ENCLOSED BY \"'\" TERMINATED BY ','; \n" %\
                                (filename, tableName)
         
-        csvLoadCommands += "SET sql_log_bin=1;\n"
         csvLoadCommands    += "SET autocommit=1;\n"
+        csvLoadCommands += "SET sql_log_bin=1;\n"
         return csvLoadCommands        
     
     def createMergeAccountTbl(self):
