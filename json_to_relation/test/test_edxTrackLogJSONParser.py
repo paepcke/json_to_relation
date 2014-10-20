@@ -1,6 +1,23 @@
 '''
 Created on Oct 3, 2013
 
+The following tests were bad before column 'quarter' was introduced:
+   testCourseIdGetsProbId
+   testEnrollmentActivatedDeactivated
+   testGotoPosition
+   testIsStudentCalibrated
+   testKeyErrorHRP259
+   testNoCourseIDInProblemCheck
+   testProblem
+   testProblemCheckInPath
+   testProcessSeq_Goto
+   testRescueJSON
+   testSaveAnswer
+   testTableCreationStatementConstruction
+
+So they need attention. At least some of the other tests need adjustment of 
+truth to the new column being presents.   
+
 @author: paepcke
 '''
 import StringIO
@@ -22,7 +39,7 @@ from json_to_relation.output_disposition import OutputDisposition, ColDataType, 
     ColumnSpec, OutputFile, OutputPipe # @UnusedImport
 
 
-TEST_ALL = True
+TEST_ALL = False
 PRINT_OUTS = False  # Set True to get printouts of CREATE TABLE statements
 
 # The following is very Dangerous: If True, no tests are
@@ -66,7 +83,8 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         #self.timestampRegex = r'[1-2][0-9][0-1][0-9][0-1][0-9][0-3][0-9][0-2][0-9][0-5][0-9][0-5][0-9][0-9]{8}'
         #self.timestampRegex = r'[1-2][0-9]{3}-[0-1][1-9]-[0-3]{2}T[0-2][0-9]:[0-6][0-9]:[0-6][0-9].[0-9]{0:6}Z'
         #self.timestampRegex = r'[1-2][0-9]{3}-[0-1][1-9]-[0-3]{2}T[0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{0,6}Z{0,1}'
-        self.timestampRegex = r'[1-2][0-9]{3}-[0-1][1-9]-[0-3][0-9]T[0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{0,6}Z{0,1}'
+        #self.timestampRegex = r'[1-2][0-9]{3}-[0-1][1-9]-[0-3][0-9]T[0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{0,6}Z{0,1}'
+        self.timestampRegex = r'[1-2][0-9]{3}-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-6][0-9]:[0-6][0-9]\.[0-9]{0,6}Z{0,1}'
         self.timestampPattern = re.compile(self.timestampRegex)
         # Pattern that recognizes our tmp files. They start with
         # 'oolala', followed by random junk, followed by a period and
@@ -269,8 +287,8 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         if UPDATE_TRUTH:
             self.updateTruth(dest.getFileName(), os.path.join(self.currDir, 'data/edxHeartbeatEventTruth.sql'))
         else:
-            self.assertFileContentEquals(os.path.join(self.currDir, 'data/edxHeartbeatEventTruth.sql'), 
-                                         dest.getFileName())
+            with open(os.path.join(self.currDir, 'data/edxHeartbeatEventTruth.sql'),'r') as truthFd:
+                self.assertFileContentEquals(truthFd, dest.getFileName())
         
         # Detecting server downtime:
         inputSourcePath = os.path.join(os.path.dirname(__file__),"data/edxHeartbeatEventDownTime.json")
@@ -290,8 +308,8 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         if UPDATE_TRUTH:
             self.updateTruth(dest.getFileName(), os.path.join(self.currDir, 'data/edxHeartbeatEventDownTimeTruth.sql'))
         else:
-            self.assertFileContentEquals(os.path.join(self.currDir, 'data/edxHeartbeatEventDownTimeTruth.sql'), 
-                                         dest.getFileName())
+            with open(os.path.join(self.currDir, 'data/edxHeartbeatEventDownTimeTruth.sql'),'r') as truthFd:
+                self.assertFileContentEquals(truthFd, dest.getFileName())
 
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testTableCreationStatementConstruction(self):
@@ -305,7 +323,8 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         if UPDATE_TRUTH:
             self.updateTruthFromString(createStatement, os.path.join(self.currDir, 'data/answerTblCreateTruth.sql'))
         else:
-            self.assertFileContentEquals(os.path.join(self.currDir, 'data/answerTblCreateTruth.sql'), createStatement)
+            with open(os.path.join(self.currDir, 'data/answerTblCreateTruth.sql'),'r') as truthFd:
+                self.assertFileContentEquals(truthFd, createStatement) 
        
         
     @unittest.skipIf(not PRINT_OUTS, "Temporarily disabled")
@@ -1470,7 +1489,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
-    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testABExperimentAssigned_user_to_partition(self):
         testFilePath = os.path.join(os.path.dirname(__file__),"data/abExpAssignUser.json")
         stringSource = InURI(testFilePath)

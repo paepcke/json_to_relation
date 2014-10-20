@@ -96,6 +96,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     page TEXT NOT NULL,
     session TEXT NOT NULL,
     time DATETIME NOT NULL,
+    quarter VARCHAR(255) NOT NULL,
     anon_screen_name TEXT NOT NULL,
     downtime_for DATETIME NOT NULL,
     student_id TEXT NOT NULL,
@@ -151,7 +152,36 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     answer_fk VARCHAR(40) NOT NULL,
     state_fk VARCHAR(40) NOT NULL,
     load_info_fk VARCHAR(40) NOT NULL
-    ) ENGINE=InnoDB;                            
+    ) 
+PARTITION BY LIST COLUMNS(quarter) (
+    PARTITION pAY2012_Spring VALUES IN ('spring2013'),
+    PARTITION pAY2012_Summer VALUES IN ('spring2013'),
+
+    PARTITION pAY2013_Fall VALUES IN ('fall2013'),
+    PARTITION pAY2013_Winter VALUES IN ('winter2014'),
+    PARTITION pAY2013_Spring VALUES IN ('spring2014'),
+    PARTITION pAY2013_Summer VALUES IN ('summer2014'),
+
+    PARTITION pAY2014_Fall VALUES IN ('fall2014'),
+    PARTITION pAY2014_Winter VALUES IN ('winter2015'),
+    PARTITION pAY2014_Spring VALUES IN ('spring2015'),
+    PARTITION pAY2014_Summer VALUES IN ('summer2015'),
+
+    PARTITION pAY2015_Fall VALUES IN ('fall2015'),
+    PARTITION pAY2015_Winter VALUES IN ('winter2016'),
+    PARTITION pAY2015_Spring VALUES IN ('spring2016'),
+    PARTITION pAY2015_Summer VALUES IN ('summer2016'),
+
+    PARTITION pAY2016_Fall VALUES IN ('fall2016'),
+    PARTITION pAY2016_Winter VALUES IN ('winter2017'),
+    PARTITION pAY2016_Spring VALUES IN ('spring2017'),
+    PARTITION pAY2016_Summer VALUES IN ('summer2017'),
+
+    PARTITION pAY2017_Fall VALUES IN ('fall2017'),
+    PARTITION pAY2017_Winter VALUES IN ('winter2018'),
+    PARTITION pAY2017_Spring VALUES IN ('spring2018'),
+    PARTITION pAY2017_Summer VALUES IN ('summer2018'),
+) ENGINE=InnoDB;                            
 
 CREATE TABLE IF NOT EXISTS ActivityGrade (
     activity_grade_id      int(11) 	 NOT NULL PRIMARY KEY,

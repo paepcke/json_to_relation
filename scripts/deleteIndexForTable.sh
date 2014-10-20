@@ -167,8 +167,11 @@ do
 	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP INDEX EdxTrackEventIdxResourceDisplayName ON EdxTrackEvent_New;"
 	echo "Dropping index  EdxTrackEvent(success)..."
 	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP INDEX EdxTrackEventIdxSuccess ON EdxTrackEvent_New;"
+
 	echo "Dropping index  EdxTrackEvent(time)..."
 	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP INDEX EdxTrackEventIdxTime ON EdxTrackEvent_New;"
+	echo "Dropping index  EdxTrackEvent(quarter)..."
+	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP INDEX EdxTrackEventIdxQuarter ON EdxTrackEvent_New;"
 	echo "Dropping index  EdxTrackEvent(ip)..."
 	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP INDEX EdxTrackEventIdxIP ON EdxTrackEvent_New;"
 	echo "Dropping index  EdxTrackEvent(course_display_name,time)..."

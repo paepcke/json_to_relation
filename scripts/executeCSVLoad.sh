@@ -206,19 +206,19 @@ done
 
 # -------------------  Remove Primary Keys for Loading Speed -----------------
 
-# Remove primary keys from public tables to speed loading; the ${!tables[@]} loops through the table names (i.e. dict keys)
-for table in ${!tables[@]}
-do
-    echo "`date`: dropping primary key from Edx.$table" >> $LOG_FILE 2>&1
-    { mysql -u root -p$password -e "USE Edx; CALL dropPrimaryIfExists('"$table"');"; } >> $LOG_FILE 2>&1	
-done
+# # Remove primary keys from public tables to speed loading; the ${!tables[@]} loops through the table names (i.e. dict keys)
+# for table in ${!tables[@]}
+# do
+#     echo "`date`: dropping primary key from Edx.$table" >> $LOG_FILE 2>&1
+#     { mysql -u root -p$password -e "USE Edx; CALL dropPrimaryIfExists('"$table"');"; } >> $LOG_FILE 2>&1	
+# done
 
-# Private tables; the ${!privateTables[@]} loops through the table names (i.e. dict keys)
-for table in ${!privateTables[@]}
-do
-    echo "`date`: dropping primary key from EdxPrivate.$table" >> $LOG_FILE 2>&1
-    { mysql -u root -p$password -e "USE EdxPrivate; CALL dropPrimaryIfExists('"$table"');"; } >> $LOG_FILE 2>&1	
-done
+# # Private tables; the ${!privateTables[@]} loops through the table names (i.e. dict keys)
+# for table in ${!privateTables[@]}
+# do
+#     echo "`date`: dropping primary key from EdxPrivate.$table" >> $LOG_FILE 2>&1
+#     { mysql -u root -p$password -e "USE EdxPrivate; CALL dropPrimaryIfExists('"$table"');"; } >> $LOG_FILE 2>&1	
+# done
 
 # -------------------  Loading SQL Files, Which Load CSVs -----------------
 
@@ -227,7 +227,8 @@ done
 for sqlFile in $@
 do  
     echo "`date`: starting on $sqlFile"  >> $LOG_FILE 2>&1
-    { mysql -f -u root -p$password --local_infile=1 < $sqlFile; } >> $LOG_FILE 2>&1
+    { mysql -f -u root -p$password --local_infile=1 autocommit=0 < $sqlFile; } >> $LOG_FILE 2>&1
+    mysql -f -u root -p$password -e "USE Edx; COMMIT; USE EdxPrivate; COMMIT;"
     echo "`date`: done loading $sqlFile"  >> $LOG_FILE 2>&1
 done
 
@@ -235,20 +236,20 @@ done
 
 # Add primary keys back in:
 # Public tables; the ${!tables[@]} loops through the table names (i.e. dict keys)
-for table in ${!tables[@]}
-do
-    echo "`date`: adding primary key to table Edx."$table"..." >> $LOG_FILE 2>&1
-    # The ${tables["$table"]} accesses the primary key column name (i.e. the value of the dict):
-    { mysql -u root -p$password -e "USE Edx; CALL addPrimaryIfNotExists('"$table"','"${tables[$table]}"');"; } >> $LOG_FILE 2>&1
-done
+# for table in ${!tables[@]}
+# do
+#     echo "`date`: adding primary key to table Edx."$table"..." >> $LOG_FILE 2>&1
+#     # The ${tables["$table"]} accesses the primary key column name (i.e. the value of the dict):
+#     { mysql -u root -p$password -e "USE Edx; CALL addPrimaryIfNotExists('"$table"','"${tables[$table]}"');"; } >> $LOG_FILE 2>&1
+# done
 
-# Private tables; the ${!tables[@]} loops through the table names (i.e. dict keys)
-for table in ${!privateTables[@]}
-do
-    echo "`date`: adding primary key to table EdxPrivate."$table"..." >> $LOG_FILE 2>&1
-    # The ${tables["$table"]} accesses the primary key column (i.e. the value of the dict):
-    { mysql -u root -p$password -e "USE EdxPrivate; CALL addPrimaryIfNotExists('"$table"','"${privateTables[$table]}"');"; } >> $LOG_FILE 2>&1
-done
+# # Private tables; the ${!tables[@]} loops through the table names (i.e. dict keys)
+# for table in ${!privateTables[@]}
+# do
+#     echo "`date`: adding primary key to table EdxPrivate."$table"..." >> $LOG_FILE 2>&1
+#     # The ${tables["$table"]} accesses the primary key column (i.e. the value of the dict):
+#     { mysql -u root -p$password -e "USE EdxPrivate; CALL addPrimaryIfNotExists('"$table"','"${privateTables[$table]}"');"; } >> $LOG_FILE 2>&1
+# done
 
 # -------------------  Update Non-Primary Indexes -----------------
 

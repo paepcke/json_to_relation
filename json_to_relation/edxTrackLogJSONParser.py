@@ -220,6 +220,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaHintsMainTable['page'] = ColDataType.TEXT
         self.schemaHintsMainTable['session'] = ColDataType.TEXT
         self.schemaHintsMainTable['time'] = ColDataType.DATETIME
+        self.schemaHintsMainTable['quarter'] = ColDataType.TINYTEXT
         self.schemaHintsMainTable['anon_screen_name'] = ColDataType.TEXT
         self.schemaHintsMainTable['downtime_for'] = ColDataType.DATETIME
 
@@ -653,20 +654,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             
             # Check whether we had a server downtime:
             try:
-                eventTimeStr = record['time']
                 ip = record['ip']
-                # Time strings in the log may or may not have a UTF extension:
-                # '2013-07-18T08:43:32.573390:+00:00' vs '2013-07-18T08:43:32.573390'
-                # For now we ignore time zone. Observed log samples are
-                # all universal +/- 0:
-                maybeOffsetDir = eventTimeStr[-6]
-                if maybeOffsetDir == '+' or maybeOffsetDir == '-': 
-                    eventTimeStr = eventTimeStr[0:-6]
-                eventDateTime = datetime.datetime.strptime(eventTimeStr, '%Y-%m-%dT%H:%M:%S.%f')
             except KeyError:
-                raise ValueError("No event time or server IP.")
-            except ValueError:
-                raise ValueError("Bad event time format: '%s'" % eventTimeStr)
+                raise ValueError("No server IP.")
+            eventDateTime = self.getEventTimeFromLogRecord(record)
             
             try:
                 doRecordHeartbeat = False
@@ -1289,6 +1280,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 else:
                     (fullCourseName, course_id, displayName) = self.get_course_id(record)  # @UnusedVariable
                     val = displayName
+            elif fldName == 'time':
+                # Computer academic quarter from time and
+                # put into row:
+                quarter = self.getEventTimeFromLogTimeString(val)
+                self.setValInRow(row, 'quarter', quarter)
             elif fldName == 'username':
                 # Hash the name, and store in MySQL col 'anon_screen_name':
                 if val is not None:
@@ -3968,6 +3964,35 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.setValInRow(row, 'badly_formatted', self.makeInsertSafe(offendingText))
         return row
     
+    def getEventTimeFromLogTimeString(self, eventTimeStr):
+        try:
+            # Time strings in the log may or may not have a UTF extension:
+            # '2013-07-18T08:43:32.573390:+00:00' vs '2013-07-18T08:43:32.573390'
+            # For now we ignore time zone. Observed log samples are
+            # all universal +/- 0:
+            maybeOffsetDir = eventTimeStr[-6]
+            if maybeOffsetDir == '+' or maybeOffsetDir == '-': 
+                eventTimeStr = eventTimeStr[0:-6]
+            eventDateTime = datetime.datetime.strptime(eventTimeStr, '%Y-%m-%dT%H:%M:%S.%f')
+            return eventDateTime
+        except ValueError:
+            raise ValueError("Bad event time format: '%s'" % eventTimeStr)
+    
+    def getEventTimeFromLogRecord(self,logRecord):
+        '''
+        Extract the time field from raw JSON log record.
+        :param logRecord:
+        :type logRecord:
+        :return: date and time as object
+        :rtype: datatime.datetime
+        '''
+        try:
+            eventTimeStr = logRecord['time']
+            return self.getEventTimeFromLogTimeString(eventTimeStr)
+        except KeyError:
+            raise ValueError("No event time.")
+
+    
     def get_course_id(self, event):
         '''
         Given a 'pythonized' JSON tracking event object, find
@@ -4064,6 +4089,29 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         if len(course_id) == 0:
             course_id = fullCourseName
         return (fullCourseName, course_id, course_display_name)
+
+    def getQuarter(self,eventTime):
+        '''
+        Returns string <quarter><year. as derived from event date:
+        fallQuarterStartDate   = Year   + "-09-01T00:00:00Z";
+        winterQuarterStartDate = Year   + "-12-01T00:00:00Z";
+        springQuarterStartDate = Year   + "-03-01T00:00:00Z";
+        summerQuarterStartDate = Year   + "-06-01T00:00:00Z";
+        summerQuarterEndDate   = Year   + "-08-31T00:00:00Z";
+        
+        :param eventTime:
+        :type eventTime:
+        '''
+        eventYear = eventTime.year
+        if eventTime.month >= 1 and eventTime.month < 3:
+            quarter = 'winter'
+        elif eventTime.month >= 3 and eventTime.month < 6:
+            quarter = 'spring'
+        elif eventTime.month >= 6 and eventTime.month < 9:
+            quarter = 'summer'
+        else:
+            quarter = 'fall'
+        return str(quarter) + str(eventYear)
         
     def getCourseDisplayName(self, fullCourseName):
         '''

@@ -61,9 +61,9 @@ class TestAddAnonToActivityGrade(unittest.TestCase):
     modid3 = 'i4x://Carnegie/2013/chapter/9a9455cd30bd4c14819542bcd11bfcf8'
     studentmoduleExcerptValues = \
                 [
-                [0,1,'myCourse',3,10,-1.0,state1,'',-1,'2014-01-10 04:10:45','2014-02-10 10:14:40','modtype1','','',modid1],
-                [1,2,'myCourse',5,10,-1.0,state2,'',-1,'2014-01-10 11:30:23','2014-02-10 14:30:12','modtype2','','',modid2],                
-                [2,3,'yourCourse',8,10,-1.0,state3,'',-1,'2014-01-10 18:34:12','2014-02-10 19:10:33','modtype2','','',modid3]                                
+                [0,1,'myCourse',3,10,-1.0,state1,'',-1,'2014-01-10 04:10:45','2014-02-10 10:14:40','modtype1','','Guided Walkthrough',modid1],
+                [1,2,'myCourse',5,10,-1.0,state2,'',-1,'2014-01-10 11:30:23','2014-02-10 14:30:12','modtype2','','Evaluation',modid2],                
+                [2,3,'yourCourse',8,10,-1.0,state3,'',-1,'2014-01-10 18:34:12','2014-02-10 19:10:33','modtype2','','Introduction',modid3]                                
                ]
 
     def setUp(self):

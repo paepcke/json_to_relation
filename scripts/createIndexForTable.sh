@@ -193,6 +193,8 @@ do
 	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxSuccess', '"${allTables[$table]}".EdxTrackEvent', 'success', 15);"
 	echo "Creating index on EdxTrackEvent(time) if needed..."
 	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxTime', '"${allTables[$table]}".EdxTrackEvent', 'time', NULL);"
+	echo "Creating index on EdxTrackEvent(quarter) if needed..."
+	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxQuarter', '"${allTables[$table]}".EdxTrackEvent', 'quarter', NULL);"
 	echo "Creating index on EdxTrackEvent(ip) if needed..."
 	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxIP', '"${allTables[$table]}".EdxTrackEvent', 'ip_country', 3);"
 	echo "Creating index on EdxTrackEvent(course_display_name,time) if needed..."

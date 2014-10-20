@@ -185,10 +185,10 @@ MYSQL_CMD="LOAD DATA LOCAL INFILE '"$TMP_FILE"' INTO TABLE Edx.CourseInfo \
            IGNORE 1 LINES;"
 
 #************
-#echo "TMP_FILE: $TMP_FILE"
-#ls -l $TMP_FILE
-#echo $MYSQL_CMD
-#exit 0
+# echo "TMP_FILE: $TMP_FILE"
+# ls -l $TMP_FILE
+# echo $MYSQL_CMD
+# exit 0
 #************
 
 echo `date`": Truncating current CourseInfo table, and importing new modulestore."
@@ -212,7 +212,14 @@ rm $TMP_FILE
 # names:
 
 echo `date`": Writing OpenEdX-hash-->display_name modulestore json excerpt to "$targetFile"."
-mongo --quiet --eval "printjson(db.modulestore.find({}, {'_id' : 1, 'metadata.display_name' : 1}).toArray())" > $targetFile
+#mongo --quiet --eval "printjson(db.modulestore.find({}, {'_id' : 1, 'metadata.display_name' : 1}).toArray())" > $targetFile
+# Note: the following little JS script loads
+#       all of modulestore into RAM. To avoid this, you
+#       need to change that script to create a JSON array
+#       [<firstResult>,<secondResult>,...]. Use of toArray()
+#       in the scripts does that automatically:
+mongo  --quiet ${currScriptsDir}/mongoPrintCourseMetadata.js >> $targetFile
+
 
 # ------------------ Make Available in Well Known Location -------------------
 
