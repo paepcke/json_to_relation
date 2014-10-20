@@ -3905,7 +3905,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                   destination for CSV rows destined for a given table.
         :type outputDisposition: OutputDisposition
         '''
-        csvLoadCommands    = "SET sql_log_bin=0;\n"
+        csvLoadCommands    =  "SET sql_log_bin=0;\n"
+        csvLoadCommands    += "SET autocommit=0;\n"
         for tableName in ['LoadInfo', 'InputState', 'State', 'CorrectMap', 'Answer', 'Account', 'EdxTrackEvent']:
             filename = outputDisposition.getCSVTableOutFileName(tableName)
             # SQL statements for LOAD INFILE all .csv tables in turn. Only used
@@ -3914,6 +3915,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                (filename, tableName)
         
         csvLoadCommands += "SET sql_log_bin=1;\n"
+        csvLoadCommands    += "SET autocommit=1;\n"
         return csvLoadCommands        
     
     def createMergeAccountTbl(self):
