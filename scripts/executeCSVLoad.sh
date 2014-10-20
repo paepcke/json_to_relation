@@ -227,7 +227,7 @@ done
 for sqlFile in $@
 do  
     echo "`date`: starting on $sqlFile"  >> $LOG_FILE 2>&1
-    { mysql -f -u root -p$password --local_infile=1 autocommit=0 < $sqlFile; } >> $LOG_FILE 2>&1
+    { mysql -f -u root -p$password --local_infile=1 --autocommit=0 < $sqlFile; } >> $LOG_FILE 2>&1
     mysql -f -u root -p$password -e "USE Edx; COMMIT; USE EdxPrivate; COMMIT;"
     echo "`date`: done loading $sqlFile"  >> $LOG_FILE 2>&1
 done
