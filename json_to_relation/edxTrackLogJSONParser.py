@@ -5,6 +5,8 @@ Created on Oct 2, 2013
 
 Modifications:
 
+* Oct 22, 2014: Added quarter column to EdxTrackEvent in support 
+*               horizontal partitioning.
 * Jun 23, 2014: Added support for AB Experiment events
 * Dec 28, 2013: Col load_info_fk in EdxTrackEvent now properly typed to varchar(40) to match LoadInfo.load_info_id's type uses REPLACE INTO, rather than INSERT INTO
 * Dec 28, 2013: Fixed some epydoc comment format errors.  
@@ -1091,7 +1093,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                  
         # Cut away the comma and newline after the last column spec,
         # and add newline, closing paren, and semicolon:
-        createStatement = createStatement[0:-2] + '\n    ) ENGINE=MyISAM;\n'
+        createStatement = createStatement[0:-2] + '\n    ) ENGINE=InnoDB;\n'
         return createStatement 
             
 
@@ -1283,7 +1285,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             elif fldName == 'time':
                 # Computer academic quarter from time and
                 # put into row:
-                quarter = self.getEventTimeFromLogTimeString(val)
+                quarter = self.getQuarter(self.getEventTimeFromLogTimeString(val))
                 self.setValInRow(row, 'quarter', quarter)
             elif fldName == 'username':
                 # Hash the name, and store in MySQL col 'anon_screen_name':
