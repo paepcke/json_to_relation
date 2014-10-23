@@ -40,6 +40,11 @@ from modulestoreImporter import ModulestoreImporter
 from output_disposition import ColumnSpec
 from ipToCountry import IpCountryDict
 
+class AssessmentOptionSource():
+    LEARNER = 0,
+    INSTRUCTOR = 1
+    
+
 EDX_HEARTBEAT_PERIOD = 360 # seconds
 
 class EdXTrackLogJSONParser(GenericJSONParser):
@@ -413,6 +418,29 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             colType =  self.schemaABExperimentTbl[colName]
             self.schemaABExperimentTbl[colName] = ColumnSpec(colName, colType, self.jsonToRelationConverter)
 
+        # Schema for OpenAssessment Events table:
+        self.schemaOpenAssessmentTbl = OrderedDict()
+        self.schemaOpenAssessmentTbl['event_table_id'] = ColDataType.UUID
+        self.schemaOpenAssessmentTbl['score_type'] = ColDataType.TINYTEXT
+        self.schemaOpenAssessmentTbl['submission_uuid'] = ColDataType.TINYTEXT
+        self.schemaOpenAssessmentTbl['edx_anon_id'] = ColDataType.TEXT
+        self.schemaOpenAssessmentTbl['time'] = ColDataType.DATETIME
+        self.schemaOpenAssessmentTbl['time_aux'] = ColDataType.DATETIME
+        self.schemaOpenAssessmentTbl['course_display_name'] = ColDataType.TINYTEXT
+        self.schemaOpenAssessmentTbl['resource_display_name'] = ColDataType.TINYTEXT
+        self.schemaOpenAssessmentTbl['resource_id'] = ColDataType.TINYTEXT
+        self.schemaOpenAssessmentTbl['submission_text'] = ColDataType.MEDIUMTEXT
+        self.schemaOpenAssessmentTbl['feedback_text'] = ColDataType.MEDIUMTEXT
+        self.schemaOpenAssessmentTbl['comment_text'] = ColDataType.MEDIUMTEXT
+        self.schemaOpenAssessmentTbl['attempt_num'] = ColDataType.INT
+        self.schemaOpenAssessmentTbl['options'] = ColDataType.TINYTEXT
+        self.schemaOpenAssessmentTbl['corrections'] = ColDataType.TEXT
+        self.schemaOpenAssessmentTbl['points'] = ColDataType.TEXT
+        # Turn the SQL data types in the dict to column spec objects:
+        for colName in self.schemaOpenAssessmentTbl.keys():
+            colType =  self.schemaOpenAssessmentTbl[colName]
+            self.schemaOpenAssessmentTbl[colName] = ColumnSpec(colName, colType, self.jsonToRelationConverter)
+        
         # Schema for Account table:
         self.schemaAccountTbl = OrderedDict()
         self.schemaAccountTbl['account_id'] = ColDataType.UUID
@@ -915,6 +943,18 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             elif eventType == 'assigned_user_to_partition' or eventType == 'child_render':
                 self.handleABExperimentEvent(record, row, event)
                 return
+
+            elif eventType in ['openassessmentblock.get_peer_submission',
+                               'openassessmentblock.peer_assess',
+                               'openassessmentblock.self_assess',
+                               'openassessmentblock.submit_feedback_on_assessments',
+                               'openassessment.create_submission',
+                               'openassessment.save_submission',
+                               'openassessment.save_submission',
+                               'openassessment.save_submission'
+                               ]:
+                self.handleOpenAssessment(record, row, event)
+                return
             
             elif eventType == 'edx.course.enrollment.activated' or eventType == 'edx.course.enrollment.deactivated':
                 self.handleCourseEnrollActivatedDeactivated(record, row, event) 
@@ -1037,6 +1077,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.createAccountTable()
         self.createEventIpTable()
         self.createABExperimentTable()
+        self.createOpenAssessmentTable()
         self.createLoadInfoTable()        
         self.createMainTable()
         
@@ -1206,6 +1247,18 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # a CSV file and CSV writer to which rows destined for this
         # table will be written:
         self.jsonToRelationConverter.startNewTable('ABExperiment', self.schemaABExperimentTbl)
+
+    def createOpenAssessmentTable(self):
+        createStatement = self.genOneCreateStatement('OpenAssessment', 
+                                                     self.schemaOpenAssessmentTbl,
+                                                     primaryKeyName='event_table_id'
+                                                     ) 
+        self.jsonToRelationConverter.pushString(createStatement)
+        # Tell the output module (output_disposition.OutputFile) that
+        # it needs to know about a new table. That module will create
+        # a CSV file and CSV writer to which rows destined for this
+        # table will be written:
+        self.jsonToRelationConverter.startNewTable('OpenAssessment', self.schemaOpenAssessmentTbl)
 
 
     def createLoadInfoTable(self):
@@ -1955,6 +2008,33 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         self.jsonToRelationConverter.pushToTable(self.resultTriplet(abExperimentDict.values(), 'ABExperiment', self.schemaABExperimentTbl.keys()))
         return
+
+    def pushOpenAssessmentInfo(self, openAssessmentDict):
+        '''
+        Takes an ordered dict with  fields:
+			 event_table_id
+			 score_type VARCHAR(2)
+			 submission_uuid
+			 edx_anon_id
+			 time DATETIME
+			 aux_time DATETIME
+			 course_display_name
+			 resource_display_name
+			 resource_id
+			 submission_text TEXT
+			 feedback_text TEXT
+			 comment_text TEXT
+			 attempt_num
+			 options
+			 corrections
+			 points
+
+        :param openAssessmentDict: Ordered dict with all required OpenAssessment table column values 
+        :type openAssessmentDict: Dict
+        '''
+        self.jsonToRelationConverter.pushToTable(self.resultTriplet(openAssessmentDict.values(), 'OpenAssessment', self.schemaOpenAssessmentTbl.keys()))
+        return
+
         
     def pushAccountInfo(self, accountDict):
         '''
@@ -3520,6 +3600,235 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.pushABExperimentInfo(abExpDict)
         return row
 
+    def handleOpenAssessmentEvent(self, record, row, event):
+        if event is None:
+            self.logWarn("Track log line %s: missing event text in one of the openassessment event types." %\
+                         (self.jsonToRelationConverter.makeFileCitation()))
+            return row
+        
+        eventDict = self.ensureDict(event)
+        if eventDict is None:
+            self.logWarn("Track log line %s: event is not a dict in one of the openassessment events: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
+        if len(row) < 1:
+            self.logWarn("Track log line %s: encountered empty partial row while processing an openassessment event: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
+        try:
+            eventType = record['event_type']
+        except KeyError:
+            # Cant' really happen, b/c event_type is what triggers call
+            # to this method. But...:
+            self.logWarn("Track log line %s: encountered openassessment event event without event_type: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(event)))
+            return row
+
+        # Give the OpenAssessment table row we are constructing
+        # the same key as the current row in EdxTrackEvent:
+        currEventRowId = row[0]
+        openAssessmentDict = OrderedDict()
+        openAssessmentDict['event_table_id'] = ''
+        openAssessmentDict['score_type'] = ''
+        openAssessmentDict['submission_uuid'] = ''
+        openAssessmentDict['edx_anon_id'] = ''
+        openAssessmentDict['time'] =  ''
+        openAssessmentDict['time_aux'] = ''
+        openAssessmentDict['course_display_name'] = '' 
+        openAssessmentDict['resource_display_name'] = ''
+        openAssessmentDict['resource_id'] = ''
+        openAssessmentDict['submission_text'] = '' 
+        openAssessmentDict['feedback_text'] = '' 
+        openAssessmentDict['comment_text'] = ''  
+        openAssessmentDict['attempt_num'] = -1
+        openAssessmentDict['options'] =  '' 
+        openAssessmentDict['corrections'] = ''  
+        openAssessmentDict['points'] = ''  
+    
+        # Fill in the above columns depending on the type of 
+        # openassessment event:
+        
+        if eventType == 'openassessmentblock.get_peer_submission':
+            openAssessmentDict['course_display_name'] = eventDict.get('course_id','')
+            openAssessmentDict['resource_id'] = eventDict.get('item_id','')
+            openAssessmentDict['submission_uuid'] = eventDict.get('submission_returned_uuid','')
+            openAssessmentDict['edx_anon_id'] = eventDict.get('requesting_student_id','')
+            
+        elif eventType in ['openassessmentblock.peer_assess', 'openassessmentblock.self_assess']:
+            openAssessmentDict['edx_anon_id'] = eventDict.get('scorer_id','')
+            openAssessmentDict['comment_text'] = eventDict.get('feedback','')
+            openAssessmentDict['submission_uuid'] = eventDict.get('submission_uuid','')            
+            openAssessmentDict['score_type'] = eventDict.get('score_type','')
+            partsArray = eventDict.get('parts','')
+            openAssessmentDict['feedback'] = self.makeAssessmentText(partsArray)
+            try:
+                rubricDict = openAssessmentDict['rubric']
+                rubric = rubricDict['content_hash']
+                openAssessmentDict['options'] = rubric 
+            except KeyError:
+                pass
+            openAssessmentDict['time'] = eventDict.get('scored_at', '')
+            
+        elif eventType == 'openassessmentblock.submit_feedback_on_assessments':
+            openAssessmentDict['submission_uuid'] = eventDict.get('submission_uuid','')            
+            openAssessmentDict['feedback_text'] = eventDict.get('feedback_text','')
+            # checkbox options that learner selected to evaluate:
+            checkboxOptions = eventDict.get('options','')
+            if type(checkboxOptions) == list:
+                openAssessmentDict['options'] = str(checkboxOptions)
+        
+        elif eventType == 'openassessment.create_submission':
+            # The 'answer' field is a dict w/ flds 'text' and 'file_upload_key'
+            # We ignore the file upload key:
+            try:
+                openAssessmentDict['submission_text'] = eventDict['answer']['text']
+            except (KeyError, TypeError):
+                pass
+            openAssessmentDict['time'] = eventDict.get('created_at','')
+            openAssessmentDict['attempt_num'] = eventDict.get('attempt_number_at','')
+            openAssessmentDict['submission_uuid'] = eventDict.get('submission_uuid','')
+            openAssessmentDict['time_aux'] = eventDict.get('submitted_at','')
+
+        elif eventType == 'openassessment.save_submission':
+            # The 'saved_response' field is a dict w/ flds 'text' and 'file_upload_key'
+            # We ignore the file upload key:
+            try:
+                openAssessmentDict['submission_text'] = eventDict['saved_response']['text']
+            except (KeyError, TypeError):
+                pass
+            
+        elif eventType == 'openassessment.student_training_assess_example':
+            try:
+                openAssessmentDict['corrections'] = self.makeTrainingAssessExample(eventDict['corrections'], AssessmentOptionSource.INSTRUCTOR)
+            except (KeyError, TypeError):
+                pass
+            openAssessmentDict['submission_uuid'] = eventDict.get('submission_uuid','')
+            try:
+                openAssessmentDict['submissions_text'] = self.makeTrainingAssessExample(eventDict['options_selected'], AssessmentOptionSource.LEARNER)
+            except (KeyError, TypeError):
+                pass
+            
+            
+        elif eventType == 'openassessment.upload_file':
+            fileType = eventDict.get('fileType', '')
+            fileName = eventDict.get('fileType', '')
+            fileSize = eventDict.get('fileSize', '')
+            openAssessmentDict['resource_display_name'] = 'File %s: %s (%s)' % (fileName, fileType, fileSize)
+             
+        self.pushOpenAssessmentInfo(openAssessmentDict)
+        return row            
+        
+    def makeAssessmentText(self, peerOrSelfAssessPartsField):
+        '''
+        Takes the 'parts' field array of openassessmentblock.peer_assess and openassessmentblock.self_assess
+        events, and returns a single, reasonably formulated string.
+        The parameter is an array of triplets: criterion, option, and feedback.
+        The criterion contains 'points_possible' and 'name', which is presumably
+        the rubric name. The 'option' is the rubric option a learner chose,
+        and 'feedback' is text.
+        
+        Example substring of the event's 'part' field:
+            "parts": [{"criterion": {"points_possible": 3, 
+                                     "name": "1"}, 
+                       "option": {"points": 3, 
+                                  "name": "3"}, 
+                       "feedback": ""}, 
+                      {"criterion": {"points_possible": 3, 
+                                     "name": "0"}, 
+                       "option": {"points": 2, 
+                                  "name": "2"}, 
+                       "feedback": ""}, 
+                      {"criterion": {"points_possible": 3, 
+                                     "name": "Content"}, 
+                       "option": {"points": 3, 
+                                  "name": "Excellent"}, 
+                       "feedback": ""}, 
+                      {"criterion": {"points_possible": 3, 
+                                     "name": "2"}, 
+                       "option": {"points": 3, 
+                                  "name": "3"}, 
+                       "feedback": ""}, 
+                      {"criterion": {"points_possible": 3, 
+                                     "name": "Ideas"}, 
+                       "option": {"points": 2, 
+                                  "name": "Good"}, 
+                       "feedback": ""}
+                       ]        
+        
+        :param peerOrSelfAssessPartsField: All information about one feedback by one or more rubrics
+        :type peerOrSelfAssessPartsField: [{int,string}, string, string]
+        :returns string that summarizes all entries
+        :rtype string
+        '''
+        
+        resTxt = ''
+        if peerOrSelfAssessPartsField is None:
+            return resTxt
+        if type(peerOrSelfAssessPartsField) != list:
+            self.logWarn("Track log line %s: parts field of openassessmentblock.peer_assess or openassessmentblock.self_assess not an array: '%s'" %\
+                         (self.jsonToRelationConverter.makeFileCitation(), str(peerOrSelfAssessPartsField)))
+        for partsStruct in peerOrSelfAssessPartsField:
+            # partsStruct is something like:
+            #   {'criterion': {'points_possible': 3, 'name': '1'}, 'option': {'points': 3, 'name': '3'}, 'feedback': ''}
+            pointsPossible = criterionName = optionPoints = optionName = feedback = ''  
+            try:
+                pointsPossible = partsStruct['criterion']['points_possible']
+            except KeyError:
+                pass
+            try:
+                criterionName = partsStruct['criterion']['name']
+            except KeyError:
+                pass
+            try:
+                optionPoints = partsStruct['option']['points']
+            except KeyError:
+                pass
+            try:
+                optionName = partsStruct['option']['name']
+            except KeyError:
+                pass
+            try:
+                feedback = partsStruct['feedback']
+            except KeyError:
+                pass
+
+            val = 'Criterion %s (max points %s): option %s: %s. Feedback: %s; ' % (criterionName,pointsPossible,optionName, optionPoints, feedback)
+            resTxt += val
+        return resTxt   
+                 
+    def makeTrainingAssessExample(self, trainingResultDict, learnerSrcOrInstructorSrc):
+        '''
+        When peer graders are trained, their results are in 
+        event openassessment.student_training_assess_example.
+        This method accepts one field of that event, a dict
+        {criterion_name: option_name}.
+        We create a single string of these values. Example:
+        "options_selected": {"1": "3", "0": "2", "Content": "Good", "2": "3", "Ideas": "0"}
+        The trainingResultDict passed in would just be the dict, without
+        the "options_selected". 
+        
+        :param trainingResultDict: 
+        :type trainingResultDict:
+        :param learnerSrcOrInstructorSrc: whether dict was from instructor or from learner
+        :type learnerSrcOrInstructorSrc: AssessmentOptionSource
+
+        '''
+        
+        if type(trainingResultDict) != dict:
+            return ''
+        
+        resTxt = ''
+        for criterionName in trainingResultDict.keys(): 
+            try:
+                criterionValue = trainingResultDict[criterionName]
+                if learnerSrcOrInstructorSrc == AssessmentOptionSource.INSTRUCTOR:
+                    resTxt += "Criterion %s's instructor-chosen option: %s;" % (criterionName, criterionValue)
+                else:
+                    resTxt += "Criterion %s's learner-chosen option: %s;" % (criterionName, criterionValue)
+            except (KeyError, TypeError):
+                pass
+        return resTxt
+    
     def handlePathStyledEventTypes(self, record, row, event):
         '''
         Called when an event type is a long path-like string.
@@ -3909,7 +4218,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         csvLoadCommands    =  "SET sql_log_bin=0;\n"
         csvLoadCommands    += "SET autocommit=0;\n"
-        for tableName in ['LoadInfo', 'InputState', 'State', 'CorrectMap', 'Answer', 'Account', 'EdxTrackEvent']:
+        for tableName in ['LoadInfo', 'InputState', 'State', 'CorrectMap', 'Answer', 'Account', 'EdxTrackEvent', 'ABExperiment']:
             filename = outputDisposition.getCSVTableOutFileName(tableName)
             # SQL statements for LOAD INFILE all .csv tables in turn. Only used
             # when no INSERT statement dump is being generated:
@@ -3988,7 +4297,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         :param logRecord:
         :type logRecord:
         :return: date and time as object
-        :rtype: datatime.datetime
+        :rtype: datetime.datetime
         '''
         try:
             eventTimeStr = logRecord['time']

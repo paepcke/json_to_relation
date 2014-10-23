@@ -250,6 +250,39 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         (fullCourseName, courseName, display_name) = edxParser.get_course_id(json.loads(self.heartbeatEvent))  # @UnusedVariable
         self.assertEqual('', fullCourseName)        
         self.assertEqual('', courseName)
+
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def testAssessPeerOrSelf(self):
+        partsField = [{'criterion': {'points_possible': 1, 'name': 'crit1'}, 
+                       'option': {'points': 0, 'name': '1'}, 
+                       'feedback': 'Feed1'}, 
+                      {'criterion': {'points_possible': 2, 'name': 'crit2'}, 
+                       'option': {'points': 1, 'name': '2'}, 
+                       'feedback': 'Feed1'}, 
+                      {'criterion': {'points_possible': 3, 'name': 'crit3'}, 
+                       'option': {'points': 2, 'name': 'Excellent'}, 
+                       'feedback': ''}, 
+                      {'criterion': {'points_possible': 4, 'name': 'crit4'}, 
+                       'option': {'points': 3, 'name': '3'}, 
+                       'feedback': 'Feed4'}, 
+                      {'criterion': {'points_possible': 5, 'name': 'crit5'}, 
+                       'option': {'points': 4, 'name': 'Good'}, 
+                       'feedback': 'Feed5'}
+                      ]
+        
+        fileConverter = JSONToRelation(self.stringSource,
+                                       OutputFile(os.devnull, OutputDisposition.OutputFormat.CSV),
+                                       mainTableName='Main'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'Main', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        fileConverter.setParser(edxParser)
+        partsFieldTxt = edxParser.makeAssessmentText(partsField)
+        self.assertEqual('Criterion crit1 (max points 1): option 1: 0. Feedback: Feed1; ' +\
+                         'Criterion crit2 (max points 2): option 2: 1. Feedback: Feed1; ' +\
+                         'Criterion crit3 (max points 3): option Excellent: 2. Feedback: ; ' +\
+                         'Criterion crit4 (max points 4): option 3: 3. Feedback: Feed4; ' +\
+                         'Criterion crit5 (max points 5): option Good: 4. Feedback: Feed5; '
+                         , partsFieldTxt)
         
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testProcessOneJSONObject(self):
@@ -1589,7 +1622,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
-    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testQuarter(self):
         testFilePath = os.path.join(os.path.dirname(__file__),"data/quarter.json")
         stringSource = InURI(testFilePath)
@@ -1612,7 +1645,6 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
             self.updateTruth(dest.name, truthFile.name)
         else:
             self.assertFileContentEquals(truthFile, dest.name)
-
 
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testInstructorEventsOnlyCommonFields(self):
