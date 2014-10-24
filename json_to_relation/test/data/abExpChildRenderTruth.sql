@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS Answer (
     problem_id VARCHAR(255) NOT NULL,
     answer TEXT NOT NULL,
     course_id VARCHAR(255) NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL PRIMARY KEY,
     answer_identifier TEXT NOT NULL,
@@ -34,12 +34,12 @@ CREATE TABLE IF NOT EXISTS CorrectMap (
     hint TEXT NOT NULL,
     hintmode VARCHAR(255) NOT NULL,
     queuestate TEXT NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS InputState (
     input_state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     problem_id VARCHAR(255) NOT NULL,
     state TEXT NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS State (
     state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT NOT NULL,
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS State (
     FOREIGN KEY(student_answer) REFERENCES Answer(answer_id) ON DELETE CASCADE,
     FOREIGN KEY(correct_map) REFERENCES CorrectMap(correct_map_id) ON DELETE CASCADE,
     FOREIGN KEY(input_state) REFERENCES InputState(input_state_id) ON DELETE CASCADE
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS Account (
     account_id VARCHAR(40) NOT NULL PRIMARY KEY,
     screen_name TEXT NOT NULL,
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS Account (
     enrollment_action VARCHAR(255) NOT NULL,
     email TEXT NOT NULL,
     receive_emails VARCHAR(255) NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     account_id VARCHAR(40) NOT NULL PRIMARY KEY,
     screen_name TEXT NOT NULL,
@@ -89,15 +89,15 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     enrollment_action VARCHAR(255) NOT NULL,
     email TEXT NOT NULL,
     receive_emails VARCHAR(255) NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS EventIp (
     event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
     event_ip VARCHAR(255) NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS EdxPrivate.EventIp (
     event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
     event_ip VARCHAR(255) NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS ABExperiment (
     event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
     event_type VARCHAR(255) NOT NULL,
@@ -105,13 +105,33 @@ CREATE TABLE IF NOT EXISTS ABExperiment (
     group_name VARCHAR(255) NOT NULL,
     partition_id INT NOT NULL,
     partition_name VARCHAR(255) NOT NULL,
-    child_module_id VARCHAR(255) NOT NULL
-    ) ENGINE=MyISAM;
+    child_module_id VARCHAR(255) NOT NULL,
+    cohort_id INT NOT NULL,
+    cohort_name VARCHAR(255) NOT NULL
+    ) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS OpenAssessment (
+    event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    score_type VARCHAR(255) NOT NULL,
+    submission_uuid VARCHAR(255) NOT NULL,
+    edx_anon_id TEXT NOT NULL,
+    time DATETIME NOT NULL,
+    time_aux DATETIME NOT NULL,
+    course_display_name VARCHAR(255) NOT NULL,
+    resource_display_name VARCHAR(255) NOT NULL,
+    resource_id VARCHAR(255) NOT NULL,
+    submission_text MEDIUMTEXT NOT NULL,
+    feedback_text MEDIUMTEXT NOT NULL,
+    comment_text MEDIUMTEXT NOT NULL,
+    attempt_num INT NOT NULL,
+    options VARCHAR(255) NOT NULL,
+    corrections TEXT NOT NULL,
+    points TEXT NOT NULL
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS LoadInfo (
     load_info_id VARCHAR(40) NOT NULL PRIMARY KEY,
     load_date_time DATETIME NOT NULL,
     load_file TEXT NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     _id VARCHAR(40) NOT NULL PRIMARY KEY,
     event_id VARCHAR(40) NOT NULL,
@@ -122,6 +142,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     page TEXT NOT NULL,
     session TEXT NOT NULL,
     time DATETIME NOT NULL,
+    quarter VARCHAR(255) NOT NULL,
     anon_screen_name TEXT NOT NULL,
     downtime_for DATETIME NOT NULL,
     student_id TEXT NOT NULL,
@@ -181,8 +202,8 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     FOREIGN KEY(answer_fk) REFERENCES Answer(answer_id) ON DELETE CASCADE,
     FOREIGN KEY(state_fk) REFERENCES State(state_id) ON DELETE CASCADE,
     FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id) ON DELETE CASCADE
-    ) ENGINE=MyISAM;
-LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE, `EventIp` WRITE, `ABExperiment` WRITE;
+    ) ENGINE=InnoDB;
+LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE, `EventIp` WRITE, `ABExperiment` WRITE, `OpenAssessment` WRITE;
 /*!40000 ALTER TABLE `EdxTrackEvent` DISABLE KEYS */;
 /*!40000 ALTER TABLE `State` DISABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` DISABLE KEYS */;
@@ -192,14 +213,15 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 /*!40000 ALTER TABLE `EventIp` DISABLE KEYS */;
 /*!40000 ALTER TABLE `ABExperiment` DISABLE KEYS */;
+/*!40000 ALTER TABLE `OpenAssessment` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('873bf38d416fe5730c7cdf598bf057b92e632a1c','2014-06-25T11:29:07.342160','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/abExpChildRender.json');
+    ('873bf38d416fe5730c7cdf598bf057b92e632a1c','2014-10-23T09:39:49.273501','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/abExpChildRender.json');
 INSERT INTO EventIp (event_table_id,event_ip) VALUES 
-    ('68ff1576_72d1_4432_988e_485420d1fe5c','24.5.14.103');
-INSERT INTO ABExperiment (event_table_id,event_type,group_id,group_name,partition_id,partition_name,child_module_id) VALUES 
-    ('68ff1576_72d1_4432_988e_485420d1fe5c','child_render',-1,'',-1,'','child_module_10');
-INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,mode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('68ff1576_72d1_4432_988e_485420d1fe5c','453a2ecc_5220_44cb_b3cc_1aa5b870a20f','Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:21.0) Gecko/20100101 Firefox/21.0','browser','child_render','USA','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/53b0357680d24191a60156e74e184be3/','009e5b5e1bd4ab5a800cafc48bad9e44','2013-06-08T23:29:58.346222','f975dd005d3db177274710127ed9ee82db4d6b5d','0:00:00','','','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/53b0357680d24191a60156e74e184be3/','Medicine/HRP258/Statistics_in_Medicine','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','873bf38d416fe5730c7cdf598bf057b92e632a1c');
+    ('57b04b5e_e2e1_4fee_a6ff_79c3583f0d1e','24.5.14.103');
+INSERT INTO ABExperiment (event_table_id,event_type,group_id,group_name,partition_id,partition_name,child_module_id,cohort_id,cohort_name) VALUES 
+    ('57b04b5e_e2e1_4fee_a6ff_79c3583f0d1e','child_render',-1,'',-1,'','child_module_10',-1,'');
+INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,quarter,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,mode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
+    ('57b04b5e_e2e1_4fee_a6ff_79c3583f0d1e','b4e943bb_a429_4d05_9538_b27f376b064c','Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:21.0) Gecko/20100101 Firefox/21.0','browser','child_render','USA','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/53b0357680d24191a60156e74e184be3/','009e5b5e1bd4ab5a800cafc48bad9e44','2013-06-08T23:29:58.346222','summer2013','f975dd005d3db177274710127ed9ee82db4d6b5d','0:00:00','','','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/53b0357680d24191a60156e74e184be3/','Medicine/HRP258/Statistics_in_Medicine','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','873bf38d416fe5730c7cdf598bf057b92e632a1c');
 -- /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;
@@ -209,6 +231,7 @@ INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country
 -- /*!40000 ALTER TABLE `Account` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `EventIp` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `ABExperiment` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `OpenAssessment` ENABLE KEYS */;
 UNLOCK TABLES;
 REPLACE INTO EdxPrivate.Account (account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) SELECT account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails FROM Edx.Account;
 DROP TABLE Edx.Account;

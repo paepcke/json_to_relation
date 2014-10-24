@@ -198,7 +198,11 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     correctMap_fk VARCHAR(40) NOT NULL,
     answer_fk VARCHAR(40) NOT NULL,
     state_fk VARCHAR(40) NOT NULL,
-    load_info_fk VARCHAR(40) NOT NULL
+    load_info_fk VARCHAR(40) NOT NULL,
+    FOREIGN KEY(correctMap_fk) REFERENCES CorrectMap(correct_map_id) ON DELETE CASCADE,
+    FOREIGN KEY(answer_fk) REFERENCES Answer(answer_id) ON DELETE CASCADE,
+    FOREIGN KEY(state_fk) REFERENCES State(state_id) ON DELETE CASCADE,
+    FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id) ON DELETE CASCADE
     ) ENGINE=InnoDB;
 LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE, `EventIp` WRITE, `ABExperiment` WRITE, `OpenAssessment` WRITE;
 /*!40000 ALTER TABLE `EdxTrackEvent` DISABLE KEYS */;
@@ -212,19 +216,15 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `ABExperiment` DISABLE KEYS */;
 /*!40000 ALTER TABLE `OpenAssessment` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('d9d99ded1f14391365e6f591166d504a723ab5d4','2014-10-23T17:07:14.142043','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/fullScreenForAbExperimentStudent.json');
+    ('4a0182a8f0801de9a24791c15de93f02028762c7','2014-10-23T16:11:58.914110','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/openAssGetPeerSubmission.json');
 INSERT INTO EventIp (event_table_id,event_ip) VALUES 
-    ('5bb9cb40_2bf5_4bdd_a877_c8aa438d4546','24.5.14.103');
+    ('55d8bb2e_520e_409a_bd4a_7584f300c338','171.67.220.125');
 INSERT INTO ABExperiment (event_table_id,event_type,group_id,group_name,partition_id,partition_name,child_module_id,resource_display_name,cohort_id,cohort_name) VALUES 
-    ('5bb9cb40_2bf5_4bdd_a877_c8aa438d4546','assigned_user_to_partition',10,'No_Flattery',20,'Flattery_Exp','','',-1,'');
+    ('55d8bb2e_520e_409a_bd4a_7584f300c338','openassessmentblock.get_peer_submission','2','',-1,'xblock.partition_service.partition_0','','Peer Assessment',-1,'');
+INSERT INTO OpenAssessment (event_table_id,score_type,submission_uuid,edx_anon_id,time,time_aux,course_display_name,resource_display_name,resource_id,submission_text,feedback_text,comment_text,attempt_num,options,corrections,points) VALUES 
+    ('55d8bb2e_520e_409a_bd4a_7584f300c338','',null,'5ee2c96e6d6b84818d41c489a0ce89ac','','','StanfordOnline/OpenEdX/Demo','Peer Assessment','i4x://StanfordOnline/OpenEdX/openassessment/bdb10e5302c64229b897f8a2e9110293','','','',-1,'','','');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,quarter,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,mode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('5bb9cb40_2bf5_4bdd_a877_c8aa438d4546','68888a8c_98b8_428a_9231_0e2d42c5cd1a','Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:21.0) Gecko/20100101 Firefox/21.0','browser','assigned_user_to_partition','USA','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/53b0357680d24191a60156e74e184be3/','009e5b5e1bd4ab5a800cafc48bad9e44','2013-06-08T23:29:58.346222','summer2013','f975dd005d3db177274710127ed9ee82db4d6b5d','0:00:00','','','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/53b0357680d24191a60156e74e184be3/','Medicine/HRP258/Statistics_in_Medicine','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','d9d99ded1f14391365e6f591166d504a723ab5d4');
-INSERT INTO EventIp (event_table_id,event_ip) VALUES 
-    ('1976ed42_de8f_4ac6_acd3_65df9bfc6c9b','70.197.74.222');
-INSERT INTO ABExperiment (event_table_id,event_type,group_id,group_name,partition_id,partition_name,child_module_id,resource_display_name,cohort_id,cohort_name) VALUES 
-    ('1976ed42_de8f_4ac6_acd3_65df9bfc6c9b','fullscreen',10,'',20,'','','',-1,'');
-INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,quarter,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,mode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('1976ed42_de8f_4ac6_acd3_65df9bfc6c9b','c8a9445e_d8a1_4f75_9372_76631e73908e','Mozilla/5.0 (Linux; Android 4.0.3; ADR6425LVW Build/IML74K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.90 Mobile Safari/537.36','browser','fullscreen','USA','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/495757ee7b25401599b1ef0495b068e4/4fe1ef4953674903b88a0c9bf3445791/','667e6f9a605483c38ddd6f4aca66d0c1','2013-06-26T07:07:44.303514+00:00','summer2013','3df14445937c3372d3d6c087a4ec067253b83167','0:00:00','','','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/495757ee7b25401599b1ef0495b068e4/4fe1ef4953674903b88a0c9bf3445791/','','Module 1, part 1','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'i4x-Medicine-HRP258-videoalpha-cb6076d965824dbcb6a3a4aa8c7a03af','Y9EC8Ql3-3k','0','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','d9d99ded1f14391365e6f591166d504a723ab5d4');
+    ('55d8bb2e_520e_409a_bd4a_7584f300c338','47236d6c_7eda_4536_9b3a_1150e213cd82','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.137 Safari/537.36','server','openassessmentblock.get_peer_submission','USA','x_module','','2014-05-15T18:09:04.697762+00:00','spring2014','e07a3da71f0330452a6aa650ed598e2911301491','0:00:00','','','StanfordOnline/OpenEdX/Demo','StanfordOnline/OpenEdX/Demo','Peer Assessment','StanfordOnline','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','4a0182a8f0801de9a24791c15de93f02028762c7');
 -- /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

@@ -413,6 +413,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaABExperimentTbl['partition_id'] = ColDataType.INT
         self.schemaABExperimentTbl['partition_name'] = ColDataType.TINYTEXT
         self.schemaABExperimentTbl['child_module_id'] = ColDataType.TINYTEXT
+        self.schemaABExperimentTbl['resource_display_name'] = ColDataType.TINYTEXT
+        self.schemaABExperimentTbl['cohort_id'] = ColDataType.INT
+        self.schemaABExperimentTbl['cohort_name'] = ColDataType.TINYTEXT
         # Turn the SQL data types in the dict to column spec objects:
         for colName in self.schemaABExperimentTbl.keys():
             colType =  self.schemaABExperimentTbl[colName]
@@ -520,7 +523,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                          "/*!40101 SET character_set_client = utf8 */;\n"
         
         # Construct the SQL statement that precedes INSERT statements:
-        self.dumpInsertPreamble = "LOCK TABLES `%s` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE, `EventIp` WRITE, `ABExperiment` WRITE;\n" % self.mainTableName +\
+        self.dumpInsertPreamble = "LOCK TABLES `%s` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE, `EventIp` WRITE, `ABExperiment` WRITE, `OpenAssessment` WRITE;\n" % self.mainTableName +\
                                   "/*!40000 ALTER TABLE `%s` DISABLE KEYS */;\n" % self.mainTableName +\
                                   "/*!40000 ALTER TABLE `State` DISABLE KEYS */;\n" +\
                                   "/*!40000 ALTER TABLE `InputState` DISABLE KEYS */;\n" +\
@@ -529,7 +532,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                   "/*!40000 ALTER TABLE `LoadInfo` DISABLE KEYS */;\n" +\
                                   "/*!40000 ALTER TABLE `Account` DISABLE KEYS */;\n" +\
                                   "/*!40000 ALTER TABLE `EventIp` DISABLE KEYS */;\n" +\
-                                  "/*!40000 ALTER TABLE `ABExperiment` DISABLE KEYS */;\n"
+                                  "/*!40000 ALTER TABLE `ABExperiment` DISABLE KEYS */;\n" +\
+                                  "/*!40000 ALTER TABLE `OpenAssessment` DISABLE KEYS */;\n"
         
         # Add commented-out instructions for re-enabling keys.
         # The ENABLE KEYS instructions are therefore disabled in
@@ -547,6 +551,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                     "-- /*!40000 ALTER TABLE `Account` ENABLE KEYS */;\n" +\
                                     "-- /*!40000 ALTER TABLE `EventIp` ENABLE KEYS */;\n" +\
                                     "-- /*!40000 ALTER TABLE `ABExperiment` ENABLE KEYS */;\n" +\
+                                    "-- /*!40000 ALTER TABLE `OpenAssessment` ENABLE KEYS */;\n" +\
                                     "UNLOCK TABLES;\n"           
 
 
@@ -940,7 +945,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 return
                 
             # A/B Test Events:
-            elif eventType == 'assigned_user_to_partition' or eventType == 'child_render':
+            elif eventType in ['assigned_user_to_partition',
+                               'xmodule.partitions.assigned_user_to_partition', 
+                               'child_render', 
+                               'edx.cohort.user_added', 
+                               'edx.cohort.user_removed']: 
                 self.handleABExperimentEvent(record, row, event)
                 return
 
@@ -953,7 +962,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                'openassessment.save_submission',
                                'openassessment.save_submission'
                                ]:
-                self.handleOpenAssessment(record, row, event)
+                self.handleOpenAssessmentEvent(record, row, event)
                 return
             
             elif eventType == 'edx.course.enrollment.activated' or eventType == 'edx.course.enrollment.deactivated':
@@ -1052,7 +1061,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             # Need to suppress foreign key checks, so that we
             # can DROP the tables; this includes the main Account tbl in db EdxPrivate
             # and any left-over tmp Account tbl in Edx:
-            self.jsonToRelationConverter.pushString('DROP TABLE IF EXISTS %s, Answer, InputState, CorrectMap, State, Account, EdxPrivate.Account, LoadInfo;\n' % self.mainTableName)
+            self.jsonToRelationConverter.pushString('DROP TABLE IF EXISTS %s, Answer, InputState, CorrectMap, State, Account, EdxPrivate.Account, LoadInfo, ABExperiment, OpenAssessment;\n' % self.mainTableName)
 
 
         # Initialize col row arrays for each table. These
@@ -1274,20 +1283,31 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.jsonToRelationConverter.startNewTable('LoadInfo', self.schemaLoadInfoTbl)
 
     def createMainTable(self):
+
+        createStatement = self.genOneCreateStatement(self.mainTableName, 
+                                                     self.schemaHintsMainTable,
+                                                     primaryKeyName='_id', 
+                                                     autoincrement=False)        
+
+        # Used to be a good boy and declare the foreign keys 
+        # as such to MySQL. But doing this then forces correct
+        # table delete sequences as MySQL insists on maintaining
+        # pointer integrity. So the decls are commented out:
+                
         # Make the foreign keys information dict ordered. Doesn't
         # matter to SQL engine, but makes unittesting easier, b/c
         # order of foreign key declarations will be constant on
         # each run:
-        foreignKeysDict = OrderedDict()
-        foreignKeysDict['CorrectMap'] = ('correctMap_fk', 'correct_map_id')
-        foreignKeysDict['Answer'] = ('answer_fk', 'answer_id')
-        foreignKeysDict['State'] = ('state_fk', 'state_id')
-        foreignKeysDict['LoadInfo'] = ('load_info_fk', 'load_info_id')
-        createStatement = self.genOneCreateStatement(self.mainTableName, 
-                                                     self.schemaHintsMainTable,
-                                                     primaryKeyName='_id', 
-                                                     foreignKeyColNames=foreignKeysDict,
-                                                     autoincrement=False)        
+#         foreignKeysDict = OrderedDict()
+#         foreignKeysDict['CorrectMap'] = ('correctMap_fk', 'correct_map_id')
+#         foreignKeysDict['Answer'] = ('answer_fk', 'answer_id')
+#         foreignKeysDict['State'] = ('state_fk', 'state_id')
+#         foreignKeysDict['LoadInfo'] = ('load_info_fk', 'load_info_id')
+#         createStatement = self.genOneCreateStatement(self.mainTableName, 
+#                                                      self.schemaHintsMainTable,
+#                                                      primaryKeyName='_id', 
+#                                                      foreignKeyColNames=foreignKeysDict,
+#                                                      autoincrement=False)        
         self.jsonToRelationConverter.pushString(createStatement)
         # Tell the output module (output_disposition.OutputFile) that
         # it needs to know about a new table. That module will create
@@ -1375,26 +1395,26 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                     theCourseId = self.currContextDict.get('course_id', None)
                     self.setValInRow(row, 'course_display_name', theCourseId)
                     
+                    # Sometimes context includes a 'module' field with a 
+                    # dict inside:
+                    #     "module": {"display_name": "Peer Assessment"}}
+                    moduleDisplayName = self.findModuleNameInEventContext(record)
+                    if len(moduleDisplayName) > 0:
+                        self.setValInRow(row, 'resource_display_name', moduleDisplayName)
+                    
                     # Fill in the organization:
                     theOrg = self.currContextDict.get('org_id', None)
                     self.setValInRow(row, 'organization', theOrg)
 
                     # When a participant who is assigned to an AB experiment
                     # triggers an event, the context field course_user_tags
-                    # contains a dict with user_id, course_id, key, and value,
-                    # where key is the experiment partition, and value is 
-                    # the experiment group_id to which the participant is
-                    # was assigned.
-                    
+                    # contains a dict with the learner's partition and group
+                    # assignment. Ensure that info about this event is recorded
+                    # in the ABExperiment table:
                     abTestInfo = self.currContextDict.get('course_user_tags', None)
                     if abTestInfo is not None:
-                        abTestDictInfoDict = self.ensureDict(abTestInfo)
-                        if abTestDictInfoDict is not None:
-                            # Use handleABExperimentEvent(), passing the
-                            # abTestInfo as if it were an event. The
-                            # method will then add a row to the ABExperiment
-                            # table:
-                            self.handleABExperimentEvent(record, row, abTestDictInfoDict)
+                        eventType = record.get('event_type', None)
+                        self.addEventToABExperiment(event_tuple_id, eventType, self.currContextDict)
 
                     # Make course_id available for places where rows are added to the Answer table.
                     # We stick the course_id there for convenience.
@@ -2002,6 +2022,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
            - 'partition_id'   : experimental partition's id
            - 'partition_name' : experimental partition's name
            - 'child_module_id': id of module within partition that was served to a participant
+           - 'resource_display_name'    : human readable name of module 
+           - 'cohort_id'      : numeric ID of cohort group
+           - 'cohort_name'    : string name of cohort group
 
         :param abExperimentDict: Ordered dict with all required ABExperiment table column values 
         :type abExperimentDict: {STRING : STRING, STRING : INT, STRING : STRING, STRING : INT, STRING : STRING, STRING : STRING} 
@@ -3591,14 +3614,96 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         abExpDict = OrderedDict()
         abExpDict['event_table_id']  = currEventRowId
         abExpDict['event_type']      = eventType
+        
         abExpDict['group_id']        = eventDict.get('group_id', -1)
         abExpDict['group_name']      = eventDict.get('group_name', '')
         abExpDict['partition_id']    = eventDict.get('partition_id', -1)
         abExpDict['partition_name']  = eventDict.get('partition_name', '')
         abExpDict['child_module_id'] = eventDict.get('child_id', '')
+        abExpDict['resource_display_name']     = self.findModuleNameInEventContext(record)
+        abExpDict['cohort_id']       = eventDict.get('cohort_id', -1)
+        abExpDict['cohort_name']     = eventDict.get('cohort_name', '')
+
+        abTestInfo = eventDict.get('course_user_tags', None)
+        if abTestInfo is not None:
+            abTestInfoDict = self.ensureDict(abTestInfo)
+            if len(abTestInfoDict) > 0:
+                # The dict contains one key/value pair: the key is
+                # the name of the partition that a learner is in. 
+                # The value is the learner's groupID:
+                tagsKeys = abTestInfoDict.keys()
+                if len(tagsKeys) > 0:
+                    abExpDict['partition_name'] = tagsKeys[0]
+                    abExpDict['group_id'] = abTestInfoDict[tagsKeys[0]]
+                if len(tagsKeys) > 1:
+                    self.logWarn("ABExperiment related event with course_user_tags length > 1; ignoring all but first key/val pair.") 
 
         self.pushABExperimentInfo(abExpDict)
         return row
+
+    def addEventToABExperiment(self, eventTableId, eventType, contextDict):
+        '''
+        Called when an event concerns a learner that has been 
+        assigned to an AB experiment. The entry into the EdxTrackEvent
+        table is handled elsewhere. This method just adds info about that
+        event to the ABExperiment table. That table's first column 
+        is a pointer into the EdxTrackEvent table; so that pt must
+        be passed in.
+        
+        :param eventTableId: reference to _id of row in EdxTrackEvent table that records the main info about the event
+        :type eventTableId: string
+        :param eventType: event type of event being noted in ABExperiment 
+        :type eventType: string
+        :param contextDict: the context dict from within the event's JSON structure
+        :type contextDict: {}
+        '''
+        
+        if contextDict is None:
+            self.logWarn("Track log line %s: missing context field in event that concerns learner in AB Experiment: " %\
+                         (self.jsonToRelationConverter.makeFileCitation()))
+            return
+        
+        # Ensure that the passed-in context dict includes the
+        # required course_user_tags dict:
+
+        courseUserTagsDict = contextDict.get('course_user_tags', None)
+        if courseUserTagsDict is None:
+            self.logWarn("Track log line %s: missing course_user_tags in context field in event that concerns learner in AB Experiment: " %\
+                         (self.jsonToRelationConverter.makeFileCitation()))
+            return
+        abTestInfoDict = self.ensureDict(courseUserTagsDict)
+        
+        try:
+            resourceDisplayName = contextDict['module']['display_name']
+        except:
+            resourceDisplayName = ''
+        
+        # Build an empty ABExperiment row, 
+        # except for the EdxTrackEvent pointer:
+        abExpDict = OrderedDict()
+        abExpDict['event_table_id']  = eventTableId
+        abExpDict['event_type']      = eventType
+        
+        abExpDict['group_id']        = -1
+        abExpDict['group_name']      = ''
+        abExpDict['partition_id']    = -1
+        abExpDict['partition_name']  = ''
+        abExpDict['child_module_id'] = ''
+        abExpDict['resource_display_name'] = resourceDisplayName 
+        abExpDict['cohort_id']       = -1
+        abExpDict['cohort_name']     = ''
+        
+        if len(abTestInfoDict) > 0:
+            # The dict contains key/value pairs: that can
+            # be course_id, user_id, partition_id, group_id,
+            # group_name, partition_name. Pick out the ones
+            # we want in the ABExperiment rows:
+            abExpDict['partition_name'] = abTestInfoDict.get('partition_name', '')
+            abExpDict['partition_id'] = abTestInfoDict.get('partition_id', -1)
+            abExpDict['group_name'] = abTestInfoDict.get('group_name', '')
+            abExpDict['group_id'] = abTestInfoDict.get('group_id', -1)
+
+        self.pushABExperimentInfo(abExpDict)
 
     def handleOpenAssessmentEvent(self, record, row, event):
         if event is None:
@@ -3628,7 +3733,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # the same key as the current row in EdxTrackEvent:
         currEventRowId = row[0]
         openAssessmentDict = OrderedDict()
-        openAssessmentDict['event_table_id'] = ''
+        openAssessmentDict['event_table_id'] = currEventRowId
         openAssessmentDict['score_type'] = ''
         openAssessmentDict['submission_uuid'] = ''
         openAssessmentDict['edx_anon_id'] = ''
@@ -3714,7 +3819,13 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             fileName = eventDict.get('fileType', '')
             fileSize = eventDict.get('fileSize', '')
             openAssessmentDict['resource_display_name'] = 'File %s: %s (%s)' % (fileName, fileType, fileSize)
-             
+        
+        resource_id = openAssessmentDict['resource_id']
+        if len(resource_id) > 0:
+            openAssessmentDict['resource_display_name'] = self.findResourceDisplayName(resource_id)
+        if len(openAssessmentDict['resource_display_name']) == 0:
+            openAssessmentDict['resource_display_name'] = self.findModuleNameInEventContext(record)
+            
         self.pushOpenAssessmentInfo(openAssessmentDict)
         return row            
         
@@ -4218,7 +4329,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         csvLoadCommands    =  "SET sql_log_bin=0;\n"
         csvLoadCommands    += "SET autocommit=0;\n"
-        for tableName in ['LoadInfo', 'InputState', 'State', 'CorrectMap', 'Answer', 'Account', 'EdxTrackEvent', 'ABExperiment']:
+        for tableName in ['LoadInfo', 'InputState', 'State', 'CorrectMap', 'Answer', 'Account', 'EdxTrackEvent', 'ABExperiment', 'OpenAssessment']:
             filename = outputDisposition.getCSVTableOutFileName(tableName)
             # SQL statements for LOAD INFILE all .csv tables in turn. Only used
             # when no INSERT statement dump is being generated:
@@ -4306,9 +4417,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             raise ValueError("No event time.")
 
     
-    def get_course_id(self, event):
+    def get_course_id(self, record):
         '''
-        Given a 'pythonized' JSON tracking event object, find
+        Given a 'pythonized' JSON tracking record object, find
         the course URL, and extract the course name from it.
         A number of different events occur, which do not contain
         course IDs: server heartbeats, account creation, dashboard
@@ -4320,7 +4431,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
              "event_type": "/accounts/login", 
              "time": "2013-06-14T00:31:57.661338", 
              "ip": "98.230.189.66", 
-             "event": "{
+             "record": "{
                         \"POST\": {}, 
                         \"GET\": {
                              \"next\": [\"/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/80160e.../\"]}}", 
@@ -4334,33 +4445,46 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             {"username": "RobbieH", 
              "host": "class.stanford.edu", 
             ...
-            "event": {"failure": "closed", "state": {"student_answers": {"i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_7_1": "choice_1", "i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_2_1": "choice_3", "i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_9_1": ["choice_0", "choice_1"], "i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_6_1": "choice_0", "i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_8_1": ["choice_0", "choice_1", "choice_2", "choice_3", "choice_4"], 
+            "record": {"failure": "closed", "state": {"student_answers": {"i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_7_1": "choice_1", "i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_2_1": "choice_3", "i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_9_1": ["choice_0", "choice_1"], "i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_6_1": "choice_0", "i4x-Medicine-HRP258-problem-4cd47ea861f542488a20691ac424a002_8_1": ["choice_0", "choice_1", "choice_2", "choice_3", "choice_4"], 
         
-        Notice the 'event' key's value being a *string* containing JSON, rather than 
+        Notice the 'record' key's value being a *string* containing JSON, rather than 
         a nested JSON object. This requires special attention. Buried inside
         that string is the 'next' tag, whose value is an array with a long (here
         partially elided) hex number. This is where the course number is
         extracted.
         
-        :param event: JSON record of an edx tracking event as internalized dict
-        :type event: Dict<String,Dict<<any>>
-        :return: two-tuple: full name of course in which event occurred, and descriptive name.
+        In some cases the newish 'context' field in the record
+        (i.e. outside the value of the 'record' label, has a course_id
+        field we need to use. 
+        
+        :param record: JSON record of an edx tracking event as internalized dict
+        :type record: Dict<String,Dict<<any>>
+        :return: two-tuple: full name of course in which record occurred, and descriptive name.
                  None if course ID could not be obtained.
 
         :rtype: {(String,String) | None} 
         '''
+        
+        # Start with the newer tracking log convention of having
+        # a course_id field in the top-level record:
+        try:
+            full_course_name = course_id = course_display_name = record['context']['course_id']
+            return (full_course_name, course_id, course_display_name)
+        except:
+            pass
+        
         course_id = ''
-        eventSource = event.get('event_source', None)
+        eventSource = record.get('event_source', None)
         if eventSource is None:
             return ('','','')
         if eventSource == 'server':
-            # get course_id from event type
-            eventType = event.get('event_type', None)
+            # get course_id from record type
+            eventType = record.get('event_type', None)
             if eventType is None:
                 return('','','')
             if eventType == u'/accounts/login':
                 try:
-                    post = json.loads(str(event.get('event', None)))
+                    post = json.loads(str(record.get('record', None)))
                 except:
                     return('','','')
                 if post is not None:
@@ -4380,15 +4504,15 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 return(courseID, courseID, self.getCourseDisplayName(eventType))
                  
             elif eventType.find('problem_') > -1:
-                event = event.get('event', None)
-                if event is None:
+                record = record.get('record', None)
+                if record is None:
                     return('','','')
-                courseID = self.extractCourseIDFromProblemXEvent(event)
+                courseID = self.extractCourseIDFromProblemXEvent(record)
                 return(courseID, courseID, '')
             else:
-                fullCourseName = event.get('event_type', '')
+                fullCourseName = record.get('event_type', '')
         else:
-            fullCourseName = event.get('page', '')
+            fullCourseName = record.get('page', '')
             
         # Abvove logic makes an error for '/dashboard' events:
         # it assigns '/dashboard' to the fullCourseName. Correct
@@ -4766,7 +4890,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
             input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_2_1
             
-        We fish it out of there.            
+        We fish it out of there. If the value is found, then it is
+        inserted into the given row.          
 
         :param row: current row's values
         :type row: [<any>]
@@ -4774,13 +4899,54 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                        such a 32-bit hash embedded in a larger string.
         :type openEdxHash: String
         '''
+        displayName = self.findResourceDisplayName(openEdxHash)
+        if len(openEdxHash) > 0:
+            self.setValInRow(row, 'resource_display_name', self.makeInsertSafe(displayName))
+
+    def findResourceDisplayName(self, openEdxHash):
+        '''
+        Given an OpenEdx hash of problem ID, video ID, or course ID,
+        set the resource_display_name in the given row. The value
+        passed in may have the actual hash embedded in a larger
+        string, as in::
+        
+            input_i4x-Medicine-HRP258-problem-7451f8fe15a642e1820767db411a4a3e_2_1
+            
+        We fish it out of there. If the value is found, then it is
+        inserted into the given row.          
+
+        :param openEdxHash: 32-bit hash string encoding a problem, video, or class, or 
+                       such a 32-bit hash embedded in a larger string.
+        :type openEdxHash: String
+        :return a human readable name, if it exists, else empty string.
+        :rtype string
+        '''
+        displayName = ''
         if openEdxHash is not None and len(openEdxHash) > 0:
             # Fish out the actual 32-bit hash:
             hashNum = self.extractOpenEdxHash(openEdxHash)
             # Get display name and add to main table as resource_display_name:
             displayName = self.hashMapper.getDisplayName(hashNum)
-            if displayName is not None:
-                self.setValInRow(row, 'resource_display_name', self.makeInsertSafe(displayName))
+        return displayName
+        
+    def findModuleNameInEventContext(self, record):
+        '''
+        Track log JSON records of newer vintage sometimes have a context field
+        in which the human-readable form of a module is stored.
+        Retrieve that value and return it. If not found, return 
+        empty string
+        
+        :param record: full record dict
+        :type record: {}
+        :return human readable module name
+        :rtype string
+        '''
+        moduleName = ''
+        try:
+            moduleName = record['context']['module']['display_name']
+        except:
+            pass
+        return moduleName
         
     def extractCanonicalCourseName(self, trackLogStr):
         '''

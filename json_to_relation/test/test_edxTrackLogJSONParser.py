@@ -251,7 +251,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         self.assertEqual('', fullCourseName)        
         self.assertEqual('', courseName)
 
-    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testAssessPeerOrSelf(self):
         partsField = [{'criterion': {'points_possible': 1, 'name': 'crit1'}, 
                        'option': {'points': 0, 'name': '1'}, 
@@ -1546,7 +1546,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
-    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testABExperimentRenderChild(self):
         testFilePath = os.path.join(os.path.dirname(__file__),"data/abExpChildRender.json")
         stringSource = InURI(testFilePath)
@@ -1597,6 +1597,32 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
             self.updateTruth(dest.name, truthFile.name)
         else:
             self.assertFileContentEquals(truthFile, dest.name)
+
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def testOpenAssGetPeerSubmission(self):
+        testFilePath = os.path.join(os.path.dirname(__file__),"data/openAssGetPeerSubmission.json")
+        stringSource = InURI(testFilePath)
+        
+        resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+        # Just use the file name of the tmp file.
+        resultFileName = resultFile.name
+        resultFile.close()
+        dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+        fileConverter = JSONToRelation(stringSource,
+                                       dest,
+                                       mainTableName='EdxTrackEvent'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        fileConverter.setParser(edxParser)
+        fileConverter.convert()
+        dest.close()
+        truthFile = open(os.path.join(os.path.dirname(__file__),"data/openAssGetPeerSubmissionTruth.sql"), 'r')
+        if UPDATE_TRUTH:
+            self.updateTruth(dest.name, truthFile.name)
+        else:
+            self.assertFileContentEquals(truthFile, dest.name)
+
+
 
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testEnrollmentActivatedDeactivated(self):
