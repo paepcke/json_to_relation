@@ -1143,7 +1143,35 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                  
         # Cut away the comma and newline after the last column spec,
         # and add newline, closing paren, and semicolon:
-        createStatement = createStatement[0:-2] + '\n    ) ENGINE=InnoDB;\n'
+        createStatement = createStatement[0:-2] + '\n    ) ENGINE=InnoDB'
+        if tableName == 'EdxTrackEvent':
+            createStatement += '\nPARTITION BY LIST COLUMNS(quarter) ( \n' +\
+    				 "PARTITION pAY2012_Spring VALUES IN ('spring2013'),\n" +\
+    				 "PARTITION pAY2012_Summer VALUES IN ('summer2013'),\n" +\
+    				 "PARTITION pAY2013_Fall VALUES IN ('fall2013'),\n" +\
+    				 "PARTITION pAY2013_Winter VALUES IN ('winter2014'),\n" +\
+    				 "PARTITION pAY2013_Spring VALUES IN ('spring2014'),\n" +\
+    				 "PARTITION pAY2013_Summer VALUES IN ('summer2014'),\n" +\
+    				 "PARTITION pAY2014_Fall VALUES IN ('fall2014'),\n" +\
+    				 "PARTITION pAY2014_Winter VALUES IN ('winter2015'),\n" +\
+    				 "PARTITION pAY2014_Spring VALUES IN ('spring2015'),\n" +\
+    				 "PARTITION pAY2014_Summer VALUES IN ('summer2015'),\n" +\
+    				 "PARTITION pAY2015_Fall VALUES IN ('fall2015'),\n" +\
+    				 "PARTITION pAY2015_Winter VALUES IN ('winter2016'),\n" +\
+    				 "PARTITION pAY2015_Spring VALUES IN ('spring2016'),\n" +\
+    				 "PARTITION pAY2015_Summer VALUES IN ('summer2016'),\n" +\
+    				 "PARTITION pAY2016_Fall VALUES IN ('fall2016'),\n" +\
+    				 "PARTITION pAY2016_Winter VALUES IN ('winter2017'),\n" +\
+    				 "PARTITION pAY2016_Spring VALUES IN ('spring2017'),\n" +\
+    				 "PARTITION pAY2016_Summer VALUES IN ('summer2017'),\n" +\
+    				 "PARTITION pAY2017_Fall VALUES IN ('fall2017'),\n" +\
+    				 "PARTITION pAY2017_Winter VALUES IN ('winter2018'),\n" +\
+    				 "PARTITION pAY2017_Spring VALUES IN ('spring2018'),\n" +\
+    				 "PARTITION pAY2017_Summer VALUES IN ('summer2018')" +\
+                     ");\n"
+        else:
+            createStatement  += ';\n'    
+        
         return createStatement 
             
 
