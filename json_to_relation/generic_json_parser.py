@@ -184,6 +184,45 @@ class GenericJSONParser(object):
             self.reportProgressIfNeeded()
             self.getReadyForNextRow()
 
+    def getValInRow(self, theRow, colName, tableName=None):
+        '''
+        Given a row, column name, and table name, retrieve the value
+        from the row in the position where the given column value
+        would be stored.
+        
+        :param theRow: row from which to retrieve the value; row may be just partially filled.
+        :type theRow: list
+        :param colName: name of database column whose value is stored in the row
+        :type colName: string
+        :param tableName: name of table to which the row belongs. If None, assume the main table
+        :type tableName: string
+        :return value in the row at position where column value is stored
+        :rtype any
+        :raise ValueError if the row does not extend to the position where the given column's value is stored. 
+        '''
+        if tableName is None:
+            tableName = self.jsonToRelationConverter.mainTableName
+        
+        # Assumes caller has called ensureColExistence() on the
+        # JSONToRelation object; so the following won't have
+        # a key failure (but check anyway):
+        try:
+            colSpec = self.jsonToRelationConverter.getSchemaHint(colName, tableName)
+        except KeyError:
+            if not self.unittesting:
+                msg = "Attempt to retrieve unanticipated field name '%s' from table '%s' (%s)" %\
+                             (colName, tableName, self.jsonToRelationConverter.makeFileCitation())
+                self.logWarn(msg)
+            raise ValueError(msg)
+        try:
+            return theRow[colSpec.colPos]
+        except IndexError:
+            msg = "Attempt to retrieve field name '%s' from table '%s' before that row element was set (%s)" %\
+                             (colName, tableName, self.jsonToRelationConverter.makeFileCitation())
+            if not self.unittesting:
+                self.logWarn(msg)
+            raise ValueError(msg)
+    
     def setValInRow(self, theRow, colName, value, tableName=None):
         '''
         Given a column name, a value and a partially filled row,

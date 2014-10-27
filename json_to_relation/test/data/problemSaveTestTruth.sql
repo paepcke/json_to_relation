@@ -16,7 +16,7 @@ USE Edx;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-DROP TABLE IF EXISTS EdxTrackEvent, Answer, InputState, CorrectMap, State, Account, EdxPrivate.Account, LoadInfo;
+DROP TABLE IF EXISTS EdxTrackEvent, Answer, InputState, CorrectMap, State, Account, EdxPrivate.Account, LoadInfo, ABExperiment, OpenAssessment;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE IF NOT EXISTS Answer (
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS Answer (
     problem_id VARCHAR(255) NOT NULL,
     answer TEXT NOT NULL,
     course_id VARCHAR(255) NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL PRIMARY KEY,
     answer_identifier TEXT NOT NULL,
@@ -34,12 +34,12 @@ CREATE TABLE IF NOT EXISTS CorrectMap (
     hint TEXT NOT NULL,
     hintmode VARCHAR(255) NOT NULL,
     queuestate TEXT NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS InputState (
     input_state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     problem_id VARCHAR(255) NOT NULL,
     state TEXT NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS State (
     state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT NOT NULL,
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS State (
     FOREIGN KEY(student_answer) REFERENCES Answer(answer_id) ON DELETE CASCADE,
     FOREIGN KEY(correct_map) REFERENCES CorrectMap(correct_map_id) ON DELETE CASCADE,
     FOREIGN KEY(input_state) REFERENCES InputState(input_state_id) ON DELETE CASCADE
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS Account (
     account_id VARCHAR(40) NOT NULL PRIMARY KEY,
     screen_name TEXT NOT NULL,
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS Account (
     enrollment_action VARCHAR(255) NOT NULL,
     email TEXT NOT NULL,
     receive_emails VARCHAR(255) NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     account_id VARCHAR(40) NOT NULL PRIMARY KEY,
     screen_name TEXT NOT NULL,
@@ -89,29 +89,53 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     enrollment_action VARCHAR(255) NOT NULL,
     email TEXT NOT NULL,
     receive_emails VARCHAR(255) NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS EventIp (
     event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
     event_ip VARCHAR(255) NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS EdxPrivate.EventIp (
     event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
     event_ip VARCHAR(255) NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS ABExperiment (
     event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
     event_type VARCHAR(255) NOT NULL,
+    anon_screen_name VARCHAR(40) NOT NULL,
     group_id INT NOT NULL,
     group_name VARCHAR(255) NOT NULL,
     partition_id INT NOT NULL,
     partition_name VARCHAR(255) NOT NULL,
-    child_module_id VARCHAR(255) NOT NULL
-    ) ENGINE=MyISAM;
+    child_module_id VARCHAR(255) NOT NULL,
+    resource_display_name VARCHAR(255) NOT NULL,
+    cohort_id INT NOT NULL,
+    cohort_name VARCHAR(255) NOT NULL
+    ) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS OpenAssessment (
+    event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    event_type VARCHAR(255) NOT NULL,
+    anon_screen_name VARCHAR(40) NOT NULL,
+    score_type VARCHAR(255) NOT NULL,
+    submission_uuid VARCHAR(255) NOT NULL,
+    edx_anon_id TEXT NOT NULL,
+    time DATETIME NOT NULL,
+    time_aux DATETIME NOT NULL,
+    course_display_name VARCHAR(255) NOT NULL,
+    resource_display_name VARCHAR(255) NOT NULL,
+    resource_id VARCHAR(255) NOT NULL,
+    submission_text MEDIUMTEXT NOT NULL,
+    feedback_text MEDIUMTEXT NOT NULL,
+    comment_text MEDIUMTEXT NOT NULL,
+    attempt_num INT NOT NULL,
+    options VARCHAR(255) NOT NULL,
+    corrections TEXT NOT NULL,
+    points TEXT NOT NULL
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS LoadInfo (
     load_info_id VARCHAR(40) NOT NULL PRIMARY KEY,
     load_date_time DATETIME NOT NULL,
     load_file TEXT NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     _id VARCHAR(40) NOT NULL PRIMARY KEY,
     event_id VARCHAR(40) NOT NULL,
@@ -122,6 +146,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     page TEXT NOT NULL,
     session TEXT NOT NULL,
     time DATETIME NOT NULL,
+    quarter VARCHAR(255) NOT NULL,
     anon_screen_name TEXT NOT NULL,
     downtime_for DATETIME NOT NULL,
     student_id TEXT NOT NULL,
@@ -176,13 +201,32 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     correctMap_fk VARCHAR(40) NOT NULL,
     answer_fk VARCHAR(40) NOT NULL,
     state_fk VARCHAR(40) NOT NULL,
-    load_info_fk VARCHAR(40) NOT NULL,
-    FOREIGN KEY(correctMap_fk) REFERENCES CorrectMap(correct_map_id) ON DELETE CASCADE,
-    FOREIGN KEY(answer_fk) REFERENCES Answer(answer_id) ON DELETE CASCADE,
-    FOREIGN KEY(state_fk) REFERENCES State(state_id) ON DELETE CASCADE,
-    FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id) ON DELETE CASCADE
-    ) ENGINE=MyISAM;
-LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE, `EventIp` WRITE, `ABExperiment` WRITE;
+    load_info_fk VARCHAR(40) NOT NULL
+    ) ENGINE=InnoDB
+PARTITION BY LIST COLUMNS(quarter) ( 
+PARTITION pAY2012_Spring VALUES IN ('spring2013'),
+PARTITION pAY2012_Summer VALUES IN ('summer2013'),
+PARTITION pAY2013_Fall VALUES IN ('fall2013'),
+PARTITION pAY2013_Winter VALUES IN ('winter2014'),
+PARTITION pAY2013_Spring VALUES IN ('spring2014'),
+PARTITION pAY2013_Summer VALUES IN ('summer2014'),
+PARTITION pAY2014_Fall VALUES IN ('fall2014'),
+PARTITION pAY2014_Winter VALUES IN ('winter2015'),
+PARTITION pAY2014_Spring VALUES IN ('spring2015'),
+PARTITION pAY2014_Summer VALUES IN ('summer2015'),
+PARTITION pAY2015_Fall VALUES IN ('fall2015'),
+PARTITION pAY2015_Winter VALUES IN ('winter2016'),
+PARTITION pAY2015_Spring VALUES IN ('spring2016'),
+PARTITION pAY2015_Summer VALUES IN ('summer2016'),
+PARTITION pAY2016_Fall VALUES IN ('fall2016'),
+PARTITION pAY2016_Winter VALUES IN ('winter2017'),
+PARTITION pAY2016_Spring VALUES IN ('spring2017'),
+PARTITION pAY2016_Summer VALUES IN ('summer2017'),
+PARTITION pAY2017_Fall VALUES IN ('fall2017'),
+PARTITION pAY2017_Winter VALUES IN ('winter2018'),
+PARTITION pAY2017_Spring VALUES IN ('spring2018'),
+PARTITION pAY2017_Summer VALUES IN ('summer2018'));
+LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE, `EventIp` WRITE, `ABExperiment` WRITE, `OpenAssessment` WRITE;
 /*!40000 ALTER TABLE `EdxTrackEvent` DISABLE KEYS */;
 /*!40000 ALTER TABLE `State` DISABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` DISABLE KEYS */;
@@ -192,20 +236,21 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 /*!40000 ALTER TABLE `EventIp` DISABLE KEYS */;
 /*!40000 ALTER TABLE `ABExperiment` DISABLE KEYS */;
+/*!40000 ALTER TABLE `OpenAssessment` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('70e665701acb39de4c46ea9737934a00efa00e95','2014-06-25T11:29:41.674740','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemSaveTest.json');
+    ('70e665701acb39de4c46ea9737934a00efa00e95','2014-10-26T12:09:04.379451','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/problemSaveTest.json');
 INSERT INTO EventIp (event_table_id,event_ip) VALUES 
-    ('8fb0e321_d9bd_4e49_aa8e_685bb685d6ae','149.171.125.90');
+    ('37dc4a11_0df7_42bb_aa92_27ca6dd87041','149.171.125.90');
 INSERT INTO Answer (answer_id,problem_id,answer,course_id) VALUES 
-    ('28ce7c8a_37ed_45c4_8838_6c1a67a3b063','input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_4_1','13.5','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/'),
-    ('485d5cef_0154_4ea2_ad19_05a49c620274','input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_3_1','1.59+breaths+per+minute','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/'),
-    ('8bf0c14c_a5da_426e_8936_358d27098d56','input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_2_1','13.4+breaths+per+minute','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/'),
-    ('ea99d0c8_ab83_4e84_8c23_f187546ad4b0','input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_18_1','','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/');
-INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,mode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('8fb0e321_d9bd_4e49_aa8e_685bb685d6ae','05daedae_4bea_45a0_a53b_27cc8333a4a6','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','browser','problem_save','AUS','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/','a7e396b28a361e7b5637c59864013f5b','2013-06-12T08:30:53.458627','21d244c8ed14b9a1c5a987db2bedd1975ee254cb','0:00:00','','','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/','Medicine/HRP258/Statistics_in_Medicine','','','',-1,-1,'input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_4_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','28ce7c8a_37ed_45c4_8838_6c1a67a3b063','','70e665701acb39de4c46ea9737934a00efa00e95'),
-    ('59aca16b_8382_4db3_bd73_253b8c1aec1e','05daedae_4bea_45a0_a53b_27cc8333a4a6','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','browser','problem_save','AUS','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/','a7e396b28a361e7b5637c59864013f5b','2013-06-12T08:30:53.458627','21d244c8ed14b9a1c5a987db2bedd1975ee254cb','0:00:00','','','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/','Medicine/HRP258/Statistics_in_Medicine','','','',-1,-1,'input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_3_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','485d5cef_0154_4ea2_ad19_05a49c620274','','70e665701acb39de4c46ea9737934a00efa00e95'),
-    ('bbbfa968_0e13_4a66_a6fd_ca9ed14ab724','05daedae_4bea_45a0_a53b_27cc8333a4a6','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','browser','problem_save','AUS','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/','a7e396b28a361e7b5637c59864013f5b','2013-06-12T08:30:53.458627','21d244c8ed14b9a1c5a987db2bedd1975ee254cb','0:00:00','','','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/','Medicine/HRP258/Statistics_in_Medicine','','','',-1,-1,'input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','8bf0c14c_a5da_426e_8936_358d27098d56','','70e665701acb39de4c46ea9737934a00efa00e95'),
-    ('63d12327_7e9d_4d6d_846d_a2908765c5db','05daedae_4bea_45a0_a53b_27cc8333a4a6','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','browser','problem_save','AUS','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/','a7e396b28a361e7b5637c59864013f5b','2013-06-12T08:30:53.458627','21d244c8ed14b9a1c5a987db2bedd1975ee254cb','0:00:00','','','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/','Medicine/HRP258/Statistics_in_Medicine','','','',-1,-1,'input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_18_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','ea99d0c8_ab83_4e84_8c23_f187546ad4b0','','70e665701acb39de4c46ea9737934a00efa00e95');
+    ('7e9c544d_1925_47d1_8620_2fe9a5db199e','input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_4_1','13.5','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/'),
+    ('0af384f9_83c8_4672_9dd4_10012a733f79','input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_3_1','1.59+breaths+per+minute','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/'),
+    ('de18421d_a360_4b35_ab95_50b6ecdf8d2b','input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_2_1','13.4+breaths+per+minute','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/'),
+    ('f2e09aea_b22b_4645_b9d4_5b22420bee4e','input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_18_1','','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/');
+INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,quarter,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,mode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
+    ('37dc4a11_0df7_42bb_aa92_27ca6dd87041','30f7e7e7_3717_47ae_8dc6_87b8789bcd91','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','browser','problem_save','AUS','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/','a7e396b28a361e7b5637c59864013f5b','2013-06-12T08:30:53.458627','summer2013','21d244c8ed14b9a1c5a987db2bedd1975ee254cb','0:00:00','','','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/','Medicine/HRP258/Statistics_in_Medicine','','','',-1,-1,'input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_4_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','7e9c544d_1925_47d1_8620_2fe9a5db199e','','70e665701acb39de4c46ea9737934a00efa00e95'),
+    ('603a57bb_2804_4b98_939a_82662b2317b5','30f7e7e7_3717_47ae_8dc6_87b8789bcd91','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','browser','problem_save','AUS','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/','a7e396b28a361e7b5637c59864013f5b','2013-06-12T08:30:53.458627','summer2013','21d244c8ed14b9a1c5a987db2bedd1975ee254cb','0:00:00','','','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/','Medicine/HRP258/Statistics_in_Medicine','','','',-1,-1,'input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_3_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','0af384f9_83c8_4672_9dd4_10012a733f79','','70e665701acb39de4c46ea9737934a00efa00e95'),
+    ('aa6cfa2a_dd25_4441_9892_d3fa0d5c798a','30f7e7e7_3717_47ae_8dc6_87b8789bcd91','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','browser','problem_save','AUS','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/','a7e396b28a361e7b5637c59864013f5b','2013-06-12T08:30:53.458627','summer2013','21d244c8ed14b9a1c5a987db2bedd1975ee254cb','0:00:00','','','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/','Medicine/HRP258/Statistics_in_Medicine','','','',-1,-1,'input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_2_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','de18421d_a360_4b35_ab95_50b6ecdf8d2b','','70e665701acb39de4c46ea9737934a00efa00e95'),
+    ('01900e09_57ae_4e82_a41a_7cf7335963b7','30f7e7e7_3717_47ae_8dc6_87b8789bcd91','Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.110 Safari/537.36','browser','problem_save','AUS','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/','a7e396b28a361e7b5637c59864013f5b','2013-06-12T08:30:53.458627','summer2013','21d244c8ed14b9a1c5a987db2bedd1975ee254cb','0:00:00','','','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/bd89d1a5da594e908b98aca72ef1e83e/','Medicine/HRP258/Statistics_in_Medicine','','','',-1,-1,'input_i4x-Medicine-HRP258-problem-44c1ef4e92f648b08adbdcd61d64d558_18_1','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','f2e09aea_b22b_4645_b9d4_5b22420bee4e','','70e665701acb39de4c46ea9737934a00efa00e95');
 -- /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;
@@ -215,6 +260,7 @@ INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country
 -- /*!40000 ALTER TABLE `Account` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `EventIp` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `ABExperiment` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `OpenAssessment` ENABLE KEYS */;
 UNLOCK TABLES;
 REPLACE INTO EdxPrivate.Account (account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) SELECT account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails FROM Edx.Account;
 DROP TABLE Edx.Account;

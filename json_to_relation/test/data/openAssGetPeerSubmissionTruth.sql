@@ -101,6 +101,7 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.EventIp (
 CREATE TABLE IF NOT EXISTS ABExperiment (
     event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
     event_type VARCHAR(255) NOT NULL,
+    anon_screen_name VARCHAR(40) NOT NULL,
     group_id INT NOT NULL,
     group_name VARCHAR(255) NOT NULL,
     partition_id INT NOT NULL,
@@ -112,6 +113,8 @@ CREATE TABLE IF NOT EXISTS ABExperiment (
     ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS OpenAssessment (
     event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    event_type VARCHAR(255) NOT NULL,
+    anon_screen_name VARCHAR(40) NOT NULL,
     score_type VARCHAR(255) NOT NULL,
     submission_uuid VARCHAR(255) NOT NULL,
     edx_anon_id TEXT NOT NULL,
@@ -198,12 +201,31 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     correctMap_fk VARCHAR(40) NOT NULL,
     answer_fk VARCHAR(40) NOT NULL,
     state_fk VARCHAR(40) NOT NULL,
-    load_info_fk VARCHAR(40) NOT NULL,
-    FOREIGN KEY(correctMap_fk) REFERENCES CorrectMap(correct_map_id) ON DELETE CASCADE,
-    FOREIGN KEY(answer_fk) REFERENCES Answer(answer_id) ON DELETE CASCADE,
-    FOREIGN KEY(state_fk) REFERENCES State(state_id) ON DELETE CASCADE,
-    FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id) ON DELETE CASCADE
-    ) ENGINE=InnoDB;
+    load_info_fk VARCHAR(40) NOT NULL
+    ) ENGINE=InnoDB
+PARTITION BY LIST COLUMNS(quarter) ( 
+PARTITION pAY2012_Spring VALUES IN ('spring2013'),
+PARTITION pAY2012_Summer VALUES IN ('summer2013'),
+PARTITION pAY2013_Fall VALUES IN ('fall2013'),
+PARTITION pAY2013_Winter VALUES IN ('winter2014'),
+PARTITION pAY2013_Spring VALUES IN ('spring2014'),
+PARTITION pAY2013_Summer VALUES IN ('summer2014'),
+PARTITION pAY2014_Fall VALUES IN ('fall2014'),
+PARTITION pAY2014_Winter VALUES IN ('winter2015'),
+PARTITION pAY2014_Spring VALUES IN ('spring2015'),
+PARTITION pAY2014_Summer VALUES IN ('summer2015'),
+PARTITION pAY2015_Fall VALUES IN ('fall2015'),
+PARTITION pAY2015_Winter VALUES IN ('winter2016'),
+PARTITION pAY2015_Spring VALUES IN ('spring2016'),
+PARTITION pAY2015_Summer VALUES IN ('summer2016'),
+PARTITION pAY2016_Fall VALUES IN ('fall2016'),
+PARTITION pAY2016_Winter VALUES IN ('winter2017'),
+PARTITION pAY2016_Spring VALUES IN ('spring2017'),
+PARTITION pAY2016_Summer VALUES IN ('summer2017'),
+PARTITION pAY2017_Fall VALUES IN ('fall2017'),
+PARTITION pAY2017_Winter VALUES IN ('winter2018'),
+PARTITION pAY2017_Spring VALUES IN ('spring2018'),
+PARTITION pAY2017_Summer VALUES IN ('summer2018'));
 LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE, `EventIp` WRITE, `ABExperiment` WRITE, `OpenAssessment` WRITE;
 /*!40000 ALTER TABLE `EdxTrackEvent` DISABLE KEYS */;
 /*!40000 ALTER TABLE `State` DISABLE KEYS */;
@@ -216,15 +238,15 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `ABExperiment` DISABLE KEYS */;
 /*!40000 ALTER TABLE `OpenAssessment` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('4a0182a8f0801de9a24791c15de93f02028762c7','2014-10-23T16:11:58.914110','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/openAssGetPeerSubmission.json');
+    ('4a0182a8f0801de9a24791c15de93f02028762c7','2014-10-26T12:08:40.928296','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/openAssGetPeerSubmission.json');
 INSERT INTO EventIp (event_table_id,event_ip) VALUES 
-    ('55d8bb2e_520e_409a_bd4a_7584f300c338','171.67.220.125');
-INSERT INTO ABExperiment (event_table_id,event_type,group_id,group_name,partition_id,partition_name,child_module_id,resource_display_name,cohort_id,cohort_name) VALUES 
-    ('55d8bb2e_520e_409a_bd4a_7584f300c338','openassessmentblock.get_peer_submission','2','',-1,'xblock.partition_service.partition_0','','Peer Assessment',-1,'');
-INSERT INTO OpenAssessment (event_table_id,score_type,submission_uuid,edx_anon_id,time,time_aux,course_display_name,resource_display_name,resource_id,submission_text,feedback_text,comment_text,attempt_num,options,corrections,points) VALUES 
-    ('55d8bb2e_520e_409a_bd4a_7584f300c338','',null,'5ee2c96e6d6b84818d41c489a0ce89ac','','','StanfordOnline/OpenEdX/Demo','Peer Assessment','i4x://StanfordOnline/OpenEdX/openassessment/bdb10e5302c64229b897f8a2e9110293','','','',-1,'','','');
+    ('466b1b9a_1cd6_49dc_ac55_ae44fccfb4da','171.67.220.125');
+INSERT INTO ABExperiment (event_table_id,event_type,anon_screen_name,group_id,group_name,partition_id,partition_name,child_module_id,resource_display_name,cohort_id,cohort_name) VALUES 
+    ('466b1b9a_1cd6_49dc_ac55_ae44fccfb4da','openassessmentblock.get_peer_submission','',-1,'',-1,'','','Peer Assessment',-1,'');
+INSERT INTO OpenAssessment (event_table_id,event_type,anon_screen_name,score_type,submission_uuid,edx_anon_id,time,time_aux,course_display_name,resource_display_name,resource_id,submission_text,feedback_text,comment_text,attempt_num,options,corrections,points) VALUES 
+    ('466b1b9a_1cd6_49dc_ac55_ae44fccfb4da','openassessmentblock.get_peer_submission','e07a3da71f0330452a6aa650ed598e2911301491','',null,'5ee2c96e6d6b84818d41c489a0ce89ac','2014-05-15T18:09:04.697762+00:00','','StanfordOnline/OpenEdX/Demo','Peer Assessment','i4x://StanfordOnline/OpenEdX/openassessment/bdb10e5302c64229b897f8a2e9110293','','','',-1,'','','');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,quarter,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,mode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('55d8bb2e_520e_409a_bd4a_7584f300c338','47236d6c_7eda_4536_9b3a_1150e213cd82','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.137 Safari/537.36','server','openassessmentblock.get_peer_submission','USA','x_module','','2014-05-15T18:09:04.697762+00:00','spring2014','e07a3da71f0330452a6aa650ed598e2911301491','0:00:00','','','StanfordOnline/OpenEdX/Demo','StanfordOnline/OpenEdX/Demo','Peer Assessment','StanfordOnline','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','4a0182a8f0801de9a24791c15de93f02028762c7');
+    ('466b1b9a_1cd6_49dc_ac55_ae44fccfb4da','9cf18103_267b_4122_8f5b_6af225093c26','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.137 Safari/537.36','server','openassessmentblock.get_peer_submission','USA','x_module','','2014-05-15T18:09:04.697762+00:00','spring2014','e07a3da71f0330452a6aa650ed598e2911301491','0:00:00','','','StanfordOnline/OpenEdX/Demo','StanfordOnline/OpenEdX/Demo','Peer Assessment','StanfordOnline','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','4a0182a8f0801de9a24791c15de93f02028762c7');
 -- /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;

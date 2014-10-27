@@ -203,6 +203,43 @@ CREATE TABLE IF NOT EXISTS ActivityGrade (
     module_id              varchar(255)
     ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS `ABExperiment` (
+  `event_table_id` varchar(40) NOT NULL,
+  `event_type` varchar(255) NOT NULL,
+  `anon_screen_name` varchar(40) NOT NULL,
+  `group_id` int(11) NOT NULL,
+  `group_name` varchar(255) NOT NULL,
+  `partition_id` int(11) NOT NULL,
+  `partition_name` varchar(255) NOT NULL,
+  `child_module_id` varchar(255) NOT NULL,
+  `resource_display_name` varchar(255) NOT NULL,
+  `cohort_id` INT NOT NULL,
+  `cohort_name` varchar(255) NOT NULL,
+  PRIMARY KEY (`event_table_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE IF NOT EXISTS `OpenAssessment` (
+  `event_table_id` varchar(40) NOT NULL,
+  `event_type` TEXT NOT NULL,
+  `anon_screen_name` varchar(40) NOT NULL,
+  `score_type` varchar(255) NOT NULL,
+  `submission_uuid` varchar(255) NOT NULL,
+  `edx_anon_id` TEXT NOT NULL,
+  `time` DATETIME NOT NULL,
+  `time_aux` DATETIME NOT NULL,
+  `course_display_name` varchar(255) NOT NULL,
+  `resource_display_name` varchar(255) NOT NULL,
+  `resource_id` varchar(255) NOT NULL,
+  `submission_text` MEDIUMTEXT NOT NULL,
+  `feedback_text` MEDIUMTEXT NOT NULL,
+  `comment_text` MEDIUMTEXT NOT NULL,
+  `attempt_num` INT NOT NULL,
+  `options` varchar(255) NOT NULL,
+  `corrections` TEXT NOT NULL,
+  `points` TEXT NOT NULL,
+  PRIMARY KEY (`event_table_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
 USE EdxForum;
 CREATE TABLE IF NOT EXISTS contents (
     `forum_post_id` varchar(40) NOT NULL,

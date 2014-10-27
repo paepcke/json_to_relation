@@ -3,4 +3,4 @@ CREATE TABLE IF NOT EXISTS Answer (
     problem_id VARCHAR(255) NOT NULL,
     answer TEXT NOT NULL,
     course_id VARCHAR(255) NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;

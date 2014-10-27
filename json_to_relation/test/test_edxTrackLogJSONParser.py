@@ -39,7 +39,7 @@ from json_to_relation.output_disposition import OutputDisposition, ColDataType, 
     ColumnSpec, OutputFile, OutputPipe # @UnusedImport
 
 
-TEST_ALL = False
+TEST_ALL = True
 PRINT_OUTS = False  # Set True to get printouts of CREATE TABLE statements
 
 # The following is very Dangerous: If True, no tests are
@@ -158,8 +158,8 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         if UPDATE_TRUTH:
             self.updateTruthFromString(str(row), os.path.join(self.currDir, 'data/rescueJSONTruth1.txt'))
         else:
-            self.assertFileContentEquals(os.path.join(self.currDir, 'data/rescueJSONTruth1.txt'), 
-                                         str(row))
+            with open(os.path.join(self.currDir, 'data/rescueJSONTruth1.txt'), 'r') as fd:
+                self.assertFileContentEquals(fd,str(row))
         
         badJSONStr = "{u'username': u'Magistra', u'event_source': u'server', u'event_type': u'/courses/Education/EDUC115N/How_to_Learn_Math/modx/i4x://Education/EDUC115N/peergrading/ef6ba7f803bb46ebaaf008cde737e3e9/save_grade', u'ip': u'209.216.182.65', u'agent': u'Mozilla/5.0 (Windows NT 6.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.66 Safari/537.36', u'page': None, u'host': u'class.stanford.edu', u'time': u'2013-09-14T06:55:57.003501+00:00', u'event': u'{\"POST\": {\"submission_id\": [\"51255\"], \"feedback\": [\"The thumbs up does seem like a great idea. How do you think she manages to communicate to students that she does take each answer seriously? Is it that she takes time to record each way of thinking accurately? This seems very important in engaging all students.\"], \"rubric_scores[]\": [\"1\"], \"answer_unknown\": [\"false\"], \"location\": [\"i4x://Education/EDUC115N/combinedopenended/0d67667941cd4e14ba29abd1542a9c5f\"], \"submission_key\": [\"414b8d746627f6db8d705605b16'}"
         row = []
@@ -167,7 +167,8 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         if UPDATE_TRUTH:
             self.updateTruthFromString(str(row), os.path.join(self.currDir, 'data/rescueJSONTruth2.txt'))
         else:
-            self.assertFileContentEquals(os.path.join(self.currDir, 'data/rescueJSONTruth2.txt'), str(row))
+            with open(os.path.join(self.currDir, 'data/rescueJSONTruth2.txt'), 'r') as fd:
+                self.assertFileContentEquals(fd, str(row))
 
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testExtractCourseIDFromProblemXEvent(self):
@@ -1498,6 +1499,31 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def testPageClose(self):
+        testFilePath = os.path.join(os.path.dirname(__file__),"data/pageClose.json")
+        stringSource = InURI(testFilePath)
+        
+        resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+        # Just use the file name of the tmp file.
+        resultFileName = resultFile.name
+        resultFile.close()
+        dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+        fileConverter = JSONToRelation(stringSource,
+                                       dest,
+                                       mainTableName='EdxTrackEvent'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        fileConverter.setParser(edxParser)
+        fileConverter.convert()
+        dest.close()
+        truthFile = open(os.path.join(os.path.dirname(__file__),"data/pageCloseTruth.sql"), 'r')
+        if UPDATE_TRUTH:
+            self.updateTruth(dest.name, truthFile.name)
+        else:
+            self.assertFileContentEquals(truthFile, dest.name)
+
+
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")    
     def testKeyErrorHRP259(self):
         testFilePath = os.path.join(os.path.dirname(__file__),"data/keyErrorHRP259.json")
@@ -1546,7 +1572,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
-    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testABExperimentRenderChild(self):
         testFilePath = os.path.join(os.path.dirname(__file__),"data/abExpChildRender.json")
         stringSource = InURI(testFilePath)
@@ -1622,7 +1648,7 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
-    #@unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testOpenAssPeerAssess(self):
         testFilePath = os.path.join(os.path.dirname(__file__),"data/openAssPeerAssess.json")
         stringSource = InURI(testFilePath)
@@ -1640,15 +1666,113 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         fileConverter.setParser(edxParser)
         fileConverter.convert()
         dest.close()
-        truthFile = open(os.path.join(os.path.dirname(__file__),"data/openAssPeerAssess.sql"), 'r')
+        truthFile = open(os.path.join(os.path.dirname(__file__),"data/openAssPeerAssessTruth.sql"), 'r')
+        if UPDATE_TRUTH:
+            self.updateTruth(dest.name, truthFile.name)
+        else:
+            self.assertFileContentEquals(truthFile, dest.name)
+
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def testOpenAssSelfAssess(self):
+        testFilePath = os.path.join(os.path.dirname(__file__),"data/openAssSelfAssess.json")
+        stringSource = InURI(testFilePath)
+        
+        resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+        # Just use the file name of the tmp file.
+        resultFileName = resultFile.name
+        resultFile.close()
+        dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+        fileConverter = JSONToRelation(stringSource,
+                                       dest,
+                                       mainTableName='EdxTrackEvent'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        fileConverter.setParser(edxParser)
+        fileConverter.convert()
+        dest.close()
+        truthFile = open(os.path.join(os.path.dirname(__file__),"data/openAssSelfAssessTruth.sql"), 'r')
+        if UPDATE_TRUTH:
+            self.updateTruth(dest.name, truthFile.name)
+        else:
+            self.assertFileContentEquals(truthFile, dest.name)
+
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def testOpenAssSubmitFeedbackOnAssessments(self):
+        testFilePath = os.path.join(os.path.dirname(__file__),"data/openAssSubmitFeedback.json")
+        stringSource = InURI(testFilePath)
+        
+        resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+        # Just use the file name of the tmp file.
+        resultFileName = resultFile.name
+        resultFile.close()
+        dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+        fileConverter = JSONToRelation(stringSource,
+                                       dest,
+                                       mainTableName='EdxTrackEvent'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        fileConverter.setParser(edxParser)
+        fileConverter.convert()
+        dest.close()
+        truthFile = open(os.path.join(os.path.dirname(__file__),"data/openAssSubmitFeedbackTruth.sql"), 'r')
+        if UPDATE_TRUTH:
+            self.updateTruth(dest.name, truthFile.name)
+        else:
+            self.assertFileContentEquals(truthFile, dest.name)
+
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def testOpenAssStudentTraining(self):
+        testFilePath = os.path.join(os.path.dirname(__file__),"data/openAssStudentTraining.json")
+        stringSource = InURI(testFilePath)
+        
+        resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+        # Just use the file name of the tmp file.
+        resultFileName = resultFile.name
+        resultFile.close()
+        dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+        fileConverter = JSONToRelation(stringSource,
+                                       dest,
+                                       mainTableName='EdxTrackEvent'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        fileConverter.setParser(edxParser)
+        fileConverter.convert()
+        dest.close()
+        truthFile = open(os.path.join(os.path.dirname(__file__),"data/openAssStudentTrainingTruth.sql"), 'r')
+        if UPDATE_TRUTH:
+            self.updateTruth(dest.name, truthFile.name)
+        else:
+            self.assertFileContentEquals(truthFile, dest.name)
+
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def testOpenUploadFile(self):
+        testFilePath = os.path.join(os.path.dirname(__file__),"data/openAssUploadFile.json")
+        stringSource = InURI(testFilePath)
+        
+        resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+        # Just use the file name of the tmp file.
+        resultFileName = resultFile.name
+        resultFile.close()
+        dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+        fileConverter = JSONToRelation(stringSource,
+                                       dest,
+                                       mainTableName='EdxTrackEvent'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        fileConverter.setParser(edxParser)
+        fileConverter.convert()
+        dest.close()
+        truthFile = open(os.path.join(os.path.dirname(__file__),"data/openAssUploadFileTruth.sql"), 'r')
         if UPDATE_TRUTH:
             self.updateTruth(dest.name, truthFile.name)
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
 
+
+
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
-    def testEnrollmentActivatedDeactivated(self):
+    def testEnrollmentActivated(self):
         testFilePath = os.path.join(os.path.dirname(__file__),"data/enrollActivated.json")
         stringSource = InURI(testFilePath)
         
@@ -1671,6 +1795,33 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
+    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+    def testEnrollmentDeactivated(self):
+        testFilePath = os.path.join(os.path.dirname(__file__),"data/enrollDeactivated.json")
+        stringSource = InURI(testFilePath)
+        
+        resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+        # Just use the file name of the tmp file.
+        resultFileName = resultFile.name
+        resultFile.close()
+        dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+        fileConverter = JSONToRelation(stringSource,
+                                       dest,
+                                       mainTableName='EdxTrackEvent'
+                                       )
+        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+        fileConverter.setParser(edxParser)
+        fileConverter.convert()
+        dest.close()
+        truthFile = open(os.path.join(os.path.dirname(__file__),"data/enrollDeactivatedTruth.sql"), 'r')
+        if UPDATE_TRUTH:
+            self.updateTruth(dest.name, truthFile.name)
+        else:
+            self.assertFileContentEquals(truthFile, dest.name)
+
+
+    
+    
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testQuarter(self):
         testFilePath = os.path.join(os.path.dirname(__file__),"data/quarter.json")
@@ -1695,33 +1846,33 @@ class TestEdxTrackLogJSONParser(unittest.TestCase):
         else:
             self.assertFileContentEquals(truthFile, dest.name)
 
-    @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
-    def testInstructorEventsOnlyCommonFields(self):
- 
-        # Several instructor events have only the common fields; event field is empty.
-        # Examples: dump_answer_dist_csv, dump_grades, list_beta_testers, list_students:
-        testFilePath = os.path.join(os.path.dirname(__file__),"data/eventsWithOnlyCommonFields.json")
-        stringSource = InURI(testFilePath)
-         
-        resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
-        # Just use the file name of the tmp file.
-        resultFileName = resultFile.name
-        resultFile.close()
-        dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
-        fileConverter = JSONToRelation(stringSource,
-                                       dest,
-                                       mainTableName='EdxTrackEvent'
-                                       )
-        edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
-        fileConverter.setParser(edxParser)
-        fileConverter.convert()
-        dest.close()
-         
-        truthFile = open(os.path.join(os.path.dirname(__file__),"data/eventsWithOnlyCommonFieldsTruth.sql"), 'r')
-        if UPDATE_TRUTH:
-            self.updateTruth(dest.name, truthFile.name)
-        else:
-            self.assertFileContentEquals(truthFile, dest.name)
+#     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
+#     def testInstructorEventsOnlyCommonFields(self):
+#  
+#         # Several instructor events have only the common fields; event field is empty.
+#         # Examples: dump_answer_dist_csv, dump_grades, list_beta_testers, list_students:
+#         testFilePath = os.path.join(os.path.dirname(__file__),"data/eventsWithOnlyCommonFields.json")
+#         stringSource = InURI(testFilePath)
+#          
+#         resultFile = tempfile.NamedTemporaryFile(prefix='oolala', suffix='.sql')
+#         # Just use the file name of the tmp file.
+#         resultFileName = resultFile.name
+#         resultFile.close()
+#         dest = OutputFile(resultFileName, OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS)
+#         fileConverter = JSONToRelation(stringSource,
+#                                        dest,
+#                                        mainTableName='EdxTrackEvent'
+#                                        )
+#         edxParser = EdXTrackLogJSONParser(fileConverter, 'EdxTrackEvent', replaceTables=True, dbName='Edx', useDisplayNameCache=True)
+#         fileConverter.setParser(edxParser)
+#         fileConverter.convert()
+#         dest.close()
+#          
+#         truthFile = open(os.path.join(os.path.dirname(__file__),"data/eventsWithOnlyCommonFieldsTruth.sql"), 'r')
+#         if UPDATE_TRUTH:
+#             self.updateTruth(dest.name, truthFile.name)
+#         else:
+#             self.assertFileContentEquals(truthFile, dest.name)
 
     @unittest.skipIf(not TEST_ALL, "Temporarily disabled")
     def testForumEvent(self):

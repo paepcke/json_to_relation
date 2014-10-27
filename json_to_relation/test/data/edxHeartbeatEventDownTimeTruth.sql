@@ -16,7 +16,7 @@ USE Edx;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-DROP TABLE IF EXISTS Main, Answer, InputState, CorrectMap, State, Account, EdxPrivate.Account, LoadInfo;
+DROP TABLE IF EXISTS Main, Answer, InputState, CorrectMap, State, Account, EdxPrivate.Account, LoadInfo, ABExperiment, OpenAssessment;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE IF NOT EXISTS Answer (
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS Answer (
     problem_id VARCHAR(255) NOT NULL,
     answer TEXT NOT NULL,
     course_id VARCHAR(255) NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL PRIMARY KEY,
     answer_identifier TEXT NOT NULL,
@@ -34,12 +34,12 @@ CREATE TABLE IF NOT EXISTS CorrectMap (
     hint TEXT NOT NULL,
     hintmode VARCHAR(255) NOT NULL,
     queuestate TEXT NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS InputState (
     input_state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     problem_id VARCHAR(255) NOT NULL,
     state TEXT NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS State (
     state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT NOT NULL,
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS State (
     FOREIGN KEY(student_answer) REFERENCES Answer(answer_id) ON DELETE CASCADE,
     FOREIGN KEY(correct_map) REFERENCES CorrectMap(correct_map_id) ON DELETE CASCADE,
     FOREIGN KEY(input_state) REFERENCES InputState(input_state_id) ON DELETE CASCADE
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS Account (
     account_id VARCHAR(40) NOT NULL PRIMARY KEY,
     screen_name TEXT NOT NULL,
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS Account (
     enrollment_action VARCHAR(255) NOT NULL,
     email TEXT NOT NULL,
     receive_emails VARCHAR(255) NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     account_id VARCHAR(40) NOT NULL PRIMARY KEY,
     screen_name TEXT NOT NULL,
@@ -89,29 +89,53 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     enrollment_action VARCHAR(255) NOT NULL,
     email TEXT NOT NULL,
     receive_emails VARCHAR(255) NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS EventIp (
     event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
     event_ip VARCHAR(255) NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS EdxPrivate.EventIp (
     event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
     event_ip VARCHAR(255) NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS ABExperiment (
     event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
     event_type VARCHAR(255) NOT NULL,
+    anon_screen_name VARCHAR(40) NOT NULL,
     group_id INT NOT NULL,
     group_name VARCHAR(255) NOT NULL,
     partition_id INT NOT NULL,
     partition_name VARCHAR(255) NOT NULL,
-    child_module_id VARCHAR(255) NOT NULL
-    ) ENGINE=MyISAM;
+    child_module_id VARCHAR(255) NOT NULL,
+    resource_display_name VARCHAR(255) NOT NULL,
+    cohort_id INT NOT NULL,
+    cohort_name VARCHAR(255) NOT NULL
+    ) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS OpenAssessment (
+    event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    event_type VARCHAR(255) NOT NULL,
+    anon_screen_name VARCHAR(40) NOT NULL,
+    score_type VARCHAR(255) NOT NULL,
+    submission_uuid VARCHAR(255) NOT NULL,
+    edx_anon_id TEXT NOT NULL,
+    time DATETIME NOT NULL,
+    time_aux DATETIME NOT NULL,
+    course_display_name VARCHAR(255) NOT NULL,
+    resource_display_name VARCHAR(255) NOT NULL,
+    resource_id VARCHAR(255) NOT NULL,
+    submission_text MEDIUMTEXT NOT NULL,
+    feedback_text MEDIUMTEXT NOT NULL,
+    comment_text MEDIUMTEXT NOT NULL,
+    attempt_num INT NOT NULL,
+    options VARCHAR(255) NOT NULL,
+    corrections TEXT NOT NULL,
+    points TEXT NOT NULL
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS LoadInfo (
     load_info_id VARCHAR(40) NOT NULL PRIMARY KEY,
     load_date_time DATETIME NOT NULL,
     load_file TEXT NOT NULL
-    ) ENGINE=MyISAM;
+    ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS Main (
     _id VARCHAR(40) NOT NULL PRIMARY KEY,
     event_id VARCHAR(40) NOT NULL,
@@ -122,6 +146,7 @@ CREATE TABLE IF NOT EXISTS Main (
     page TEXT NOT NULL,
     session TEXT NOT NULL,
     time DATETIME NOT NULL,
+    quarter VARCHAR(255) NOT NULL,
     anon_screen_name TEXT NOT NULL,
     downtime_for DATETIME NOT NULL,
     student_id TEXT NOT NULL,
@@ -176,13 +201,9 @@ CREATE TABLE IF NOT EXISTS Main (
     correctMap_fk VARCHAR(40) NOT NULL,
     answer_fk VARCHAR(40) NOT NULL,
     state_fk VARCHAR(40) NOT NULL,
-    load_info_fk VARCHAR(40) NOT NULL,
-    FOREIGN KEY(correctMap_fk) REFERENCES CorrectMap(correct_map_id) ON DELETE CASCADE,
-    FOREIGN KEY(answer_fk) REFERENCES Answer(answer_id) ON DELETE CASCADE,
-    FOREIGN KEY(state_fk) REFERENCES State(state_id) ON DELETE CASCADE,
-    FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id) ON DELETE CASCADE
-    ) ENGINE=MyISAM;
-LOCK TABLES `Main` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE, `EventIp` WRITE, `ABExperiment` WRITE;
+    load_info_fk VARCHAR(40) NOT NULL
+    ) ENGINE=InnoDB;
+LOCK TABLES `Main` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE, `EventIp` WRITE, `ABExperiment` WRITE, `OpenAssessment` WRITE;
 /*!40000 ALTER TABLE `Main` DISABLE KEYS */;
 /*!40000 ALTER TABLE `State` DISABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` DISABLE KEYS */;
@@ -192,18 +213,19 @@ LOCK TABLES `Main` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `Co
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 /*!40000 ALTER TABLE `EventIp` DISABLE KEYS */;
 /*!40000 ALTER TABLE `ABExperiment` DISABLE KEYS */;
+/*!40000 ALTER TABLE `OpenAssessment` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('f348f0ce54c75dcc680209885594269f42f33b35','2014-06-25T11:29:18.603203','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/edxHeartbeatEventDownTime.json');
+    ('f348f0ce54c75dcc680209885594269f42f33b35','2014-10-26T12:08:18.915241','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/edxHeartbeatEventDownTime.json');
 INSERT INTO EventIp (event_table_id,event_ip) VALUES 
-    ('4f4a4c75_c5f4_4265_8004_857f74667965','127.0.0.1');
-INSERT INTO Main (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,mode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('4f4a4c75_c5f4_4265_8004_857f74667965','68e2b925_e5b0_4138_85df_c382078b3583','ELB-HealthChecker/1.0','server','/heartbeat','ZZZ','','','2013-07-18T08:43:32.573390+00:00','9c1185a5c5e9fc54612808977ee8f548b2258d31','0:00:00','','','','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','f348f0ce54c75dcc680209885594269f42f33b35');
+    ('d7fbd1c5_c2b0_4ade_8a1f_5b3abde13220','127.0.0.1');
+INSERT INTO Main (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,quarter,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,mode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
+    ('d7fbd1c5_c2b0_4ade_8a1f_5b3abde13220','7ded7e1a_0b5a_4c7b_a124_07da5f38e448','ELB-HealthChecker/1.0','server','/heartbeat','ZZZ','','','2013-07-18T08:43:32.573390+00:00','summer2013','9c1185a5c5e9fc54612808977ee8f548b2258d31','0:00:00','','','','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','f348f0ce54c75dcc680209885594269f42f33b35');
 INSERT INTO EventIp (event_table_id,event_ip) VALUES 
-    ('53944324_3bb4_46a9_b045_47e1801adcf2','127.0.0.1');
-INSERT INTO Main (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,mode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('53944324_3bb4_46a9_b045_47e1801adcf2','3620944b_3267_4e14_bd10_ebae237aded6','ELB-HealthChecker/1.0','server','/heartbeat','ZZZ','','','2013-07-18T09:45:37.573390+00:00','9c1185a5c5e9fc54612808977ee8f548b2258d31','1:02:05','','','','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','f348f0ce54c75dcc680209885594269f42f33b35');
+    ('ac113e98_e728_49e7_9189_53718fb0e756','127.0.0.1');
+INSERT INTO Main (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,quarter,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,mode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
+    ('ac113e98_e728_49e7_9189_53718fb0e756','4f5da3bf_1d49_4157_8394_f36b124b01c3','ELB-HealthChecker/1.0','server','/heartbeat','ZZZ','','','2013-07-18T09:45:37.573390+00:00','summer2013','9c1185a5c5e9fc54612808977ee8f548b2258d31','1:02:05','','','','','','','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','f348f0ce54c75dcc680209885594269f42f33b35');
 INSERT INTO EventIp (event_table_id,event_ip) VALUES 
-    ('8dc564e7_0fb0_4a70_bf1f_3a3a64f3ac7b','127.0.0.1');
+    ('97c1aa96_374a_481d_94dc_2aaca504328f','127.0.0.1');
 -- /*!40000 ALTER TABLE `Main` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;
@@ -213,6 +235,7 @@ INSERT INTO EventIp (event_table_id,event_ip) VALUES
 -- /*!40000 ALTER TABLE `Account` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `EventIp` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `ABExperiment` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `OpenAssessment` ENABLE KEYS */;
 UNLOCK TABLES;
 REPLACE INTO EdxPrivate.Account (account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) SELECT account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails FROM Edx.Account;
 DROP TABLE Edx.Account;

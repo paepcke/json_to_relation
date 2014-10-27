@@ -408,6 +408,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaABExperimentTbl = OrderedDict()
         self.schemaABExperimentTbl['event_table_id'] = ColDataType.UUID
         self.schemaABExperimentTbl['event_type'] = ColDataType.TINYTEXT
+        self.schemaABExperimentTbl['anon_screen_name'] = ColDataType.UUID
         self.schemaABExperimentTbl['group_id'] = ColDataType.INT
         self.schemaABExperimentTbl['group_name'] = ColDataType.TINYTEXT
         self.schemaABExperimentTbl['partition_id'] = ColDataType.INT
@@ -424,6 +425,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # Schema for OpenAssessment Events table:
         self.schemaOpenAssessmentTbl = OrderedDict()
         self.schemaOpenAssessmentTbl['event_table_id'] = ColDataType.UUID
+        self.schemaOpenAssessmentTbl['event_type'] = ColDataType.TINYTEXT
+        self.schemaOpenAssessmentTbl['anon_screen_name'] = ColDataType.UUID
         self.schemaOpenAssessmentTbl['score_type'] = ColDataType.TINYTEXT
         self.schemaOpenAssessmentTbl['submission_uuid'] = ColDataType.TINYTEXT
         self.schemaOpenAssessmentTbl['edx_anon_id'] = ColDataType.TEXT
@@ -948,19 +951,21 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             elif eventType in ['assigned_user_to_partition',
                                'xmodule.partitions.assigned_user_to_partition', 
                                'child_render', 
+                               'edx.cohort.user_created', 
                                'edx.cohort.user_added', 
                                'edx.cohort.user_removed']: 
                 self.handleABExperimentEvent(record, row, event)
                 return
 
+            # Peer/Self grading (open assessment):
             elif eventType in ['openassessmentblock.get_peer_submission',
                                'openassessmentblock.peer_assess',
                                'openassessmentblock.self_assess',
                                'openassessmentblock.submit_feedback_on_assessments',
+                               'openassessment.student_training_assess_example',
                                'openassessment.create_submission',
                                'openassessment.save_submission',
-                               'openassessment.save_submission',
-                               'openassessment.save_submission'
+                               'openassessment.upload_file',
                                ]:
                 self.handleOpenAssessmentEvent(record, row, event)
                 return
@@ -2045,6 +2050,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         Takes an ordered dict with  fields:
            - 'event_table_id' : EdxTrackEvent _id field
            - 'event_type      : type of event that caused need for this row
+           - 'anon_screen_name': ...
            - 'group_id'       : experimental group's ID
            - 'group_name'     : experimental group's name
            - 'partition_id'   : experimental partition's id
@@ -2064,6 +2070,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         Takes an ordered dict with  fields:
 			 event_table_id
+			 event_type
+			 anon_screen_name
 			 score_type VARCHAR(2)
 			 submission_uuid
 			 edx_anon_id
@@ -3640,8 +3648,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         # the same key as the current row in EdxTrackEvent:
         currEventRowId = row[0]
         abExpDict = OrderedDict()
-        abExpDict['event_table_id']  = currEventRowId
-        abExpDict['event_type']      = eventType
+        abExpDict['event_table_id']   = currEventRowId
+        abExpDict['event_type']       = eventType
+        abExpDict['anon_screen_name'] = self.getValInRow(row, 'anon_screen_name') 
         
         abExpDict['group_id']        = eventDict.get('group_id', -1)
         abExpDict['group_name']      = eventDict.get('group_name', '')
@@ -3711,7 +3720,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         abExpDict = OrderedDict()
         abExpDict['event_table_id']  = eventTableId
         abExpDict['event_type']      = eventType
-        
+        abExpDict['anon_screen_name'] = ''
         abExpDict['group_id']        = -1
         abExpDict['group_name']      = ''
         abExpDict['partition_id']    = -1
@@ -3762,12 +3771,15 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         currEventRowId = row[0]
         openAssessmentDict = OrderedDict()
         openAssessmentDict['event_table_id'] = currEventRowId
+        openAssessmentDict['event_type'] = eventType
+        openAssessmentDict['anon_screen_name'] = self.getValInRow(row, 'anon_screen_name') 
+        openAssessmentDict['score_type'] = eventType
         openAssessmentDict['score_type'] = ''
         openAssessmentDict['submission_uuid'] = ''
         openAssessmentDict['edx_anon_id'] = ''
-        openAssessmentDict['time'] =  ''
+        openAssessmentDict['time'] =  self.getValInRow(row, 'time') 
         openAssessmentDict['time_aux'] = ''
-        openAssessmentDict['course_display_name'] = '' 
+        openAssessmentDict['course_display_name'] = self.getValInRow(row, 'course_display_name') 
         openAssessmentDict['resource_display_name'] = ''
         openAssessmentDict['resource_id'] = ''
         openAssessmentDict['submission_text'] = '' 
@@ -3793,7 +3805,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             openAssessmentDict['submission_uuid'] = eventDict.get('submission_uuid','')            
             openAssessmentDict['score_type'] = eventDict.get('score_type','')
             partsArray = eventDict.get('parts','')
-            openAssessmentDict['feedback'] = self.makeAssessmentText(partsArray)
+            openAssessmentDict['feedback_text'] = self.makeAssessmentText(partsArray)
             try:
                 rubricDict = openAssessmentDict['rubric']
                 rubric = rubricDict['content_hash']
@@ -3809,6 +3821,12 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             checkboxOptions = eventDict.get('options','')
             if type(checkboxOptions) == list:
                 openAssessmentDict['options'] = str(checkboxOptions)
+
+        elif eventType == 'openassessment.student_training_assess_example':
+            openAssessmentDict['submission_uuid'] = eventDict.get('submission_uuid','')
+            correctionsDict = eventDict.get('corrections', None)
+            openAssessmentDict['corrections'] = self.makeCorrectionsText(correctionsDict, 'Instructor choices in rubric: ')
+            openAssessmentDict['options'] = self.makeCriterionChoiceText(eventDict.get('options_selected', None), 'Student choices in rubric: ')            
         
         elif eventType == 'openassessment.create_submission':
             # The 'answer' field is a dict w/ flds 'text' and 'file_upload_key'
@@ -3843,7 +3861,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             
             
         elif eventType == 'openassessment.upload_file':
-            fileType = eventDict.get('fileType', '')
+            fileType = eventDict.get('fileName', '')
             fileName = eventDict.get('fileType', '')
             fileSize = eventDict.get('fileSize', '')
             openAssessmentDict['resource_display_name'] = 'File %s: %s (%s)' % (fileName, fileType, fileSize)
@@ -3967,6 +3985,50 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             except (KeyError, TypeError):
                 pass
         return resTxt
+    
+    def makeCorrectionsText(self, correctionsDict, preamble=''):
+        '''
+        In openassessment.student_training_assess_example events, the
+        corrections field contains a dict whose keys name a rubric 
+        criterion, and values contain the instructor defined correct choices
+        for that criterion. Return a string suitable for placing in the 'corrections' 
+        column.
+        
+        :param correctionsDict: dict containing criterion name/instructor truth-choice
+        :type correctionsDict: {string : string}
+        :return string listing criterion option choices suitable for placement in 'corrections' column. If
+                passed-in optionsDict is None or empty, an empty string is returned.
+        '''
+        if correctionsDict is None or len(correctionsDict) == 0:
+            return ''
+        resTxt = preamble
+        for correctionCriterion in correctionsDict.keys():
+            resTxt += "Criterion %s: %s; " % (correctionCriterion, correctionsDict[correctionCriterion])
+        return resTxt
+    
+    def makeCriterionChoiceText(self, optionsDict, preamble=''):
+        '''
+        In openassessment.student_training_assess_example the
+        'options_selected' dict contains key/value pairs in which
+        the key names a criterion in a rubric, and value contains
+        a learner's choice in that rubric criterion. Return a 
+        string suitable for placing in the 'options' column.
+        
+        :param optionsDict: dict containing criterionName/chosenValue pairs
+        :type optionsDict: {string : string}
+        :param preamble: any text to put in front of the automatically generated result string
+        :type preamble: string
+        :return string listing criterion option choices suitable for placement in 'options' column. If
+                passed-in optionsDict is None or empty, an empty string is returned.
+        :rtype string 
+        '''
+        if optionsDict is None or len(optionsDict) == 0:
+            return ''
+        resTxt = preamble
+        for criterion in optionsDict.keys():
+            resTxt += "Criterion %s: %s; " % (criterion, optionsDict[criterion])
+        return resTxt
+        
     
     def handlePathStyledEventTypes(self, record, row, event):
         '''
@@ -4512,7 +4574,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 return('','','')
             if eventType == u'/accounts/login':
                 try:
-                    post = json.loads(str(record.get('record', None)))
+                    post = json.loads(str(record.get('event', None)))
                 except:
                     return('','','')
                 if post is not None:
@@ -4532,10 +4594,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 return(courseID, courseID, self.getCourseDisplayName(eventType))
                  
             elif eventType.find('problem_') > -1:
-                record = record.get('record', None)
-                if record is None:
+                event = record.get('event', None)
+                if event is None:
                     return('','','')
-                courseID = self.extractCourseIDFromProblemXEvent(record)
+                courseID = self.extractCourseIDFromProblemXEvent(event)
                 return(courseID, courseID, '')
             else:
                 fullCourseName = record.get('event_type', '')

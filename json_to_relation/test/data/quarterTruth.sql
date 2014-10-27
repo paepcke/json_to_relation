@@ -16,7 +16,7 @@ USE Edx;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-DROP TABLE IF EXISTS EdxTrackEvent, Answer, InputState, CorrectMap, State, Account, EdxPrivate.Account, LoadInfo;
+DROP TABLE IF EXISTS EdxTrackEvent, Answer, InputState, CorrectMap, State, Account, EdxPrivate.Account, LoadInfo, ABExperiment, OpenAssessment;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE IF NOT EXISTS Answer (
@@ -101,11 +101,35 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.EventIp (
 CREATE TABLE IF NOT EXISTS ABExperiment (
     event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
     event_type VARCHAR(255) NOT NULL,
+    anon_screen_name VARCHAR(40) NOT NULL,
     group_id INT NOT NULL,
     group_name VARCHAR(255) NOT NULL,
     partition_id INT NOT NULL,
     partition_name VARCHAR(255) NOT NULL,
-    child_module_id VARCHAR(255) NOT NULL
+    child_module_id VARCHAR(255) NOT NULL,
+    resource_display_name VARCHAR(255) NOT NULL,
+    cohort_id INT NOT NULL,
+    cohort_name VARCHAR(255) NOT NULL
+    ) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS OpenAssessment (
+    event_table_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    event_type VARCHAR(255) NOT NULL,
+    anon_screen_name VARCHAR(40) NOT NULL,
+    score_type VARCHAR(255) NOT NULL,
+    submission_uuid VARCHAR(255) NOT NULL,
+    edx_anon_id TEXT NOT NULL,
+    time DATETIME NOT NULL,
+    time_aux DATETIME NOT NULL,
+    course_display_name VARCHAR(255) NOT NULL,
+    resource_display_name VARCHAR(255) NOT NULL,
+    resource_id VARCHAR(255) NOT NULL,
+    submission_text MEDIUMTEXT NOT NULL,
+    feedback_text MEDIUMTEXT NOT NULL,
+    comment_text MEDIUMTEXT NOT NULL,
+    attempt_num INT NOT NULL,
+    options VARCHAR(255) NOT NULL,
+    corrections TEXT NOT NULL,
+    points TEXT NOT NULL
     ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS LoadInfo (
     load_info_id VARCHAR(40) NOT NULL PRIMARY KEY,
@@ -177,13 +201,32 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     correctMap_fk VARCHAR(40) NOT NULL,
     answer_fk VARCHAR(40) NOT NULL,
     state_fk VARCHAR(40) NOT NULL,
-    load_info_fk VARCHAR(40) NOT NULL,
-    FOREIGN KEY(correctMap_fk) REFERENCES CorrectMap(correct_map_id) ON DELETE CASCADE,
-    FOREIGN KEY(answer_fk) REFERENCES Answer(answer_id) ON DELETE CASCADE,
-    FOREIGN KEY(state_fk) REFERENCES State(state_id) ON DELETE CASCADE,
-    FOREIGN KEY(load_info_fk) REFERENCES LoadInfo(load_info_id) ON DELETE CASCADE
-    ) ENGINE=InnoDB;
-LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE, `EventIp` WRITE, `ABExperiment` WRITE;
+    load_info_fk VARCHAR(40) NOT NULL
+    ) ENGINE=InnoDB
+PARTITION BY LIST COLUMNS(quarter) ( 
+PARTITION pAY2012_Spring VALUES IN ('spring2013'),
+PARTITION pAY2012_Summer VALUES IN ('summer2013'),
+PARTITION pAY2013_Fall VALUES IN ('fall2013'),
+PARTITION pAY2013_Winter VALUES IN ('winter2014'),
+PARTITION pAY2013_Spring VALUES IN ('spring2014'),
+PARTITION pAY2013_Summer VALUES IN ('summer2014'),
+PARTITION pAY2014_Fall VALUES IN ('fall2014'),
+PARTITION pAY2014_Winter VALUES IN ('winter2015'),
+PARTITION pAY2014_Spring VALUES IN ('spring2015'),
+PARTITION pAY2014_Summer VALUES IN ('summer2015'),
+PARTITION pAY2015_Fall VALUES IN ('fall2015'),
+PARTITION pAY2015_Winter VALUES IN ('winter2016'),
+PARTITION pAY2015_Spring VALUES IN ('spring2016'),
+PARTITION pAY2015_Summer VALUES IN ('summer2016'),
+PARTITION pAY2016_Fall VALUES IN ('fall2016'),
+PARTITION pAY2016_Winter VALUES IN ('winter2017'),
+PARTITION pAY2016_Spring VALUES IN ('spring2017'),
+PARTITION pAY2016_Summer VALUES IN ('summer2017'),
+PARTITION pAY2017_Fall VALUES IN ('fall2017'),
+PARTITION pAY2017_Winter VALUES IN ('winter2018'),
+PARTITION pAY2017_Spring VALUES IN ('spring2018'),
+PARTITION pAY2017_Summer VALUES IN ('summer2018'));
+LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` WRITE, `CorrectMap` WRITE, `LoadInfo` WRITE, `Account` WRITE, `EventIp` WRITE, `ABExperiment` WRITE, `OpenAssessment` WRITE;
 /*!40000 ALTER TABLE `EdxTrackEvent` DISABLE KEYS */;
 /*!40000 ALTER TABLE `State` DISABLE KEYS */;
 /*!40000 ALTER TABLE `InputState` DISABLE KEYS */;
@@ -193,12 +236,13 @@ LOCK TABLES `EdxTrackEvent` WRITE, `State` WRITE, `InputState` WRITE, `Answer` W
 /*!40000 ALTER TABLE `Account` DISABLE KEYS */;
 /*!40000 ALTER TABLE `EventIp` DISABLE KEYS */;
 /*!40000 ALTER TABLE `ABExperiment` DISABLE KEYS */;
+/*!40000 ALTER TABLE `OpenAssessment` DISABLE KEYS */;
 INSERT INTO LoadInfo (load_info_id,load_date_time,load_file) VALUES 
-    ('20ffff1f104b3fad46eba8e7316f75b5a04421ab','2014-10-21T15:26:35.394031','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/quarter.json');
+    ('20ffff1f104b3fad46eba8e7316f75b5a04421ab','2014-10-26T13:21:43.969363','file:///home/paepcke/EclipseWorkspaces/json_to_relation/json_to_relation/test/data/quarter.json');
 INSERT INTO EventIp (event_table_id,event_ip) VALUES 
-    ('166f210d_8547_4c86_8451_599025a455ad','24.5.14.103');
+    ('cf9af043_21a2_401e_86b0_8e81bdad36b4','177.134.16.217');
 INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country,page,session,time,quarter,anon_screen_name,downtime_for,student_id,instructor_id,course_id,course_display_name,resource_display_name,organization,sequence_id,goto_from,goto_dest,problem_id,problem_choice,question_location,submission_id,attempts,long_answer,student_file,can_upload_file,feedback,feedback_response_selected,transcript_id,transcript_code,rubric_selection,rubric_category,video_id,video_code,video_current_time,video_speed,video_old_time,video_new_time,video_seek_type,video_new_speed,video_old_speed,book_interaction_type,success,answer_id,hint,mode,msg,npoints,queuestate,orig_score,new_score,orig_total,new_total,event_name,group_user,group_action,position,badly_formatted,correctMap_fk,answer_fk,state_fk,load_info_fk) VALUES 
-    ('166f210d_8547_4c86_8451_599025a455ad','cc90d60c_1c39_47d3_833f_d5bacb6706eb','Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:21.0) Gecko/20100101 Firefox/21.0','browser','edx_course_enrollment_activated','USA','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/53b0357680d24191a60156e74e184be3/','009e5b5e1bd4ab5a800cafc48bad9e44','2013-06-08T23:29:58.346222','summer2013','f975dd005d3db177274710127ed9ee82db4d6b5d','0:00:00','','','https://class.stanford.edu/courses/Medicine/HRP258/Statistics_in_Medicine/courseware/ac6d006c4bc84fc1a9cec412734fd5ca/53b0357680d24191a60156e74e184be3/','edX/DemoX/Demo_Course','','edX','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','20ffff1f104b3fad46eba8e7316f75b5a04421ab');
+    ('cf9af043_21a2_401e_86b0_8e81bdad36b4','5e19e544_630c_4349_b269_75d4069efd79','Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/31.0.1650.63 Chrome/31.0.1650.63 Safari/537.36','server','edx.course.enrollment.deactivated','BRA','','','2014-01-08T21:35:33.275252+00:00','winter2014','931ca73bf9b8d5a08084d0fc49f68eb240422d6d','0:00:00','','','Engineering/db/2014_1','Engineering/db/2014_1','','Engineering','',-1,-1,'','','','',-1,'','','','',-1,'','',-1,-1,'','','','','','','','','','','','','','honor','',-1,'',-1,-1,-1,-1,'','','',-1,'','','','','20ffff1f104b3fad46eba8e7316f75b5a04421ab');
 -- /*!40000 ALTER TABLE `EdxTrackEvent` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `State` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `InputState` ENABLE KEYS */;
@@ -208,6 +252,7 @@ INSERT INTO EdxTrackEvent (_id,event_id,agent,event_source,event_type,ip_country
 -- /*!40000 ALTER TABLE `Account` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `EventIp` ENABLE KEYS */;
 -- /*!40000 ALTER TABLE `ABExperiment` ENABLE KEYS */;
+-- /*!40000 ALTER TABLE `OpenAssessment` ENABLE KEYS */;
 UNLOCK TABLES;
 REPLACE INTO EdxPrivate.Account (account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) SELECT account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails FROM Edx.Account;
 DROP TABLE Edx.Account;
