@@ -246,7 +246,7 @@ CREATE TABLE `UserCountry` (
   `anon_screen_name` varchar(40) NOT NULL DEFAULT '',
   `country` varchar(255) NOT NULL DEFAULT '',
   KEY `UserCountryAnonIdx` (`anon_screen_name`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 
 USE EdxForum;
