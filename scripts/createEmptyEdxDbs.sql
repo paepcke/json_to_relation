@@ -240,6 +240,15 @@ CREATE TABLE IF NOT EXISTS `OpenAssessment` (
   PRIMARY KEY (`event_table_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+CREATE TABLE `UserCountry` (
+  `two_letter_country` varchar(2) NOT NULL DEFAULT '',
+  `three_letter_country` varchar(3) NOT NULL DEFAULT '',
+  `anon_screen_name` varchar(40) NOT NULL DEFAULT '',
+  `country` varchar(255) NOT NULL DEFAULT '',
+  KEY `UserCountryAnonIdx` (`anon_screen_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 
+
+
 USE EdxForum;
 CREATE TABLE IF NOT EXISTS contents (
     `forum_post_id` varchar(40) NOT NULL,
