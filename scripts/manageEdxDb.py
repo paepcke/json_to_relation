@@ -123,6 +123,7 @@ class TrackLogPuller(object):
     # commands, as appropriate. If LOCAL_LOG_STORE_ROOT
     # is provided here, then appropriate defaults will
     # be computed for these options:
+    LOCAL_LOG_STORE_ROOT = None
     if hostname == 'duo':
         LOCAL_LOG_STORE_ROOT = "/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsTests/"
     elif hostname == 'mono':
@@ -938,7 +939,7 @@ if __name__ == '__main__':
                         action='store',
                         help='For pull: root destination of downloaded OpenEdX tracking log .json files;\n' +\
                              '    default LOCAL_LOG_STORE_ROOT (on this machine:\n' +\
-                             '    %s' % TrackLogPuller.LOCAL_LOG_STORE_ROOT +\
+                             '    %s' % str(TrackLogPuller.LOCAL_LOG_STORE_ROOT) +\
                              ').\n')
     parser.add_argument('--logsSrc',
                         action='store',
@@ -947,20 +948,20 @@ if __name__ == '__main__':
                              '    and/or directories that contain such tracking log files; \n' +\
                              '    default: all files LOCAL_LOG_STORE_ROOT/app*/*.gz that have \n' +\
                              '    not yet been transformed (on this machine:\n' + \
-                             '    %s).' % os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/app*/*.gz')
+                             '    %s).' % ('not set' if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None else os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/app*/*.gz'))
                              )
     parser.add_argument('--sqlDest',
                         action='store',
                         help='For transform: destination directory of where the .sql and \n' +\
                              '    .csv files of the transformed OpenEdX tracking files go;\n' +\
                              '    default LOCAL_LOG_STORE_ROOT/tracking/CSV (on this machine: \n' +\
-                             '    %s' % os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/CSV')  +\
+                             '    %s' % ('not set' if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None else os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/CSV'))  +\
                              ').\n')
     parser.add_argument('--sqlSrc',
                         action='store',
                         help='For load: a string containing a space separated list with full paths to the .sql files to load;\n' +\
                              '    one directory instead of files is acceptable. default LOCAL_LOG_STORE_ROOT/tracking/CSV (on this machine:\n' +\
-                             '    %s.' % os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/CSV') +\
+                             '    %s.' % ('not set' if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None else os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/CSV')) +\
                              ')'
                              )
     parser.add_argument('--pullLimit',
@@ -996,8 +997,12 @@ if __name__ == '__main__':
     if args.errLogFile is None:
         # Default error logs go to LOCAL_LOG_STORE_ROOT/NonTransformLogs.
         # (the transform logs go into LOCAL_LOG_STORE_ROOT/tracking/TransformLogs):
-        args.errLogFile = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'NonTransformLogs/manageDb_%s_%s.log' % 
-                                       (args.toDo, str(datetime.datetime.now()).replace(' ', 'T',).replace(':','_')))
+        if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None:
+            args.errLogFile = os.path.join('/tmp/', 'NonTransformLogs/manageDb_%s_%s.log' % 
+                                           (args.toDo, str(datetime.datetime.now()).replace(' ', 'T',).replace(':','_')))
+        else:
+            args.errLogFile = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'NonTransformLogs/manageDb_%s_%s.log' % 
+                                           (args.toDo, str(datetime.datetime.now()).replace(' ', 'T',).replace(':','_')))
 
     try:
         os.makedirs(os.path.dirname(args.errLogFile))
