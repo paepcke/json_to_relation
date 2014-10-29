@@ -580,6 +580,27 @@ BEGIN
 END//
 
 #--------------------------
+# wasCertified
+#-------------
+
+# Returns 1 if given learner earned a certificate in the given course.
+# Else returns 0. Note: returns 0 when given learner not found in given course.
+
+DROP FUNCTION IF EXISTS wasCertified//
+CREATE FUNCTION wasCertified(anon_screen_name varchar(40), course_display_name varchar(255))
+RETURNS BOOL
+BEGIN
+    -- IFNULL ensures return of 0 when learner or course not found.
+    SELECT IFNULL(
+      (SELECT IF(status = 'downloadable', 0, 1)
+       FROM edxprod.certificates_generatedcertificate 
+       WHERE course_id = course_display_name
+       AND idInt2Anon(user_id) = anon_screen_name
+    ),0) INTO @wasCertified;
+    RETURN @wasCertified;
+END//
+
+#--------------------------
 # isUserEvent
 #-----------
 

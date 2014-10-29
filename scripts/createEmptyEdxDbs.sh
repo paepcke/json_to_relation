@@ -91,24 +91,49 @@ then
     HOME_DIR=$(getent passwd $USERNAME | cut -d: -f6)
     # If the home dir has a readable file called mysql_root in its .ssh
     # subdir, then pull the pwd from there:
-    if test -f $HOME_DIR/.ssh/mysql && test -r $HOME_DIR/.ssh/mysql
+    if test -f $HOME_DIR/.ssh/mysql_root && test -r $HOME_DIR/.ssh/mysql_root
     then
-	PASSWD=`cat $HOME_DIR/.ssh/mysql`
+	PASSWD=`cat $HOME_DIR/.ssh/mysql_root`
     fi
 fi
 
 #**************
-#echo 'UID: '$USERNAME
-#echo 'Password: '$PASSWD
-#exit 0
+# echo 'UID of script caller: '$USERNAME
+# echo 'UID used for MySQL operations: root'
+# echo 'MySQL root password: '$PASSWD
+# exit 0
+#**************
+
+#**************
+echo "About to create tables"
 #**************
 
 currScriptsDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 if [ -z $PASSWD ]
 then
-    mysql -u $USERNAME < ${currScriptsDir}/createEmptyEdxDbs.sql
+    mysql -u root < ${currScriptsDir}/createEmptyEdxDbs.sql
 else
-    mysql -u $USERNAME -p$PASSWD < ${currScriptsDir}/createEmptyEdxDbs.sql
+    mysql -u root -p$PASSWD < ${currScriptsDir}/createEmptyEdxDbs.sql
 fi
-$currScriptsDir/defineMySQLProcedures.sh -u $USERNAME -p$PASSWD
-$currScriptsDir/createIndexForTable.sh -u $USERNAME -p$PASSWD
+#**************
+echo "Done creating tables"
+echo "About to create procedures and functions."
+#**************
+
+if [ -z $PASSWD ]
+then
+    $currScriptsDir/defineMySQLProcedures.sh -u root
+else
+    $currScriptsDir/defineMySQLProcedures.sh -u root -p${PASSWD}
+fi
+
+#**************
+echo "Done creating procedures and functions."
+echo "Starting index creation."
+#**************
+
+$currScriptsDir/createIndexForTable.sh -u root -p${PASSWD}
+
+#**************
+echo "Done creating indexes."
+#**************

@@ -574,7 +574,7 @@ class TrackLogPuller(object):
             self.logInfo("Pulled OpenEdX tracking log files from S3: %s" % str(rfileNamesToPull))
         return rfileNamesToPull
 
-    def transform(self, logFilePaths=None, csvDestDir=None, dryRun=False):
+    def transform(self, logFilePathsOrDir=None, csvDestDir=None, processOnCluster=False, dryRun=False):
         '''
         Given a list of full-path log files, initiate their transform.
         Uses gnu parallel to use multiple cores if available. One error log file
@@ -582,24 +582,34 @@ class TrackLogPuller(object):
         are written to directory TransformLogs that is a sibling of the given
         csvDestDir. Assumes that script transformGivenLogfiles.sh found by
         subprocess. Just have it in the same dir as this file.
-        @param logFilePaths: list of full-path track log files that are to be transformed.
-        @type logFilePaths: [String]
+        @param logFilePathsOrDir: list of full-path track log files that are to be transformed,
+            or a directory with subdirectories named app<int>, where <int> is some
+            integer. All files below the app<int> will be pulled in this case.
+            NOTE: this directory option is only available when processOnCluster is True.
+            (just laziness). 
+        @type logFilePathsOrDir: [String]
         @param csvDestDir: full path to dir where sql files will be deposited. If None,
                            SQL files will to into TrackLogPuller.LOCAL_LOG_STORE_ROOT/SQL
         @type csvDestDir: String
+        @param: processOnCluster should be set to True if the transforms are to 
+              use a compute cluster. In that case, logFilePathsOrDir should be
+              a directory. If False, transforms will be distributed 
+              among cores on the local machine via Gnu Parallel, and logFilePathsOrDir
+              should be an array of file paths.
+        @type: bool
         @param dryRun: if True, only log what *would* be done. Cause no actual changes.
         @type dryRun: Bool
         '''
         
-        self.logDebug("Method transform() called with logFilePaths='%s'; csvDestDir='%s'" % (logFilePaths,csvDestDir))
+        self.logDebug("Method transform() called with logFilePathsOrDir='%s'; csvDestDir='%s'" % (logFilePathsOrDir,csvDestDir))
 
-        if logFilePaths is None:
-            logFilePaths = self.identifyNotTransformedLogFiles(csvDestDir=csvDestDir)
+        if logFilePathsOrDir is None:
+            logFilePathsOrDir = self.identifyNotTransformedLogFiles(csvDestDir=csvDestDir)
         if csvDestDir is None:
             csvDestDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/CSV')
             
-        if len(logFilePaths) == 0:
-            self.logInfo("In transform(): all files in %s were already transformed to %s; or logFilePaths was passed as an empty list." %
+        if type(logFilePathsOrDir) == list and len(logFilePathsOrDir) == 0:
+            self.logInfo("In transform(): all files in %s were already transformed to %s; or logFilePathsOrDir was passed as an empty list." %
                          (os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT,'tracking/app*/*.gz'),
                           csvDestDir))
             return
@@ -611,23 +621,29 @@ class TrackLogPuller(object):
             pass
         
         thisScriptsDir = os.path.dirname(__file__)
-        shellCommand = [os.path.join(thisScriptsDir, 'transformGivenLogfiles.sh'), csvDestDir]
+        if processOnCluster:
+            if not os.path.isdir(logFilePathsOrDir):
+                raise ValueError("For use on compute cluster, the logFilePathsOrDir parameter must be a directory with subdirs of the form 'app<int>'")
+            shellCommand = [os.path.join(thisScriptsDir, 'transformGivenLogfilesOnCluster.sh'), logFilePathsOrDir, csvDestDir]
+        else:
+            shellCommand = [os.path.join(thisScriptsDir, 'transformGivenLogfiles.sh'), csvDestDir]
         # Add the logfiles as arguments; if that's a wildcard expression,
         # i.e. string, just append. Else it's assumed to an array of
         # strings that need to be concatted:
-        if isinstance(logFilePaths, basestring):
-            shellCommand.append(logFilePaths)
-        else:
-            shellCommand.extend(logFilePaths)
-
-        # If file list is a shell glob, expand into a file list
-        # to show the file names in logs and dryRun output below;
-        # the actual command is executed in a shell and does its
-        # own glob resolution:
-        if isinstance(logFilePaths, basestring):
-            fileList = glob.glob(logFilePaths)
-        else:
-            fileList = logFilePaths
+        if not processOnCluster:
+            if isinstance(logFilePathsOrDir, basestring):
+                shellCommand.append(logFilePathsOrDir)
+            else:
+                shellCommand.extend(logFilePathsOrDir)
+    
+            # If file list is a shell glob, expand into a file list
+            # to show the file names in logs and dryRun output below;
+            # the actual command is executed in a shell and does its
+            # own glob resolution:
+            if isinstance(logFilePathsOrDir, basestring):
+                fileList = glob.glob(logFilePathsOrDir)
+            else:
+                fileList = logFilePathsOrDir
 
         # Place where each invocation of the underlying json2sql.py
         # will write a log file for its transform process (json2sql.py
@@ -646,18 +662,28 @@ class TrackLogPuller(object):
             # of "scriptName ['foo.log', bar.log']" make it: "scriptName foo.log bar.log"
             # by removing the brackets, commas, and quotes normally produced by
             # str(someList):
-            logFilePathsForPrint = str(logFilePaths).strip('[]')
+            logFilePathsForPrint = str(logFilePathsOrDir).strip('[]')
             logFilePathsForPrint = string.replace(logFilePathsForPrint, ',', ' ')
             logFilePathsForPrint = string.replace(logFilePathsForPrint, "'", "")
-            self.logInfo("Would call shell script transformGivenLogfiles.sh %s %s" %
-                         (csvDestDir,logFilePathsForPrint))
-                        #(csvDestDir, map(os.path.basename, logFilePaths)))
+            if processOnCluster:
+                self.logInfo("Would call shell script transformGivenLogfilesOnCluster.sh %s %s" %
+                             (logFilePathsOrDir, csvDestDir))
+            else:
+                self.logInfo("Would call shell script transformGivenLogfiles.sh %s %s" %
+                             (csvDestDir,logFilePathsForPrint))
+                            #(csvDestDir, map(os.path.basename, logFilePathsOrDir)))
             self.logInfo('Would be done transforming %d newly downloaded tracklog file(s)...' % len(fileList))
         else:
-            self.logInfo('Starting to transform %d tracklog files...' % len(fileList))
+            if processOnCluster:
+                self.logInfo('Starting to transform tracklog files below directories app<int> in %s ' % logFilePathsOrDir)
+            else:
+                self.logInfo('Starting to transform %d tracklog files...' % len(fileList))
             self.logDebug('Calling Bash with %s' % shellCommand)
             subprocess.call(shellCommand)
-            self.logInfo('Done transforming %d newly downloaded tracklog file(s)...' % len(fileList))
+            if processOnCluster:
+                self.logInfo('Done transforming newly downloaded tracklog file(s) below directories app<int> in %s' % logFilePathsOrDir)
+            else:
+                self.logInfo('Done transforming %d newly downloaded tracklog file(s)...' % len(fileList))
 
     def load(self, mysqlPWD=None, sqlFilesToLoad=None, logDir=None, csvDir=None, dryRun=False):
         '''
@@ -904,6 +930,10 @@ if __name__ == '__main__':
                         help='print operational info to log.', 
                         dest='verbose',
                         action='store_true');
+    parser.add_argument('-c', '--onCluster', 
+                        help='transforms are to be processed on a compute cluster, rather than via Gnu Parallel.', 
+                        dest='onCluster',
+                        action='store_true');
     parser.add_argument('--logsDest',
                         action='store',
                         help='For pull: root destination of downloaded OpenEdX tracking log .json files;\n' +\
@@ -979,6 +1009,7 @@ if __name__ == '__main__':
 #    print('dryRun: %s' % args.dryRun)
 #    print('errLogFile: %s' % args.errLogFile)
 #    print('verbose: %s' % args.verbose)
+#    print('onCluster: %s' % args.onCluster)
 #    print('logsDest: %s' % args.logsDest)
 #    print('logsSrc: %s' % args.logsSrc)    
 #    print('sqlDest: %s' % args.sqlDest)
@@ -1086,42 +1117,51 @@ if __name__ == '__main__':
             sys.exit(1)
         receivedFiles = tblCreator.pullNewFiles(destDir=args.logsDest, pullLimit=args.pullLimit, dryRun=args.dryRun)
     
+    # Check whether tracking logs are properly provided, unless
+    # computation will happen on a compute cluster. In that case,
+    # args.logsSrc must be a directory:
     if args.toDo == 'transform' or args.toDo == 'pullTransform' or args.toDo == 'transformLoad' or args.toDo == 'pullTransformLoad':
-        # For transform cmd, logs will be defaulted, or be a space-or-comma-separated string of log files/directories:
-        # Check for, and point out all errors, rather than quitting after one:
-        if args.logsSrc is not None:
-            logsLocs = args.logsSrc
-            # On the commandline the --logs option will have a string
-            # of either comma- or space-separated directories and/or files.
-            # Get a Python list from that:
-            logFilesOrDirs = re.split('[\s,]', logsLocs)
-            # Remove empty strings that come from use of commas *and* spaces in
-            # the cmd line option:
-            logFilesOrDirs = [logLoc for logLoc in logFilesOrDirs if len(logLoc) > 0]
-            
-            # If some of the srcFiles arguments are directories, replace those with arrays
-            # of .gz files in those directories; for files in the argument, ensure they
-            # exist: 
-            allLogFiles = []
-            for fileOrDir in logFilesOrDirs:
-                # Whether file or directory: either must be readable:
-                if not os.access(fileOrDir, os.R_OK):
-                    tblCreator.logErr("Tracking log file or directory '%s' not readable or non-existent; ignored." % fileOrDir)
-                    continue
-                if os.path.isdir(fileOrDir):
-                    # For directories in the args, ensure that
-                    # each gzipped file within is readable:
-                    dirFiles = filter(tblCreator.isGzippedFile, os.listdir(fileOrDir))
-                    for dirFile in dirFiles:
-                        if not os.access(os.path.join(fileOrDir,dirFile), os.R_OK):
-                            tblCreator.logErr("Tracking log file '%s' not readable or non-existent; ignored." % os.path.join(fileOrDir, dirFile))
-                            continue
-                        allLogFiles.append(os.path.join(fileOrDir,dirFile))
-                else: # arg not a directory:
-                    if tblCreator.isGzippedFile(fileOrDir):
-                        allLogFiles.append(fileOrDir)
+        if args.onCluster:
+            if not os.path.isdir(args.logsSrc) or not os.access(args.logsSrc, os.R_OK):
+                tblCreator.logErr("Tracking log directory '%s' not readable or non-existent" % args.logsSrc)
+                sys.exit(1)
+            allLogFiles = args.logsSrc
         else:
-            allLogFiles = None
+            # For transform cmd, logs will be defaulted, or be a space-or-comma-separated string of log files/directories:
+            # Check for, and point out all errors, rather than quitting after one:
+            if args.logsSrc is not None:
+                logsLocs = args.logsSrc
+                # On the commandline the --logs option will have a string
+                # of either comma- or space-separated directories and/or files.
+                # Get a Python list from that:
+                logFilesOrDirs = re.split('[\s,]', logsLocs)
+                # Remove empty strings that come from use of commas *and* spaces in
+                # the cmd line option:
+                logFilesOrDirs = [logLoc for logLoc in logFilesOrDirs if len(logLoc) > 0]
+                
+                # If some of the srcFiles arguments are directories, replace those with arrays
+                # of .gz files in those directories; for files in the argument, ensure they
+                # exist: 
+                allLogFiles = []
+                for fileOrDir in logFilesOrDirs:
+                    # Whether file or directory: either must be readable:
+                    if not os.access(fileOrDir, os.R_OK):
+                        tblCreator.logErr("Tracking log file or directory '%s' not readable or non-existent; ignored." % fileOrDir)
+                        continue
+                    if os.path.isdir(fileOrDir):
+                        # For directories in the args, ensure that
+                        # each gzipped file within is readable:
+                        dirFiles = filter(tblCreator.isGzippedFile, os.listdir(fileOrDir))
+                        for dirFile in dirFiles:
+                            if not os.access(os.path.join(fileOrDir,dirFile), os.R_OK):
+                                tblCreator.logErr("Tracking log file '%s' not readable or non-existent; ignored." % os.path.join(fileOrDir, dirFile))
+                                continue
+                            allLogFiles.append(os.path.join(fileOrDir,dirFile))
+                    else: # arg not a directory:
+                        if tblCreator.isGzippedFile(fileOrDir):
+                            allLogFiles.append(fileOrDir)
+            else:
+                allLogFiles = None
                         
         # args.sqlDest must be a singleton directory:
         # sanity checks:
@@ -1129,7 +1169,7 @@ if __name__ == '__main__':
             (args.sqlDest is not None and not os.access(args.sqlDest, os.W_OK))):
             tblCreator.logErr("For transform command the 'sqlDest' parameter must be a single directory where result .sql files are written.")
             sys.exit(1)
-        tblCreator.transform(logFilePaths=allLogFiles, csvDestDir=args.sqlDest, dryRun=args.dryRun)
+        tblCreator.transform(logFilePathsOrDir=allLogFiles, csvDestDir=args.sqlDest, dryRun=args.dryRun, processOnCluster=args.onCluster)
     
     if args.toDo == 'load' or args.toDo == 'transformLoad' or args.toDo == 'pullTransformLoad':
         # For loading, args.sqlSrc must be None, or a readable directory, or a sequence of readable .sql files.

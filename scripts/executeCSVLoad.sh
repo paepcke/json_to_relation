@@ -185,10 +185,14 @@ tables=( ["EdxTrackEvent"]="_id" \
          ["InputState"]="input_state_id" \
          ["LoadInfo"]="load_info_id" \
          ["State"]="state_id" \
+         ["ABExperiment"]="event_table_id" \
+         ["OpenAssessment"]="event_table_id" \
     )
 
 declare -A privateTables
-privateTables=( ["Account"]="account_id" )
+privateTables=( ["Account"]="account_id" \
+                ["EventIp"]="event_table_id" \
+    )
 
 # Flush Public tables; the ${!tables[@]} loops through the table names (i.e. dict keys)
 for table in ${!tables[@]}

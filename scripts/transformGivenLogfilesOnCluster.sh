@@ -35,7 +35,11 @@ USAGE="Usage: "`basename $0`" trackLogRootDir sqlDestDir"
 
 LOCKDIR=/tmp/transformLock.lock
 LOGFILE=/tmp/transformActivityLog.log
-rm $LOGFILE
+
+if [ -e $LOGFILE ]
+then
+    rm $LOGFILE
+fi
 
 if [ $# -lt 2 ]
 then
@@ -66,7 +70,7 @@ thisScriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # will release the lock:
 function finish {
     echo "Cleaning up..."
-    rmdir ${LOCKDIR}
+    rm -rf ${LOCKDIR}
 }
 trap finish EXIT
 
@@ -75,7 +79,7 @@ do
     # Is someone else looking for a file to process?
     if ! mkdir ${LOCKDIR} 2>/dev/null
     then
-	#echo "Someone else looking for a file to work on." >&2
+	echo "Someone else looking for a file to work on." >&2
 	sleep 1
 	continue
     fi
@@ -83,13 +87,15 @@ do
     # Find files in root directory under subdirs
     # app<n,m>. The inner $() executes the find,
     # the outer parens turn the result into an array.
-    # The find only retrieves files that end in .gz.
+    # The find only retrieves files that end in .gz,
+    # but not in DONE.gz, which we use to mark files
+    # as processed.
     # The limit on type 'f' suppresses return of 
     # intermediate directory names:
-    filesToDo=($(find ${srcRootDir}/app* -name *.gz -type f))
+    filesToDo=($(find ${srcRootDir}/app* -name *.gz ! -name *DONE.gz -type f))
 
     #*********
-    #echo ${filesToDo[@]}
+    echo "To do: ${filesToDo[@]}"
     #*********
 
     # Are all the files done?
@@ -101,13 +107,17 @@ do
     # Grab the first file, and change its name 
     # on the file system to <fileName>.DONE. 
     chosenFile=${filesToDo[0]}
-    mv $chosenFile ${chosenFile}.DONE
+    mv $chosenFile ${chosenFile}.DONE.gz
     
     # Release the lock:
-    rmdir ${LOCKDIR}
+    rm -rf ${LOCKDIR}
+
+    #*****
+    echo "Doing ${chosenFile}.DONE.gz"
+    #*****
 
     # ...and process:
     echo "Transform-only start transform: `date`: ${chosenFile}" >> $LOGFILE
-#****    $thisScriptDir/json2sql.py  -t csv $destDir ${chosenFile}.DONE
+    $thisScriptDir/json2sql.py  -t csv $destDir ${chosenFile}.DONE.gz
     echo "`date`: ${chosenFile} is done." >> $LOGFILE
 done

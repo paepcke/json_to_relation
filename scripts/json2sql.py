@@ -57,6 +57,16 @@ def buildOutputFileName(inFilePath, destDir, fileStamp):
     That is the LOCAL_STORE_ROOT is removed from the infile, leaving just
     tracking/app10/tracking.log-20130610.gz. Then the destDir is prepended,
     the fileStamp is appended, together with a trailing .sql
+    
+    If the inFilePath does not end with '.gz', but '.gz' is part of the
+    inner part of the file name then enough of the file
+    name tail is removed to have the name end in .gz. If no '.gz' is
+    anywhwere in the filename, the filename is left alone. This odd behavior
+    takes care of a particularity of the compute cluster implementation for 
+    transforms. Script transformGivenLogFilesOnCluster.sh appends '.DONE' to
+    file names as part of the file selection protocol that all the cluster
+    machines follow. We don't want that '.DONE' to be part of the name
+    we return here.
      
     @param inFilePath: full path to .json file
     @type inFilePath: String
@@ -67,6 +77,13 @@ def buildOutputFileName(inFilePath, destDir, fileStamp):
     @return: a full filename with a .sql extension, derived from the input file name
     @rtype: String
     '''
+    
+    # If file name has no .gz at all, simply proceed,
+    # not worrying about any unwanted extensions:
+    if  re.search('.gz', inFilePath) is not None:
+        while not inFilePath.endswith('.gz'):
+            inFilePath,oldExtension = os.path.splitext(inFilePath) #@UnusedVariable
+    
     rootEnd = inFilePath.find(LOCAL_LOG_STORE_ROOT)
     if rootEnd < 0:
         return os.path.join(destDir, os.path.basename(inFilePath)) + '.' + fileStamp + '.sql'

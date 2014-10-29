@@ -48,7 +48,9 @@ do
    then
        continue
    else
+       #************
        #echo "Pwd is:"$PASSWD
+       #************
        break
    fi
 done
@@ -91,6 +93,12 @@ done
 # Shift past all the optional parms:
 shift ${NEXT_ARG}
 
+#*****************
+# echo "UID: $MYSQL_USERNAME"
+# echo "PWD: $PASSWD"
+# echo "needPasswd: $needPasswd"
+# exit
+#*****************
 
 if $needPasswd
 then
@@ -131,7 +139,7 @@ KEY_INSTALL_CMD="DROP TABLE IF EXISTS EdxPrivate.Keys; \
                  INSERT INTO EdxPrivate.Keys SET forumKey = (SELECT SHA2('"$FORUM_KEY_PASSPHRASE"',224) AS forumKey);"
 
 #*****************
-#echo "KEY_INSTALL_CMD: $KEY_INSTALL_CMD"
+# echo "KEY_INSTALL_CMD: $KEY_INSTALL_CMD"
 # exit 0
 #*****************
 

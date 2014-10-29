@@ -4419,7 +4419,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         csvLoadCommands    =  "SET sql_log_bin=0;\n"
         csvLoadCommands    += "SET autocommit=0;\n"
-        for tableName in ['LoadInfo', 'InputState', 'State', 'CorrectMap', 'Answer', 'Account', 'EdxTrackEvent', 'ABExperiment', 'OpenAssessment']:
+        for tableName in ['LoadInfo', 'InputState', 'State', 'CorrectMap', 'Answer', 'Account', 'EventIp', 'EdxTrackEvent', 'ABExperiment', 'OpenAssessment']:
             filename = outputDisposition.getCSVTableOutFileName(tableName)
             # SQL statements for LOAD INFILE all .csv tables in turn. Only used
             # when no INSERT statement dump is being generated:
@@ -4816,7 +4816,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.setValInRow(row, 'event_source', event_source)
         self.setValInRow(row, 'event_type', event_type)
         self.setValInRow(row, 'time', time)
-        self.setValInRow(row, 'ip_country', self.getThreeLetterCountryCode(ip))
+        try:
+            ip_country = self.getThreeLetterCountryCode(ip)
+        except:
+            ip_country = ''
+        self.setValInRow(row, 'ip_country', ip_country)
         self.setValInRow(row, 'badly_formatted', self.makeInsertSafe(event))
     
     def tryJSONExtraction(self, pattern, theStr):
