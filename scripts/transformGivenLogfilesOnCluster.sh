@@ -95,7 +95,7 @@ do
     filesToDo=($(find ${srcRootDir}/app* -name *.gz ! -name *DONE.gz -type f))
 
     #*********
-    echo "To do: ${filesToDo[@]}"
+    #echo "To do: ${filesToDo[@]}"
     #*********
 
     # Are all the files done?

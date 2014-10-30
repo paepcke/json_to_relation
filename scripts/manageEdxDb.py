@@ -125,16 +125,20 @@ class TrackLogPuller(object):
     # be computed for these options:
     LOCAL_LOG_STORE_ROOT = None
     if hostname == 'duo':
-        LOCAL_LOG_STORE_ROOT = "/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsTests/"
+        LOCAL_LOG_STORE_ROOT = "/home/paepcke/Project/VPOL/Data/EdX/tracking/"
     elif hostname == 'mono':
-        LOCAL_LOG_STORE_ROOT = "/home/paepcke/Project/VPOL/Data/EdXTrackingOct22_2013/"
+        LOCAL_LOG_STORE_ROOT = "/home/paepcke/Project/VPOL/Data/EdX/tracking/"
     elif hostname == 'datastage':
-        LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/EdX"
+        LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/EdX/tracking"
     elif hostname == 'datastage2':
-        LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/EdX"
+        LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/EdX/tracking"
     else:
         LOCAL_LOG_STORE_ROOT = None
     LOG_BUCKETNAME = "stanford-edx-logs"
+    
+    #*****************
+    LOCAL_LOG_STORE_ROOT = None
+    #*****************
     
     # Directory into which the executeCSVLoad.sh script that is invoked
     # from the load() method will put its log entries.
@@ -163,7 +167,10 @@ class TrackLogPuller(object):
         @type logFile:
         '''
 
-        TrackLogPuller.LOAD_LOG_DIR = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'Logs')        
+        if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None:
+            TrackLogPuller.LOAD_LOG_DIR = os.path.join('/tmp/', 'Logs')        
+        else:
+            TrackLogPuller.LOAD_LOG_DIR = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'Logs')        
         self.logger = None
         self.setupLogging(loggingLevel, logFile)
         # No connection yet to S3. That only
@@ -607,11 +614,11 @@ class TrackLogPuller(object):
         if logFilePathsOrDir is None:
             logFilePathsOrDir = self.identifyNotTransformedLogFiles(csvDestDir=csvDestDir)
         if csvDestDir is None:
-            csvDestDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/CSV')
+            csvDestDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'CSV')
             
         if type(logFilePathsOrDir) == list and len(logFilePathsOrDir) == 0:
             self.logInfo("In transform(): all files in %s were already transformed to %s; or logFilePathsOrDir was passed as an empty list." %
-                         (os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT,'tracking/app*/*.gz'),
+                         (os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT,'app*/*.gz'),
                           csvDestDir))
             return
         # Ensure that the target directory exists:
@@ -1025,7 +1032,7 @@ if __name__ == '__main__':
 #    print('toDo: %s' % args.toDo)
 #************
 #    sys.exit(0)
-    
+        
     if args.verbose:
         tblCreator = TrackLogPuller(logFile=args.errLogFile, loggingLevel=logging.DEBUG)
     else:
@@ -1120,6 +1127,13 @@ if __name__ == '__main__':
         if (args.logsDest is not None and not os.access(args.logsDest, os.W_OK)):
             tblCreator.logErr("For pulling track log files from S3, the 'logs' parameter must either not be present, or it must be one *writable* directory (where files will be deposited).")
             sys.exit(1)
+
+        # If TrackLogPuller.LOCAL_LOG_STORE_ROOT is not set, try
+        # to rescue the situation:
+        if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None:
+            if args.logsSrc is not None:
+                TrackLogPuller.LOCAL_LOG_STORE_ROOT = args.logsDest
+
         receivedFiles = tblCreator.pullNewFiles(destDir=args.logsDest, pullLimit=args.pullLimit, dryRun=args.dryRun)
     
     # Check whether tracking logs are properly provided, unless
@@ -1174,6 +1188,15 @@ if __name__ == '__main__':
             (args.sqlDest is not None and not os.access(args.sqlDest, os.W_OK))):
             tblCreator.logErr("For transform command the 'sqlDest' parameter must be a single directory where result .sql files are written.")
             sys.exit(1)
+
+        # If TrackLogPuller.LOCAL_LOG_STORE_ROOT is not set, try
+        # to rescue the situation:
+        if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None:
+            if args.sqlDest is not None:
+                TrackLogPuller.LOCAL_LOG_STORE_ROOT = os.path.join(args.sqlDest, '/../')
+            elif args.logsSrc is not None:
+                TrackLogPuller.LOCAL_LOG_STORE_ROOT = args.logsSrc
+            
         tblCreator.transform(logFilePathsOrDir=allLogFiles, csvDestDir=args.sqlDest, dryRun=args.dryRun, processOnCluster=args.onCluster)
     
     if args.toDo == 'load' or args.toDo == 'transformLoad' or args.toDo == 'pullTransformLoad':
@@ -1212,6 +1235,13 @@ if __name__ == '__main__':
             if not ok:
                 tblCreator.logErr("Command aborted, no action was taken.")
                 sys.exit(1)
+
+        # If TrackLogPuller.LOCAL_LOG_STORE_ROOT is not set, try
+        # to rescue the situation:
+        if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None:
+            if args.sqlSrc is not None:
+                TrackLogPuller.LOCAL_LOG_STORE_ROOT = os.path.join(args.sqlSrc, '/../')
+        
         # For DB ops need DB root pwd, which was 
         # put into tblCreator.pwd above by various means:
         tblCreator.load(mysqlPWD=tblCreator.pwd, sqlFilesToLoad=sqlFilesToLoad, logDir=os.path.dirname(args.errLogFile), dryRun=args.dryRun)

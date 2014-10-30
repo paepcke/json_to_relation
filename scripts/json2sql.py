@@ -78,6 +78,13 @@ def buildOutputFileName(inFilePath, destDir, fileStamp):
     @rtype: String
     '''
     
+    # For cluster operations, 'DONE.gz' is appended to
+    # file names to indicate that they are done.
+    # Chop that flag off for the purpose of creating
+    # an output file name:
+    if inFilePath.endswith('.DONE.gz'):
+        inFilePath = inFilePath[:-8]
+    
     # If file name has no .gz at all, simply proceed,
     # not worrying about any unwanted extensions:
     if  re.search('.gz', inFilePath) is not None:
