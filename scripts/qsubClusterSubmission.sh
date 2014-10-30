@@ -22,7 +22,7 @@
 #
 #    [cd <json_to_relation dir>] # Optional; if skipped need full 
 #                                # path to script in statement below.
-#    qsub -V -v logsSrc=<pathToJSONParentDir>,sqlDest=<pathToResultSQL/CSV>  scripts/qsubClusterSubmission.sh
+#    qsub -V -t 0-500 -v logsSrc=<pathToJSONParentDir>,sqlDest=<pathToResultSQL/CSV>,scripts/qsubClusterSubmission.sh
 #
 # The -V passes the environment to all the nodes. The -v accepts the
 # key/value pairs.
@@ -41,10 +41,12 @@ then
     manageEdxDbLoc=${currScriptsDir}/manageEdxDb.py
 fi
 
-#PBS -N paepckeTransforms
-#PBS -o /dfs/scratch1/paepcke/ClusterLogs/paepckeTransforms.out
-#PBS -e /dfs/scratch1/paepcke/ClusterLogs/paepckeTransforms.err
-#PBS -l nodes=20:ppn=25
+#PBS -N $jobName
+#PBS -o /dfs/scratch1/paepcke/ClusterLogs/${jobName}.out
+#PBS -e /dfs/scratch1/paepcke/ClusterLogs/${jobName}.err
+#PBS -l nodes=1:ppn=1
+
+
 
 # Have cluster send mail when job starts and finishes
 #PBS -m be -M paepcke@cs.stanford.edu
