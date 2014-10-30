@@ -3868,9 +3868,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         
         resource_id = openAssessmentDict['resource_id']
         if len(resource_id) > 0:
-            openAssessmentDict['resource_display_name'] = self.findResourceDisplayName(resource_id)
+            displayName = self.findResourceDisplayName(resource_id)
+            openAssessmentDict['resource_display_name'] = '' if displayName is None else displayName
         if len(openAssessmentDict['resource_display_name']) == 0:
-            openAssessmentDict['resource_display_name'] = self.findModuleNameInEventContext(record)
+            displayName = self.findModuleNameInEventContext(record)
+            openAssessmentDict['resource_display_name'] = '' if displayName is None else displayName
             
         self.pushOpenAssessmentInfo(openAssessmentDict)
         return row            
