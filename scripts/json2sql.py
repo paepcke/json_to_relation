@@ -33,6 +33,8 @@ from output_disposition import OutputDisposition, OutputFile
 # /foo/bar/tracking/app10/tracking.log-<date>.gz
 # LOCAL_LOG_STORE_ROOT in this example is /foo/bar/
 
+LOCAL_LOG_STORE_ROOT = None
+
 hostname = socket.gethostname()
 if hostname == 'duo':
     LOCAL_LOG_STORE_ROOT = "/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsTests/"                            
@@ -77,7 +79,6 @@ def buildOutputFileName(inFilePath, destDir, fileStamp):
     @return: a full filename with a .sql extension, derived from the input file name
     @rtype: String
     '''
-    
     # For cluster operations, 'DONE.gz' is appended to
     # file names to indicate that they are done.
     # Chop that flag off for the purpose of creating
@@ -91,6 +92,8 @@ def buildOutputFileName(inFilePath, destDir, fileStamp):
         while not inFilePath.endswith('.gz'):
             inFilePath,oldExtension = os.path.splitext(inFilePath) #@UnusedVariable
     
+    if LOCAL_LOG_STORE_ROOT is None:
+        return os.path.join(destDir, os.path.basename(inFilePath)) + '.' + fileStamp + '.sql'
     rootEnd = inFilePath.find(LOCAL_LOG_STORE_ROOT)
     if rootEnd < 0:
         return os.path.join(destDir, os.path.basename(inFilePath)) + '.' + fileStamp + '.sql'

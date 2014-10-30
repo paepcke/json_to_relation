@@ -136,10 +136,6 @@ class TrackLogPuller(object):
         LOCAL_LOG_STORE_ROOT = None
     LOG_BUCKETNAME = "stanford-edx-logs"
     
-    #*****************
-    LOCAL_LOG_STORE_ROOT = None
-    #*****************
-    
     # Directory into which the executeCSVLoad.sh script that is invoked
     # from the load() method will put its log entries.
     LOAD_LOG_DIR = ''
