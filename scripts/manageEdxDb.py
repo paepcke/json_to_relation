@@ -726,7 +726,7 @@ class TrackLogPuller(object):
         self.logDebug("Method load() called with sqlFilesToLoad='%s'; logDir=%s, csvDir='%s'" % (sqlFilesToLoad, logDir,csvDir))
         
         if csvDir is None:
-            csvDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/CSV')
+            csvDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'CSV')
         if sqlFilesToLoad is None:
             sqlFilesToLoad = self.identifySQLToLoad(csvDir=csvDir)
         if len(sqlFilesToLoad) == 0:
