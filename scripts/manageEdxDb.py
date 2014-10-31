@@ -43,9 +43,9 @@ optional arguments:
                             not yet been transformed.
   --sqlDest SQLDEST     For transform: destination directory of where the .sql and 
                             .csv files of the transformed OpenEdX tracking files go;
-                            default LOCAL_LOG_STORE_ROOT/tracking/CSV.
+                            default LOCAL_LOG_STORE_ROOT/CSV.
   --sqlSrc SQLSRC       For load: directory of .sql/.csv files to be loaded, or list of .sql files;
-                            default LOCAL_LOG_STORE_ROOT/tracking/CSV.
+                            default LOCAL_LOG_STORE_ROOT/CSV.
   --pullLimit PULLLIMIT
                         For load: maximum number of new OpenEdx tracking log files to pull from AmazonS3
   -u USER, --user USER  For load: user ID whose HOME/.ssh/mysql_root contains the localhost MySQL root password.
@@ -64,7 +64,7 @@ To use the script in other installations, modify the following constants:
                     from which subtrees of loaded tracking files grow. At stanford the
                     subtree is tracking/{app10/app11/app20/app21}. The root of that 
                     subtree is /home/dataman/Data/EdX. An example tracking log file path
-                    is thus: /home/dataman/Data/EdX/tracking/app10/tracking.log-20130610.gz
+                    is thus: /home/dataman/Data/EdX/app10/tracking.log-20130610.gz
 @author: paepcke
 
 Modifications:
@@ -290,7 +290,7 @@ class TrackLogPuller(object):
                If None, uses LOCAL_LOG_STORE_ROOT + '/tracking/app*/*.gz'
         @type localTrackingLogFilePaths: {[String] | None}
         @param csvDestDir: directory where previous transforms have deposited their output files.
-        `     If None, uses LOCAL_LOG_STORE_ROOT/tracking/CSV
+        `     If None, uses LOCAL_LOG_STORE_ROOT/CSV
         @type csvDestDir: String
         @returns: array of absolute paths to OpenEdX tracking log files that need to be
                   transformed
@@ -406,7 +406,7 @@ class TrackLogPuller(object):
         db. Uses the Edx.LoadInfo to see which .sql files have already
         been loaded.
         @param csvDir: directory where previous transform runs have deposited
-               their .sql and .csv files. If None, LOCAL_LOG_STORE_ROOT/tracking/CSV'
+               their .sql and .csv files. If None, LOCAL_LOG_STORE_ROOT/CSV'
                is assumed.
         @type csvDir: String
         @return: possibly empty list of absolute paths to .sql files that have
@@ -417,7 +417,7 @@ class TrackLogPuller(object):
         self.logDebug("Method identifySQLToLoad()  called with csvDir='%s'" % csvDir)
 
         if csvDir is None:
-            csvDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/CSV')
+            csvDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'CSV')
         # Get content of LoadInfo file names in MySQL db Edx:
         if self.pwd:
             mysqldb = MySQLDB(user=self.user, passwd=self.pwd, db='Edx')
@@ -957,13 +957,13 @@ if __name__ == '__main__':
                         action='store',
                         help='For transform: destination directory of where the .sql and \n' +\
                              '    .csv files of the transformed OpenEdX tracking files go;\n' +\
-                             '    default LOCAL_LOG_STORE_ROOT/tracking/CSV (on this machine: \n' +\
+                             '    default LOCAL_LOG_STORE_ROOT/CSV (on this machine: \n' +\
                              '    %s' % ('not set' if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None else os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/CSV'))  +\
                              ').\n')
     parser.add_argument('--sqlSrc',
                         action='store',
                         help='For load: a string containing a space separated list with full paths to the .sql files to load;\n' +\
-                             '    one directory instead of files is acceptable. default LOCAL_LOG_STORE_ROOT/tracking/CSV (on this machine:\n' +\
+                             '    one directory instead of files is acceptable. default LOCAL_LOG_STORE_ROOT/CSV (on this machine:\n' +\
                              '    %s.' % ('not set' if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None else os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/CSV')) +\
                              ')'
                              )
@@ -999,7 +999,7 @@ if __name__ == '__main__':
     # Log file:
     if args.errLogFile is None:
         # Default error logs go to LOCAL_LOG_STORE_ROOT/NonTransformLogs.
-        # (the transform logs go into LOCAL_LOG_STORE_ROOT/tracking/TransformLogs):
+        # (the transform logs go into LOCAL_LOG_STORE_ROOT/TransformLogs):
         if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None:
             args.errLogFile = os.path.join('/tmp/', 'NonTransformLogs/manageDb_%s_%s.log' % 
                                            (args.toDo, str(datetime.datetime.now()).replace(' ', 'T',).replace(':','_')))
