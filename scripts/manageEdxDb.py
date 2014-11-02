@@ -127,7 +127,7 @@ class TrackLogPuller(object):
     if hostname == 'duo':
         LOCAL_LOG_STORE_ROOT = "/home/paepcke/Project/VPOL/Data/EdX/tracking/"
     elif hostname == 'mono':
-        LOCAL_LOG_STORE_ROOT = "/home/paepcke/Project/VPOL/Data/EdX/tracking/"
+        LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/EdX/tracking"
     elif hostname == 'datastage':
         LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/EdX/tracking"
     elif hostname == 'datastage2':
@@ -135,6 +135,12 @@ class TrackLogPuller(object):
     else:
         LOCAL_LOG_STORE_ROOT = None
     LOG_BUCKETNAME = "stanford-edx-logs"
+    
+
+    #********************
+    LOCAL_LOG_STORE_ROOT = None
+    #********************
+    
     
     # Directory into which the executeCSVLoad.sh script that is invoked
     # from the load() method will put its log entries.
@@ -287,7 +293,7 @@ class TrackLogPuller(object):
         that the transform file generates will be named tracking.app10.foo.gz.<more pieces>.sql.  
         Like this: tracking.app10.tracking.log-20131128.gz.2013-12-05T00_33_29.900465_5064.sql
         @param localTrackingLogFilePaths: list of all .json files to consider for transform.
-               If None, uses LOCAL_LOG_STORE_ROOT + '/app*/*.gz'
+               If None, uses LOCAL_LOG_STORE_ROOT + '/app*/.../*.gz (equivalent to bash 'find')
         @type localTrackingLogFilePaths: {[String] | None}
         @param csvDestDir: directory where previous transforms have deposited their output files.
         `     If None, uses LOCAL_LOG_STORE_ROOT/CSV
@@ -300,10 +306,17 @@ class TrackLogPuller(object):
         self.logDebug("Method identifyNotTransformedLogFiles()  called with localTrackingLogFilePaths='%s'; csvDestDir='%s'" % (localTrackingLogFilePaths,csvDestDir))
              
         if localTrackingLogFilePaths is None:
-            localTrackingLogFilePaths = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'app*/*.gz')
+            localTrackingLogFileDirs = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'app*/')
+            localTrackingLogFileDirs = glob.glob(localTrackingLogFileDirs)
+            localTrackingLogFilePaths = []
+            for logFileDir in localTrackingLogFileDirs:
+                for (root, dirs, files) in os.walk(logFileDir): #@UnusedVariable
+                    for partialFilePath in files:
+                        filePath = os.path.join(root,partialFilePath)
+                        localTrackingLogFilePaths.append(filePath)            
             
         if csvDestDir is None:
-            csvDestDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, '/CSV')
+            csvDestDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'CSV')
             
         # If tracking file list is a string (that might include shell
         # wildcards), expand into a file list:
@@ -567,8 +580,7 @@ class TrackLogPuller(object):
                 # dest exists:
                 try:
                     os.makedirs(os.path.dirname(localDest))
-                except OSError as e:
-                    #self.logErr('Error while trying to write track log file to local (%s): %s' % (localDest, `e`))
+                except OSError:
                     # Dir already exists; fine
                     pass
                 fileKey.get_contents_to_filename(localDest)
@@ -614,7 +626,7 @@ class TrackLogPuller(object):
             
         if type(logFilePathsOrDir) == list and len(logFilePathsOrDir) == 0:
             self.logInfo("In transform(): all files in %s were already transformed to %s; or logFilePathsOrDir was passed as an empty list." %
-                         (os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT,'app*/*.gz'),
+                         (os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT,'app*/.../*.gz'),
                           csvDestDir))
             return
         # Ensure that the target directory exists:

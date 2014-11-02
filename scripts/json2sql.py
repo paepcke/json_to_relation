@@ -39,11 +39,11 @@ hostname = socket.gethostname()
 if hostname == 'duo':
     LOCAL_LOG_STORE_ROOT = "/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsTests/"                            
 elif hostname == 'mono':
-    LOCAL_LOG_STORE_ROOT = "/home/paepcke/Project/VPOL/Data/EdXTrackingOct22_2013/"
+    LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/EdX/tracking"
 elif hostname == 'datastage':
-    LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/EdX"
+    LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/EdX/tracking"
 elif hostname == 'datastage2':
-    LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/EdX"
+    LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/EdX/tracking"
 
 def buildOutputFileName(inFilePath, destDir, fileStamp):
     '''
