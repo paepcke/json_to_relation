@@ -287,7 +287,7 @@ class TrackLogPuller(object):
         that the transform file generates will be named tracking.app10.foo.gz.<more pieces>.sql.  
         Like this: tracking.app10.tracking.log-20131128.gz.2013-12-05T00_33_29.900465_5064.sql
         @param localTrackingLogFilePaths: list of all .json files to consider for transform.
-               If None, uses LOCAL_LOG_STORE_ROOT + '/tracking/app*/*.gz'
+               If None, uses LOCAL_LOG_STORE_ROOT + '/app*/*.gz'
         @type localTrackingLogFilePaths: {[String] | None}
         @param csvDestDir: directory where previous transforms have deposited their output files.
         `     If None, uses LOCAL_LOG_STORE_ROOT/CSV
@@ -300,10 +300,10 @@ class TrackLogPuller(object):
         self.logDebug("Method identifyNotTransformedLogFiles()  called with localTrackingLogFilePaths='%s'; csvDestDir='%s'" % (localTrackingLogFilePaths,csvDestDir))
              
         if localTrackingLogFilePaths is None:
-            localTrackingLogFilePaths = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/app*/*.gz')
+            localTrackingLogFilePaths = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'app*/*.gz')
             
         if csvDestDir is None:
-            csvDestDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/CSV')
+            csvDestDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, '/CSV')
             
         # If tracking file list is a string (that might include shell
         # wildcards), expand into a file list:
@@ -716,7 +716,7 @@ class TrackLogPuller(object):
         @param logDir: directory for file loadLog.log where this method directs logging.
         @type logDir: String
         @param csvDir: directory where transforms have deposited their .sql and associated .csv files.
-                       If None, assumes LOCAL_LOG_STORE_ROOT/'tracking/CSV'. Not used if
+                       If None, assumes LOCAL_LOG_STORE_ROOT/'/CSV'. Not used if
                        sqlFilesToLoad are specified explicitly.
         @type csvDir: String
         @param dryRun: if True, only log what *would* be done. Cause no actual changes.
@@ -951,20 +951,20 @@ if __name__ == '__main__':
                              '    and/or directories that contain such tracking log files; \n' +\
                              '    default: all files LOCAL_LOG_STORE_ROOT/app*/*.gz that have \n' +\
                              '    not yet been transformed (on this machine:\n' + \
-                             '    %s).' % ('not set' if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None else os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/app*/*.gz'))
+                             '    %s).' % ('not set' if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None else os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'app*/*.gz'))
                              )
     parser.add_argument('--sqlDest',
                         action='store',
                         help='For transform: destination directory of where the .sql and \n' +\
                              '    .csv files of the transformed OpenEdX tracking files go;\n' +\
                              '    default LOCAL_LOG_STORE_ROOT/CSV (on this machine: \n' +\
-                             '    %s' % ('not set' if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None else os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/CSV'))  +\
+                             '    %s' % ('not set' if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None else os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, '/CSV'))  +\
                              ').\n')
     parser.add_argument('--sqlSrc',
                         action='store',
                         help='For load: a string containing a space separated list with full paths to the .sql files to load;\n' +\
                              '    one directory instead of files is acceptable. default LOCAL_LOG_STORE_ROOT/CSV (on this machine:\n' +\
-                             '    %s.' % ('not set' if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None else os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking/CSV')) +\
+                             '    %s.' % ('not set' if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None else os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, '/CSV')) +\
                              ')'
                              )
     parser.add_argument('--pullLimit',
