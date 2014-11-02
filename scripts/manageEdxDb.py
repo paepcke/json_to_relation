@@ -136,12 +136,6 @@ class TrackLogPuller(object):
         LOCAL_LOG_STORE_ROOT = None
     LOG_BUCKETNAME = "stanford-edx-logs"
     
-
-    #********************
-    LOCAL_LOG_STORE_ROOT = None
-    #********************
-    
-    
     # Directory into which the executeCSVLoad.sh script that is invoked
     # from the load() method will put its log entries.
     LOAD_LOG_DIR = ''
@@ -240,7 +234,10 @@ class TrackLogPuller(object):
             self.logInfo("Establishing connection to Amazon S3")
             if not self.openS3Connection():
                 try:
-                    self.logErr("Could not connect to Amazon 3S: %s" % sys.last_value)
+                    # sys.last_value is only defined when errors occur
+                    # To get Eclipse to shut up about var undefined, use
+                    # decorator:
+                    self.logErr("Could not connect to Amazon 3S: %s" % sys.last_value) #@UndefinedVariable
                 except AttributeError:
                     # The last_value wasn't initialized yet:
                     sys.last_value = ""
@@ -316,6 +313,10 @@ class TrackLogPuller(object):
                         localTrackingLogFilePaths.append(filePath)            
             
         if csvDestDir is None:
+            if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None:
+                # Note: we check for this condition in main;
+                # nonetheless...
+                raise ValueError("If csvDestDir is None, then TrackLogPuller.LOCAL_LOG_STORE_ROOT must be set in manageEdxDb.py")
             csvDestDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'CSV')
             
         # If tracking file list is a string (that might include shell
@@ -331,28 +332,6 @@ class TrackLogPuller(object):
         if len(localTrackingLogFilePaths) == 0:
             return []
          
-        # Do have at least one tracking log file that might need
-        # to be transformed. Example list:
-        #   ['/home/johndoe/tracking/app10/tracking.log-20130610.gz', 
-        #    '/home/johndoe/tracking/app10/tracking.log-20130609.gz'] 
-        # Given LOCAL_LOG_STORE_ROOT (e.g. == '/home/johndoe/') 
-        # find the path components between the end of the log files
-        # root and the beginning of the log file name:
-        try:
-            subtree = localTrackingLogFilePaths[0][len(TrackLogPuller.LOCAL_LOG_STORE_ROOT):]
-            # Chop off the file name to get, e.g. 'tracking/app10':
-            subtree = os.path.dirname(subtree)
-        except IndexError:
-            subtree = ''
-        # The transform process converts the subtree's slashes to dots,
-        # and prepends the result to tracking log files when it creates
-        # the output .sql files. Ex: the transform's .sql file for
-        # an input file '/home/johndoe/tracking/app10/tracking.log-20130610.gz'
-        # will be something like:
-        # 'tracking.app10.tracking.log-20130610.gz.2013-12-23T13_07_05.082546_11122.sql
-        # We need that prepended part (e.g. 'tracking.app10.'):
-        outputFilePrepend = re.sub('/', '.', subtree).strip('.') + '.'
-        
         # Next: find all .sql files among the existing .csv/.sql
         # files from already accomplished transforms:
         try:
@@ -565,7 +544,10 @@ class TrackLogPuller(object):
                     # No connection has been established yet to S3:
                     if not self.openS3Connection():
                         try:
-                            self.logErr("Could not connect to Amazon 3S: %s" % sys.last_value)
+                            # sys.last_value is only defined when errors occur
+                            # To get Eclipse to shut up about var undefined, use
+                            # decorator:
+                            self.logErr("Could not connect to Amazon 3S: %s" % sys.last_value) #@UndefinedVariable
                         except AttributeError:
                             # The last_value wasn't initialized yet:
                             sys.last_value = ""
@@ -619,15 +601,23 @@ class TrackLogPuller(object):
         
         self.logDebug("Method transform() called with logFilePathsOrDir='%s'; csvDestDir='%s'" % (logFilePathsOrDir,csvDestDir))
 
+        if csvDestDir is None:
+            try:
+                csvDestDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'CSV')
+            except TypeError:
+                # TrackLogPuller.LOCAL_LOG_STORE_ROOT is None:
+                self.log
+
         if logFilePathsOrDir is None:
             logFilePathsOrDir = self.identifyNotTransformedLogFiles(csvDestDir=csvDestDir)
-        if csvDestDir is None:
-            csvDestDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'CSV')
+        else:
+            # We were passed a list of files to transform. Check whether
+            # any have been transformed before:
+            logFilePathsOrDir = self.identifyNotTransformedLogFiles(localTrackingLogFilePaths=logFilePathsOrDir, csvDestDir=csvDestDir)
             
         if type(logFilePathsOrDir) == list and len(logFilePathsOrDir) == 0:
-            self.logInfo("In transform(): all files in %s were already transformed to %s; or logFilePathsOrDir was passed as an empty list." %
-                         (os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT,'app*/.../*.gz'),
-                          csvDestDir))
+            self.logInfo("In transform(): all files were already transformed to %s; or logFilePathsOrDir was passed as an empty list." %
+                          csvDestDir)
             return
         # Ensure that the target directory exists:
         try:
@@ -1177,13 +1167,18 @@ if __name__ == '__main__':
                         continue
                     if os.path.isdir(fileOrDir):
                         # For directories in the args, ensure that
-                        # each gzipped file within is readable:
-                        dirFiles = filter(tblCreator.isGzippedFile, os.listdir(fileOrDir))
-                        for dirFile in dirFiles:
-                            if not os.access(os.path.join(fileOrDir,dirFile), os.R_OK):
-                                tblCreator.logErr("Tracking log file '%s' not readable or non-existent; ignored." % os.path.join(fileOrDir, dirFile))
-                                continue
-                            allLogFiles.append(os.path.join(fileOrDir,dirFile))
+                        # each gzipped file within is readable. Find
+                        # All gzipped files at any level below the
+                        # directory:
+                        for (root, dirs, files) in os.walk(fileOrDir): #@UnusedVariable
+                            for partialFilePath in files:
+                                fullTrackLogPath = os.path.join(root,partialFilePath)
+                                if not tblCreator.isGzippedFile(fullTrackLogPath):
+                                    continue
+                                if not os.access(fullTrackLogPath, os.R_OK):
+                                    tblCreator.logErr("Tracking log file '%s' not readable or non-existent; ignored." % fullTrackLogPath)
+                                    continue
+                                allLogFiles.append(fullTrackLogPath)
                     else: # arg not a directory:
                         if tblCreator.isGzippedFile(fileOrDir):
                             allLogFiles.append(fileOrDir)
@@ -1197,13 +1192,11 @@ if __name__ == '__main__':
             tblCreator.logErr("For transform command the 'sqlDest' parameter must be a single directory where result .sql files are written.")
             sys.exit(1)
 
-        # If TrackLogPuller.LOCAL_LOG_STORE_ROOT is not set, try
-        # to rescue the situation:
-        if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None:
-            if args.sqlDest is not None:
-                TrackLogPuller.LOCAL_LOG_STORE_ROOT = os.path.join(args.sqlDest, '/../')
-            elif args.logsSrc is not None:
-                TrackLogPuller.LOCAL_LOG_STORE_ROOT = args.logsSrc
+        # If TrackLogPuller.LOCAL_LOG_STORE_ROOT is not set, then
+        # make sure that sqlDest was provided by the caller:
+        if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None and args.sqlDest is None:
+            tblCreator.logErr("You need to provide sqlDest, since TrackLogPuller.LOCAL_LOG_STORE_ROOT in manageEdxDb.py was not customized.")
+            sys.exit(1)
             
         tblCreator.transform(logFilePathsOrDir=allLogFiles, csvDestDir=args.sqlDest, dryRun=args.dryRun, processOnCluster=args.onCluster)
     
