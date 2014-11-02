@@ -5023,6 +5023,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             hashNum = self.extractOpenEdxHash(openEdxHash)
             # Get display name and add to main table as resource_display_name:
             displayName = self.hashMapper.getDisplayName(hashNum)
+            if displayName is None:
+                displayName = ''
         return displayName
         
     def findModuleNameInEventContext(self, record):
