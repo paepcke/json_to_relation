@@ -3929,26 +3929,28 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         for partsStruct in peerOrSelfAssessPartsField:
             # partsStruct is something like:
             #   {'criterion': {'points_possible': 3, 'name': '1'}, 'option': {'points': 3, 'name': '3'}, 'feedback': ''}
-            pointsPossible = criterionName = optionPoints = optionName = feedback = ''  
+            pointsPossible = criterionName = optionPoints = optionName = feedback = ''
+            # The TypeError catching below is to protect
+            # against the inner getitem returning null:  
             try:
                 pointsPossible = partsStruct['criterion']['points_possible']
-            except KeyError:
+            except (KeyError,TypeError):
                 pass
             try:
                 criterionName = partsStruct['criterion']['name']
-            except KeyError:
+            except (KeyError,TypeError):
                 pass
             try:
                 optionPoints = partsStruct['option']['points']
-            except KeyError:
+            except (KeyError,TypeError):
                 pass
             try:
                 optionName = partsStruct['option']['name']
-            except KeyError:
+            except (KeyError,TypeError):
                 pass
             try:
                 feedback = partsStruct['feedback']
-            except KeyError:
+            except (KeyError,TypeError):
                 pass
 
             val = 'Criterion %s (max points %s): option %s: %s. Feedback: %s; ' % (criterionName,pointsPossible,optionName, optionPoints, feedback)

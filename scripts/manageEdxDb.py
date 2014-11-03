@@ -74,6 +74,7 @@ Modifications:
 '''
 
 import argparse
+import boto
 import copy
 import datetime
 import getpass
@@ -86,17 +87,18 @@ import socket
 import string
 import subprocess
 import sys
+import tempfile
 
-import boto
+from pymysql_utils.pymysql_utils import MySQLDB
+
+
 #import boto.connection 
-
 # Add json_to_relation source dir to $PATH
 # for duration of this execution:
 source_dir = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "../json_to_relation/")]
 source_dir.extend(sys.path)
 sys.path = source_dir
 
-from pymysql_utils.pymysql_utils import MySQLDB
 
 # Error info only available after 
 # exceptions. Else undefined. Set
@@ -409,6 +411,10 @@ class TrackLogPuller(object):
         self.logDebug("Method identifySQLToLoad()  called with csvDir='%s'" % csvDir)
 
         if csvDir is None:
+            # The following condition is checked in main,
+            # ... still:
+            if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None:
+                raise ValueError("Since TrackLogPuller.LOCAL_LOG_STORE_ROOT is not customized in manageEdxDb.py, you need to specify --csvDest.")
             csvDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'CSV')
         # Get content of LoadInfo file names in MySQL db Edx:
         if self.pwd:
@@ -432,7 +438,7 @@ class TrackLogPuller(object):
             # The csvDir doesn't exist:
             self.logWarn('Method identifySQLToLoad called with csvDir=%s, but that dir does not exist.' % csvDir)
             return []
-                # Each transformed tracking log file has generated several .csv
+        # Each transformed tracking log file has generated several .csv
         # files, but only one .sql file, so keep only the latter in
         # a list: 
         allTransformSQLFiles = filter(TrackLogPuller.SQL_FILE_NAME_PATTERN.search, allTransformResultFiles)
@@ -728,6 +734,10 @@ class TrackLogPuller(object):
         self.logDebug("Method load() called with sqlFilesToLoad='%s'; logDir=%s, csvDir='%s'" % (sqlFilesToLoad, logDir,csvDir))
         
         if csvDir is None:
+            # The following condition is checked in main,
+            # ... still:
+            if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None:
+                raise ValueError("Since TrackLogPuller.LOCAL_LOG_STORE_ROOT is not customized in manageEdxDb.py, you need to specify --csvDest.")
             csvDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'CSV')
         if sqlFilesToLoad is None:
             sqlFilesToLoad = self.identifySQLToLoad(csvDir=csvDir)
@@ -744,12 +754,28 @@ class TrackLogPuller(object):
         
         # Directory of this script:
         currDir = os.path.dirname(__file__)
-        loadScriptPath = os.path.join(currDir, 'executeCSVLoad.sh')
+        loadScriptPath = os.path.join(currDir, 'executeCSVBulkLoad.sh')
         
-        # Now SQL files are guaranteed to be a list. Load them all using
-        # a bash script, which will also run the index:
+        # Now SQL files are guaranteed to be a list of
+        # absolute paths to all .sql files to load. We
+        # now call a script that extracts all LOAD DATA INFILE
+        # statements, and combines them into one operation. If
+        # we instead imported all the .sql files separately, 
+        # indexes would be rebuilt after each one.
         
-        # Build the Bash command for calling executeCSVLoad.sh;
+        timestamp = datetime.datetime.now().isoformat().replace(':','_')
+        tmpFilePrefix = 'batchLoad' + timestamp + '_'
+        batchLoadFile = tempfile.NamedTemporaryFile(prefix=tmpFilePrefix, suffix='.sql', delete=False)
+        batchMakerScriptPath = os.path.join(currDir, 'createBatchLoadFile.sh')
+        scriptCmd = [batchMakerScriptPath] + sqlFilesToLoad
+        try:
+            subprocess.call(scriptCmd, stdout=batchLoadFile)
+        finally:
+            batchLoadFileName = batchLoadFile.name 
+            batchLoadFile.close()
+        # Input the single batchLoadFile into MySQL:
+        
+        # Build the Bash command for calling executeCSVBulkLoad.sh;
         # build a 'shadow' command for reporting to the log, such
         # that pwd does not show up in the log:
         if mysqlPWD is None:
@@ -758,8 +784,8 @@ class TrackLogPuller(object):
         else:
             shellCommand = [loadScriptPath, '-w', mysqlPWD, logDir]
             shadowCmd = [loadScriptPath, '-w', '*******', logDir]
-        shellCommand.extend(sqlFilesToLoad)
-        shadowCmd.extend(sqlFilesToLoad)
+        shellCommand.append(batchLoadFileName)
+        shadowCmd.append(batchLoadFileName)
         if dryRun:
             self.logInfo("Would now invoke bash command %s" % shadowCmd)
         else:
@@ -1237,11 +1263,11 @@ if __name__ == '__main__':
                 tblCreator.logErr("Command aborted, no action was taken.")
                 sys.exit(1)
 
-        # If TrackLogPuller.LOCAL_LOG_STORE_ROOT is not set, try
-        # to rescue the situation:
-        if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None:
-            if args.sqlSrc is not None:
-                TrackLogPuller.LOCAL_LOG_STORE_ROOT = os.path.join(args.sqlSrc, '/../')
+        # If TrackLogPuller.LOCAL_LOG_STORE_ROOT is not set, then
+        # make sure that sqlDest was provided by the caller:
+        if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None and args.sqlDest is None:
+            tblCreator.logErr("You need to provide sqlDest, since TrackLogPuller.LOCAL_LOG_STORE_ROOT in manageEdxDb.py was not customized.")
+            sys.exit(1)
         
         # For DB ops need DB root pwd, which was 
         # put into tblCreator.pwd above by various means:
