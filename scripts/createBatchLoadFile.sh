@@ -90,16 +90,17 @@ then
     do
 	echo "-- Loading data from "$(echo ${fileName} | sed -n 's/.*\(tracking.*\.gz\).*/\1/p')
 	echo `sed -n '/LOAD DATA LOCAL INFILE/p' ${csvDir}/*.sql`
+	echo "COMMIT;"
     done
 else
     for fileName in $@
     do
 	echo "-- Loading data from "$(echo ${fileName} | sed -n -e 's/.*\(tracking.*\.gz\).*/\1/p')
 	echo "$(sed -n '/LOAD DATA LOCAL INFILE/p' ${fileName})"
+	echo "COMMIT;"
     done
 fi    
 
-echo "COMMIT;"
 echo "-- /*!40000 ALTER TABLE \`EdxTrackEvent\` ENABLE KEYS */;"
 echo "-- /*!40000 ALTER TABLE \`State\` ENABLE KEYS */;"
 echo "-- /*!40000 ALTER TABLE \`InputState\` ENABLE KEYS */;"
