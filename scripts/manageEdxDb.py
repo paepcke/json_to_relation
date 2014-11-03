@@ -305,6 +305,10 @@ class TrackLogPuller(object):
         self.logDebug("Method identifyNotTransformedLogFiles()  called with localTrackingLogFilePaths='%s'; csvDestDir='%s'" % (localTrackingLogFilePaths,csvDestDir))
              
         if localTrackingLogFilePaths is None:
+            if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None:
+                # Note: we check for this condition in main;
+                # nonetheless...
+                raise ValueError("If localTrackingLogFilePaths is None, then TrackLogPuller.LOCAL_LOG_STORE_ROOT must be set in manageEdxDb.py")
             localTrackingLogFileDirs = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'app*/')
             localTrackingLogFileDirs = glob.glob(localTrackingLogFileDirs)
             localTrackingLogFilePaths = []
@@ -608,11 +612,11 @@ class TrackLogPuller(object):
         self.logDebug("Method transform() called with logFilePathsOrDir='%s'; csvDestDir='%s'" % (logFilePathsOrDir,csvDestDir))
 
         if csvDestDir is None:
-            try:
-                csvDestDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'CSV')
-            except TypeError:
-                # TrackLogPuller.LOCAL_LOG_STORE_ROOT is None:
-                self.log
+            if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None:
+                # Note: we check for this condition in main;
+                # nonetheless...
+                raise ValueError("If localTrackingLogFilePaths is None, then TrackLogPuller.LOCAL_LOG_STORE_ROOT must be set in manageEdxDb.py")
+            csvDestDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'CSV')
 
         if logFilePathsOrDir is None:
             logFilePathsOrDir = self.identifyNotTransformedLogFiles(csvDestDir=csvDestDir)
