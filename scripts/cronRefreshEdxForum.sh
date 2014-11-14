@@ -160,7 +160,7 @@ echo `date`": Symlinking Forum copy to forum_latest..."  | tee --append $LOG_FIL
 echo `date`": Anonymizing and loading into MySQL..."  | tee --append $LOG_FILE
 
 # Anonymize and load:
-python $CURR_SCRIPT_DIR/../../forum_etl/src/forum_etl/extractor.py --anonymize $PWD/forum-latest/app*/contents.bson
+python $CURR_SCRIPT_DIR/../../forum_etl/src/forum_etl/extractor.py --anonymize $PWD/forum-latest/stanford*/contents.bson
 
 # Delete the first 559 rows, which are all in Latin (test posts):
 if [ ! -z $MYSQL_PWD ]
