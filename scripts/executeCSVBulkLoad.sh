@@ -125,12 +125,9 @@ echo "Load process is logging to "$LOG_FILE
 # -------------------  Run the Bulk Load Script in MySQL -----------------
 
 # Do the actual loading of CSV files into their respective tables;
-# $@ are the .sql files from the CLI:
-for sqlFile in $@
-do  
-    echo "`date`: starting on $sqlFile"  >> $LOG_FILE 2>&1
-    { mysql -f -u root -p$password --local_infile=1 < "${bulkLoadFile}"; } >> "${LOG_FILE}" 2>&1
-    echo "`date`: done loading $bulkLoadFile"  >> $LOG_FILE 2>&1
-done
+# We simply source the passed-in bulk load file to MySQL:
+echo "`date`: starting load from $bulkLoadFile"  >> $LOG_FILE 2>&1
+{ mysql -f -u root -p$password --local_infile=1 < "${bulkLoadFile}"; } >> "${LOG_FILE}" 2>&1
+echo "`date`: done loading from $bulkLoadFile"  >> $LOG_FILE 2>&1
 
 exit
