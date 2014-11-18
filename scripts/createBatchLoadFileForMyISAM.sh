@@ -89,14 +89,20 @@ then
     for fileName in ${csvDirOrFirstFile}/*.sql
     do
 	echo "-- Loading data from "$(echo ${fileName} | sed -n 's/.*\(tracking.*\.gz\).*/\1/p')
-	echo `sed -n '/LOAD DATA LOCAL INFILE/p' ${csvDir}/*.sql`
+	# The following extracts all LOAD DATA... lines from
+	# one .sql file and echos them. Unfortunately, it
+	# adds one superfluos ';\n' after the last one:
+	echo "$(sed -n '/LOAD DATA LOCAL INFILE/p' ${fileName});\n"
 	echo "COMMIT;"
     done
 else
     for fileName in $@
     do
 	echo "-- Loading data from "$(echo ${fileName} | sed -n -e 's/.*\(tracking.*\.gz\).*/\1/p')
-	echo "$(sed -n '/LOAD DATA LOCAL INFILE/p' ${fileName})"
+	# The following extracts all LOAD DATA... lines from
+	# one .sql file and echos them. Unfortunately, it
+	# adds one superfluos ';\n' after the last one:
+	echo "$(sed -n '/LOAD DATA LOCAL INFILE/p' ${fileName});\n"
 	echo "COMMIT;"
     done
 fi    

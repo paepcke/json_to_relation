@@ -6,10 +6,11 @@
 # to install the stored prodcedures and functions required
 # for operation.
 
-usage="Usage: "`basename $0`" [-u username][-p]"
+usage="Usage: "`basename $0`" [-u username][-p][-n noindexex]"
 
 
 askForPasswd=false
+buildIndexes=1
 USERNAME=`whoami`
 PASSWD=''
 
@@ -47,7 +48,7 @@ done
 
 # Keep track of number of optional args the user provided:
 NEXT_ARG=0
-while getopts ":u:p" opt
+while getopts ":u:pn" opt
 do
   case $opt in
     u) # look in given user's HOME/.ssh/ for mysql_root
@@ -55,7 +56,11 @@ do
       NEXT_ARG=$((NEXT_ARG + 2))
       ;;
     p) # ask for mysql root pwd
-      askForPasswd=true
+      askForPasswd=0
+      NEXT_ARG=$((NEXT_ARG + 1))
+      ;;
+    n) # don't build indexes on the empty tables:
+      buildIndexes=false
       NEXT_ARG=$((NEXT_ARG + 1))
       ;;
     \?)
@@ -129,11 +134,14 @@ fi
 
 #**************
 echo "Done creating procedures and functions."
-echo "Starting index creation."
 #**************
 
-$currScriptsDir/createIndexForTable.sh -u root -p${PASSWD}
+if [ $buildIndexes = 1 ]
+then
+    echo "Starting index creation."
+    $currScriptsDir/createIndexForTable.sh -u root -p${PASSWD}
+    echo "Done creating indexes."
+else
+    echo "No index creation requested; no indexes defined."
+fi
 
-#**************
-echo "Done creating indexes."
-#**************
