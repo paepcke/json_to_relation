@@ -15,6 +15,7 @@ CREATE DATABASE IF NOT EXISTS Edx;
 CREATE DATABASE IF NOT EXISTS EdxPrivate;
 CREATE DATABASE IF NOT EXISTS EdxForum;
 CREATE DATABASE IF NOT EXISTS EdxPiazza;
+CREATE DATABASE IF NOT EXISTS edxprod;
 
 USE Edx;
 CREATE TABLE IF NOT EXISTS Answer (
@@ -22,7 +23,7 @@ CREATE TABLE IF NOT EXISTS Answer (
     problem_id VARCHAR(255) NOT NULL,
     answer TEXT NOT NULL,
     course_id VARCHAR(255) NOT NULL
-    ) ENGINE=InnoDB;
+    ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS CorrectMap (
     correct_map_id VARCHAR(40) NOT NULL PRIMARY KEY,
     answer_identifier TEXT NOT NULL,
@@ -32,12 +33,12 @@ CREATE TABLE IF NOT EXISTS CorrectMap (
     hint TEXT NOT NULL,
     hintmode VARCHAR(255) NOT NULL,
     queuestate TEXT NOT NULL
-    ) ENGINE=InnoDB;
+    ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS InputState (
     input_state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     problem_id VARCHAR(255) NOT NULL,
     state TEXT NOT NULL
-    ) ENGINE=InnoDB;
+    ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS State (
     state_id VARCHAR(40) NOT NULL PRIMARY KEY,
     seed TINYINT NOT NULL,
@@ -46,7 +47,7 @@ CREATE TABLE IF NOT EXISTS State (
     student_answer VARCHAR(40) NOT NULL,
     correct_map VARCHAR(40) NOT NULL,
     input_state VARCHAR(40) NOT NULL
-    ) ENGINE=InnoDB;
+    ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS CourseInfo (
     course_display_name varchar(255),
     course_catalog_name varchar(255),
@@ -57,11 +58,11 @@ CREATE TABLE IF NOT EXISTS CourseInfo (
     enrollment_start datetime,
     start_date datetime,
     end_date datetime
-) ENGINE=InnoDB;
+) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS EdxPrivate.EventIp (
     event_table_id varchar(40) NOT NULL PRIMARY KEY,
     event_ip varchar(16) NOT NULL DEFAULT ''
-) ENGINE=InnoDB;
+) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     account_id VARCHAR(40) NOT NULL PRIMARY KEY,
     screen_name TEXT NOT NULL,
@@ -80,12 +81,12 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     enrollment_action VARCHAR(255) NOT NULL,
     email TEXT NOT NULL,
     receive_emails VARCHAR(255) NOT NULL
-    ) ENGINE=InnoDB;
+    ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS LoadInfo (
     load_info_id VARCHAR(40) NOT NULL PRIMARY KEY,
     load_date_time DATETIME NOT NULL,
     load_file TEXT NOT NULL
-    ) ENGINE=InnoDB;
+    ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     _id VARCHAR(40) NOT NULL,
     event_id VARCHAR(40) NOT NULL,
@@ -96,7 +97,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     page TEXT NOT NULL,
     session TEXT NOT NULL,
     time DATETIME NOT NULL,
-    quarter VARCHAR(255) NOT NULL,
+    quarter VARCHAR(10) NOT NULL,
     anon_screen_name TEXT NOT NULL,
     downtime_for DATETIME NOT NULL,
     student_id TEXT NOT NULL,
@@ -154,7 +155,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     load_info_fk VARCHAR(40) NOT NULL,
     PRIMARY KEY(_id,quarter)
     ) 
-ENGINE=InnoDB
+ENGINE=MyISAM
 PARTITION BY LIST COLUMNS(quarter) (
     PARTITION pAY2012_Spring VALUES IN ('spring2013'),
     PARTITION pAY2012_Summer VALUES IN ('summer2013'),
@@ -201,7 +202,7 @@ CREATE TABLE IF NOT EXISTS ActivityGrade (
     anon_screen_name       varchar(40)   NOT NULL,
     resource_display_name  varchar(255)  NOT NULL,
     module_id              varchar(255)
-    ) ENGINE=InnoDB;
+    ) ENGINE=MyISAM;
 
 CREATE TABLE IF NOT EXISTS `ABExperiment` (
   `event_table_id` varchar(40) NOT NULL,
@@ -216,7 +217,7 @@ CREATE TABLE IF NOT EXISTS `ABExperiment` (
   `cohort_id` INT NOT NULL,
   `cohort_name` varchar(255) NOT NULL,
   PRIMARY KEY (`event_table_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 CREATE TABLE IF NOT EXISTS `OpenAssessment` (
   `event_table_id` varchar(40) NOT NULL,
@@ -238,7 +239,7 @@ CREATE TABLE IF NOT EXISTS `OpenAssessment` (
   `corrections` TEXT NOT NULL,
   `points` TEXT NOT NULL,
   PRIMARY KEY (`event_table_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 CREATE TABLE `UserCountry` (
   `two_letter_country` varchar(2) NOT NULL DEFAULT '',
@@ -246,7 +247,7 @@ CREATE TABLE `UserCountry` (
   `anon_screen_name` varchar(40) NOT NULL DEFAULT '',
   `country` varchar(255) NOT NULL DEFAULT '',
   KEY `UserCountryAnonIdx` (`anon_screen_name`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 
 USE EdxForum;
@@ -271,7 +272,7 @@ CREATE TABLE IF NOT EXISTS contents (
     `parent_id` varchar(255) DEFAULT NULL,
     `parent_ids` varchar(255) DEFAULT NULL,
     `sk` varchar(255) DEFAULT NULL
-    ) ENGINE=InnoDB;
+    ) ENGINE=MyISAM;
 
 
 USE EdxPiazza;
@@ -283,7 +284,7 @@ CREATE TABLE IF NOT EXISTS PiazzaUsers (
     `answers` int(11) NOT NULL DEFAULT 0,
     `views` int(11) NOT NULL DEFAULT 0,
     `days` int(11) NOT NULL DEFAULT 0
-)  ENGINE=InnoDB;
+)  ENGINE=MyISAM;
 
 CREATE TABLE IF NOT EXISTS contents (
     `forum_post_id` varchar(40) NOT NULL DEFAULT 'none',
@@ -306,7 +307,7 @@ CREATE TABLE IF NOT EXISTS contents (
     `sk` varchar(255) DEFAULT NULL,
     `confusion` varchar(20) NOT NULL DEFAULT 'none',
     `happiness` varchar(20) NOT NULL DEFAULT 'none'
-    ) ENGINE=InnoDB;
+    ) ENGINE=MyISAM;
 
 
 USE EdxPrivate;
@@ -327,4 +328,84 @@ CREATE TABLE `UserGrade` (
   KEY `UserGradeStatusIdx` (`status`),
   KEY `UserGradeNameIdx` (`name`),
   KEY `GradesAnonIdx` (`anon_screen_name`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+
+USE edxprod;
+CREATE TABLE `student_anonymoususerid` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `anonymous_user_id` varchar(32) COLLATE utf8_unicode_ci NOT NULL,
+  `course_id` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `anonymous_user_id` (`anonymous_user_id`),
+  KEY `student_anonymoususerid_fbfc09f1` (`user_id`),
+  KEY `student_anonymoususerid_ff48d8e5` (`course_id`),
+  CONSTRAINT `user_id_refs_id_23effb36c38f7a2a` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=816384 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci
+
+CREATE TABLE `certificates_generatedcertificate` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `download_url` varchar(128) NOT NULL,
+  `grade` varchar(5) NOT NULL,
+  `course_id` varchar(255) NOT NULL,
+  `key` varchar(32) NOT NULL,
+  `distinction` tinyint(1) NOT NULL,
+  `status` varchar(32) NOT NULL,
+  `verify_uuid` varchar(32) NOT NULL,
+  `download_uuid` varchar(32) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `created_date` datetime NOT NULL,
+  `modified_date` datetime NOT NULL,
+  `error_reason` varchar(512) NOT NULL,
+  `mode` varchar(32) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `certificates_generatedcertifica_course_id_1389f6b2d72f5e78_uniq` (`course_id`,`user_id`),
+  KEY `certificates_generatedcertificate_fbfc09f1` (`user_id`),
+  KEY `statusIdx` (`status`),
+  CONSTRAINT `user_id_refs_id_6c4fb3478e23bfe2` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=323031 DEFAULT CHARSET=utf8
+
+CREATE TABLE `student_courseenrollment` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `course_id` varchar(255) NOT NULL,
+  `created` datetime DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL,
+  `mode` varchar(100) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `student_courseenrollment_user_id_2d2a572f07dd8e37_uniq` (`user_id`,`course_id`),
+  KEY `student_courseenrollment_fbfc09f1` (`user_id`),
+  KEY `student_courseenrollment_ff48d8e5` (`course_id`),
+  KEY `student_courseenrollment_3216ff68` (`created`),
+  CONSTRAINT `user_id_refs_id_45948fcded37bc9d` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=810212 DEFAULT CHARSET=utf8
+
+CREATE TABLE `auth_userprofile` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `language` varchar(255) NOT NULL,
+  `location` varchar(255) NOT NULL,
+  `meta` longtext NOT NULL,
+  `courseware` varchar(255) NOT NULL,
+  `gender` varchar(6) DEFAULT NULL,
+  `mailing_address` longtext,
+  `year_of_birth` int(11) DEFAULT NULL,
+  `level_of_education` varchar(6) DEFAULT NULL,
+  `goals` longtext,
+  `allow_certificate` tinyint(1) NOT NULL,
+  `nonregistered` tinyint(1) NOT NULL,
+  `country` varchar(2) DEFAULT NULL,
+  `city` longtext,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `user_id` (`user_id`),
+  KEY `auth_userprofile_52094d6e` (`name`),
+  KEY `auth_userprofile_8a7ac9ab` (`language`),
+  KEY `auth_userprofile_b54954de` (`location`),
+  KEY `auth_userprofile_fca3d292` (`gender`),
+  KEY `auth_userprofile_d85587` (`year_of_birth`),
+  KEY `auth_userprofile_551e365c` (`level_of_education`),
+  CONSTRAINT `user_id_refs_id_3daaa960628b4c11` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=631396 DEFAULT CHARSET=utf8
+
