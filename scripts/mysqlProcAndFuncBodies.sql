@@ -779,7 +779,7 @@ END//
 
 #--------------------------
 # isUserEvent
-#-----------
+#------------
 
 # Returns 1 if given user event was generated
 # by the class participant, rather than the server
@@ -834,6 +834,7 @@ END;//
 # isEngagementEvent
 #-----------
 
+# NOTE: use isUserEvent() instead of this function.
 # Returns 1 if given event was generated
 # by the class participant during interaction
 # with a class element: video, a problem, or
