@@ -25,6 +25,8 @@
 # so the procedure can use ';':
 delimiter //
 
+USE Edx//
+
 #--------------------------
 # createIndexIfNotExists
 #-----------
@@ -601,6 +603,181 @@ BEGIN
 END//
 
 #--------------------------
+# extractCourseraCourseName
+#--------------------------
+
+# Given a Coursera database name, such as coursera_networksonline-001_anonymized_forum,
+# extract the course and run parts, in this case: 'networksonline-001'.
+# If a MOOCDb version is available, 'MOOCDb Coursera' is appended.
+# 
+# You can use this function to list all Coursera courses, like this:
+#
+#  SELECT DISTINCT extractCourseraCourseName(SCHEMA_NAME) 
+#  FROM information_schema.SCHEMATA 
+#  WHERE schema_name LIKE 'Coursera%' LIMIT 100;
+
+DROP FUNCTION IF EXISTS extractCourseraCourseName;
+CREATE FUNCTION  extractCourseraCourseName(courseraDbName varchar(255))
+RETURNS varchar(255)
+BEGIN
+    # If name doesn not start with coursera_, it is not
+    # a Coursera course:
+    SELECT LOCATE('coursera_',courseraDbName) INTO @startPosUnderscore;
+    SELECT LOCATE('coursera-',courseraDbName) INTO @startPosDash;
+    if (@startPosUnderscore != 1 && @startPosDash != 1)
+    then
+	return '';
+    END IF;
+
+    # Extract substring between 'coursera_' (or 'coursera-'), and the 
+    # 'sub database': '_anonymized_forum', '_hash_mapping', etc.:
+    IF (@startPosUnderscore = 1)
+    THEN
+        SELECT SUBSTRING_INDEX(courseraDbName,'_',2) INTO @RIGHT_CHOPPED;
+        SELECT SUBSTRING_INDEX(@RIGHT_CHOPPED,'_',-1) INTO @RES;
+    ELSE 
+        SELECT SUBSTRING_INDEX(courseraDbName,'-',2) INTO @RIGHT_CHOPPED;
+        SELECT SUBSTRING_INDEX(@RIGHT_CHOPPED,'-',-1) INTO @RES;
+    END IF;
+
+    # If the db name ends in '_moocdb': Prepend 'Coursera MOOCDb'
+    # to the result:
+    SELECT LOCATE('_moocdb', courseraDbName) INTO @MOOC_DB_POS;
+    SET @moocdb_len := 7;
+    IF (@MOOC_DB_POS > 0 && LENGTH(courseraDbName) - @moocdb_len + 1 = @MOOC_DB_POS)
+    THEN
+        SET @RES := concat('MOOCDb Coursera ', @RES);
+    END IF;
+
+    return @RES;
+END//
+
+#--------------------------
+# extractNovoEdCourseName
+#------------------------
+
+# Given a NovoEd database name, such as 'novoed-crs_email_Technology_Entrepreneurship'
+# extract the course and run parts, in this case: 'Technology_Entrepreneurship'.
+
+DROP FUNCTION IF EXISTS extractNovoEdCourseName;
+CREATE FUNCTION  extractNovoEdCourseName(novoEdDbName varchar(255))
+RETURNS varchar(255)
+BEGIN
+    # If name doesn not start with novoed_ or novoed-, it is not
+    # a NovoEd course:
+    SELECT LOCATE('novoed_',novoEdDbName) INTO @startPosUnderscore;
+    SELECT LOCATE('novoed-',novoEdDbName) INTO @startPosDash;
+    if (@startPosUnderscore != 1 && @startPosDash != 1)
+    then
+	return '';
+    END IF;
+
+    IF (LOCATE('novoed_crs_email_', novoEdDbName) > 0) ||
+       (LOCATE('novoed-crs_email_', novoEdDbName) > 0)
+    THEN
+        SELECT SUBSTRING(novoEdDbName FROM LENGTH('novoed_crs_email_')+1) INTO @RES;
+    ELSE
+        SELECT SUBSTRING(novoEdDbName FROM LENGTH('novoed_crs_')+1) INTO @RES;
+    END IF;
+    return @RES;
+END//
+
+#--------------------------
+# extractOpenEdXMoocDbCourseName
+#-------------------------------
+
+# Given a database name, return either of three results:
+#    Coursera MOOCDb <course_name>
+#    OpenEdX MOOCDb <course_name>
+#    ''
+#
+# Coursera MOOCDb courses are named like coursera_organalysis-002_moocdb
+# OpenEdX MOOCDb courses are named like openedx_moocdb_ee222_applied_quantum_mechanics
+
+DROP FUNCTION IF EXISTS extractOpenEdXMoocDbCourseName;
+CREATE FUNCTION  extractOpenEdXMoocDbCourseName(openEdxMoocDbDbName varchar(255))
+RETURNS varchar(255)
+BEGIN
+    SET @RES := '';
+    SELECT LOCATE('openedx_moocdb_', openEdxMoocDbDbName) INTO @startPos;
+    IF (@startPos != 1)
+    THEN
+        return '';
+    END IF;
+
+    IF (LOCATE('openedx_moocdb_', openEdxMoocDbDbName) > 0)
+    THEN
+        SELECT SUBSTRING(openEdxMoocDbDbName FROM LENGTH('openedx_moocdb_')+1) INTO @RES;
+	SET @RES := CONCAT('MOOCDb OpenEdX ', @RES);
+    END IF;
+    return @RES;
+END//
+
+#--------------------------
+# extractMoocDbCourseName
+#-------------------------
+
+DROP FUNCTION IF EXISTS extractMoocDbCourseName;
+CREATE FUNCTION  extractMoocDbCourseName(maybeMoocDbName varchar(255))
+RETURNS varchar(255)
+BEGIN
+    if (isMoocDbCourseName(maybeMoocDbName) = '')
+    THEN
+	RETURN '';
+    END IF;
+
+    # Is name an OpenEdX MOOCDb?
+    SELECT extractOpenEdXMoocDbCourseName(maybeMoocDbName) INTO @RES;
+    IF (@RES != '')
+    THEN
+        RETURN @RES;
+    END IF;
+
+    SELECT extractCourseraCourseName(maybeMoocDbName) INTO @RES;
+    IF (@RES != '')
+    THEN
+        RETURN @RES;
+    END IF;
+
+    # Add NovoEd case here when NovoEd MOOCDb is supported.
+
+    RETURN '';    
+END//
+
+#--------------------------
+# isMoocDbCourseName
+#-------------------
+
+# Given a database name from Datastage,
+# return 'openedx' if the name is a MOOOCDb
+# version of an OpenEdX course. Return one
+# of three results:
+#
+#   'openedx'
+#   'coursera'
+#   ''
+
+DROP FUNCTION IF EXISTS isMoocDbCourseName;
+CREATE FUNCTION isMoocDbCourseName(maybeMoocDbName varchar(255))
+RETURNS varchar(255)
+Begin
+    SELECT LOCATE('openedx_moocdb_', maybeMoocDbName) INTO @startPos;
+    IF (@startPos = 1)
+    THEN
+        RETURN 'openedx';
+    END IF;
+
+    # Does the db name end in '_moocdb'?
+    SELECT LOCATE('_moocdb', maybeMoocDbName) INTO @MOOC_DB_POS;
+    SET @moocdb_len := 7;
+    IF (@MOOC_DB_POS > 0 && LENGTH(maybeMoocDbName) - @moocdb_len + 1 = @MOOC_DB_POS)
+    THEN
+        RETURN 'coursera';
+    END IF;
+    RETURN '';
+END//
+
+#--------------------------
 # isUserEvent
 #-----------
 
@@ -822,8 +999,10 @@ END//
 # enrollment
 #-----------
 
-# Takes a course name, and returns its enrollment
-# via courseware_studentmodule.
+# Takes an OpenEdX course name, and returns its enrollment
+# via courseware_studentmodule. For Coursera and NovoEd
+# enrollment functions, see enrollmentCoursera(), and
+# enrollmentNovoEd().
 
 DROP FUNCTION IF EXISTS enrollment//
 CREATE FUNCTION enrollment(course_display_name varchar(255))
@@ -841,6 +1020,130 @@ BEGIN
     RETURN @totalEnrollment;
 END//
 
+#--------------------------
+# computeEnrollmentCoursera
+#--------------------------
+
+# Takes a Coursera course name, and returns its enrollment.
+# The course name may be given with, our without the 
+# leading 'coursera'. Also, any of the standard Coursera
+# database names may or may not be appended. All of the
+# following are legal as course_name values:
+#
+#   coursera_antimicrobial-001_demographics
+#   antimicrobial-001_demographics
+#   antimicrobial-001_anonymized_general
+#   antimicrobial-001
+#
+# Note that computeEnrollmentCoursera is a procedure,
+#      not a function. Therefore, usage:
+#
+#    CALL computeEnrollmentCoursera('antimicrobial-001', @enrollment);
+#    SELECT @enrollment;
+
+DROP PROCEDURE IF EXISTS computeEnrollmentCoursera;
+CREATE PROCEDURE computeEnrollmentCoursera(IN course_name varchar(255), OUT enrollment INT)
+BEGIN
+    DECLARE goodName varchar(255) DEFAULT course_name;
+
+    # Normalize the course name:
+
+    # Does the given name start with 'coursera_',
+    # as it should?
+    IF (LOCATE('coursera_', goodName) != 1)
+    THEN
+        SET goodName := concat('coursera_', goodName);    
+    END IF;
+
+    # Remove any of the 'subdatabase' names, such
+    # removing _anonymized_forum from end of the given
+    # course name:
+    IF (LOCATE('_anonymized_forum', goodName) != 0)
+    THEN
+	SET goodName := SUBSTRING_INDEX(goodName, '_anonymized_forum', 1);
+    ELSEIF (LOCATE('_anonymized_general', goodName) != 0)
+    THEN
+        SET goodName := SUBSTRING_INDEX(goodName, '_anonymized_general', 1);
+    ELSEIF (LOCATE('_demographics', goodName) != 0)
+    THEN
+	SET goodName := SUBSTRING_INDEX(goodName, '_demographics', 1);
+    ELSEIF (LOCATE('_hash_mapping', goodName) != 0)
+    THEN
+	SET goodName := SUBSTRING_INDEX(goodName, '_hash_mapping', 1);
+    ELSEIF (LOCATE('_mdbfe', goodName) != 0)
+    THEN
+	SET goodName := SUBSTRING_INDEX(goodName, '_mdbfe', 1);
+    ELSEIF (LOCATE('_moocdb', goodName) != 0)
+    THEN
+	SET goodName := SUBSTRING_INDEX(goodName, '_moocdb', 1);
+    ELSEIF (LOCATE('_unanonymizable', goodName) != 0)
+    THEN
+	SET goodName := SUBSTRING_INDEX(goodName, '_unanonymizable', 1);
+    END IF;
+
+    SET goodName := concat("`", goodName, '_anonymized_general', "`", '.users');
+
+    # Need to prepare a statement, b/c table
+    # name is a variable:
+    SET @stmtText := CONCAT("SELECT COUNT(*) FROM ",goodName," WHERE access_group_id = 4 INTO @RES;");
+    PREPARE enrollQuery FROM @stmtText;
+    EXECUTE enrollQuery;
+    DEALLOCATE PREPARE enrollQuery;
+
+    SET enrollment := @RES;
+END//
+
+#--------------------------
+# computeEnrollmentNovoEd
+#------------------------
+
+# Takes a NovoEd course name, and returns its enrollment.
+# The course name may be given with, our without the 
+# leading 'novoed_crs_'. Also, the standard NovoEd email
+# version of the course db name: foo_email_bar may
+# be given. The following are legal as course_name values:
+#
+#   novoed_crs_93
+#   novoed_crs_email_93
+#   93
+#
+# Note that computeEnrollmentNovoEd is a procedure,
+#      not a function. Therefore, usage:
+#
+#    CALL computeEnrollmentNovoEd('93', @enrollment);
+#    SELECT @enrollment;
+
+
+DROP PROCEDURE IF EXISTS computeEnrollmentNovoEd;
+CREATE PROCEDURE computeEnrollmentNovoEd(IN course_name varchar(255), OUT enrollment INT)
+BEGIN
+    DECLARE goodName varchar(255) DEFAULT course_name;
+
+    # Normalize the course name:
+
+    # Does the given name start with 'novoed_crs_',
+    # as it should?
+    IF (LOCATE('novoed_crs_', goodName) != 1)
+    THEN
+        SET goodName := CONCAT('novoed_crs_', goodName);    
+    END IF;
+    # If the given name is an email db, remove the _email_ 
+    # part:
+    IF (LOCATE('_email_', goodName) != 0)
+    THEN
+	SET goodName := CONCAT(SUBSTRING_INDEX(goodName, '_email_', 1),'_',SUBSTRING_INDEX(goodName, '_email_', -1));
+    END IF;
+    SET goodName := CONCAT("`", goodName, "`", '.user_courses');
+    # Need to prepare a statement, b/c table
+    # name is a variable:
+    SET @stmtText := CONCAT("SELECT COUNT(*) FROM ",goodName,
+                            " WHERE is_instructor=0 AND is_mentor=0 AND is_star_reviewer=0 AND is_teaching_assistant=0  INTO @RES;");
+    PREPARE enrollQuery FROM @stmtText;
+    EXECUTE enrollQuery;
+    DEALLOCATE PREPARE enrollQuery;
+
+    SET enrollment := @RES;
+END//
 
 # Restore standard delimiter:
 delimiter ;
@@ -985,6 +1288,10 @@ CALL grantExecuteIfExists('Edx.idAnon2Ext');
 CALL grantExecuteIfExists('Edx.latestLog');
 CALL grantExecuteIfExists('Edx.earliestLog');
 CALL grantExecuteIfExists('Edx.isUserEvent');
+CALL grantExecuteIfExists('Edx.wasCertified');
+CALL grantExecuteIfExists('Edx.enrollment');
+CALL grantExecuteIfExists('Edx.computeEnrollmentCoursera');
+CALL grantExecuteIfExists('Edx.computeEnrollmentNovoEd');
 
 CALL grantExecuteIfExists('EdxPrivate.idInt2Anon');
 CALL grantExecuteIfExists('EdxPrivate.idAnon2Int');
@@ -993,6 +1300,10 @@ CALL grantExecuteIfExists('EdxPrivate.idAnon2Ext');
 CALL grantExecuteIfExists('EdxPrivate.latestLog');
 CALL grantExecuteIfExists('EdxPrivate.earliestLog');
 CALL grantExecuteIfExists('EdxPrivate.isUserEvent');
+CALL grantExecuteIfExists('EdxPrivate.wasCertified');
+CALL grantExecuteIfExists('EdxPrivate.enrollment');
+CALL grantExecuteIfExists('EdxPrivate.computeEnrollmentCoursera');
+CALL grantExecuteIfExists('EdxPrivate.computeEnrollmentNovoEd');
 
 CALL grantExecuteIfExists('EdxForum.idInt2Anon');
 CALL grantExecuteIfExists('EdxForum.idAnon2Int');
@@ -1001,6 +1312,10 @@ CALL grantExecuteIfExists('EdxForum.idAnon2Ext');
 CALL grantExecuteIfExists('EdxForum.latestLog');
 CALL grantExecuteIfExists('EdxForum.earliestLog');
 CALL grantExecuteIfExists('EdxForum.isUserEvent');
+CALL grantExecuteIfExists('EdxForum.wasCertified');
+CALL grantExecuteIfExists('EdxForum.enrollment');
+CALL grantExecuteIfExists('EdxForum.computeEnrollmentCoursera');
+CALL grantExecuteIfExists('EdxForum.computeEnrollmentNovoEd');
 
 CALL grantExecuteIfExists('EdxPiazza.idInt2Anon');
 CALL grantExecuteIfExists('EdxPiazza.idAnon2Int');
@@ -1009,6 +1324,10 @@ CALL grantExecuteIfExists('EdxPiazza.idAnon2Ext');
 CALL grantExecuteIfExists('EdxPiazza.latestLog');
 CALL grantExecuteIfExists('EdxPiazza.earliestLog');
 CALL grantExecuteIfExists('EdxPiazza.isUserEvent');
+CALL grantExecuteIfExists('EdxPiazza.wasCertified');
+CALL grantExecuteIfExists('EdxPiazza.enrollment');
+CALL grantExecuteIfExists('EdxPiazza.computeEnrollmentCoursera');
+CALL grantExecuteIfExists('EdxPiazza.computeEnrollmentNovoEd');
 
 CALL grantExecuteIfExists('unittest.idInt2Anon');
 CALL grantExecuteIfExists('unittest.idAnon2Int');
@@ -1017,3 +1336,7 @@ CALL grantExecuteIfExists('unittest.idAnon2Ext');
 CALL grantExecuteIfExists('unittest.latestLog');
 CALL grantExecuteIfExists('unittest.earliestLog');
 CALL grantExecuteIfExists('unittest.isUserEvent');
+CALL grantExecuteIfExists('unittest.wasCertified');
+CALL grantExecuteIfExists('unittest.enrollment');
+CALL grantExecuteIfExists('unittest.computeEnrollmentCoursera');
+CALL grantExecuteIfExists('unittest.computeEnrollmentNovoEd');
