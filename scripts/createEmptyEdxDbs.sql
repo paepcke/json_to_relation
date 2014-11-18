@@ -328,7 +328,7 @@ CREATE TABLE `UserGrade` (
   KEY `UserGradeStatusIdx` (`status`),
   KEY `UserGradeNameIdx` (`name`),
   KEY `GradesAnonIdx` (`anon_screen_name`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 USE edxprod;
 CREATE TABLE `student_anonymoususerid` (
@@ -341,7 +341,7 @@ CREATE TABLE `student_anonymoususerid` (
   KEY `student_anonymoususerid_fbfc09f1` (`user_id`),
   KEY `student_anonymoususerid_ff48d8e5` (`course_id`),
   CONSTRAINT `user_id_refs_id_23effb36c38f7a2a` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=816384 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci
+) ENGINE=MyISAM AUTO_INCREMENT=816384 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 CREATE TABLE `certificates_generatedcertificate` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -364,7 +364,7 @@ CREATE TABLE `certificates_generatedcertificate` (
   KEY `certificates_generatedcertificate_fbfc09f1` (`user_id`),
   KEY `statusIdx` (`status`),
   CONSTRAINT `user_id_refs_id_6c4fb3478e23bfe2` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=323031 DEFAULT CHARSET=utf8
+) ENGINE=MyISAM AUTO_INCREMENT=323031 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `student_courseenrollment` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -379,7 +379,7 @@ CREATE TABLE `student_courseenrollment` (
   KEY `student_courseenrollment_ff48d8e5` (`course_id`),
   KEY `student_courseenrollment_3216ff68` (`created`),
   CONSTRAINT `user_id_refs_id_45948fcded37bc9d` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=810212 DEFAULT CHARSET=utf8
+) ENGINE=MyISAM AUTO_INCREMENT=810212 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `auth_userprofile` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -407,5 +407,5 @@ CREATE TABLE `auth_userprofile` (
   KEY `auth_userprofile_d85587` (`year_of_birth`),
   KEY `auth_userprofile_551e365c` (`level_of_education`),
   CONSTRAINT `user_id_refs_id_3daaa960628b4c11` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=631396 DEFAULT CHARSET=utf8
+) ENGINE=MyISAM AUTO_INCREMENT=631396 DEFAULT CHARSET=utf8;
 
