@@ -9,7 +9,7 @@
 #
 # Instead, the output of this script is a .sql file that 
 # executes all LOADs of .csv files that the individual .sql
-# files execute, and *then* creates a new index.
+# files execute. All known InnoDB optimizations are enabled.
 #
 # The generated .sql script is written to stdout.
 #

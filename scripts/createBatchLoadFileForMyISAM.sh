@@ -9,7 +9,8 @@
 #
 # Instead, the output of this script is a .sql file that 
 # executes all LOADs of .csv files that the individual .sql
-# files execute, and *then* creates a new index.
+# files execute with secondary keys disabled. At the end,
+# the keys are re-enabled, and the indexes are updated.
 #
 # The generated .sql script is written to stdout.
 #
@@ -91,7 +92,11 @@ then
 	echo "-- Loading data from "$(echo ${fileName} | sed -n 's/.*\(tracking.*\.gz\).*/\1/p')
 	# The following extracts all LOAD DATA... lines from
 	# one .sql file and echos them. Unfortunately, it
-	# adds one superfluos ';\n' after the last one:
+	# adds one superfluos ';\n' after the last one. So,
+	# Do this afterwards:
+	#     sed -i.bak 's/;/;\n/g' <your .sql output file>
+	#     rm <your .sql output file>.bak
+
 	echo "$(sed -n '/LOAD DATA LOCAL INFILE/p' ${fileName});\n"
 	echo "COMMIT;"
     done
@@ -101,7 +106,10 @@ else
 	echo "-- Loading data from "$(echo ${fileName} | sed -n -e 's/.*\(tracking.*\.gz\).*/\1/p')
 	# The following extracts all LOAD DATA... lines from
 	# one .sql file and echos them. Unfortunately, it
-	# adds one superfluos ';\n' after the last one:
+	# adds one superfluos ';\n' after the last one. So
+	# Do this afterwards:
+	#     sed -i.bak 's/;/;\n/g' <your .sql output file>
+	#     rm <your .sql output file>.bak
 	echo "$(sed -n '/LOAD DATA LOCAL INFILE/p' ${fileName});\n"
 	echo "COMMIT;"
     done
