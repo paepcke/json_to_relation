@@ -16,6 +16,7 @@ CREATE DATABASE IF NOT EXISTS EdxPrivate;
 CREATE DATABASE IF NOT EXISTS EdxForum;
 CREATE DATABASE IF NOT EXISTS EdxPiazza;
 CREATE DATABASE IF NOT EXISTS edxprod;
+CREATE DATABASE IF NOT EXISTS unittest;
 
 USE Edx;
 CREATE TABLE IF NOT EXISTS Answer (
@@ -311,7 +312,7 @@ CREATE TABLE IF NOT EXISTS contents (
 
 
 USE EdxPrivate;
-CREATE TABLE `UserGrade` (
+CREATE TABLE IF NOT EXISTS `UserGrade` (
   `name` varchar(255) NOT NULL DEFAULT '',
   `screen_name` varchar(255) NOT NULL DEFAULT '',
   `grade` int(11) NOT NULL DEFAULT '0',
@@ -331,7 +332,7 @@ CREATE TABLE `UserGrade` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 USE edxprod;
-CREATE TABLE `student_anonymoususerid` (
+CREATE TABLE IF NOT EXISTS `student_anonymoususerid` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
   `anonymous_user_id` varchar(32) COLLATE utf8_unicode_ci NOT NULL,
@@ -343,7 +344,7 @@ CREATE TABLE `student_anonymoususerid` (
   CONSTRAINT `user_id_refs_id_23effb36c38f7a2a` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=816384 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-CREATE TABLE `certificates_generatedcertificate` (
+CREATE TABLE IF NOT EXISTS `certificates_generatedcertificate` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
   `download_url` varchar(128) NOT NULL,
@@ -366,7 +367,7 @@ CREATE TABLE `certificates_generatedcertificate` (
   CONSTRAINT `user_id_refs_id_6c4fb3478e23bfe2` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=323031 DEFAULT CHARSET=utf8;
 
-CREATE TABLE `student_courseenrollment` (
+CREATE TABLE IF NOT EXISTS `student_courseenrollment` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
   `course_id` varchar(255) NOT NULL,
@@ -381,7 +382,7 @@ CREATE TABLE `student_courseenrollment` (
   CONSTRAINT `user_id_refs_id_45948fcded37bc9d` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=810212 DEFAULT CHARSET=utf8;
 
-CREATE TABLE `auth_userprofile` (
+CREATE TABLE IF NOT EXISTS `auth_userprofile` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
   `name` varchar(255) NOT NULL,
