@@ -94,7 +94,7 @@ then
 	# one .sql file and echos them. Unfortunately, it
 	# adds one superfluos ';\n' after the last one. So,
 	# Do this afterwards:
-	#     sed -i.bak 's/;/;\n/g' <your .sql output file>
+	#     sed -i.bak 's/;\\n//g' <your .sql output file>
 	#     rm <your .sql output file>.bak
 
 	echo "$(sed -n '/LOAD DATA LOCAL INFILE/p' ${fileName});\n"
@@ -108,7 +108,7 @@ else
 	# one .sql file and echos them. Unfortunately, it
 	# adds one superfluos ';\n' after the last one. So
 	# Do this afterwards:
-	#     sed -i.bak 's/;/;\n/g' <your .sql output file>
+	#     sed -i.bak 's/;\\n//g' <your .sql output file>
 	#     rm <your .sql output file>.bak
 	echo "$(sed -n '/LOAD DATA LOCAL INFILE/p' ${fileName});\n"
 	echo "COMMIT;"
