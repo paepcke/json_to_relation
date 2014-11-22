@@ -132,6 +132,8 @@ allTables=( ["EdxTrackEvent"]="Edx" \
             ["LoadInfo"]="Edx" \
             ["State"]="Edx" \
             ["ActivityGrade"]="Edx" \
+            ["ABExperiment"]="Edx" \
+            ["OpenAssessment"]="Edx" \
             ["Account"]="EdxPrivate" \
     )
 
@@ -182,63 +184,130 @@ do
 	    # COMMIT;"
 
 	echo "Creating index on EdxTrackEvent(event_type) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxEvType', '"${allTables[$table]}".EdxTrackEvent', 'event_type', 255);"
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxEvType', 'EdxTrackEvent', 'event_type', 255);"
 	echo "Creating index on EdxTrackEvent(anon_screen_name) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxIdxUname', '"${allTables[$table]}".EdxTrackEvent', 'anon_screen_name', 40);"
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxIdxUname', 'EdxTrackEvent', 'anon_screen_name', 40);"
 	echo "Creating index on EdxTrackEvent(course_display_name) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxCourseDisplayName', '"${allTables[$table]}".EdxTrackEvent', 'course_display_name', 255);"
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxCourseDisplayName', 'EdxTrackEvent', 'course_display_name', 255);"
 	echo "Creating index on EdxTrackEvent(resource_display_name) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxResourceDisplayName', '"${allTables[$table]}".EdxTrackEvent', 'resource_display_name', 255);"
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxResourceDisplayName', 'EdxTrackEvent', 'resource_display_name', 255);"
 	echo "Creating index on EdxTrackEvent(success) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxSuccess', '"${allTables[$table]}".EdxTrackEvent', 'success', 15);"
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxSuccess', 'EdxTrackEvent', 'success', 15);"
 	echo "Creating index on EdxTrackEvent(time) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxTime', '"${allTables[$table]}".EdxTrackEvent', 'time', NULL);"
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxTime', 'EdxTrackEvent', 'time', NULL);"
 	echo "Creating index on EdxTrackEvent(quarter) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxQuarter', '"${allTables[$table]}".EdxTrackEvent', 'quarter', NULL);"
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxQuarter', 'EdxTrackEvent', 'quarter', NULL);"
 	echo "Creating index on EdxTrackEvent(ip) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxIP', '"${allTables[$table]}".EdxTrackEvent', 'ip_country', 3);"
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxIP', 'EdxTrackEvent', 'ip_country', 3);"
 	echo "Creating index on EdxTrackEvent(course_display_name,time) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxCourseNameTime', '"${allTables[$table]}".EdxTrackEvent', 'course_display_name,time', NULL);"
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxVideoId', '"${allTables[$table]}".EdxTrackEvent', 'video_id', 255);"
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxCourseNameTime', 'EdxTrackEvent', 'course_display_name,time', NULL);"
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxVideoId', 'EdxTrackEvent', 'video_id', 255);"
 
     elif [ $table == 'Answer' ]
     then
 	echo "Creating index on Answer(answer) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('AnswerIdxAns', '"${allTables[$table]}".Answer', 'answer', 255);"
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('AnswerIdxAns', 'Answer', 'answer', 255);"
 	echo "Creating index on Answer(course_id) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('AnswerIdxCourseID', '"${allTables[$table]}".Answer', 'course_id', 255);"
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('AnswerIdxCourseID', 'Answer', 'course_id', 255);"
     elif [ $table == 'Account' ]
     then
 	echo "Creating index on Account(screen_name) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('AccountIdxUname', '"${allTables[$table]}".Account', 'screen_name', 255);"
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('AccountIdxUname', 'Account', 'screen_name', 255);"
 	echo "Creating index on Account(anon_screen_name) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('AccountIdxAnonUname', '"${allTables[$table]}".Account', 'anon_screen_name', 40);"
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('AccountIdxAnonUname', 'Account', 'anon_screen_name', 40);"
 	echo "Creating index on Account(zipcode) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('AccountIdxZip', '"${allTables[$table]}".Account', 'zipcode', 10);"
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('AccountIdxZip', 'Account', 'zipcode', 10);"
 	echo "Creating index on Account(country) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('AccountIdxCoun', '"${allTables[$table]}".Account', 'country', 255);"
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('AccountIdxCoun', 'Account', 'country', 255);"
 	echo "Creating index on Account(gender) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('AccountIdxGen', '"${allTables[$table]}".Account', 'gender', 6);"
-	echo "Creating index on Account(year_of_birth'.."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('AccountIdxDOB', '"${allTables[$table]}".Account', 'year_of_birth', NULL);"
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('AccountIdxGen', 'Account', 'gender', 6);"
+	echo "Creating index on Account(year_of_birth'..."
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('AccountIdxDOB', 'Account', 'year_of_birth', NULL);"
 	echo "Creating index on Account(level_of_education) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('AccountIdxEdu', '"${allTables[$table]}".Account', 'level_of_education', 10);"
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('AccountIdxEdu', 'Account', 'level_of_education', 10);"
 	echo "Creating index on Account(course_id) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('AccountIdxCouID', '"${allTables[$table]}".Account', 'course_id', 255);"
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('AccountIdxCouID', 'Account', 'course_id', 255);"
     elif [ $table == 'ActivityGrade' ]
     then
 	echo "Creating index on ActivityGrade(last_submit) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('activityGradeLast_submitIdx', '"${allTables[$table]}".ActivityGrade', 'last_submit', NULL);"
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('activityGradeLast_submitIdx', 'ActivityGrade', 'last_submit', NULL);"
 	echo "Creating index on ActivityGrade(ActGrdAnonSNIdx) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('ActGrdAnonSNIdx', '"${allTables[$table]}".ActivityGrade', 'anon_screen_name', 40);"
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('ActGrdAnonSNIdx', 'ActivityGrade', 'anon_screen_name', 40);"
 	echo "Creating index on ActivityGrade(course_display_name) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('ActGrdCourseDisNmIdx', '"${allTables[$table]}".ActivityGrade', 'course_display_name', 255);"
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('ActGrdCourseDisNmIdx', 'ActivityGrade', 'course_display_name', 255);"
 	echo "Creating index on ActivityGrade(module_id) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('ActGrdModIdIdx', '"${allTables[$table]}".ActivityGrade', 'module_id', 255);"
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('ActGrdModIdIdx', 'ActivityGrade', 'module_id', 255);"
 	echo "Creating index on ActivityGrade(resource_display_name) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('ActGrdResDispNmIdx', '"${allTables[$table]}".ActivityGrade', 'resource_display_name', 255);"
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('ActGrdResDispNmIdx', 'ActivityGrade', 'resource_display_name', 255);"
 	echo "Creating index on ActivityGrade(num_attempts) if needed..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CALL createIndexIfNotExists('ActGrdNumAttemptsIdx', '"${allTables[$table]}".ActivityGrade', 'num_attempts', NULL);"
-	
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('ActGrdNumAttemptsIdx', 'ActivityGrade', 'num_attempts', NULL);"
+    elif [ $table == 'ABExperiment' ]	
+    then
+	echo "Creating index on ABExperiment(event_type) if needed..."
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('ABExpEventTypeIdx', 'ABExperiment', 'event_type', NULL);"
+	echo "Creating index on ABExperiment(group_id) if needed..."
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('ABExpGrpIdIdx', 'ABExperiment', 'group_id', NULL);"
+	echo "Creating index on ABExperiment(course_display_name) if needed..."
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('ABExpGrpNmIdx', 'ABExperiment', 'group_name', 255);"
+	echo "Creating index on ABExperiment(module_id) if needed..."
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('ABExpPartIdIdx', 'ABExperiment', 'partition_id', NULL);"
+	echo "Creating index on ABExperiment(resource_display_name) if needed..."
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('ABExpPartNmIdx', 'ABExperiment', 'partition_name', 255);"
+	echo "Creating index on ABExperiment(num_attempts) if needed..."
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('ABExpChldModIdIdx', 'ABExperiment', 'child_module_id', 255);"
+
+    elif [ $table == 'OpenAssessment' ]	
+    then
+	echo "Creating index on OpenAssessment(event_type) if needed..."
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('OpAssEvTypeIdx', 'OpenAssessment', 'event_type', 255);"
+	echo "Creating index on OpenAssessment(anon_screen_name) if needed..."
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('OpAssAnonScNmIdx', 'OpenAssessment', 'anon_screen_name', 40);"
+	echo "Creating index on OpenAssessment(score_type) if needed..."
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('OpAssScoreTpIdx', 'OpenAssessment', 'score_type', 255);"
+	echo "Creating index on OpenAssessment(time) if needed..."
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('OpAssTimeIdx', 'OpenAssessment', 'time', NULL);"
+	echo "Creating index on OpenAssessment(submission_uuid) if needed..."
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('OpAssSubmIdIdx', 'OpenAssessment', 'submission_uuid', 40);"
+	echo "Creating index on OpenAssessment(edx_anon_id) if needed..."
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('OpAssEdxAnonIdx', 'OpenAssessment', 'edx_anon_id', 40);"
+	echo "Creating index on OpenAssessment(course_display_name) if needed..."
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('OpAssCrsNmIdx', 'OpenAssessment', 'course_display_name', 255);"
+	echo "Creating index on OpenAssessment(resource_display_name) if needed..."
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('OpAssRrcDispNmIdx', 'OpenAssessment', 'resource_display_name', 255);"
+	echo "Creating index on OpenAssessment(resource_id) if needed..."
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('OpAssRscIdIdx', 'OpenAssessment', 'resource_id', 255);"
+	echo "Creating index on OpenAssessment(attempt_num) if needed..."
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('OpAssAttNumNmIdx', 'OpenAssessment', 'attempt_num', NULL);"
+	echo "Creating index on OpenAssessment(options) if needed..."
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('OpAssOptsIdx', 'OpenAssessment', 'options', 255);"
+	echo "Creating index on OpenAssessment(corrections) if needed..."
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('OpAssCorrIdx', 'OpenAssessment', 'corrections', 40);"
+	echo "Creating index on OpenAssessment(points) if needed..."
+	mysql -u $USERNAME $pwdOption --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('OpAssPtsidx', 'OpenAssessment', 'points', 40);"
+
+	# Three fulltext indexes are created (if needed) here
+	# as opposed to using function createIndexIfNotExists()
+	# b/c that function isn't written to consider fulltext
+	# indexing:
+
+	indxExists=$(mysql --silent -u $USERNAME $pwdOption -e "USE Edx; SELECT indexExists('OpenAssessment','submission_text');")
+	if [[ $indxExists == 0 ]]
+	then
+	    echo "Creating index on OpenAssessment(submission_text) (fulltext)..."
+	    mysql -u $USERNAME $pwdOption -e "USE Edx; CREATE FULLTEXT INDEX OpAssSubmTxtIdx ON OpenAssessment(submission_text);"
+	fi
+	indxExists=$(mysql --silent -u $USERNAME $pwdOption -e "USE Edx; SELECT indexExists('OpenAssessment','feedback_text');")
+	if [[ $indxExists == 0 ]]
+	then
+	    echo "Creating index on OpenAssessment(feedback_text) (fulltext)..."
+	    mysql -u $USERNAME $pwdOption -e "USE Edx; CREATE FULLTEXT INDEX OpAssFeedbkTxtIdx ON OpenAssessment(feedback_text);"
+        fi
+	indxExists=$(mysql --silent -u $USERNAME $pwdOption -e "USE Edx; SELECT indexExists('OpenAssessment','comment_text');")
+	if [[ $indxExists == 0 ]]
+	then
+	    echo "Creating index on OpenAssessment(comment_text) (fulltext)..."
+	    mysql -u $USERNAME $pwdOption -e "USE Edx; CREATE FULLTEXT INDEX OpAssCommentTxtIdx ON OpenAssessment(comment_text);"
+        fi
+
     fi
 done

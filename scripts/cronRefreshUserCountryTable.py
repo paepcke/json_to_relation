@@ -51,6 +51,7 @@ class UserCountryTableCreator(object):
 
     def makeIndex(self):
         self.db.execute("CALL createIndexIfNotExists('UserCountryAnonIdx', 'UserCountry', 'anon_screen_name', 40);")
+        self.db.execute("CALL createIndexIfNotExists('UserCountryThreeLetIdx', 'UserCountry', 'three_letter_country', 3);")
 
     def close(self):
         self.db.close()

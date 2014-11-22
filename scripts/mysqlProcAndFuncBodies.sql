@@ -33,13 +33,26 @@ USE Edx//
 
 # Create index if it does not exist yet.
 # Parameter the_prefix_len can be set to NULL if not needed
+# NOTE: ensure the database in which the table resides
+# is the current db. I.e. do USE <db> before calling.
 
 DROP PROCEDURE IF EXISTS createIndexIfNotExists //
 CREATE PROCEDURE createIndexIfNotExists (IN the_index_name varchar(255),
      		 			 IN the_table_name varchar(255),
 					 IN the_col_name   varchar(255),
 					 IN the_prefix_len INT)
-BEGIN
+this_proc: BEGIN
+      # Check whether table exists:
+      IF ((SELECT COUNT(*) AS table_exists 
+           FROM information_schema.statistics 
+           WHERE TABLE_SCHEMA = DATABASE() 
+             AND table_name = the_table_name)
+          = 0)
+      THEN
+           SELECT concat("**** Table ", DATABASE(), ".", the_table_name, " does not exist.");
+	   LEAVE this_proc;
+      END IF;
+	   
       IF ((SELECT COUNT(*) AS index_exists 
            FROM information_schema.statistics 
            WHERE TABLE_SCHEMA = DATABASE() 
