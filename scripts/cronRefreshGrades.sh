@@ -20,8 +20,7 @@ USAGE='Usage: '`basename $0`' [-u localMySQLUser][-p][-pLocalMySQLPwd]'
 
 LOG_FILE=/home/dataman/Data/EdX/NonTransformLogs/refreshUserGradeTable.log
 LOCAL_MYSQL_PASSWD=''
-#targetFile=$HOME/MySQLTmp/userTable.tsv
-targetFile=/lfs/datastage/1/tmp/userTable.tsv
+
 LOCAL_USERNAME=`whoami`
 needLocalPasswd=false
 
@@ -117,9 +116,30 @@ echo `date`": Start updating table UserGrade..." | tee --append $LOG_FILE
 
 # ------------------ Retrieve certificates_generatedcertificate Excerpt from S3 as TSV -------------------
 
+# Need to find MySQL's tmpdir to be sure that MySQL
+# can write the tmp file we'll ask it for. The mysql
+# call runs a SHOW VARIABLES LIKE 'tmpdir' to get
+# something like: "tmpdir /tmp". The 'cut' cmd then
+# isolates the dir name in the second statement:
+
+if [ -z $LOCAL_MYSQL_PASSWD ]
+then
+    mysqlTmpDir=`mysql -u $LOCAL_USERNAME --silent --skip-column-names -e "SHOW VARIABLES LIKE 'tmpdir';") | cut --delimiter=' ' --fields=2`
+    mysqlTmpDir=`echo $mysqlTmpDir | cut --delimiter=' ' --fields=2`
+else
+    mysqlTmpDir=`mysql -u $LOCAL_USERNAME -p$LOCAL_MYSQL_PASSWD --silent --skip-column-names -e "SHOW VARIABLES LIKE 'tmpdir';"`
+    mysqlTmpDir=`echo $mysqlTmpDir | cut --delimiter=' ' --fields=2`
+fi
+
+#**********
+#echo 'mysqlTmpDir: '$mysqlTmpDir
+#exit 0
+#**********
+
 # Ensure all directories to the target
 # file exist:
-mkdir -p $(dirname ${targetFile})
+mkdir -p $mysqlTmpDir
+targetFile=$mysqlTmpDir/userTable.tsv
 
 # SSH to remote machine, log into MySQL from
 # there, do the query, and redirect the result
