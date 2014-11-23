@@ -102,13 +102,23 @@ then
 elif [ -z $MYSQL_PWD ]
 then
     # Get home directory of whichever user will
-    # log into MySQL:
-    HOME_DIR=$(getent passwd $USERNAME | cut -d: -f6)
-    # If the home dir has a readable file called mysql_root in its .ssh
-    # subdir, then pull the pwd from there:
-    if test -f $HOME_DIR/.ssh/mysql && test -r $HOME_DIR/.ssh/mysql
+    # log into MySQL, except for root:
+
+    if [[ $USERNAME == 'root' ]]
     then
-	MYSQL_PWD=`cat $HOME_DIR/.ssh/mysql`
+        HOME_DIR=$(getent passwd `whoami` | cut -d: -f6)
+        if test -f $HOME_DIR/.ssh/mysql_root && test -r $HOME_DIR/.ssh/mysql_root
+        then
+                MYSQL_PWD=`cat $HOME_DIR/.ssh/mysql_root`
+        fi
+    else
+        HOME_DIR=$(getent passwd $USERNAME | cut -d: -f6)
+        # If the home dir has a readable file called mysql in its .ssh
+        # subdir, then pull the pwd from there:
+        if test -f $HOME_DIR/.ssh/mysql && test -r $HOME_DIR/.ssh/mysql
+        then
+                MYSQL_PWD=`cat $HOME_DIR/.ssh/mysql`
+        fi
     fi
 fi
 
