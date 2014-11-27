@@ -974,7 +974,7 @@ CREATE FUNCTION wordcount(str TEXT)
 
 DROP FUNCTION IF EXISTS isTrueCourseName//
 CREATE FUNCTION isTrueCourseName(course_display_name varchar(255))
-RETURNS BOOL
+RETURNS BOOL DETERMINISTIC
 BEGIN
     # Name starts with a zero?
     IF ((SELECT course_display_name REGEXP '^[0-9]') = 1)
@@ -1157,6 +1157,95 @@ BEGIN
     DEALLOCATE PREPARE enrollQuery;
 
     SET enrollment := @RES;
+END//
+
+#--------------------------
+# dateInQuarter
+#-------------
+
+# Tests whether a given date lies within a given academic
+# year and quarter. 
+
+DROP FUNCTION IF EXISTS dateInQuarter//
+CREATE FUNCTION dateInQuarter(dateInQuestion DATETIME, quarter varchar(6), academic_year INT)
+RETURNS BOOLEAN DETERMINISTIC
+BEGIN
+    DECLARE acQuarterNumber INT DEFAULT QUARTER(DATE_ADD(dateInQuestion, INTERVAL 1 MONTH));
+    IF (acQuarterNumber = 4) # academic Fall
+    THEN
+        RETURN ((YEAR(dateInQuestion) = academic_year) AND (LOWER(quarter) = 'fall'));
+    ELSEIF (acQuarterNumber = 3) # academic Summer
+    THEN
+        RETURN ((YEAR(dateInQuestion) = academic_year + 1) AND (LOWER(quarter) = 'summer'));
+    ELSEIF (acQuarterNumber = 2) # academic Spring
+    THEN
+        RETURN ((YEAR(dateInQuestion) = academic_year + 1) AND (LOWER(quarter) = 'spring'));
+    ELSE # winter quarter: academic quarter straddles year boundary
+        IF (MONTH(dateInQuestion) = 12)
+	THEN
+	    RETURN (YEAR(dateInQuestion) = academic_year);
+        ELSE
+	    RETURN (YEAR(dateInQuestion) = academic_year + 1);
+        END IF;
+    END IF;
+END//
+
+#--------------------------
+# makeUpperQuarterDate
+#-------------
+
+# Given a quarter name and academic year, return the
+# latest date that is still within that quarter. Legal
+# quarter arguments are fall,winter,spring, and summer.
+
+DROP FUNCTION IF EXISTS makeUpperQuarterDate //
+CREATE FUNCTION makeUpperQuarterDate(quarter varchar(6), academic_year INT) 
+RETURNS date DETERMINISTIC
+BEGIN
+    IF (quarter = 'fall')
+    THEN
+        RETURN DATE(concat(academic_year,'-11-30'));
+    ELSEIF (quarter = 'winter')
+    THEN
+    RETURN DATE(concat(academic_year+1,'-02-28'));
+    ELSEIF (quarter = 'spring')
+    THEN
+    RETURN DATE(concat(academic_year+1,'-05-31'));
+    ELSEIF (quarter = 'summer')
+    THEN
+    RETURN DATE(concat(academic_year+1,'-08-31'));
+    ELSE
+        RETURN NULL;
+    END IF;
+END//
+
+#--------------------------
+# makeLowQuarterDate
+#-------------
+
+# Given a quarter name and academic year, return the
+# earliest date that is within that quarter. Legal
+# quarter arguments are fall,winter,spring, and summer.
+
+DROP FUNCTION IF EXISTS makeLowQuarterDate //
+CREATE FUNCTION `makeLowQuarterDate`(quarter varchar(6), academic_year INT) 
+RETURNS date DETERMINISTIC
+BEGIN
+    IF (quarter = 'fall')
+    THEN
+        RETURN DATE(concat(academic_year,'-09-01'));
+    ELSEIF (quarter = 'winter')
+    THEN
+    RETURN DATE(concat(academic_year,'-12-01'));
+    ELSEIF (quarter = 'spring')
+    THEN
+    RETURN DATE(concat(academic_year+1,'-03-01'));
+    ELSEIF (quarter = 'summer')
+    THEN
+    RETURN DATE(concat(academic_year+1,'-06-01'));
+    ELSE
+        RETURN NULL;
+    END IF;
 END//
 
 # Restore standard delimiter:
