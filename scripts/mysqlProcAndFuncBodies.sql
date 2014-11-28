@@ -1178,24 +1178,52 @@ END//
 # dateInQuarter
 #-------------
 
-# Tests whether a given date lies within a given academic
-# year and quarter. 
+# Tests whether a given date lies within a given *academic*
+# year and quarter. Year is either a four digit number, or
+# the string '%'. In this latter case, the test succeeds
+# if the given date is in the proper quarter of any year.
+# Numeric year may be provided as int or string.
+#
+# Quarter must be one of 'fall', 'winter', 'spring', 'summer'. 
+# Case does not matter.
+#
+# Examples:
+#    SELECT dateInQuarter('2014-1-02', 'winter', '2013'); -> 1
+#    SELECT dateInQuarter('2013-12-02', 'winter', '2013'); -> 1
+#    SELECT dateInQuarter('2013-11-30', 'fall', 2013); -> 1
+#    SELECT dateInQuarter('2014-03-30', 'spring', '%'); -> 1
+#    SELECT dateInQuarter('2020-03-30', 'spring', '%'); -> 1
+
 
 DROP FUNCTION IF EXISTS dateInQuarter//
-CREATE FUNCTION dateInQuarter(dateInQuestion DATETIME, quarter varchar(6), academic_year INT)
+CREATE FUNCTION dateInQuarter(dateInQuestion DATETIME, quarter varchar(6), academic_year varchar(4))
 RETURNS BOOLEAN DETERMINISTIC
 BEGIN
     DECLARE acQuarterNumber INT DEFAULT QUARTER(DATE_ADD(dateInQuestion, INTERVAL 1 MONTH));
+    # If passed in wildcard, double it so that
+    # conditionals below will work:
+    IF (academic_year = '%')
+    THEN
+        SET academic_year := '%%';
+    END IF;
     IF (acQuarterNumber = 4) # academic Fall
     THEN
-        RETURN ((YEAR(dateInQuestion) = academic_year) AND (LOWER(quarter) = 'fall'));
+        RETURN ((YEAR(dateInQuestion) LIKE academic_year) AND (LOWER(quarter) = 'fall'));
     ELSEIF (acQuarterNumber = 3) # academic Summer
     THEN
-        RETURN ((YEAR(dateInQuestion) = academic_year + 1) AND (LOWER(quarter) = 'summer'));
+        # Unless year is wildcard, compute calendar year:
+        SET academic_year := IF(academic_year = '%%','%', academic_year + 1);
+        RETURN ((YEAR(dateInQuestion) LIKE academic_year) AND (LOWER(quarter) = 'summer'));
     ELSEIF (acQuarterNumber = 2) # academic Spring
     THEN
-        RETURN ((YEAR(dateInQuestion) = academic_year + 1) AND (LOWER(quarter) = 'spring'));
+        # Unless year is wildcard, compute calendar year:
+        SET academic_year := IF(academic_year = '%%','%', academic_year + 1);
+        RETURN ((YEAR(dateInQuestion) LIKE academic_year) AND (LOWER(quarter) = 'spring'));
     ELSE # winter quarter: academic quarter straddles year boundary
+        IF (academic_year = '%%')
+	THEN
+	    RETURN(LOWER(quarter) = 'winter');
+	END IF;
         IF (MONTH(dateInQuestion) = 12)
 	THEN
 	    RETURN (YEAR(dateInQuestion) = academic_year);
