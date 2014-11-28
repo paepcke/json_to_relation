@@ -4636,14 +4636,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         eventYear = eventTime.year
         if eventTime.month >= 1 and eventTime.month < 3 or eventTime.month == 12:
             quarter = 'winter'
-            if eventTime.month != 12:
-                eventYear -= 1
         elif eventTime.month >= 3 and eventTime.month < 6:
             quarter = 'spring'
-            eventYear -= 1
         elif eventTime.month >= 6 and eventTime.month < 9:
             quarter = 'summer'
-            eventYear -= 1
         else:
             quarter = 'fall'
         return str(quarter) + str(eventYear)

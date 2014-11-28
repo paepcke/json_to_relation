@@ -1306,6 +1306,7 @@ CREATE VIEW EventXtract AS
 	  event_type,
 	  ip_country,
 	  time,
+	  quarter,
 	  course_display_name,
 	  resource_display_name,
 	  success,
