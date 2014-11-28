@@ -802,7 +802,7 @@ END//
 
 DROP FUNCTION IF EXISTS isUserEvent //
 CREATE FUNCTION isUserEvent (an_event_type varchar(255))
-RETURNS BOOL
+RETURNS BOOL DETERMINISTIC
 BEGIN
     IF 	 an_event_type = 'book' OR 
 	 an_event_type = 'fullscreen' OR 
@@ -815,6 +815,14 @@ BEGIN
 	 an_event_type = 'oe_show_question' OR 
 	 an_event_type = 'oe_show_full_feedback' OR 
 	 an_event_type = 'oe_show_respond_to_feedback' OR 
+	 an_event_type = 'openassessmentblock.get_peer_submission' OR
+         an_event_type = 'openassessmentblock.peer_assess' OR
+         an_event_type = 'openassessmentblock.self_assess' OR
+         an_event_type = 'openassessmentblock.submit_feedback_on_assessments' OR
+         an_event_type = 'openassessment.student_training_assess_example' OR
+         an_event_type = 'openassessment.create_submission' OR
+         an_event_type = 'openassessment.save_submission' OR
+         an_event_type = 'openassessment.upload_file' OR
 	 an_event_type = 'page_close' OR 
 	 an_event_type = 'pause_video' OR 
 	 an_event_type = 'peer_grading_hide_question' OR 
@@ -835,7 +843,6 @@ BEGIN
 	 an_event_type = 'speed_change_video' OR 
 	 an_event_type = 'staff_grading_hide_question' OR 
 	 an_event_type = 'staff_grading_show_question'
-
    THEN
        RETURN 1;
    ELSE
@@ -855,10 +862,18 @@ END;//
 
 DROP FUNCTION IF EXISTS isEngagementEvent //
 CREATE FUNCTION isEngagementEvent (an_event_type varchar(255))
-RETURNS BOOL
+RETURNS BOOL DETERMINISTIC
 BEGIN
     IF 	 an_event_type = 'load_video' OR 
 	 an_event_type = 'oe_feedback_response_selected' OR 
+	 an_event_type = 'openassessmentblock.get_peer_submission' OR
+         an_event_type = 'openassessmentblock.peer_assess' OR
+         an_event_type = 'openassessmentblock.self_assess' OR
+         an_event_type = 'openassessmentblock.submit_feedback_on_assessments' OR
+         an_event_type = 'openassessment.student_training_assess_example' OR
+         an_event_type = 'openassessment.create_submission' OR
+         an_event_type = 'openassessment.save_submission' OR
+         an_event_type = 'openassessment.upload_file' OR
 	 an_event_type = 'pause_video' OR 
 	 an_event_type = 'peer_grading_hide_question' OR 
 	 an_event_type = 'peer_grading_show_question' OR 
