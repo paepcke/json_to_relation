@@ -244,7 +244,7 @@ CREATE TABLE IF NOT EXISTS `OpenAssessment` (
   `options` varchar(255) NOT NULL,
   `corrections` TEXT NOT NULL,
   `points` TEXT NOT NULL,
-  PRIMARY KEY (`event_table_id`)
+  PRIMARY KEY (`event_table_id`),
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 CREATE TABLE `UserCountry` (
