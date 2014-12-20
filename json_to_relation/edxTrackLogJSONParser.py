@@ -5166,9 +5166,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                        such a 32-bit hash embedded in a larger string.
         :type openEdxHash: String
         '''
-        displayName = self.findResourceDisplayName(openEdxHash)
-        if len(openEdxHash) > 0:
-            self.setValInRow(row, 'resource_display_name', self.makeInsertSafe(displayName))
+        if openEdxHash is not None and len(openEdxHash) > 0:
+            displayName = self.findResourceDisplayName(openEdxHash)
+            if len(displayName) > 0:
+                self.setValInRow(row, 'resource_display_name', self.makeInsertSafe(displayName))
 
     def findResourceDisplayName(self, openEdxHash):
         '''
