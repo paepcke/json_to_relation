@@ -221,31 +221,45 @@ CREATE TABLE IF NOT EXISTS `ABExperiment` (
   `resource_display_name` varchar(255) NOT NULL,
   `cohort_id` INT NOT NULL,
   `cohort_name` varchar(255) NOT NULL,
-  `course_display_name` varchar(255) NOT NULL
+  `course_display_name` varchar(255) NOT NULL,
   PRIMARY KEY (`event_table_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
-CREATE TABLE IF NOT EXISTS `OpenAssessment` (
+CREATE TABLE `OpenAssessment` (
   `event_table_id` varchar(40) NOT NULL,
-  `event_type` TEXT NOT NULL,
+  `event_type` text NOT NULL,
   `anon_screen_name` varchar(40) NOT NULL,
   `score_type` varchar(255) NOT NULL,
   `submission_uuid` varchar(255) NOT NULL,
-  `edx_anon_id` TEXT NOT NULL,
-  `time` DATETIME NOT NULL,
-  `time_aux` DATETIME NOT NULL,
+  `edx_anon_id` text NOT NULL,
+  `time` datetime NOT NULL,
+  `time_aux` datetime NOT NULL,
   `course_display_name` varchar(255) NOT NULL,
   `resource_display_name` varchar(255) NOT NULL,
   `resource_id` varchar(255) NOT NULL,
-  `submission_text` MEDIUMTEXT NOT NULL,
-  `feedback_text` MEDIUMTEXT NOT NULL,
-  `comment_text` MEDIUMTEXT NOT NULL,
-  `attempt_num` INT NOT NULL,
+  `submission_text` mediumtext NOT NULL,
+  `feedback_text` mediumtext NOT NULL,
+  `comment_text` mediumtext NOT NULL,
+  `attempt_num` int(11) NOT NULL,
   `options` varchar(255) NOT NULL,
-  `corrections` TEXT NOT NULL,
-  `points` TEXT NOT NULL,
+  `corrections` text NOT NULL,
+  `points` text NOT NULL,
   PRIMARY KEY (`event_table_id`),
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+  KEY `OpAssScoreTpIdx` (`score_type`),
+  KEY `OpAssTimeIdx` (`time`),
+  KEY `OpAssSubmIdIdx` (`submission_uuid`(40)),
+  KEY `OpAssEdxAnonIdx` (`edx_anon_id`(40)),
+  KEY `OpAssCrsNmIdx` (`course_display_name`),
+  KEY `OpAssRrcDispNmIdx` (`resource_display_name`),
+  KEY `OpAssRscIdIdx` (`resource_id`),
+  KEY `OpAssAttNumNmIdx` (`attempt_num`),
+  KEY `OpAssOptsIdx` (`options`),
+  KEY `OpAssCorrIdx` (`corrections`(40)),
+  KEY `OpAssEvTypeIdx` (`event_type`(255)),
+  KEY `OpAssAnonScNmIdx` (`anon_screen_name`),
+  KEY `OpAssPtsidx` (`points`(40))
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
 
 CREATE TABLE `UserCountry` (
   `two_letter_country` varchar(2) NOT NULL DEFAULT '',
