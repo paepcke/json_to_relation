@@ -3827,7 +3827,17 @@ class EdXTrackLogJSONParser(GenericJSONParser):
 
         if eventType.endswith('child_render'):
             abExpDict['child_module_id'] = childId = eventDict.get('child-id', '')
-            moduleDisplayName = self.findResourceDisplayName(childId)
+            if len(childId) == 0:
+                # 'child-id' is the documented field name. But EdX likes to change
+                # hyphens to underscores, so in case the ever do:
+                abExpDict['child_module_id'] = childId = eventDict.get('child_id', '')
+            try:
+                moduleDisplayName = self.findResourceDisplayName(childId)
+            except TypeError:
+                # A type error was seen once during a transform; unsure how
+                # that comes about. But this guards against them:
+                self.logWarn("Event %s should have child-id field but has '%s'" % (eventType,childId))
+                moduleDisplayName = ''
             if len(moduleDisplayName) > 0:
                 abExpDict['resource_display_name'] = moduleDisplayName
 
