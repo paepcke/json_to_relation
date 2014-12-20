@@ -110,7 +110,7 @@ class IpCountryDict(unittest.TestCase):
         '''
         (ipNum, lookupKey) = self.ipStrToIntAndKey(ipStr)
         if ipNum is None or lookupKey is None:
-            raise ValueError('IP string is not a valid IP address: %s' % str(ipStr))
+            raise ValueError("IP string is not a valid IP address: '%s'" % str(ipStr))
         while lookupKey > 0:
             try:
                 ipRangeChain = self.ipToCountryDict[lookupKey]
@@ -119,7 +119,7 @@ class IpCountryDict(unittest.TestCase):
                 lookupKey = str(int(lookupKey) - 1).zfill(4)[0:4]
                 continue
         if ipRangeChain is None:
-            raise KeyError('IP string is not a valid IP address: %s' % str(ipStr))
+            raise KeyError("IP string is not a valid IP address: '%s'" % str(ipStr))
         for ipInfo in ipRangeChain:
             # Have (rangeStart,rangeEnd,country2Let,country3Let,county)
             # Sorted by rangeStart:

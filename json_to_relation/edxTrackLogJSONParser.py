@@ -417,6 +417,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.schemaABExperimentTbl['resource_display_name'] = ColDataType.TINYTEXT
         self.schemaABExperimentTbl['cohort_id'] = ColDataType.INT
         self.schemaABExperimentTbl['cohort_name'] = ColDataType.TINYTEXT
+        self.schemaABExperimentTbl['course_display_name'] = ColDataType.TINYTEXT
         # Turn the SQL data types in the dict to column spec objects:
         for colName in self.schemaABExperimentTbl.keys():
             colType =  self.schemaABExperimentTbl[colName]
@@ -856,7 +857,11 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 # Nothing additional to grab:
                 return
                 
-            elif eventType == 'book':
+            # The 'startswith textbook.pdf' covers a whole
+            # famility of textbook related actions, such as
+            # textbook.pdf.thumbnails.toggled.
+            elif eventType == 'book' or\
+                 eventType.startswith('textbook.pdf'):
                 row = self.handleBook(record, row, event)
                 return
     
@@ -950,7 +955,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             # A/B Test Events:
             elif eventType in ['assigned_user_to_partition',
                                'xmodule.partitions.assigned_user_to_partition', 
-                               'child_render', 
+                               'child_render',
+                               'xblock.split_test.child_render',
                                'edx.cohort.user_created', 
                                'edx.cohort.user_added', 
                                'edx.cohort.user_removed']: 
@@ -962,6 +968,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                                'openassessmentblock.peer_assess',
                                'openassessmentblock.self_assess',
                                'openassessmentblock.submit_feedback_on_assessments',
+                               'openassessmentblock.create_submission',
+                               'openassessmentblock.save_submission',
+                               'openassessmentblock.upload_file',
+                               'openassessmentblock.student_training_assess_example',
                                'openassessment.student_training_assess_example',
                                'openassessment.create_submission',
                                'openassessment.save_submission',
@@ -1400,9 +1410,15 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 fldName = 'anon_screen_name'
             elif fldName == 'ip':
                 ip  = val
-                # Col value is to be three-letter country code;
-                # Get the triplet (2-letter-country-code, 3-letter-country-code, country): 
-                val = self.getThreeLetterCountryCode(ip)
+                # For some server originating events
+                # the IP address is empty. Tolerate
+                # that: 
+                if len(ip) == 0:
+                    val = 'zzz'
+                else:
+                    # Col value is to be three-letter country code;
+                    # Get the triplet (2-letter-country-code, 3-letter-country-code, country):
+                    val = self.getThreeLetterCountryCode(ip)
                 fldName = 'ip_country'
                 
                 # The event row id and IP address go into 
@@ -1439,15 +1455,19 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                     theOrg = self.currContextDict.get('org_id', None)
                     self.setValInRow(row, 'organization', theOrg)
 
+                    # The following is no longer done. The only info that
+                    # goes into the ABTest table now is assignments or
+                    # reassignments, not every event about a learner that
+                    # happens to be in an AB group.
                     # When a participant who is assigned to an AB experiment
                     # triggers an event, the context field course_user_tags
                     # contains a dict with the learner's partition and group
                     # assignment. Ensure that info about this event is recorded
                     # in the ABExperiment table:
-                    abTestInfo = self.currContextDict.get('course_user_tags', None)
-                    if abTestInfo is not None:
-                        eventType = record.get('event_type', None)
-                        self.addEventToABExperiment(event_tuple_id, eventType, self.currContextDict)
+                    ##abTestInfo = self.currContextDict.get('course_user_tags', None)
+                    ##if abTestInfo is not None:
+                    ##    eventType = record.get('event_type', None)
+                    ##   self.addEventToABExperiment(event_tuple_id, eventType, self.currContextDict)
 
                     # Make course_id available for places where rows are added to the Answer table.
                     # We stick the course_id there for convenience.
@@ -2059,6 +2079,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
            - 'resource_display_name'    : human readable name of module 
            - 'cohort_id'      : numeric ID of cohort group
            - 'cohort_name'    : string name of cohort group
+           - 'course_display_name' : course name 
 
         :param abExperimentDict: Ordered dict with all required ABExperiment table column values 
         :type abExperimentDict: {STRING : STRING, STRING : INT, STRING : STRING, STRING : INT, STRING : STRING, STRING : STRING} 
@@ -2586,9 +2607,91 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         self.setValInRow(row, 'video_current_time', videoCurrentTime)
         return row
     
-    def handleBook(self, record, row, event):
+    def handleBook(self, record, row, event):   
         '''
-        No example of book available
+        The textbook event series is a bit complicate.
+        Check the OpenEdX documentation for the JSON (below
+        are three examples). Depending on the textbook event
+        type, target columns are used in different ways:
+        
+             JSON                  Column           Comment
+        ------------------------------------------------------------------------------------
+            chapter         resource_display_nam  (pdf file name)
+        thumbnail_title     resource_display_name
+          chapter_title     resource_display_name
+           query            resource_display_name (for event textbook.pdf.search.executed)
+                                                           amount is target zoom level)
+            page            sequence_id           (page within pdf file)  
+            page            goto_from             (for event textbook.pdf.search.executed,
+                                                         also for textbook.pdf.thumbnails.toggled)
+            new             goto_dest
+            old             goto_from
+           amount           goto_dest              (used in textbook.pdf.zoom.menu.changed
+            name            book_interaction_type  (i.e. textbook.pdf.page.loaded
+                                                        for 'gotopage' in 'type'
+                                                        textbook.pdf.page.navigatedprevious
+                                                           for 'prevpage' in 'type'
+                                                        textbook.pdf.page.navigatednext
+                                                           for 'nextpage' in 'type')
+            direction       book_interaction_type  (when direction field present,
+                                                        then name fld is just
+                                                        a repeat of event_type
+         findprevious       book_interaction_type  (for event textbook.pdf.search.navigatednext)
+           status           success                (for event textbook.pdf.search.executed)
+
+        Example JSON events:
+        {
+            "username": "...",
+            "event_type": "textbook.pdf.page.scrolled",
+            "event": "{\"page\":5,
+                       \"direction\":\"down\",
+                       \"chapter\":\"/foo/Introduction.pdf\",
+                       \"name\":\"textbook.pdf.page.scrolled\"}",
+            "event_source": "browser",
+            "context": {
+                "user_id": 606813,
+                "org_id": "Philosophy",
+                "course_id": "Philosophy/LPL/2014",
+                "path": "/event"
+            },
+            "page": "https://class.stanford.edu/courses/Philosophy/LPL/2014/pdfbook/0/?viewer=true&file=/c4x/Philosophy/LPL/asset/Chapter_2_from_LPL_textbook.pdf#zoom=page-fit"        
+        }
+        
+        {
+            "username": "...",
+            "event_type": "book",
+            "event": "{\"type\":\"gotopage\",
+                       \"old\":4,
+        	           \"new\":5,
+        	           \"chapter\":\"/c4x/Philosophy/LPL/asset/Introduction.pdf\",
+        	           \"name\":\"textbook.pdf.page.loaded\"}",
+            "event_source": "browser",
+            "context": {
+                "user_id": 606813,
+                "org_id": "Philosophy",
+                "course_id": "Philosophy/LPL/2014",
+                "path": "/event"
+            },
+            "page": "https://class.stanford.edu/courses/Philosophy/LPL/2014/pdfbook/0/?viewer=true&file=/c4x/Philosophy/LPL/asset/Chapter_2_from_LPL_textbook.pdf#zoom=page-fit"
+        }
+        
+        {
+            "username": "...",
+            "event_type": "book",
+            "event": "{\"type\":\"gotopage\",
+                       \"old\":6,
+        	           \"new\":7,
+        	           \"chapter\":\"/c4x/Philosophy/LPL/asset/Introduction.pdf\",
+        	           \"name\":\"textbook.pdf.page.loaded\"}",
+            "context": {
+                "user_id": 606813,
+                "org_id": "Philosophy",
+                "course_id": "Philosophy/LPL/2014",
+                "path": "/event"
+            },
+            "page": "https://class.stanford.edu/courses/Philosophy/LPL/2014/pdfbook/0/?viewer=true&file=/c4x/Philosophy/LPL/asset/Chapter_2_from_LPL_textbook.pdf#zoom=page-fit"
+        }
+                
         '''
         if event is None:
             self.logWarn("Track log line %s: missing event text in book event type." %\
@@ -2602,15 +2705,58 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                          (self.jsonToRelationConverter.makeFileCitation(), str(event)))
             return row
 
-        bookInteractionType = valsDict.get('type', None)
+        bookInteractionType = valsDict.get('name', None)
+        chapter = valsDict.get('chapter', None)
         bookOld = valsDict.get('old', None)
         bookNew = valsDict.get('new', None)
+        page    = valsDict.get('page', None)
+        thumbNailTitle = valsDict.get('thumbnail_title', None)
+        chapterTitle = valsDict.get('chapter_title', None)
+        direction = valsDict.get('direction', None)
+        amount = valsDict.get('amount', None)
+        caseSensitive = valsDict.get('caseSensistive', None)
+        query = valsDict.get('query', None)
+        status = valsDict.get('status', None)
+        findprevious = valsDict.get('findprevious', None)
+        highlightAll = valsDict.get('highlightAll', None)
+        
         if bookInteractionType is not None:
             self.setValInRow(row, 'book_interaction_type', bookInteractionType)
+        if chapter is not None:
+            self.setValInRow(row, 'resource_display_name', chapter)
         if bookOld is not None:            
             self.setValInRow(row, 'goto_from', bookOld)
         if bookNew is not None:            
             self.setValInRow(row, 'goto_dest', bookNew)
+        if type(page) == int:
+            self.setValInRow(row, 'goto_from', page)
+            self.setValInRow(row, 'goto_dest', page)
+        if thumbNailTitle is not None:
+            self.setValInRow(row, 'sequence_id', thumbNailTitle)
+        if chapterTitle is not None:
+            self.setValInRow(row, 'sequence_id', chapterTitle)
+        if direction is not None:
+            self.setValInRow(row, 'mode', direction)
+        if amount is not None:
+            self.setValInRow(row, 'mode', amount)
+        if caseSensitive is not None:
+            self.setValInRow(row, 'mode', caseSensitive)
+        if query is not None:
+            self.setValInRow(row, 'sequence_id', query)
+        if status is not None:
+            self.setValInRow(row, 'success', query)
+        if findprevious is not None:
+            if findprevious:
+                self.setValInRow(row, 'mode', 'previous')
+            else:
+                self.setValInRow(row, 'mode', 'next')
+        if highlightAll is not None:
+            if highlightAll:
+                self.setValInRow(row, 'mode', 'do_highlight_all')
+            else:
+                self.setValInRow(row, 'mode', 'dont_highlight_all')
+            
+            
         return row
         
     def handleShowAnswer(self, record, row, event):
@@ -3660,26 +3806,36 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         abExpDict['resource_display_name']     = self.findModuleNameInEventContext(record)
         abExpDict['cohort_id']       = eventDict.get('cohort_id', -1)
         abExpDict['cohort_name']     = eventDict.get('cohort_name', '')
+        abExpDict['course_display_name'] = self.currCourseID
 
-        abTestInfo = eventDict.get('course_user_tags', None)
-        if abTestInfo is not None:
-            abTestInfoDict = self.ensureDict(abTestInfo)
-            if len(abTestInfoDict) > 0:
-                # The dict contains one key/value pair: the key is
-                # the name of the partition that a learner is in. 
-                # The value is the learner's groupID:
-                tagsKeys = abTestInfoDict.keys()
-                if len(tagsKeys) > 0:
-                    abExpDict['partition_name'] = tagsKeys[0]
-                    abExpDict['group_id'] = abTestInfoDict[tagsKeys[0]]
-                if len(tagsKeys) > 1:
-                    self.logWarn("ABExperiment related event with course_user_tags length > 1; ignoring all but first key/val pair.") 
+        if not eventType.endswith('assigned_user_to_partition'):
+            context = eventDict.get('context', {})
+            abTestInfo = context.get('course_user_tags', None)
+            if abTestInfo is not None:
+                abTestInfoDict = self.ensureDict(abTestInfo)
+                if len(abTestInfoDict) > 0:
+                    # The dict contains one key/value pair: the key is
+                    # the name of the partition that a learner is in. 
+                    # The value is the learner's groupID:
+                    tagsKeys = abTestInfoDict.keys()
+                    if len(tagsKeys) > 0:
+                        abExpDict['partition_name'] = tagsKeys[0]
+                        abExpDict['group_id'] = abTestInfoDict[tagsKeys[0]]
+                    if len(tagsKeys) > 1:
+                        self.logWarn("ABExperiment related event with course_user_tags length > 1; ignoring all but first key/val pair.") 
+
+        if eventType.endswith('child_render'):
+            abExpDict['child_module_id'] = childId = eventDict.get('child-id', '')
+            moduleDisplayName = self.findResourceDisplayName(childId)
+            if len(moduleDisplayName) > 0:
+                abExpDict['resource_display_name'] = moduleDisplayName
 
         self.pushABExperimentInfo(abExpDict)
         return row
 
     def addEventToABExperiment(self, eventTableId, eventType, contextDict):
         '''
+        [This method is currently not used, and likely won't in the future]
         Called when an event concerns a learner that has been 
         assigned to an AB experiment. The entry into the EdxTrackEvent
         table is handled elsewhere. This method just adds info about that
@@ -3729,6 +3885,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         abExpDict['resource_display_name'] = resourceDisplayName 
         abExpDict['cohort_id']       = -1
         abExpDict['cohort_name']     = ''
+        abExpDict['course_display_name']     = ''
         
         if len(abTestInfoDict) > 0:
             # The dict contains key/value pairs: that can
@@ -3840,7 +3997,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             openAssessmentDict['submission_uuid'] = eventDict.get('submission_uuid','')
             openAssessmentDict['time_aux'] = eventDict.get('submitted_at','')
 
-        elif eventType == 'openassessment.save_submission':
+        elif (eventType == 'openassessment.save_submission') or\
+             (eventType == 'openassessmentblock.save_submission'):
             # The 'saved_response' field is a dict w/ flds 'text' and 'file_upload_key'
             # We ignore the file upload key:
             try:

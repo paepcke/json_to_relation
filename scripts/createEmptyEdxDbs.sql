@@ -217,6 +217,7 @@ CREATE TABLE IF NOT EXISTS `ABExperiment` (
   `resource_display_name` varchar(255) NOT NULL,
   `cohort_id` INT NOT NULL,
   `cohort_name` varchar(255) NOT NULL,
+  `course_display_name` varchar(255) NOT NULL
   PRIMARY KEY (`event_table_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 

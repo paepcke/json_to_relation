@@ -366,6 +366,9 @@ class JSONToRelation(object):
                 # to self.destination before this point:
                 savedFinalOutDest.copySchemas(self.destination)
 
+        #*************
+        #numErrorsSoFar = 0
+        #*************
         with self.destination as outFd, self.jsonSource as inFd:
             for jsonStr in inFd:
                 # Skip empty rows:
@@ -381,10 +384,18 @@ class JSONToRelation(object):
                 except (ValueError, KeyError) as e:
                     JSONToRelation.logger.warn('Line %s: bad JSON object: %s' % (self.makeFileCitation(), `e`))
                     #***************
+                    # Uncomment to print the offending JSON string, and quit:
+                    #print('=====================================')
+                    #print(jsonStr)
+                    #numErrorsSoFar += 1
+                    #if numErrorsSoFar > 5:
+                    #    raise
+                    
                     # Uncomment to get stacktrace for the above caught errors:
                     #import sys
                     #import traceback
                     #traceback.print_tb(sys.exc_info()[2])
+                    #print('-------------------------------------')
                     #***************
                 self.bumpLineCounter()
 
