@@ -5,6 +5,7 @@ Created on Oct 2, 2013
 
 Modifications:
 
+* Dec 19, 2014: Fixed treatment of AB experiment related events.
 * Oct 22, 2014: Added quarter column to EdxTrackEvent in support 
 *               horizontal partitioning.
 * Jun 23, 2014: Added support for AB Experiment events
