@@ -770,7 +770,7 @@ class TrackLogPuller(object):
         timestamp = datetime.datetime.now().isoformat().replace(':','_')
         tmpFilePrefix = 'batchLoad' + timestamp + '_'
         batchLoadFile = tempfile.NamedTemporaryFile(prefix=tmpFilePrefix, suffix='.sql', delete=False)
-        batchMakerScriptPath = os.path.join(currDir, 'createBatchLoadFile.sh')
+        batchMakerScriptPath = os.path.join(currDir, 'createBatchLoadFileForMyISAM.sh')
         scriptCmd = [batchMakerScriptPath] + sqlFilesToLoad
         try:
             subprocess.call(scriptCmd, stdout=batchLoadFile)
