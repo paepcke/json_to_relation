@@ -1175,6 +1175,101 @@ BEGIN
 END//
 
 #--------------------------
+# multipleDbQuery
+#----------------
+
+# Loop over multiple MySQL dbs (a.k.a. schemas), and
+# issue the same query on each one. Place result into
+# temp table ResultSet, which is overwritten with each
+# call.
+#
+# Caller provides regex to identify the databases,
+# a table name to look for within each database. Only
+# dbs with that table present are involved in the query.
+# A result field list, which defines the columns in the
+# ResultSet table, a field list for the query, and where
+# and group-by clauses. Example:
+#
+#    CALL multipleDbQuery(
+#       '%coursera%',      -- regex to id the DBs to loop over
+#       'hash_mapping',    -- tbl within each db
+#       'user_id INT',     -- for CREATE TABLE ResultSet user_id INT...
+#       'user_id',         -- for SELECT user_id FROM...
+#       '1',               -- where clause is just 'True'
+#       null)              -- no group-by
+
+DROP PROCEDURE IF EXISTS multipleDbQuery //
+CREATE PROCEDURE `multipleDbQuery`(dbNameRegex varchar(255),
+                                   tableName varchar(255),
+				   resFieldList varchar(255),
+				   fieldList varchar(255),
+				   whereClause varchar(255),
+				   groupBy varchar(255))
+proc_start_lbl: BEGIN
+    declare scName varchar(250);
+    declare q varchar(2000);
+    declare progr varchar(255);
+    declare tblCreate varchar(255);
+
+    DROP TABLE IF EXISTS ResultSet;
+    SET @tblCreate := concat('CREATE TEMPORARY TABLE ResultSet (',resFieldList,');');
+
+    PREPARE stmt FROM @tblCreate;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+
+    DROP TABLE IF EXISTS MySchemaNames;
+    create temporary table MySchemaNames (
+        schemaName varchar(250)
+    );
+
+    insert into MySchemaNames
+    SELECT distinct
+        TABLE_SCHEMA as SchemaName
+    FROM 
+        `information_schema`.`TABLES`,
+	`information_schema`.`SCHEMATA`
+    where 
+        `information_schema`.`SCHEMATA`.`SCHEMA_NAME` LIKE dbNameRegex
+      AND
+        TABLE_NAME = tableName;
+
+label1:
+    LOOP
+        set scName = (select schemaName from MySchemaNames limit 1);
+
+	set @progr = concat("SELECT 'Retrieving user_id for `", scName,"`' AS Db\G;");
+        PREPARE stmt0 FROM @progr;
+	EXECUTE stmt0;
+	DEALLOCATE PREPARE stmt0;
+
+	if groupBy is NULL
+	then
+	    set @q = concat('INSERT INTO ResultSet ',
+	                    'SELECT ', fieldList, ' FROM `', scName, '`.', tableName, ' WHERE ', whereClause);
+	else
+	    set @q = concat('INSERT INTO ResultSet ',
+	                    'SELECT ', fieldList ,' FROM `', scName, '`.', tableName,' WHERE ', whereClause, ' GROUP BY ', groupBy);
+	end if;
+        PREPARE stmt1 FROM @q;
+        EXECUTE stmt1;
+        DEALLOCATE PREPARE stmt1;
+
+        delete from MySchemaNames where schemaName = scName;
+        IF ((select count(*) from MySchemaNames) > 0) THEN
+            ITERATE label1;
+        END IF;
+        LEAVE label1;
+
+    END LOOP label1;
+
+    -- SELECT * FROM ResultSet;
+
+    DROP TABLE IF EXISTS MySchemaNames;
+    -- DROP TABLE IF EXISTS ResultSet;
+END//
+
+#--------------------------
 # dateInQuarter
 #-------------
 
