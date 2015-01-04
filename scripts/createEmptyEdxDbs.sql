@@ -22,13 +22,13 @@ CREATE DATABASE IF NOT EXISTS unittest;
 
 USE Edx;
 CREATE TABLE IF NOT EXISTS Answer (
-    answer_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    answer_id VARCHAR(40) NOT NULL,
     problem_id VARCHAR(255) NOT NULL,
     answer TEXT NOT NULL,
     course_id VARCHAR(255) NOT NULL
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS CorrectMap (
-    correct_map_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    correct_map_id VARCHAR(40) NOT NULL,
     answer_identifier TEXT NOT NULL,
     correctness VARCHAR(255) NOT NULL,
     npoints INT NOT NULL,
@@ -38,12 +38,12 @@ CREATE TABLE IF NOT EXISTS CorrectMap (
     queuestate TEXT NOT NULL
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS InputState (
-    input_state_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    input_state_id VARCHAR(40) NOT NULL,
     problem_id VARCHAR(255) NOT NULL,
     state TEXT NOT NULL
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS State (
-    state_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    state_id VARCHAR(40) NOT NULL,
     seed TINYINT NOT NULL,
     done VARCHAR(255) NOT NULL,
     problem_id VARCHAR(255) NOT NULL,
@@ -63,11 +63,11 @@ CREATE TABLE IF NOT EXISTS CourseInfo (
     end_date datetime
 ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS EdxPrivate.EventIp (
-    event_table_id varchar(40) NOT NULL PRIMARY KEY,
+    event_table_id varchar(40) NOT NULL,
     event_ip varchar(16) NOT NULL DEFAULT ''
 ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
-    account_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    account_id VARCHAR(40) NOT NULL,
     screen_name TEXT NOT NULL,
     name TEXT NOT NULL,
     anon_screen_name TEXT NOT NULL,
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.Account (
     receive_emails VARCHAR(255) NOT NULL
     ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS LoadInfo (
-    load_info_id VARCHAR(40) NOT NULL PRIMARY KEY,
+    load_info_id VARCHAR(40) NOT NULL,
     load_date_time DATETIME NOT NULL,
     load_file TEXT NOT NULL
     ) ENGINE=MyISAM;
@@ -155,8 +155,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     correctMap_fk VARCHAR(40) NOT NULL,
     answer_fk VARCHAR(40) NOT NULL,
     state_fk VARCHAR(40) NOT NULL,
-    load_info_fk VARCHAR(40) NOT NULL,
-    PRIMARY KEY(_id,quarter)
+    load_info_fk VARCHAR(40) NOT NULL
     ) 
 ENGINE=MyISAM
 PARTITION BY LIST COLUMNS(quarter) (
@@ -192,7 +191,7 @@ PARTITION BY LIST COLUMNS(quarter) (
 );
 
 CREATE TABLE IF NOT EXISTS ActivityGrade (
-    activity_grade_id      int(11) 	 NOT NULL PRIMARY KEY,
+    activity_grade_id      int(11) 	 NOT NULL,
     student_id             int(11) 	 NOT NULL,
     course_display_name    varchar(255)  NOT NULL,
     grade                  double,
@@ -221,8 +220,7 @@ CREATE TABLE IF NOT EXISTS `ABExperiment` (
   `resource_display_name` varchar(255) NOT NULL,
   `cohort_id` INT NOT NULL,
   `cohort_name` varchar(255) NOT NULL,
-  `course_display_name` varchar(255) NOT NULL,
-  PRIMARY KEY (`event_table_id`)
+  `course_display_name` varchar(255) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 CREATE TABLE `OpenAssessment` (
@@ -244,7 +242,6 @@ CREATE TABLE `OpenAssessment` (
   `options` varchar(255) NOT NULL,
   `corrections` text NOT NULL,
   `points` text NOT NULL,
-  PRIMARY KEY (`event_table_id`),
   KEY `OpAssScoreTpIdx` (`score_type`),
   KEY `OpAssTimeIdx` (`time`),
   KEY `OpAssSubmIdIdx` (`submission_uuid`(40)),
@@ -339,8 +336,7 @@ CREATE TABLE IF NOT EXISTS `UserGrade` (
   `distinction` tinyint(4) NOT NULL DEFAULT '0',
   `status` varchar(50) NOT NULL DEFAULT '',
   `user_int_id` int(11) NOT NULL,
-  `anon_screen_name` varchar(40) NOT NULL DEFAULT '',
-  PRIMARY KEY (`user_int_id`),
+  `anon_screen_name` varchar(40) NOT NULL DEFAULT ''
   KEY `GradesUIDIdx` (`user_int_id`),
   KEY `UserGradeGradeIdx` (`grade`),
   KEY `UserGradeCourseIDIdx` (`course_id`),

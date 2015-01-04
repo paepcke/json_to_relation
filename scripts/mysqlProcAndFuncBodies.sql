@@ -1508,9 +1508,6 @@ FROM edxprod.auth_userprofile
  LEFT JOIN Edx.UserCountry
    ON Edx.UserCountry.anon_screen_name = EdxPrivate.UserGrade.anon_screen_name;
 
-
-
-
 # ------------- Drop Functions that are only for EdxPrivate DB -----
 
 DROP FUNCTION IF EXISTS EdxPiazza.idForum2Anon;
@@ -1534,6 +1531,7 @@ CALL grantExecuteIfExists('Edx.wasCertified');
 CALL grantExecuteIfExists('Edx.enrollment');
 CALL grantExecuteIfExists('Edx.computeEnrollmentCoursera');
 CALL grantExecuteIfExists('Edx.computeEnrollmentNovoEd');
+CALL grantExecuteIfExists('Edx.multipleDbQuery');
 
 CALL grantExecuteIfExists('EdxPrivate.idInt2Anon');
 CALL grantExecuteIfExists('EdxPrivate.idAnon2Int');
@@ -1546,6 +1544,7 @@ CALL grantExecuteIfExists('EdxPrivate.wasCertified');
 CALL grantExecuteIfExists('EdxPrivate.enrollment');
 CALL grantExecuteIfExists('EdxPrivate.computeEnrollmentCoursera');
 CALL grantExecuteIfExists('EdxPrivate.computeEnrollmentNovoEd');
+CALL grantExecuteIfExists('EdxPrivate.multipleDbQuery');
 
 CALL grantExecuteIfExists('EdxForum.idInt2Anon');
 CALL grantExecuteIfExists('EdxForum.idAnon2Int');
@@ -1558,6 +1557,7 @@ CALL grantExecuteIfExists('EdxForum.wasCertified');
 CALL grantExecuteIfExists('EdxForum.enrollment');
 CALL grantExecuteIfExists('EdxForum.computeEnrollmentCoursera');
 CALL grantExecuteIfExists('EdxForum.computeEnrollmentNovoEd');
+CALL grantExecuteIfExists('EdxForum.multipleDbQuery');
 
 CALL grantExecuteIfExists('EdxPiazza.idInt2Anon');
 CALL grantExecuteIfExists('EdxPiazza.idAnon2Int');
@@ -1570,6 +1570,7 @@ CALL grantExecuteIfExists('EdxPiazza.wasCertified');
 CALL grantExecuteIfExists('EdxPiazza.enrollment');
 CALL grantExecuteIfExists('EdxPiazza.computeEnrollmentCoursera');
 CALL grantExecuteIfExists('EdxPiazza.computeEnrollmentNovoEd');
+CALL grantExecuteIfExists('EdxPiazza.multipleDbQuery');
 
 CALL grantExecuteIfExists('unittest.idInt2Anon');
 CALL grantExecuteIfExists('unittest.idAnon2Int');
@@ -1582,3 +1583,4 @@ CALL grantExecuteIfExists('unittest.wasCertified');
 CALL grantExecuteIfExists('unittest.enrollment');
 CALL grantExecuteIfExists('unittest.computeEnrollmentCoursera');
 CALL grantExecuteIfExists('unittest.computeEnrollmentNovoEd');
+CALL grantExecuteIfExists('unittest.multipleDbQuery');
