@@ -25,7 +25,7 @@
 # so the procedure can use ';':
 delimiter //
 
-USE Edx//
+#USE Edx//
 
 #--------------------------
 # createIndexIfNotExists
@@ -1513,10 +1513,12 @@ FROM edxprod.auth_userprofile
 DROP FUNCTION IF EXISTS EdxPiazza.idForum2Anon;
 DROP FUNCTION IF EXISTS EdxForum.idForum2Anon;
 DROP FUNCTION IF EXISTS Edx.idForum2Anon;
+DROP FUNCTION IF EXISTS EdxQualtrics.idForum2Anon;
 
 DROP FUNCTION IF EXISTS EdxPiazza.idForum2Int;
 DROP FUNCTION IF EXISTS EdxForum.idForum2Int;
 DROP FUNCTION IF EXISTS Edx.idForum2Int;
+DROP FUNCTION IF EXISTS EdxQualtrics.idForum2Int;
 
 # ------------- Grant EXECUTE Privileges for User Level Functions -----
 
@@ -1571,6 +1573,19 @@ CALL grantExecuteIfExists('EdxPiazza.enrollment');
 CALL grantExecuteIfExists('EdxPiazza.computeEnrollmentCoursera');
 CALL grantExecuteIfExists('EdxPiazza.computeEnrollmentNovoEd');
 CALL grantExecuteIfExists('EdxPiazza.multipleDbQuery');
+
+CALL grantExecuteIfExists('EdxQualtrics.idInt2Anon');
+CALL grantExecuteIfExists('EdxQualtrics.idAnon2Int');
+CALL grantExecuteIfExists('EdxQualtrics.idExt2Anon');
+CALL grantExecuteIfExists('EdxQualtrics.idAnon2Ext');
+CALL grantExecuteIfExists('EdxQualtrics.latestLog');
+CALL grantExecuteIfExists('EdxQualtrics.earliestLog');
+CALL grantExecuteIfExists('EdxQualtrics.isUserEvent');
+CALL grantExecuteIfExists('EdxQualtrics.wasCertified');
+CALL grantExecuteIfExists('EdxQualtrics.enrollment');
+CALL grantExecuteIfExists('EdxQualtrics.computeEnrollmentCoursera');
+CALL grantExecuteIfExists('EdxQualtrics.computeEnrollmentNovoEd');
+CALL grantExecuteIfExists('EdxQualtrics.multipleDbQuery');
 
 CALL grantExecuteIfExists('unittest.idInt2Anon');
 CALL grantExecuteIfExists('unittest.idAnon2Int');
