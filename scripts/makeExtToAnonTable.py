@@ -111,7 +111,7 @@ class ExtToAnonTableMaker(object):
                 print("ScreenName.strip(): '%s'" % screenName.strip())
                 #********
                 if firstLineDiscarded:
-                    screenName = screenName.strip().strip('"')
+                    screenName = screenName.strip('"')
                     if screenName == '\\N':
                         print ('%s,%s' % (extId.strip('"'),'NULL'))
                     else:
