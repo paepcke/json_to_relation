@@ -135,4 +135,3 @@ class ExtToAnonTableMaker(object):
 if __name__ == '__main__':
     
     converter = ExtToAnonTableMaker('/tmp/unmappables.csv');
-    converter.computeAnonFromScreenNames('/tmp/extsIntsScreenNameshP1lFP.csv')
