@@ -49,7 +49,7 @@ class ExtToAnonTableMaker(object):
     def makeTmpExtsTable(self):
         # Create table to load the CSV file into:
         self.externalsTblNm = self.idGenerator(prefix='ExternalsTbl_')
-        mysqlCmd = 'CREATE TEMPORARY TABLE %s (ext_id varchar(32));' % self.externalsTblNm
+        mysqlCmd = 'CREATE TEMPORARY TABLE %s (ext_id varchar(33));' % self.externalsTblNm
         self.db.execute(mysqlCmd)
         
     def loadExtIds(self, csvExtsFileName):
@@ -83,6 +83,7 @@ class ExtToAnonTableMaker(object):
         return prefix + randPart
 
 
+    
 if __name__ == '__main__':
     
     converter = ExtToAnonTableMaker('/tmp/unmappables.csv');
