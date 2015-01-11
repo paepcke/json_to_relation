@@ -115,7 +115,7 @@ class ExtToAnonTableMaker(object):
                     if screenName == '\\N':
                         print ('%s,%s' % (extId.strip('"'),'NULL'))
                     else:
-                        print('%s,%s,%s' % (screenName, extId.strip('"'),EdXTrackLogJSONParser.makeHash(screenName)))
+                        print('%s,%s' % (extId.strip('"'),EdXTrackLogJSONParser.makeHash(screenName)))
                 else:
                     firstLineDiscarded = True
         
