@@ -8,11 +8,18 @@ import os
 import random
 import stat
 import string
+from subprocess import PIPE, Popen
 import subprocess
+import sys
 import tempfile
 
 from pymysql_utils.pymysql_utils import MySQLDB
 
+source_dir = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "../json_to_relation/")]
+source_dir.extend(sys.path)
+sys.path = source_dir
+
+from edxTrackLogJSONParser import EdXTrackLogJSONParser
 
 class ExtToAnonTableMaker(object):
     
@@ -45,9 +52,8 @@ class ExtToAnonTableMaker(object):
         # that's a race condition. But this is an
         # admin script, run by one person:
         outfile.close()
-        self.computeConversion(outfile.name)
-        
-        print('Outfile in %s' % outfile.name)
+        self.findScreenNames(outfile.name)
+        self.computeAnonFromScreenNames(outfile.name)
 
     def makeTmpExtsTable(self):
         # Create table to load the CSV file into:
@@ -75,7 +81,7 @@ class ExtToAnonTableMaker(object):
         # Delete the cleaned-exts file:
         os.remove(cleanExtsFile.name)
         
-    def computeConversion(self, outCSVFileName):
+    def findScreenNames(self, outCSVFileName):
         
         mysqlCmd = "SELECT 'ext_id','user_int_id','screen_name'" +\
 		    	   "UNION " +\
@@ -95,22 +101,34 @@ class ExtToAnonTableMaker(object):
         self.db.execute(mysqlCmd)
               
         
+    def computeAnonFromScreenNames(self, extIntNameFileName):
+        with open(extIntNameFileName, 'r') as inFd:
+            print('ext_id,anon_screen_name')
+            firstLineDiscarded = False
+            for line in inFd:
+                (extId, intId, screenName) = line.split(',') #@UnusedVariable
+                if firstLineDiscarded:
+                    print('%s,%s' % (extId.strip('"'),EdXTrackLogJSONParser.makeHash(screenName)))
+                else:
+                    firstLineDiscarded = True
+        
     def idGenerator(self, prefix='', size=6, chars=string.ascii_uppercase + string.digits):
         randPart = ''.join(random.choice(chars) for _ in range(size))
         return prefix + randPart
 
-    def computeAnonFromExts(self, extIntNameFileName):
-        currDir = os.path.dirname(__file__)
-        scriptPath = '%s/makeAnonScreenName.py' % currDir
-        anonMaker = subprocess.Popen([scriptPath, '-'])
-        with open(extIntNameFileName, 'r') as inFd:
-            for line in inFd:
-                (extId, intId, screenName) = line.split(',') #@UnusedVariable
-                print(anonMaker.stdin, screenName)
-            
-                
+
+
+#     def computeAnonFromScreenNames(self, extIntNameFileName):
+#         currDir = os.path.dirname(__file__)
+#         scriptPath = '%s/makeAnonScreenName.py' % currDir
+#         anonMaker = subprocess.Popen([scriptPath, '-'], stdout=PIPE, stdin=PIPE)
+#         with open(extIntNameFileName, 'r') as inFd:
+#             for line in inFd:
+#                 (extId, intId, screenName) = line.split(',') #@UnusedVariable
+#                 (anonScreenName, errRets) = anonMaker.communicate(screenName)  #@UnusedVariable
+#                 print('%s,%s' % (extId, anonScreenName))
     
 if __name__ == '__main__':
     
     converter = ExtToAnonTableMaker('/tmp/unmappables.csv');
-    converter.computeAnonFromExts('/tmp/extsIntsScreenNameshP1lFP.csv')
+    converter.computeAnonFromScreenNames('/tmp/extsIntsScreenNameshP1lFP.csv')
