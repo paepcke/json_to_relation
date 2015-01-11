@@ -108,7 +108,7 @@ class ExtToAnonTableMaker(object):
             for line in inFd:
                 (extId, intId, screenName) = line.split(',') #@UnusedVariable
                 #********
-                print("ScreenName.strip(): '%s'" % screenName.strip())
+                print('ScreenName.strip(\'"\'): \'%s\'' % screenName.strip('"'))
                 #********
                 if firstLineDiscarded:
                     screenName = screenName.strip('"')
