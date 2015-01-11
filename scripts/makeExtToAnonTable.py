@@ -108,8 +108,8 @@ class ExtToAnonTableMaker(object):
             for line in inFd:
                 (extId, intId, screenName) = line.split(',') #@UnusedVariable
                 if firstLineDiscarded:
-                    screenName = screenName.strip()
-                    if screenName == '\\N':
+                    #*****screenName = screenName.strip()
+                    if screenName.strip() == '\\N':
                         print ('%s,%s' % (extId.strip('"'),'NULL'))
                     else:
                         print('%s,%s' % (extId.strip('"'),EdXTrackLogJSONParser.makeHash(screenName)))
