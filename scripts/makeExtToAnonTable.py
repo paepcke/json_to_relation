@@ -107,12 +107,15 @@ class ExtToAnonTableMaker(object):
             firstLineDiscarded = False
             for line in inFd:
                 (extId, intId, screenName) = line.split(',') #@UnusedVariable
+                #********
+                print("ScreenName.strip(): '%s'" % screenName.strip())
+                #********
                 if firstLineDiscarded:
-                    #*****screenName = screenName.strip()
-                    if screenName.strip() == '\\N':
+                    screenName = screenName.strip()
+                    if screenName == '\\N':
                         print ('%s,%s' % (extId.strip('"'),'NULL'))
                     else:
-                        print('%s,%s' % (extId.strip('"'),EdXTrackLogJSONParser.makeHash(screenName)))
+                        print('%s,%s,%s' % (screenName, extId.strip('"'),EdXTrackLogJSONParser.makeHash(screenName)))
                 else:
                     firstLineDiscarded = True
         
