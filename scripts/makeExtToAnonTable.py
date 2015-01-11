@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 '''
 Created on Jan 11, 2015
 
@@ -5,7 +6,9 @@ Created on Jan 11, 2015
 '''
 import os
 import random
+import stat
 import string
+import subprocess
 import tempfile
 
 from pymysql_utils.pymysql_utils import MySQLDB
@@ -49,14 +52,28 @@ class ExtToAnonTableMaker(object):
     def makeTmpExtsTable(self):
         # Create table to load the CSV file into:
         self.externalsTblNm = self.idGenerator(prefix='ExternalsTbl_')
-        mysqlCmd = 'CREATE TEMPORARY TABLE %s (ext_id varchar(33));' % self.externalsTblNm
+        mysqlCmd = 'CREATE TEMPORARY TABLE %s (ext_id varchar(32));' % self.externalsTblNm
         self.db.execute(mysqlCmd)
         
     def loadExtIds(self, csvExtsFileName):
-        mysqlCmd = "LOAD DATA INFILE '%s' " % csvExtsFileName +\
+        # Clean up line endings in the extIds file.
+        # Between Win, MySQL, Mac, and R, we get
+        # linefeeds and crs:
+        cleanExtsFile = tempfile.NamedTemporaryFile(prefix='cleanExts', suffix='.csv', delete=False)
+        os.chmod(cleanExtsFile.name, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+        rawExtsFd = open(csvExtsFileName, 'r')
+        for line in rawExtsFd:
+            cleanExtsFile.write(line.strip() + '\n')
+        cleanExtsFile.close()
+        rawExtsFd.close()
+        
+        mysqlCmd = "LOAD DATA INFILE '%s' " % cleanExtsFile.name +\
                    'INTO TABLE %s ' % self.externalsTblNm +\
                    "FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' IGNORE 1 LINES;"
         self.db.execute(mysqlCmd)
+        
+        # Delete the cleaned-exts file:
+        os.remove(cleanExtsFile.name)
         
     def computeConversion(self, outCSVFileName):
         
@@ -82,8 +99,18 @@ class ExtToAnonTableMaker(object):
         randPart = ''.join(random.choice(chars) for _ in range(size))
         return prefix + randPart
 
-
+    def computeAnonFromExts(self, extIntNameFileName):
+        currDir = os.path.dirname(__file__)
+        scriptPath = '%s/makeAnonScreenName.py' % currDir
+        anonMaker = subprocess.Popen([scriptPath, '-'])
+        with open(extIntNameFileName, 'r') as inFd:
+            for line in inFd:
+                (extId, intId, screenName) = line.split(',') #@UnusedVariable
+                print(anonMaker.stdin, screenName)
+            
+                
     
 if __name__ == '__main__':
     
     converter = ExtToAnonTableMaker('/tmp/unmappables.csv');
+    converter.computeAnonFromExts('/tmp/extsIntsScreenNameshP1lFP.csv')
