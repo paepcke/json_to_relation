@@ -195,6 +195,33 @@ for TABLE in ${TABLES[@]}
 do
     echo `date`": Extracting table $TABLE."  | tee --append $LOG_FILE
     $currScriptsDir/extractTableFromDump.sh $DUMP_FILE $TABLE > $EDXPROD_DUMP_DIR/$TABLE.sql
+
+    # Because MySQL is soooo slow loading tables
+    # with a primary index, modify the table
+    # courseware_studentmodule.sql to drop the
+    # primary index before loading:
+    if [[ $TABLE == 'courseware_studentmodule' ]]
+    then
+	echo "Adding DROP INDEX PRIMARY ON courseware_studentmodule to .sql export..." | tee --append $LOG_FILE
+	cat $EDXPROD_DUMP_DIR/courseware_studentmodule.sql 
+	                                                   | sed 's/^-- Dumping data for table `courseware_studentmodule`/DROP INDEX `PRIMARY` ON courseware_studentmodule;/' \
+                                                           | sed 's/^  `id` int(11) NOT NULL AUTO_INCREMENT/  `id` int(11) NOT NULL/' \
+                  > $EDXPROD_DUMP_DIR/courseware_studentmoduleNoPrimaryIndex.sql
+        TABLE=courseware_studentmoduleNoPrimaryIndex
+	echo "Done adding the DROP INDEX." | tee --append $LOG_FILE
+    fi
+
+    # Same with courseware_studentmodulehistory:
+    if [[ $TABLE == 'courseware_studentmodulehistory' ]]
+    then
+	echo "Adding DROP INDEX PRIMARY ON courseware_studentmodulehistory to .sql export..." | tee --append $LOG_FILE
+	cat $EDXPROD_DUMP_DIR/courseware_studentmodulehistory.sql | sed 's/^-- Dumping data for table `courseware_studentmodulehistory`/DROP INDEX `PRIMARY` ON courseware_studentmodulehistory;/' \
+                                                                  | sed 's/^  `id` int(11) NOT NULL AUTO_INCREMENT/  `id` int(11) NOT NULL/' \
+                  > $EDXPROD_DUMP_DIR/courseware_studentmodulehistoryNoPrimaryIndex.sql
+        TABLE=courseware_studentmodulehistoryNoPrimaryIndex
+	echo "Done adding the DROP INDEX." | tee --append $LOG_FILE
+    fi
+
     echo `date`": Loading table $TABLE."  | tee --append $LOG_FILE
     mysql -u root -p$MYSQL_PASSWD edxprod < $EDXPROD_DUMP_DIR/$TABLE.sql
 done
