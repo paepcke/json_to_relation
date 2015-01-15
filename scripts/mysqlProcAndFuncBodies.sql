@@ -1029,7 +1029,7 @@ END//
 #-----------
 
 # Takes an OpenEdX course name, and returns its enrollment
-# via courseware_studentmodule. For Coursera and NovoEd
+# via true_courseenrollment. For Coursera and NovoEd
 # enrollment functions, see enrollmentCoursera(), and
 # enrollmentNovoEd().
 
@@ -1043,8 +1043,8 @@ BEGIN
         RETURN -1; 
     END IF;
     SELECT COUNT(user_id) AS 'enrollment' 
-	   FROM edxprod.student_courseenrollment 
-	   WHERE course_id = course_display_name
+	   FROM edxprod.true_courseenrollment 
+	   WHERE course_display = course_display_name
 	   INTO @totalEnrollment;
     RETURN @totalEnrollment;
 END//

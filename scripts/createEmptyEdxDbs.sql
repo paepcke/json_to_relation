@@ -275,7 +275,7 @@ CREATE TABLE IF NOT EXISTS contents (
     `anonymous` varchar(10) NOT NULL,
     `anonymous_to_peers` varchar(10) NOT NULL,
     `at_position_list` varchar(200) NOT NULL,
-    `forum_int_id` BIGINT UNSIGNED NOT NULL,
+    `forum_uid` varchar(40) NOT NULL,
     `body` varchar(2500) NOT NULL,
     `course_display_name` varchar(100) NOT NULL,
     `created_at` datetime NOT NULL,
