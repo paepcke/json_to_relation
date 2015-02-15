@@ -1376,7 +1376,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             # if the event_type starts with a '/', followed by a 
             # class ID and '/about', treat separately:
             if fldName == 'event_type' and val is not None:
-                if val[0] == '/' and val[-6:] == '/about':
+                if val[0] == '/' and len(val) >= 6 and val[-6:] == '/about':
                     self.setValInRow(row, 'course_id', val[0:-6])
                     val = 'about'
                     self.finishedRow = True

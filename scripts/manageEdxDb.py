@@ -387,57 +387,13 @@ class TrackLogPuller(object):
         # file name that contains 'app10.tracking.log-20130609.gz'. If
         # none is found the respective tracking file is yet to be
         # transformed:
-        #
-        # The ugly conditional below works like this:logFilePath.split('/')
-        # turns /home/dataman/.../tracking/app10/tracking.log-20130609.gz
-        # into .home.dataman....tracking.app10.tracking.log-20130609.gz
-        # The [-1] and [-2] pick out 'app10' and 'tracking.log-20130609.gz'
-        # from the resulting list.
-        # These two are combined into app10.tracking.log-20130609.gz. 
-        # The find() looks for 'app10.tracking.log-20130609.gz' in 
-        # each sqlFilePath. If none is found, the respective tracking
-        # log file is yet to be transformed. This ugly expression
-        # can surely be prettified, but I need to move on.
-        # 
-        # I'm trying out the pythonic use of list comprehensions.
-        # I'm not convinced that this syntax is more clear than
-        # using a more verbose, standard approach. You be the judge: 
-        
+
         self.logDebug("number of allTransformSQLFiles: '%d'" % len(allTransformSQLFiles))
         if len(allTransformSQLFiles) > 3:
             self.logDebug("three examples from allTransformSQLFiles: '%s,%s,%s'" % (allTransformSQLFiles[0],allTransformSQLFiles[1],allTransformSQLFiles[2]))
         else:
             self.logDebug("all of allTransformSQLFiles: '%s'" % allTransformSQLFiles)
 
-        # alreadyTransformedList = [logFilePath 
-        #                           for sqlFilePath in allTransformSQLFiles  # go through all transform output file names 
-        #                           for logFilePath in localTrackingLogFilePaths # go through each .json file path
-        #                           if sqlFilePath.find( logFilePath.split('/')[-2] + '.' + logFilePath.split('/')[-1] ) > -1
-        #                           ]
-
-        # alreadyTransformedList = []
-        # # Go through all already transform output file names 
-        # for sqlFilePath in allTransformSQLFiles:  
-        #     for logFilePath in localTrackingLogFilePaths: # go through each .json file path
-        #         if sqlFilePath.find( logFilePath.split('/')[-2] + '.' + logFilePath.split('/')[-1] ) > -1:
-        #             # Log file was already transformed:
-        #             continue
-
-        # self.logDebug("number of alreadyTransformedList: '%d'" % len(alreadyTransformedList))
-        # if len(alreadyTransformedList) > 3:
-        #     self.logDebug("three examples from alreadyTransformedList: '%s,%s,%s'" % (alreadyTransformedList[0],alreadyTransformedList[1],alreadyTransformedList[2]))
-        # else:
-        #     self.logDebug("all of alreadyTransformedList: '%s'" % alreadyTransformedList)
-
-
-        # # Finally: the .json files that need to be transformed
-        # # are the ones that are in the .json file list, but not
-        # # in the .sql file list: use set difference:
-        # toDo = sets.Set(localTrackingLogFilePaths).difference(sets.Set(alreadyTransformedList))
-        # # Return an array, rather than the set,
-        # # b/c that's more common:
-
-            
         # Need to compute set difference between the json files
         # and the .sql files from earlier transforms. Use a 
         # hash table with keys of the form:
