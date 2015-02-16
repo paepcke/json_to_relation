@@ -309,8 +309,17 @@ class TrackLogPuller(object):
                 # Note: we check for this condition in main;
                 # nonetheless...
                 raise ValueError("If localTrackingLogFilePaths is None, then TrackLogPuller.LOCAL_LOG_STORE_ROOT must be set in manageEdxDb.py")
-            localTrackingLogFileDirs = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'app*/')
-            localTrackingLogFileDirs = glob.glob(localTrackingLogFileDirs)
+            oldLocalTrackingLogFileDirs = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'app*/')
+            oldLocalTrackingLogFileDirs = glob.glob(oldLocalTrackingLogFileDirs)
+            
+            newLocalTrackingLogFileDirs = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking', 'app*/')
+            newLocalTrackingLogFileDirs = glob.glob(newLocalTrackingLogFileDirs)
+
+            localTrackingLogFileDirs = []
+            localTrackingLogFileDirs.extend(oldLocalTrackingLogFileDirs)
+            localTrackingLogFileDirs.extend(newLocalTrackingLogFileDirs)
+
+            self.logDebug("localTrackingLogFileDirs: '%s'" % localTrackingLogFileDirs)
             localTrackingLogFilePaths = []
             for logFileDir in localTrackingLogFileDirs:
                 for (root, dirs, files) in os.walk(logFileDir): #@UnusedVariable
@@ -318,6 +327,17 @@ class TrackLogPuller(object):
                         filePath = os.path.join(root,partialFilePath)
                         localTrackingLogFilePaths.append(filePath)            
             
+        self.logDebug("number of localTrackingLogFilePaths: '%d'" % len(localTrackingLogFilePaths))
+        if len(localTrackingLogFilePaths) > 3:
+            self.logDebug("three examples from localTrackingLogFilePaths: '%s,%s,%s'" % (localTrackingLogFilePaths[0],
+                                                                                   localTrackingLogFilePaths[1],
+                                                                                   localTrackingLogFilePaths[2]))
+        else:
+            self.logDebug("all of localTrackingLogFilePaths: '%s'" % localTrackingLogFilePaths)
+
+        # The following is commented, b/c it can be a lot of output:
+        # self.logDebug("localTrackingLogFilePaths: '%s'" % localTrackingLogFilePaths)
+
         if csvDestDir is None:
             if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None:
                 # Note: we check for this condition in main;
@@ -367,33 +387,61 @@ class TrackLogPuller(object):
         # file name that contains 'app10.tracking.log-20130609.gz'. If
         # none is found the respective tracking file is yet to be
         # transformed:
-        #
-        # The ugly conditional below works like this:logFilePath.split('/')
-        # turns /home/dataman/.../tracking/app10/tracking.log-20130609.gz
-        # into .home.dataman....tracking.app10.tracking.log-20130609.gz
-        # The [-1] and [-2] pick out 'app10' and 'tracking.log-20130609.gz'
-        # from the resulting list.
-        # These two are combined into app10.tracking.log-20130609.gz. 
-        # The find() looks for 'app10.tracking.log-20130609.gz' in 
-        # each sqlFilePath. If none is found, the respective tracking
-        # log file is yet to be transformed. This ugly expression
-        # can surely be prettified, but I need to move on.
-        # 
-        # I'm trying out the pythonic use of list comprehensions.
-        # I'm not convinced that this syntax is more clear than
-        # using a more verbose, standard approach. You be the judge: 
-        
-        alreadyTransformedList = [logFilePath 
-                                  for sqlFilePath in allTransformSQLFiles  # go through all transform output file names 
-                                  for logFilePath in localTrackingLogFilePaths # go through each .json file path
-                                  if sqlFilePath.find( logFilePath.split('/')[-2] + '.' + logFilePath.split('/')[-1] ) > -1
-                                  ]
-        # Finally: the .json files that need to be transformed
-        # are the ones that are in the .json file list, but not
-        # in the .sql file list: use set difference:
-        toDo = sets.Set(localTrackingLogFilePaths).difference(sets.Set(alreadyTransformedList))
-        # Return an array, rather than the set,
-        # b/c that's more common:
+
+        self.logDebug("number of allTransformSQLFiles: '%d'" % len(allTransformSQLFiles))
+        if len(allTransformSQLFiles) > 3:
+            self.logDebug("three examples from allTransformSQLFiles: '%s,%s,%s'" % (allTransformSQLFiles[0],allTransformSQLFiles[1],allTransformSQLFiles[2]))
+        else:
+            self.logDebug("all of allTransformSQLFiles: '%s'" % allTransformSQLFiles)
+
+        # Need to compute set difference between the json files
+        # and the .sql files from earlier transforms. Use a 
+        # hash table with keys of the form:
+        #     app2.tracking.log-20140626-1403785021.gz  : 1
+        # Then extract from each .json gz file name the 
+        # portion that makes up the form of those keys.
+        # If that key is a hit in the hash table, the
+        # respective json gz file was transformed earlier:
+    
+        normalizedSQLFiles = {}
+    
+        # Extract the pieces from the SQL file names that
+        # will be used as keys to the hash table:
+        for sqlFile in allTransformSQLFiles:
+            gzFilePart = sqlFile.split('.gz')[0]
+            fileComponents = gzFilePart.split('.')
+            app = fileComponents[0]
+            
+            hashKey = app + '.tracking.' + fileComponents[-1] + '.gz'
+            #print(hashKey)
+            normalizedSQLFiles[hashKey] = 1
+            
+        # Build the 'to-transform' list using hash table
+        # misses to signal to-do files:
+        toDo = []
+        for logFile in localTrackingLogFilePaths:
+            fileComponents = logFile.split('/')
+            # Extract something like 'app2.tracking.log-20140531-1401571021.gz'
+            # from log file paths that look like this:
+            # /home/dataman/Data/EdX/tracking/app2/tracking/tracking.log-20140531-1401571021.gz
+            for component in fileComponents:
+                if component.startswith('app'):
+                    key = component + '.' + fileComponents[-1]
+            #print(logFile + ':' + key)
+            # If hash table contains that key, the transform
+            # was done earlier:
+            try:
+                normalizedSQLFiles[key]
+            except KeyError:
+                toDo.append(logFile)
+
+        self.logDebug("toDo: '%s'" % toDo)
+        self.logDebug("number of toDo: '%d'" % len(toDo))
+        if len(toDo) > 3:
+            self.logDebug("three examples from toDo: '%s,%s,%s'" % (toDo[0],toDo[1],toDo[2]))
+        else:
+            self.logDebug("all of : '%s'" % toDo)
+
         return list(toDo)
        
        
@@ -969,7 +1017,8 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--onCluster', 
                         help='transforms are to be processed on a compute cluster, rather than via Gnu Parallel.', 
                         dest='onCluster',
-                        action='store_true');
+                        action='store_true',
+                        default=False);
     parser.add_argument('--logsDest',
                         action='store',
                         help='For pull: root destination of downloaded OpenEdX tracking log .json files;\n' +\
