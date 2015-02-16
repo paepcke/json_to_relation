@@ -226,6 +226,39 @@ do
     mysql -u root -p$MYSQL_PASSWD edxprod < $EDXPROD_DUMP_DIR/$TABLE.sql
 done
 
+# Now create the true_enrollment table, which only
+# contains rows for learners that fully enrolled, i.e.
+# answered the confirmation email, and who do not
+# receive one or more entries in student_courseenrollment just
+# because they accessed course material in an internal course
+# that was marked as internal, but allowed public access.
+
+newTblCmd="DROP TABLE IF EXISTS true_courseenrollment;
+	   CREATE TABLE true_courseenrollment (
+	     user_id int(11) NOT NULL,
+	     course_display_name varchar(255) NOT NULL,
+	     created datetime DEFAULT NULL,
+	     mode varchar(100) NOT NULL,
+	     KEY true_courseenrollment_uid (user_id),
+	     KEY true_courseenrollment_course_id (course_display_name),
+	     KEY true_courseenrollment_created (created)
+	   ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+	   ALTER TABLE true_courseenrollment DISABLE KEYS;
+	   INSERT INTO true_courseenrollment
+	   SELECT student_courseenrollment.user_id,
+	          course_id AS course_display_name,
+	          created,
+	          mode
+	   FROM student_courseenrollment LEFT JOIN 
+	        (SELECT user_id
+	         FROM auth_userprofile
+	        WHERE nonregistered = 0
+	        ) AS TrueRegistrations
+	     ON student_courseenrollment.user_id = TrueRegistrations.user_id
+	     WHERE student_courseenrollment.is_active = 1;
+	   ALTER TABLE true_courseenrollment ENABLE KEYS;
+         "
+echo $newTblCmd | mysql -u root -p$MYSQL_PASSWD edxprod
 
 # ------------------ Signout -------------------
 echo `date`": Finished refreshing edxprod tables."  | tee --append $LOG_FILE
