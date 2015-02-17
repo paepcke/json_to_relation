@@ -12,6 +12,15 @@
 # files execute with secondary keys disabled. At the end,
 # the keys are re-enabled, and the indexes are updated.
 #
+# It turns out that we also must disable the primary keys
+# of EdxTrackEvent, and EventIp. The only way to do this
+# is to remove those keys, and add them later. They cannot
+# be disabled like the primary keys.
+#
+# So after loading is done we must:
+#    - Re-enable the secondary keys
+#    - Create primary index for EventIdTable
+#
 # The generated .sql script is written to stdout.
 #
 # Input: either an absolute path to a directory that 
@@ -46,12 +55,12 @@ echo "/*!40101 SET character_set_client = utf8 */;"
 echo "USE Edx;"
 echo "DROP TABLE IF EXISTS EventIp;"
 echo "CREATE TABLE IF NOT EXISTS EventIp ("
-echo "    event_table_id varchar(40) NOT NULL PRIMARY KEY,"
+echo "    event_table_id varchar(40) NOT NULL,"
 echo "    event_ip varchar(16) NOT NULL DEFAULT ''"
 echo ") ENGINE=InnoDB;"
 echo "DROP TABLE IF EXISTS Account;"
 echo "CREATE TABLE IF NOT EXISTS Account ("
-echo "    account_id VARCHAR(40) NOT NULL PRIMARY KEY,"
+echo "    account_id VARCHAR(40) NOT NULL,"
 echo "    screen_name TEXT NOT NULL,"
 echo "    name TEXT NOT NULL,"
 echo "    anon_screen_name TEXT NOT NULL,"
@@ -82,6 +91,7 @@ echo "/*!40000 ALTER TABLE \`Account\` DISABLE KEYS */;"
 echo "/*!40000 ALTER TABLE \`EventIp\` DISABLE KEYS */;"
 echo "/*!40000 ALTER TABLE \`ABExperiment\` DISABLE KEYS */;"
 echo "/*!40000 ALTER TABLE \`OpenAssessment\` DISABLE KEYS */;"
+echo "/*!40000 ALTER TABLE \`EdxPrivate.EventIp\` DISABLE KEYS */;"
 echo "SET sql_log_bin=0;"
 echo "SET autocommit=0;"
 
@@ -122,13 +132,14 @@ echo "-- /*!40000 ALTER TABLE \`Answer\` ENABLE KEYS */;"
 echo "-- /*!40000 ALTER TABLE \`CorrectMap\` ENABLE KEYS */;"
 echo "-- /*!40000 ALTER TABLE \`LoadInfo\` ENABLE KEYS */;"
 echo "-- /*!40000 ALTER TABLE \`Account\` ENABLE KEYS */;"
-echo "-- /*!40000 ALTER TABLE \`EventIp\` ENABLE KEYS */;"
 echo "-- /*!40000 ALTER TABLE \`ABExperiment\` ENABLE KEYS */;"
 echo "-- /*!40000 ALTER TABLE \`OpenAssessment\` ENABLE KEYS */;"
+
 echo "UNLOCK TABLES;"
 echo "REPLACE INTO EdxPrivate.Account (account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) SELECT account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails FROM Edx.Account;"
 echo "DROP TABLE Edx.Account;"
 echo "REPLACE INTO EdxPrivate.EventIp (event_table_id,event_ip) SELECT event_table_id,event_ip FROM Edx.EventIp;"
+echo "-- /*!40000 ALTER TABLE \`EdxPrivate.EventIp\` ENABLE KEYS */;"
 echo "DROP TABLE Edx.EventIp;"
 echo "COMMIT;"
 echo "SET autocommit=1;"
