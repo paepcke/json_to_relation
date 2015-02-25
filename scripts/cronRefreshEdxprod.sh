@@ -158,10 +158,10 @@ then
 fi
 
 #**********
-echo 'MySQL uid: '$MYSQL_USERNAME
-echo 'MySQL pwd: "'$MYSQL_PASSWD'"'
-echo 'Ubuntu uid: '$UBUNTU_USERNAME
-exit 0
+#echo 'MySQL uid: '$MYSQL_USERNAME
+#echo 'MySQL pwd: "'$MYSQL_PASSWD'"'
+#echo 'Ubuntu uid: '$UBUNTU_USERNAME
+#exit 0
 # *********
 
 # ------------------ Signin-------------------
