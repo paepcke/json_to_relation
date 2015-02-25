@@ -95,7 +95,7 @@ do
       NEXT_ARG=$((NEXT_ARG + 1))
       ;;
     u)
-      UBUNTU_USERNAME=$OPTARG
+      MYSQL_USERNAME=$OPTARG
       NEXT_ARG=$((NEXT_ARG + 2))
       ;;
     n)
@@ -131,14 +131,14 @@ shift ${NEXT_ARG}
 if $needLocalPasswd && [ -z $MYSQL_PASSWD ]
 then
     # The -s option suppresses echo:
-    read -s -p "Password for "$UBUNTU_USERNAME" on local MySQL server: " MYSQL_PASSWD
+    read -s -p "Password for "$MYSQL_USERNAME" on local MySQL server: " MYSQL_PASSWD
     echo
 elif [ -z $MYSQL_PASSWD ]
 then
     # Get home directory of whichever user will
     # log into MySQL, except for root:
 
-    if [[ $UBUNTU_USERNAME == 'root' ]]
+    if [[ $MYSQL_USERNAME == 'root' ]]
     then
         HOME_DIR=$(getent passwd `whoami` | cut -d: -f6)
         if test -f $HOME_DIR/.ssh/mysql_root && test -r $HOME_DIR/.ssh/mysql_root
@@ -158,10 +158,10 @@ then
 fi
 
 #**********
-#echo 'MySQL uid: '$MYSQL_USERNAME
-#echo 'MySQL pwd: "'$MYSQL_PASSWD'"'
-#echo 'Ubuntu uid: '$UBUNTU_USERNAME
-#exit 0
+echo 'MySQL uid: '$MYSQL_USERNAME
+echo 'MySQL pwd: "'$MYSQL_PASSWD'"'
+echo 'Ubuntu uid: '$UBUNTU_USERNAME
+exit 0
 # *********
 
 # ------------------ Signin-------------------
