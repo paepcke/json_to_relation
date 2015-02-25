@@ -665,6 +665,43 @@ BEGIN
     return @RES;
 END//
 
+
+#--------------------------
+# isSharable
+#-----------
+
+# Given a course name, return 1 if the course is sharable
+# outside of Stanford, else return 0. To be sharable, the 
+# must have run after June 14, 2014, not be designated as
+# 'internal,' and have enrollment > 500.
+
+DROP FUNCTION IF EXISTS isSharable//
+CREATE FUNCTION isSharable(the_course_display_name varchar(255))
+RETURNS BOOL DETERMINISTIC
+BEGIN
+    SELECT COUNT(course_display_name)
+      FROM (
+            SELECT course_display_name
+              FROM CourseInfo
+              WHERE course_display_name = the_course_display_name
+                AND (academic_year > 2014 
+                     OR (academic_year = 2013 AND quarter = 'summer')
+                     OR (academic_year = 2014 AND quarter = 'fall')
+                     AND is_internal = 0
+                   )
+             HAVING enrollment(course_display_name) > 500
+            ) AS EligibleCourses
+      INTO @isSharable;
+
+
+    IF (@isSharable > 0)
+    THEN
+        RETURN 1;
+    ELSE
+        RETURN 0;
+    END IF;
+END//
+
 #--------------------------
 # extractNovoEdCourseName
 #------------------------
