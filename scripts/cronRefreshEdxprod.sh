@@ -199,28 +199,30 @@ do
 
     # Because MySQL is soooo slow loading tables
     # with a primary index, modify the table
-    # courseware_studentmodule.sql to drop the
-    # primary index before loading:
+    # courseware_studentmodule.sql to not define
+    # a primary index. Since we don't need them,
+    # we also remove UNIQUE and CONSTRAINT declarations
+    # from the CREATE TABLE statement. We do this 
+    # by copying the courseware_studentmodule.sql file
+    # through an awk script into a tmp file, and then
+    # load that tmp file, rather than the original:
     if [[ $TABLE == 'courseware_studentmodule' ]]
     then
-	echo "Adding DROP INDEX PRIMARY ON courseware_studentmodule to .sql export..." | tee --append $LOG_FILE
-	cat $EDXPROD_DUMP_DIR/courseware_studentmodule.sql 
-	                                                   | sed 's/^-- Dumping data for table `courseware_studentmodule`/DROP INDEX `PRIMARY` ON courseware_studentmodule;/' \
-                                                           | sed 's/^  `id` int(11) NOT NULL AUTO_INCREMENT/  `id` int(11) NOT NULL/' \
+	echo "Removing PRIMARY/UNIQUE/CONSTRAINTS decls from courseware_studentmodule.sql file..." | tee --append $LOG_FILE
+	cat $EDXPROD_DUMP_DIR/courseware_studentmodule.sql | awk -f $currScriptsDir/stripUniquePrimaryConstraintsFromCreateTable.awk \
                   > $EDXPROD_DUMP_DIR/courseware_studentmoduleNoPrimaryIndex.sql
         TABLE=courseware_studentmoduleNoPrimaryIndex
-	echo "Done adding the DROP INDEX." | tee --append $LOG_FILE
+	echo `date`": Done adding the PRIMARY/UNIQUE/CONSTRAINTS removal." | tee --append $LOG_FILE
     fi
 
     # Same with courseware_studentmodulehistory:
     if [[ $TABLE == 'courseware_studentmodulehistory' ]]
     then
-	echo "Adding DROP INDEX PRIMARY ON courseware_studentmodulehistory to .sql export..." | tee --append $LOG_FILE
-	cat $EDXPROD_DUMP_DIR/courseware_studentmodulehistory.sql | sed 's/^-- Dumping data for table `courseware_studentmodulehistory`/DROP INDEX `PRIMARY` ON courseware_studentmodulehistory;/' \
-                                                                  | sed 's/^  `id` int(11) NOT NULL AUTO_INCREMENT/  `id` int(11) NOT NULL/' \
+	echo "Removing PRIMARY/UNIQUE/CONSTRAINTS decls from courseware_studentmodule.sql file..." | tee --append $LOG_FILE
+	cat $EDXPROD_DUMP_DIR/courseware_studentmodulehistory.sql | awk -f $currScriptsDir/stripUniquePrimaryConstraintsFromCreateTable.awk \
                   > $EDXPROD_DUMP_DIR/courseware_studentmodulehistoryNoPrimaryIndex.sql
         TABLE=courseware_studentmodulehistoryNoPrimaryIndex
-	echo "Done adding the DROP INDEX." | tee --append $LOG_FILE
+	echo `date`": Done adding the PRIMARY/UNIQUE/CONSTRAINTS removal." | tee --append $LOG_FILE
     fi
 
     echo `date`": Loading table $TABLE."  | tee --append $LOG_FILE
