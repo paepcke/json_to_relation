@@ -17,6 +17,15 @@
 
 USAGE='Usage: '`basename $0`' [-u localMySQLUser][-p][-pLocalMySQLPwd]'
 
+# Get MySQL version on this machine
+MYSQL_VERSION=$(mysql --version | sed -ne 's/.*Distrib \([0-9][.][0-9]\).*/\1/p')
+if [[ $MYSQL_VERSION > 5.5 ]]
+then 
+    MYSQL_VERSION='5.6+'
+else 
+    MYSQL_VERSION='5.5'
+fi
+
 # If option -p is provided, script will request password for
 # local MySQL db.
 
@@ -132,16 +141,22 @@ echo `date`": Start updating table UserGrade..." | tee --append $LOG_FILE
 # can write the tmp file we'll ask it for. The mysql
 # call runs a SHOW VARIABLES LIKE 'tmpdir' to get
 # something like: "tmpdir /tmp". The 'cut' cmd then
-# isolates the dir name in the second statement:
+# isolates the dir name in the second statement (or pipe element)
 
-if [ -z $MYSQL_PASSWD ]
+# Different auth for different MySQL versions:
+if [[ $MYSQL_VERSION == '5.6+' ]]
 then
-    mysqlTmpDir=`mysql -u $MYSQL_USERNAME --silent --skip-column-names -e "SHOW VARIABLES LIKE 'tmpdir';" | cut --delimiter=' ' --fields=2`
-    mysqlTmpDir=`echo $mysqlTmpDir | cut --delimiter=' ' --fields=2`
+    mysqlTmpDir=`mysql --login-path=root --silent --skip-column-names -e "SHOW VARIABLES LIKE 'tmpdir';" | cut --delimiter=' ' --fields=2`
 else
-    mysqlTmpDir=`mysql -u $MYSQL_USERNAME -p$MYSQL_PASSWD --silent --skip-column-names -e "SHOW VARIABLES LIKE 'tmpdir';"`
-    mysqlTmpDir=`echo $mysqlTmpDir | cut --delimiter=' ' --fields=2`
+    if [ -z $MYSQL_PASSWD ]
+    then
+        mysqlTmpDir=`mysql -u $MYSQL_USERNAME --silent --skip-column-names -e "SHOW VARIABLES LIKE 'tmpdir';" | cut --delimiter=' ' --fields=2`
+    else
+        mysqlTmpDir=`mysql -u $MYSQL_USERNAME -p$MYSQL_PASSWD --silent --skip-column-names -e "SHOW VARIABLES LIKE 'tmpdir';"`
+        mysqlTmpDir=`echo $mysqlTmpDir | cut --delimiter=' ' --fields=2`
+    fi
 fi
+
 
 #**********
 #echo 'mysqlTmpDir: '$mysqlTmpDir
@@ -181,11 +196,17 @@ tmpTableCmd="USE edxprod; \
              FROM certificates_generatedcertificate RIGHT OUTER JOIN auth_user \
              ON certificates_generatedcertificate.user_id = auth_user.id;"
 
-if [ -z $MYSQL_PASSWD ]
+# Different auth for different MySQL versions:
+if [[ $MYSQL_VERSION == '5.6+' ]]
 then
-    mysql -u $MYSQL_USERNAME edxprod -e "$tmpTableCmd"
+    mysql --login-path=root edxprod -e "$tmpTableCmd"
 else
-    mysql -u $MYSQL_USERNAME -p$MYSQL_PASSWD edxprod -e "$tmpTableCmd"
+    if [ -z $MYSQL_PASSWD ]
+    then
+        mysql -u $MYSQL_USERNAME edxprod -e "$tmpTableCmd"
+    else
+        mysql -u $MYSQL_USERNAME -p$MYSQL_PASSWD edxprod -e "$tmpTableCmd"
+    fi
 fi
 
 echo `date`": Done constructing amalgam from certificates_generatedcertificate and auth_user." | tee --append $LOG_FILE
@@ -226,41 +247,81 @@ if [ ! -z $MYSQL_PASSWD ]
 then
     echo `date`": About to drop UserGrade table..." | tee --append $LOG_FILE
     # Drop UserGrade table if it exists:
-    mysql -u $MYSQL_USERNAME -p$MYSQL_PASSWD -e "USE EdxPrivate; DROP TABLE IF EXISTS UserGrade;\n"
+    if [[ $MYSQL_VERSION == '5.6+' ]]
+    then
+	mysql --login-path=root -e "USE EdxPrivate; DROP TABLE IF EXISTS UserGrade;\n"
+    else
+	mysql -u $MYSQL_USERNAME -p$MYSQL_PASSWD -e "USE EdxPrivate; DROP TABLE IF EXISTS UserGrade;\n"
+    fi
     echo `date`": Done dropping UserGrade table..." | tee --append $LOG_FILE
     
     echo `date`": About to create UserGrade table..." | tee --append $LOG_FILE
     # Create table 'UserGrade' in EdxPrivate, if it doesn't exist:
-    mysql -u $MYSQL_USERNAME -p$MYSQL_PASSWD < $currScriptsDir/cronRefreshGradesCrTable.sql
+    if [[ $MYSQL_VERSION == '5.6+' ]]
+    then
+        mysql --login-path=root < $currScriptsDir/cronRefreshGradesCrTable.sql
+    else
+	mysql -u $MYSQL_USERNAME -p$MYSQL_PASSWD < $currScriptsDir/cronRefreshGradesCrTable.sql
+    fi
     echo `date`": Done creating UserGrade table..." | tee --append $LOG_FILE
 
     echo `date`": About to load TSV into UserGrade table..." | tee --append $LOG_FILE
     # Do the load:
-    mysql --local-infile -u $MYSQL_USERNAME -p$MYSQL_PASSWD -e "USE EdxPrivate; $MYSQL_LOAD_CMD"
+    if [[ $MYSQL_VERSION == '5.6+' ]]
+    then
+	mysql --local-infile --login-path=root -e "USE EdxPrivate; $MYSQL_LOAD_CMD"
+    else
+	mysql --local-infile -u $MYSQL_USERNAME -p$MYSQL_PASSWD -e "USE EdxPrivate; $MYSQL_LOAD_CMD"
+    fi
     echo `date`": Done loading TSV into UserGrade table..." | tee --append $LOG_FILE
 
     # Build the indexes:
     echo `date`": About to build UserGrade indexes..." | tee --append $LOG_FILE
-    mysql -u $MYSQL_USERNAME -p$MYSQL_PASSWD < $currScriptsDir/cronRefreshGradesMkIndexes.sql
+    if [[ $MYSQL_VERSION == '5.6+' ]]
+    then
+	mysql --login-path=root < $currScriptsDir/cronRefreshGradesMkIndexes.sql
+    else
+	mysql -u $MYSQL_USERNAME -p$MYSQL_PASSWD < $currScriptsDir/cronRefreshGradesMkIndexes.sql
+    fi
 else
     # Drop existing table:
     echo `date`": About to drop UserGrade table..." | tee --append $LOG_FILE
-    mysql -u $MYSQL_USERNAME -e "USE EdxPrivate; DROP TABLE IF EXISTS UserGrade;"
+    if [[ $MYSQL_VERSION == '5.6+' ]]
+    then
+	mysql --login-path=root -e "USE EdxPrivate; DROP TABLE IF EXISTS UserGrade;"
+    else
+	mysql -u $MYSQL_USERNAME -e "USE EdxPrivate; DROP TABLE IF EXISTS UserGrade;"
+    fi
     echo `date`": Done dropping UserGrade table..." | tee --append $LOG_FILE
 
     # Create table 'UserGrade' in EdxPrivate, if it doesn't exist:
     echo `date`": About to create UserGrade table..." | tee --append $LOG_FILE
-    mysql -u $MYSQL_USERNAME < $currScriptsDir/cronRefreshGradesCrTable.sql
+    if [[ $MYSQL_VERSION == '5.6+' ]]
+    then
+	mysql --login-path=root < $currScriptsDir/cronRefreshGradesCrTable.sql
+    else
+	mysql -u $MYSQL_USERNAME < $currScriptsDir/cronRefreshGradesCrTable.sql
+    fi
     echo `date`": Done creating UserGrade table..." | tee --append $LOG_FILE
 
     # Do the load:
     echo `date`": About to load TSV into UserGrade table..." | tee --append $LOG_FILE
-    mysql --local-infile -u $MYSQL_USERNAME -e "USE EdxPrivate; $MYSQL_LOAD_CMD"
+    if [[ $MYSQL_VERSION == '5.6+' ]]
+    then
+	mysql --local-infile --login-path=root -e "USE EdxPrivate; $MYSQL_LOAD_CMD"
+    else
+	mysql --local-infile -u $MYSQL_USERNAME -e "USE EdxPrivate; $MYSQL_LOAD_CMD"
+    fi
     echo `date`": Done loading TSV into UserGrade table..." | tee --append $LOG_FILE
 
     # Build the indexes:
     echo `date`": About to build UserGrade indexes..." | tee --append $LOG_FILE
-    mysql -u $MYSQL_USERNAME < $currScriptsDir/cronRefreshGradesMkIndexes.sql
+    if [[ $MYSQL_VERSION == '5.6+' ]]
+    then
+	mysql --login-path=root < $currScriptsDir/cronRefreshGradesMkIndexes.sql
+    else
+	mysql -u $MYSQL_USERNAME < $currScriptsDir/cronRefreshGradesMkIndexes.sql
+    fi
 fi
 
 # ------------------ Cleanup -------------------
