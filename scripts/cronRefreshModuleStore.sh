@@ -51,6 +51,15 @@
 
 USAGE="Usage: "`basename $0`" [-p]"
 
+# Get MySQL version on this machine
+MYSQL_VERSION=$(mysql --version | sed -ne 's/.*Distrib \([0-9][.][0-9]\).*/\1/p')
+if [[ $MYSQL_VERSION > 5.5 ]]
+then 
+    MYSQL_VERSION='5.6+'
+else 
+    MYSQL_VERSION='5.5'
+fi
+
 # Get directory in which this script is running,
 # and where its support scripts therefore live:
 currScriptsDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -192,13 +201,19 @@ MYSQL_CMD="LOAD DATA LOCAL INFILE '"$TMP_FILE"' INTO TABLE Edx.CourseInfo \
 #************
 
 echo `date`": Truncating current CourseInfo table, and importing new modulestore."
-if $needPasswd
+if [[ $MYSQL_VERSION == '5.6+' ]]
 then
-    mysql -u $MYSQL_USERNAME -p$MYSQL_PASSWD Edx -e "TRUNCATE TABLE CourseInfo; ""$MYSQL_CMD"
+    # Use 5.6 auth to MySQL:
+    mysql --login-path=root Edx -e "TRUNCATE TABLE CourseInfo; ""$MYSQL_CMD"
 else
-    mysql -u $MYSQL_USERNAME Edx -e "TRUNCATE TABLE CourseInfo; ""$MYSQL_CMD"
+    # Use 5.5 auth to MySQL:
+    if $needPasswd
+    then
+        mysql -u $MYSQL_USERNAME -p$MYSQL_PASSWD Edx -e "TRUNCATE TABLE CourseInfo; ""$MYSQL_CMD"
+    else
+        mysql -u $MYSQL_USERNAME Edx -e "TRUNCATE TABLE CourseInfo; ""$MYSQL_CMD"
+    fi  
 fi
-
 echo `date`": Deleting temp file."
 rm $TMP_FILE
 
