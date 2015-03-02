@@ -16,6 +16,15 @@
 
 USAGE='Usage: '`basename $0`' [-u localMySQLUser][-p][-pLocalMySQLPwd]'
 
+# Get MySQL version on this machine
+MYSQL_VERSION=$(mysql --version | sed -ne 's/.*Distrib \([0-9][.][0-9]\).*/\1/p')
+if [[ $MYSQL_VERSION > 5.5 ]]
+then 
+    MYSQL_VERSION='5.6+'
+else 
+    MYSQL_VERSION='5.5'
+fi
+
 # If option -p is provided, script will request password for
 # local MySQL db.
 
@@ -136,15 +145,22 @@ echo `date`": Start updating table ActivityGrade..."  | tee --append $LOG_FILE
 
 # ----------------- Find Newest Entry in Local ActivityGrade Table ------------------
 
-if [ ! -z $MYSQL_PWD ]
+if [[ $MYSQL_VERSION == '5.6+' ]]
 then
-    mysql -u $USERNAME -p$MYSQL_PWD < $currScriptsDir/cronRefreshActivityGradeCrTable.sql
-    LATEST_DATE=`mysql -u $USERNAME -p$MYSQL_PWD --silent --skip-column-names Edx -e \
-	  "SELECT MAX(last_submit) FROM ActivityGrade;"`
+        mysql --login-path=root < $currScriptsDir/cronRefreshActivityGradeCrTable.sql
+        LATEST_DATE=`mysql --login-path=root --silent --skip-column-names Edx -e \
+    	  "SELECT MAX(last_submit) FROM ActivityGrade;"`
 else
-    mysql -u $USERNAME  < $currScriptsDir/cronRefreshActivityGradeCrTable.sql
-    LATEST_DATE=`mysql -u $USERNAME --silent --skip-column-names Edx -e \
-	  "SELECT MAX(last_submit) FROM ActivityGrade;"`
+    if [ ! -z $MYSQL_PWD ]
+    then
+        mysql -u $USERNAME -p$MYSQL_PWD < $currScriptsDir/cronRefreshActivityGradeCrTable.sql
+        LATEST_DATE=`mysql -u $USERNAME -p$MYSQL_PWD --silent --skip-column-names Edx -e \
+    	  "SELECT MAX(last_submit) FROM ActivityGrade;"`
+    else
+        mysql -u $USERNAME  < $currScriptsDir/cronRefreshActivityGradeCrTable.sql
+        LATEST_DATE=`mysql -u $USERNAME --silent --skip-column-names Edx -e \
+    	  "SELECT MAX(last_submit) FROM ActivityGrade;"`
+    fi
 fi
 
 if [ "${LATEST_DATE}" == "NULL" ]
@@ -197,11 +213,16 @@ FROM edxprod.courseware_studentmodule \
 WHERE modified > '"$LATEST_DATE"'; "
 
 echo `date`": About to create auxiliary table StudentmoduleExcerpt in prep of addAnonToActivityGradeTable.py..."  | tee --append $LOG_FILE
-if [ -z $MYSQL_PWD ]
+if [[ $MYSQL_VERSION == '5.6+' ]]
 then
-    mysql -u $USERNAME -e "$tmpTableCmd"
+    mysql --login-path=root -e "$tmpTableCmd"
 else
-    mysql -u $USERNAME -p$MYSQL_PWD -e "$tmpTableCmd"
+    if [ -z $MYSQL_PWD ]
+    then
+        mysql -u $USERNAME -e "$tmpTableCmd"
+    else
+        mysql -u $USERNAME -p$MYSQL_PWD -e "$tmpTableCmd"
+    fi
 fi
 
 echo `date`": Done creating auxiliary table."  | tee --append $LOG_FILE
@@ -221,21 +242,31 @@ echo `date`": Done adding percent_grade, ..."  | tee --append $LOG_FILE
 
 echo `date`": Creating indexes ..."  | tee --append $LOG_FILE
 
-if [ -z $MYSQL_PWD ]
+if [[ $MYSQL_VERSION == '5.6+' ]]
 then
-    mysql -u $USERNAME Edx -e "CREATE INDEX ActGrdAnonSNIdx ON ActivityGrade (anon_screen_name);"
-    mysql -u $USERNAME Edx -e "CREATE INDEX ActGrdCourseDisNmIdx ON ActivityGrade (course_display_name);"
-    mysql -u $USERNAME Edx -e "CREATE INDEX ActGrdNumAttemptsIdx ON ActivityGrade (num_attempts);"
-    mysql -u $USERNAME Edx -e "CREATE INDEX ActGrdModIdIdx ON ActivityGrade (module_id);"
-    mysql -u $USERNAME Edx -e "CREATE INDEX ActGrdResDispNmIdx ON ActivityGrade (resource_display_name);"
-    mysql -u $USERNAME Edx -e "CREATE INDEX ActGrdLastSubmitIdx ON ActivityGrade (last_submit);"           
+        mysql --login-path=root Edx -e "CREATE INDEX ActGrdAnonSNIdx ON ActivityGrade (anon_screen_name);"
+        mysql --login-path=root Edx -e "CREATE INDEX ActGrdCourseDisNmIdx ON ActivityGrade (course_display_name);"
+        mysql --login-path=root Edx -e "CREATE INDEX ActGrdNumAttemptsIdx ON ActivityGrade (num_attempts);"
+        mysql --login-path=root Edx -e "CREATE INDEX ActGrdModIdIdx ON ActivityGrade (module_id);"
+        mysql --login-path=root Edx -e "CREATE INDEX ActGrdResDispNmIdx ON ActivityGrade (resource_display_name);"
+        mysql --login-path=root Edx -e "CREATE INDEX ActGrdLastSubmitIdx ON ActivityGrade (last_submit);"           
 else
-    mysql -u $USERNAME -p$MYSQL_PWD Edx -e "CREATE INDEX ActGrdAnonSNIdx ON ActivityGrade (anon_screen_name);"          
-    mysql -u $USERNAME -p$MYSQL_PWD Edx -e "CREATE INDEX ActGrdCourseDisNmIdx ON ActivityGrade (course_display_name);"  
-    mysql -u $USERNAME -p$MYSQL_PWD Edx -e "CREATE INDEX ActGrdNumAttemptsIdx ON ActivityGrade (num_attempts);"
-    mysql -u $USERNAME -p$MYSQL_PWD Edx -e "CREATE INDEX ActGrdModIdIdx ON ActivityGrade (module_id);"                  
-    mysql -u $USERNAME -p$MYSQL_PWD Edx -e "CREATE INDEX ActGrdResDispNmIdx ON ActivityGrade (resource_display_name);"  
-    mysql -u $USERNAME -p$MYSQL_PWD Edx -e "CREATE INDEX ActGrdLastSubmitIdx ON ActivityGrade (last_submit);"           
+    if [ -z $MYSQL_PWD ]
+    then
+        mysql -u $USERNAME Edx -e "CREATE INDEX ActGrdAnonSNIdx ON ActivityGrade (anon_screen_name);"
+        mysql -u $USERNAME Edx -e "CREATE INDEX ActGrdCourseDisNmIdx ON ActivityGrade (course_display_name);"
+        mysql -u $USERNAME Edx -e "CREATE INDEX ActGrdNumAttemptsIdx ON ActivityGrade (num_attempts);"
+        mysql -u $USERNAME Edx -e "CREATE INDEX ActGrdModIdIdx ON ActivityGrade (module_id);"
+        mysql -u $USERNAME Edx -e "CREATE INDEX ActGrdResDispNmIdx ON ActivityGrade (resource_display_name);"
+        mysql -u $USERNAME Edx -e "CREATE INDEX ActGrdLastSubmitIdx ON ActivityGrade (last_submit);"           
+    else
+        mysql -u $USERNAME -p$MYSQL_PWD Edx -e "CREATE INDEX ActGrdAnonSNIdx ON ActivityGrade (anon_screen_name);"          
+        mysql -u $USERNAME -p$MYSQL_PWD Edx -e "CREATE INDEX ActGrdCourseDisNmIdx ON ActivityGrade (course_display_name);"  
+        mysql -u $USERNAME -p$MYSQL_PWD Edx -e "CREATE INDEX ActGrdNumAttemptsIdx ON ActivityGrade (num_attempts);"
+        mysql -u $USERNAME -p$MYSQL_PWD Edx -e "CREATE INDEX ActGrdModIdIdx ON ActivityGrade (module_id);"                  
+        mysql -u $USERNAME -p$MYSQL_PWD Edx -e "CREATE INDEX ActGrdResDispNmIdx ON ActivityGrade (resource_display_name);"  
+        mysql -u $USERNAME -p$MYSQL_PWD Edx -e "CREATE INDEX ActGrdLastSubmitIdx ON ActivityGrade (last_submit);"           
+    fi
 fi
 
 echo `date`": Done creating indexes ..."  | tee --append $LOG_FILE
