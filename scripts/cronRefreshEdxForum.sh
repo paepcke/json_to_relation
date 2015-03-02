@@ -8,6 +8,16 @@
 EDX_PLATFORM_DUMP_MACHINE=jenkins.prod.class.stanford.edu
 
 USAGE='Usage: '`basename $0`' [-u localMySQLUser][-p][-pLocalMySQLPwd]'
+
+# Get MySQL version on this machine
+MYSQL_VERSION=$(mysql --version | sed -ne 's/.*Distrib \([0-9][.][0-9]\).*/\1/p')
+if [[ $MYSQL_VERSION > 5.5 ]]
+then 
+    MYSQL_VERSION='5.6+'
+else 
+    MYSQL_VERSION='5.5'
+fi
+
 # If option -p is provided, script will request password for
 # local MySQL db.
 
@@ -173,9 +183,15 @@ echo `date`": Anonymizing and loading into MySQL..."  | tee --append $LOG_FILE
 python $CURR_SCRIPT_DIR/../../forum_etl/src/forum_etl/extractor.py --anonymize $PWD/forum-latest/stanford*/contents.bson
 
 # Delete the first 559 rows, which are all in Latin (test posts):
-if [ ! -z $MYSQL_PWD ]
+if [[ $MYSQL_VERSION == '5.6+' ]]
 then
-    mysql -u $USERNAME -p$MYSQL_PWD EdxForum -e "DELETE FROM contents ORDER BY forum_post_id LIMIT 559;"
+    mysql --login-path=root EdxForum -e "DELETE FROM contents ORDER BY forum_post_id LIMIT 559;"
 else
-    mysql -u $USERNAME  EdxForum  -e "DELETE FROM contents ORDER BY forum_post_id LIMIT 559;"
+    if [ ! -z $MYSQL_PWD ]
+    then
+        mysql -u $USERNAME -p$MYSQL_PWD EdxForum -e "DELETE FROM contents ORDER BY forum_post_id LIMIT 559;"
+    else
+        mysql -u $USERNAME  EdxForum  -e "DELETE FROM contents ORDER BY forum_post_id LIMIT 559;"
+    fi
 fi
+
