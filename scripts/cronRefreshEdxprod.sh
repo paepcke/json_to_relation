@@ -23,6 +23,15 @@ EDX_PLATFORM_DUMP_MACHINE=jenkins.prod.class.stanford.edu
 
 USAGE='Usage: '`basename $0`' [-u localUbuntuUser][-p][-pLocalMySQLRootPwd][-n]'
 
+# Get MySQL version on this machine
+MYSQL_VERSION=$(mysql --version | sed -ne 's/.*Distrib \([0-9][.][0-9]\).*/\1/p')
+if [[ $MYSQL_VERSION > 5.5 ]]
+then 
+    MYSQL_VERSION='5.6+'
+else 
+    MYSQL_VERSION='5.5'
+fi
+
 # If -u is omitted, then unix 'whoami' is used.
 # If option -p is provided, script will request password for
 # local MySQL db's root user. As per MySQL the -p can be
@@ -33,19 +42,18 @@ USAGE='Usage: '`basename $0`' [-u localUbuntuUser][-p][-pLocalMySQLRootPwd][-n]'
 # file .ssh/mysql_root with the password.
 
 # Array of tables to get from edxprod (NOTE: no commas between tables!):
-TABLES=(#****courseware_studentmodule \
-        courseware_studentmodule
-        #courseware_studentmodulehistory \
-        # auth_user \
-        # certificates_generatedcertificate \
-        # auth_userprofile \
-        # external_auth_externalauthmap \
-        # student_anonymoususerid \
-        # student_courseenrollment\
-        # submissions_score\
-        # submissions_scoresummary\
-        # submissions_studentitem\
-        # submissions_submission 
+TABLES=(courseware_studentmodule \
+        courseware_studentmodulehistory \
+        auth_user \
+        certificates_generatedcertificate \
+        auth_userprofile \
+        external_auth_externalauthmap \
+        student_anonymoususerid \
+        student_courseenrollment\
+        submissions_score\
+        submissions_scoresummary\
+        submissions_studentitem\
+        submissions_submission 
        )
 
 MYSQL_PASSWD=''
@@ -179,8 +187,12 @@ fi
 
 # ------------------ Ensure Existence of Local Database -------------------
 
-mysql -u root -p$MYSQL_PASSWD -e "CREATE DATABASE IF NOT EXISTS edxprod;"
-
+if [[ $MYSQL_VERSION == '5.6+' ]]
+then
+    mysql --login-path=root -e "CREATE DATABASE IF NOT EXISTS edxprod;"
+else
+    mysql -u root -p$MYSQL_PASSWD -e "CREATE DATABASE IF NOT EXISTS edxprod;"
+fi
 
 # ------------------ Extract and Load Tables from Dump File -------------------
 
@@ -227,7 +239,13 @@ do
     fi
 
     echo `date`": Loading table $TABLE."  | tee --append $LOG_FILE
-    mysql -u root -p$MYSQL_PASSWD edxprod < $EDXPROD_DUMP_DIR/$TABLE.sql
+    if [[ $MYSQL_VERSION == '5.6+' ]]
+    then
+	mysql --login-path=root edxprod < $EDXPROD_DUMP_DIR/$TABLE.sql
+    else
+	mysql -u root -p$MYSQL_PASSWD edxprod < $EDXPROD_DUMP_DIR/$TABLE.sql
+    fi  
+
 done
 
 # Now create the true_enrollment table, which only
@@ -262,7 +280,14 @@ newTblCmd="DROP TABLE IF EXISTS true_courseenrollment;
 	     WHERE student_courseenrollment.is_active = 1;
 	   ALTER TABLE true_courseenrollment ENABLE KEYS;
          "
-echo $newTblCmd | mysql -u root -p$MYSQL_PASSWD edxprod
+if [[ $MYSQL_VERSION == '5.6+' ]]
+then
+    echo $newTblCmd | mysql --login-path=root edxprod
+else
+    echo $newTblCmd | mysql -u root -p$MYSQL_PASSWD edxprod
+fi
+
+
 
 # ------------------ Signout -------------------
 echo `date`": Finished refreshing edxprod tables."  | tee --append $LOG_FILE
