@@ -8,6 +8,14 @@
 
 usage="Usage: "`basename $0`" [-u username][-p][-n noindexex]"
 
+# Get MySQL version on this machine
+MYSQL_VERSION=$(mysql --version | sed -ne 's/.*Distrib \([0-9][.][0-9]\).*/\1/p')
+if [[ $MYSQL_VERSION > 5.5 ]]
+then 
+    MYSQL_VERSION='5.6+'
+else 
+    MYSQL_VERSION='5.5'
+fi
 
 askForPasswd=false
 buildIndexes=1
@@ -114,12 +122,18 @@ echo "About to create tables"
 #**************
 
 currScriptsDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-if [ -z $PASSWD ]
+if [[ $MYSQL_VERSION == '5.6+' ]]
 then
-    mysql -u root < ${currScriptsDir}/createEmptyEdxDbs.sql
+    mysql --login-path=root < ${currScriptsDir}/createEmptyEdxDbs.sql
 else
-    mysql -u root -p$PASSWD < ${currScriptsDir}/createEmptyEdxDbs.sql
+    if [ -z $PASSWD ]
+    then
+        mysql -u root < ${currScriptsDir}/createEmptyEdxDbs.sql
+    else
+        mysql -u root -p$PASSWD < ${currScriptsDir}/createEmptyEdxDbs.sql
+    fi
 fi
+
 #**************
 echo "Done creating tables"
 echo "About to create procedures and functions."

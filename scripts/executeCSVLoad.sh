@@ -32,6 +32,15 @@
 
 usage="Usage: "`basename $0`" [-u username][-p][-w rootpass] logDir file1.sql file2.sql... # You may be asked for MySQL root pwd."
 
+# Get MySQL version on this machine
+MYSQL_VERSION=$(mysql --version | sed -ne 's/.*Distrib \([0-9][.][0-9]\).*/\1/p')
+if [[ $MYSQL_VERSION > 5.5 ]]
+then 
+    MYSQL_VERSION='5.6+'
+else 
+    MYSQL_VERSION='5.5'
+fi
+
 if [ $# -lt 1 ]
 then
     echo $usage
@@ -198,14 +207,23 @@ privateTables=( ["Account"]="account_id" \
 for table in ${!tables[@]}
 do
     echo "`date`: Flushing table $table:" >> $LOG_FILE 2>&1
-    { mysql -u root -p$password -e 'FLUSH TABLES $table' Edx; } >> $LOG_FILE 2>&1
+    if [[ $MYSQL_VERSION == '5.6+' ]]
+    then
+	{ mysql --login-path=root -e 'FLUSH TABLES $table' Edx; } >> $LOG_FILE 2>&1
+    else
+        { mysql -u root -p$password -e 'FLUSH TABLES $table' Edx; } >> $LOG_FILE 2>&1
+    fi
 done
 
 # Flush Private tables; the ${!privateTables[@]} loops through the table names (i.e. dict keys)
 for table in ${!privateTables[@]}
 do
     echo "`date`: Flushing table $table:"  >> $LOG_FILE 2>&1
-    { mysql -u root -p$password -e 'FLUSH TABLES $table' EdxPrivate; } >> $LOG_FILE 2>&1
+    if [[ $MYSQL_VERSION == '5.6+' ]]
+    then
+        { mysql --login-path=root -e 'FLUSH TABLES $table' EdxPrivate; } >> $LOG_FILE 2>&1
+    else
+	{ mysql -u root -p$password -e 'FLUSH TABLES $table' EdxPrivate; } >> $LOG_FILE 2>&1
 done
 
 # -------------------  Remove Primary Keys for Loading Speed -----------------
@@ -231,9 +249,16 @@ done
 for sqlFile in $@
 do  
     echo "`date`: starting on $sqlFile"  >> $LOG_FILE 2>&1
-    { mysql -f -u root -p$password --local_infile=1 < $sqlFile; } >> $LOG_FILE 2>&1
-    mysql -f -u root -p$password -e "USE Edx; COMMIT; USE EdxPrivate; COMMIT;"
-    echo "`date`: done loading $sqlFile"  >> $LOG_FILE 2>&1
+    if [[ $MYSQL_VERSION == '5.6+' ]]
+    then
+    	{ mysql -f --login-path=root --local_infile=1 < $sqlFile; } >> $LOG_FILE 2>&1
+    	mysql -f --login-path=root -e "USE Edx; COMMIT; USE EdxPrivate; COMMIT;"
+    	echo "`date`: done loading $sqlFile"  >> $LOG_FILE 2>&1
+    else
+    	{ mysql -f -u root -p$password --local_infile=1 < $sqlFile; } >> $LOG_FILE 2>&1
+    	mysql -f -u root -p$password -e "USE Edx; COMMIT; USE EdxPrivate; COMMIT;"
+    	echo "`date`: done loading $sqlFile"  >> $LOG_FILE 2>&1
+    fi
 done
 
 # -------------------  Restore Primary Keys -----------------
@@ -268,7 +293,12 @@ for table in ${!tables[@]}
 do
     echo "`date`: re-enabling non-primary key indexes for Edx."$table"..." >> $LOG_FILE 2>&1
     # The ${tables["$table"]} accesses the primary key column name (i.e. the value of the dict):
-    { mysql -u root -p$password -e "USE Edx; ALTER TABLE "$table" ENABLE KEYS;"; } >> $LOG_FILE 2>&1
+    if [[ $MYSQL_VERSION == '5.6+' ]]
+    then
+	{ mysql --login-path=root -e "USE Edx; ALTER TABLE "$table" ENABLE KEYS;"; } >> $LOG_FILE 2>&1
+    else
+	{ mysql -u root -p$password -e "USE Edx; ALTER TABLE "$table" ENABLE KEYS;"; } >> $LOG_FILE 2>&1
+    fi
 done
 
 # Same for private tables
@@ -276,7 +306,12 @@ for table in ${!privateTables[@]}
 do
     echo "`date`: re-enabling non-primary key indexes for EdxPrivate."$table"..." >> $LOG_FILE 2>&1
     # The ${tables["$table"]} accesses the primary key column name (i.e. the value of the dict):
-    { mysql -u root -p$password -e "USE EdxPrivate; ALTER TABLE "$table" ENABLE KEYS;"; } >> $LOG_FILE 2>&1
+    if [[ $MYSQL_VERSION == '5.6+' ]]
+    then
+	{ mysql --login-path=root -e "USE EdxPrivate; ALTER TABLE "$table" ENABLE KEYS;"; } >> $LOG_FILE 2>&1
+    else
+	{ mysql -u root -p$password -e "USE EdxPrivate; ALTER TABLE "$table" ENABLE KEYS;"; } >> $LOG_FILE 2>&1
+    fi
 done
 
 # Create any missing non-primary indexes:

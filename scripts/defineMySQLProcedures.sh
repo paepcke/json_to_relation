@@ -20,6 +20,15 @@
 
 USAGE="Usage: `basename $0` [-u username][-p][-pYourPwd]"
 
+# Get MySQL version on this machine
+MYSQL_VERSION=$(mysql --version | sed -ne 's/.*Distrib \([0-9][.][0-9]\).*/\1/p')
+if [[ $MYSQL_VERSION > 5.5 ]]
+then 
+    MYSQL_VERSION='5.6+'
+else 
+    MYSQL_VERSION='5.5'
+fi
+
 MYSQL_USERNAME=`whoami`
 SHELL_USERNAME=`whoami`
 PASSWD=''
@@ -143,32 +152,50 @@ KEY_INSTALL_CMD="DROP TABLE IF EXISTS EdxPrivate.Keys; \
 # exit 0
 #*****************
 
-if [ -z $PASSWD ]
+if [[ $MYSQL_VERSION == '5.6+' ]]
 then
-    mysql -u $MYSQL_USERNAME EdxPrivate -e "$KEY_INSTALL_CMD"
+    mysql --login-path=root EdxPrivate -e "$KEY_INSTALL_CMD"
 else
-    mysql -u $MYSQL_USERNAME -p$PASSWD EdxPrivate -e "$KEY_INSTALL_CMD"
+    if [ -z $PASSWD ]
+    then
+        mysql -u $MYSQL_USERNAME EdxPrivate -e "$KEY_INSTALL_CMD"
+    else
+        mysql -u $MYSQL_USERNAME -p$PASSWD EdxPrivate -e "$KEY_INSTALL_CMD"
+    fi
 fi
+
 
 # Load the .sql file that contains the procedure
 # function bodies several times: into each of Edx
 # and EdxPrivate, into EdxForum, and into EdxQualtrics, 
 # so that they # are available there:
-if [ -z $PASSWD ]
+if [[ $MYSQL_VERSION == '5.6+' ]]
 then
-    mysql -u $MYSQL_USERNAME Edx          -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
-    mysql -u $MYSQL_USERNAME EdxPrivate   -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
-    mysql -u $MYSQL_USERNAME EdxForum     -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
-    mysql -u $MYSQL_USERNAME EdxPiazza    -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
-    mysql -u $MYSQL_USERNAME edxprod      -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
-    mysql -u $MYSQL_USERNAME EdxQualtrics -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
-    mysql -u $MYSQL_USERNAME unittest     -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+        mysql --login-path=root Edx          -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+        mysql --login-path=root EdxPrivate   -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+        mysql --login-path=root EdxForum     -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+        mysql --login-path=root EdxPiazza    -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+        mysql --login-path=root edxprod      -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+        mysql --login-path=root EdxQualtrics -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+        mysql --login-path=root unittest     -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
 else
-    mysql -u $MYSQL_USERNAME -p$PASSWD Edx          -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
-    mysql -u $MYSQL_USERNAME -p$PASSWD EdxPrivate   -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
-    mysql -u $MYSQL_USERNAME -p$PASSWD EdxForum     -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
-    mysql -u $MYSQL_USERNAME -p$PASSWD EdxPiazza    -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
-    mysql -u $MYSQL_USERNAME -p$PASSWD edxprod      -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
-    mysql -u $MYSQL_USERNAME -p$PASSWD EdxQualtrics -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
-    mysql -u $MYSQL_USERNAME -p$PASSWD unittest     -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+    if [ -z $PASSWD ]
+    then
+        mysql -u $MYSQL_USERNAME Edx          -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+        mysql -u $MYSQL_USERNAME EdxPrivate   -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+        mysql -u $MYSQL_USERNAME EdxForum     -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+        mysql -u $MYSQL_USERNAME EdxPiazza    -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+        mysql -u $MYSQL_USERNAME edxprod      -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+        mysql -u $MYSQL_USERNAME EdxQualtrics -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+        mysql -u $MYSQL_USERNAME unittest     -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+    else
+        mysql -u $MYSQL_USERNAME -p$PASSWD Edx          -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+        mysql -u $MYSQL_USERNAME -p$PASSWD EdxPrivate   -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+        mysql -u $MYSQL_USERNAME -p$PASSWD EdxForum     -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+        mysql -u $MYSQL_USERNAME -p$PASSWD EdxPiazza    -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+        mysql -u $MYSQL_USERNAME -p$PASSWD edxprod      -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+        mysql -u $MYSQL_USERNAME -p$PASSWD EdxQualtrics -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+        mysql -u $MYSQL_USERNAME -p$PASSWD unittest     -e "source "$THIS_SCRIPT_DIR"/mysqlProcAndFuncBodies.sql;"
+    fi
 fi
+

@@ -52,6 +52,16 @@
 
 USAGE="Usage: "`basename $0`" [-u uid][-p][-d dbName][-t tableName][-a] courseNamePattern"
 
+# Get MySQL version on this machine
+MYSQL_VERSION=$(mysql --version | sed -ne 's/.*Distrib \([0-9][.][0-9]\).*/\1/p')
+if [[ $MYSQL_VERSION > 5.5 ]]
+then 
+    MYSQL_VERSION='5.6+'
+else 
+    MYSQL_VERSION='5.5'
+fi
+
+
 if [ $# -lt 1 ]
 then
     echo $USAGE
@@ -243,36 +253,52 @@ INDEXING_CMD="ALTER TABLE $DB_NAME.$TABLE_NAME \
 #***************
 
 echo "Creating extract $DB_NAME.$TABLE_NAME ..."
-# If the pwd is empty, don't issue -p to mysql:
-if [ -z $PASSWD ]
+if [[ $MYSQL_VERSION == '5.6+' ]]
 then
-    # Password empty...
     # Check whether the target table already exists, and
     # quit if so:
     TABLE_EXISTS=`echo "SELECT COUNT(*) FROM information_schema.tables \
-  	                WHERE table_schema = '$DB_NAME' \
-	                AND table_name = '$TABLE_NAME' LIMIT 1;" | mysql -u $USERNAME | grep 1`
+                    WHERE table_schema = '$DB_NAME' \
+                    AND table_name = '$TABLE_NAME' LIMIT 1;" | mysql --login-path=root | grep 1`
     if [ "$TABLE_EXISTS" = "1" ]
     then
-	echo "Table $DB_NAME.$TABLE_NAME already exists; aborting."
-	exit 1
+    echo "Table $DB_NAME.$TABLE_NAME already exists; aborting."
+    exit 1
     fi
-    echo "$CREATION_CMD" | mysql -u $USERNAME
+    echo "$CREATION_CMD" | mysql --login-path=root
     echo "Building indexes on the new extract..."
-    echo "$INDEXING_CMD"  | mysql -u $USERNAME
+    echo "$INDEXING_CMD"  | mysql --login-path=root
 else
-    # Password not empty ...
-    TABLE_EXISTS=`echo "SELECT COUNT(*) FROM information_schema.tables \
-  	                WHERE table_schema = '$DB_NAME' \
-	                AND table_name = '$TABLE_NAME' LIMIT 1;" | mysql -u $USERNAME -p$PASSWD | grep 1`
-    if [ "$TABLE_EXISTS" = "1" ]
+    # If the pwd is empty, don't issue -p to mysql:
+    if [ -z $PASSWD ]
     then
-	echo "Table $DB_NAME.$TABLE_NAME already exists; aborting."
-	exit 1
+        # Password empty...
+        # Check whether the target table already exists, and
+        # quit if so:
+        TABLE_EXISTS=`echo "SELECT COUNT(*) FROM information_schema.tables \
+      	                WHERE table_schema = '$DB_NAME' \
+    	                AND table_name = '$TABLE_NAME' LIMIT 1;" | mysql -u $USERNAME | grep 1`
+        if [ "$TABLE_EXISTS" = "1" ]
+        then
+    	echo "Table $DB_NAME.$TABLE_NAME already exists; aborting."
+    	exit 1
+        fi
+        echo "$CREATION_CMD" | mysql -u $USERNAME
+        echo "Building indexes on the new extract..."
+        echo "$INDEXING_CMD"  | mysql -u $USERNAME
+    else
+        # Password not empty ...
+        TABLE_EXISTS=`echo "SELECT COUNT(*) FROM information_schema.tables \
+      	                WHERE table_schema = '$DB_NAME' \
+    	                AND table_name = '$TABLE_NAME' LIMIT 1;" | mysql -u $USERNAME -p$PASSWD | grep 1`
+        if [ "$TABLE_EXISTS" = "1" ]
+        then
+    	echo "Table $DB_NAME.$TABLE_NAME already exists; aborting."
+    	exit 1
+        fi
+        echo "$CREATION_CMD" | mysql -u $USERNAME -p$PASSWD
+        echo "Building indexes on the new extract..."
+        echo "$INDEXING_CMD"  | mysql -u $USERNAME -p$PASSWD
     fi
-    echo "$CREATION_CMD" | mysql -u $USERNAME -p$PASSWD
-    echo "Building indexes on the new extract..."
-    echo "$INDEXING_CMD"  | mysql -u $USERNAME -p$PASSWD
 fi
-
 echo "Done building $DB_NAME.$TABLE_NAME"

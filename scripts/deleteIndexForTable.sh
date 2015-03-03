@@ -9,6 +9,15 @@
 
 usage="Usage: "`basename $0`" [-u username][-p] [tableName [tableName ...]]"
 
+# Get MySQL version on this machine
+MYSQL_VERSION=$(mysql --version | sed -ne 's/.*Distrib \([0-9][.][0-9]\).*/\1/p')
+if [[ $MYSQL_VERSION > 5.5 ]]
+then 
+    MYSQL_VERSION='5.6+'
+else 
+    MYSQL_VERSION='5.5'
+fi
+
 USERNAME=`whoami`
 PASSWD=''
 askForPasswd=false
@@ -147,46 +156,59 @@ fi
 # exit 0
 #*****************
 
+# Build a variable MYSQL_AUTH that depends on
+# the MySQL server version. Versions <5.6 use
+#   -u $USERNAME $pwdOption
+# For newer servers we use --login-path=root 
+
+if [[ $MYSQL_VERSION == '5.6+' ]]
+then
+    MYSQL_AUTH="--login-path=root"
+else
+    MYSQL_AUTH="-u $USERNAME $pwdOption"
+fi
+
+
 for table in ${tables[@]}
 do
     if [ $table == 'EdxTrackEvent' ]
     then
 	echo "Creating empty tbl shaped like EdxTrackEvent..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CREATE TABLE EdxTrackEvent_New LIKE EdxTrackEvent;"
+	mysql $MYSQL_AUTH -e "USE Edx; CREATE TABLE EdxTrackEvent_New LIKE EdxTrackEvent;"
 	echo "Dropping all indexes in new, empty table..."
 
 	echo "Dropping index  EdxTrackEvent(event_type)..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP INDEX EdxTrackEventIdxEvType ON EdxTrackEvent_New;"
+	mysql $MYSQL_AUTH -e "USE Edx; DROP INDEX EdxTrackEventIdxEvType ON EdxTrackEvent_New;"
 	echo "Dropping index  EdxTrackEvent(anon_screen_name)..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP INDEX EdxTrackEventIdxIdxUname ON EdxTrackEvent_New;"
+	mysql $MYSQL_AUTH -e "USE Edx; DROP INDEX EdxTrackEventIdxIdxUname ON EdxTrackEvent_New;"
 	echo "Dropping index  EdxTrackEvent(course_id)..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP INDEX EdxTrackEventIdxCourseID ON EdxTrackEvent_New;"
+	mysql $MYSQL_AUTH -e "USE Edx; DROP INDEX EdxTrackEventIdxCourseID ON EdxTrackEvent_New;"
 	echo "Dropping index  EdxTrackEvent(course_display_name)..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP INDEX EdxTrackEventIdxCourseDisplayName ON EdxTrackEvent_New;"
+	mysql $MYSQL_AUTH -e "USE Edx; DROP INDEX EdxTrackEventIdxCourseDisplayName ON EdxTrackEvent_New;"
 	echo "Dropping index  EdxTrackEvent(resource_display_name)..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP INDEX EdxTrackEventIdxResourceDisplayName ON EdxTrackEvent_New;"
+	mysql $MYSQL_AUTH -e "USE Edx; DROP INDEX EdxTrackEventIdxResourceDisplayName ON EdxTrackEvent_New;"
 	echo "Dropping index  EdxTrackEvent(success)..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP INDEX EdxTrackEventIdxSuccess ON EdxTrackEvent_New;"
+	mysql $MYSQL_AUTH -e "USE Edx; DROP INDEX EdxTrackEventIdxSuccess ON EdxTrackEvent_New;"
 
 	echo "Dropping index  EdxTrackEvent(time)..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP INDEX EdxTrackEventIdxTime ON EdxTrackEvent_New;"
+	mysql $MYSQL_AUTH -e "USE Edx; DROP INDEX EdxTrackEventIdxTime ON EdxTrackEvent_New;"
 	echo "Dropping index  EdxTrackEvent(quarter)..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP INDEX EdxTrackEventIdxQuarter ON EdxTrackEvent_New;"
+	mysql $MYSQL_AUTH -e "USE Edx; DROP INDEX EdxTrackEventIdxQuarter ON EdxTrackEvent_New;"
 	echo "Dropping index  EdxTrackEvent(ip)..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP INDEX EdxTrackEventIdxIP ON EdxTrackEvent_New;"
+	mysql $MYSQL_AUTH -e "USE Edx; DROP INDEX EdxTrackEventIdxIP ON EdxTrackEvent_New;"
 	echo "Dropping index  EdxTrackEvent(course_display_name,time)..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP INDEX EdxTrackEventIdxCourseNameTime ON EdxTrackEvent_New;"
+	mysql $MYSQL_AUTH -e "USE Edx; DROP INDEX EdxTrackEventIdxCourseNameTime ON EdxTrackEvent_New;"
 	echo "Dropping index  EdxTrackEvent(video_id)..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP INDEX EdxTrackEventIdxVideoId ON EdxTrackEvent_New;"
+	mysql $MYSQL_AUTH -e "USE Edx; DROP INDEX EdxTrackEventIdxVideoId ON EdxTrackEvent_New;"
 
 	echo "Copying old EdxTrackEvent content to EdxTrackEvent_New..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; INSERT INTO EdxTrackEvent_New SELECT * FROM EdxTrackEvent;"
+	mysql $MYSQL_AUTH -e "USE Edx; INSERT INTO EdxTrackEvent_New SELECT * FROM EdxTrackEvent;"
 
 	echo "Dropping old EdxTrackEvent..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP TABLE EdxTrackEvent;"
+	mysql $MYSQL_AUTH -e "USE Edx; DROP TABLE EdxTrackEvent;"
 	
 	echo "Renaming EdxTrackEvent_New to EdxTrackEvent..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx;  ALTER TABLE EdxTrackEvent_New RENAME TO EdxTrackEvent;"
+	mysql $MYSQL_AUTH -e "USE Edx;  ALTER TABLE EdxTrackEvent_New RENAME TO EdxTrackEvent;"
 
 	echo "Deleted all indexes from EdxTrackEvent..."
 	
@@ -194,22 +216,22 @@ do
     elif [ $table == 'Answer' ]
     then
 	echo "Creating empty tbl shaped like Answer..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CREATE TABLE Answer_New LIKE Answer;"
+	mysql $MYSQL_AUTH -e "USE Edx; CREATE TABLE Answer_New LIKE Answer;"
 	echo "Dropping all indexes in new, empty table..."
 
 	echo "Dropping index  Answer(answer)..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP INDEX AnswerIdxAns ON Answer_New;"
+	mysql $MYSQL_AUTH -e "USE Edx; DROP INDEX AnswerIdxAns ON Answer_New;"
 	echo "Dropping index  Answer(course_id)..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP INDEX AnswerIdxCourseID ON Answer_New;"
+	mysql $MYSQL_AUTH -e "USE Edx; DROP INDEX AnswerIdxCourseID ON Answer_New;"
 
 	echo "Copying old Answer content to Answer_New..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; INSERT INTO Answer_New SELECT * FROM Answer;"
+	mysql $MYSQL_AUTH -e "USE Edx; INSERT INTO Answer_New SELECT * FROM Answer;"
 
 	echo "Dropping old Answer..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP TABLE Answer;"
+	mysql $MYSQL_AUTH -e "USE Edx; DROP TABLE Answer;"
 	
 	echo "Renaming Answer_New to Answer..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx;  ALTER TABLE Answer_New RENAME TO Answer;"
+	mysql $MYSQL_AUTH -e "USE Edx;  ALTER TABLE Answer_New RENAME TO Answer;"
 
 	echo "Deleted all indexes from Answer..."
 
@@ -218,34 +240,34 @@ do
     then
 
 	echo "Creating empty tbl shaped like Account..."
-	mysql -u $USERNAME $pwdOption -e "USE EdxPrivate; CREATE TABLE Account_New LIKE Account;"
+	mysql $MYSQL_AUTH -e "USE EdxPrivate; CREATE TABLE Account_New LIKE Account;"
 	echo "Dropping all indexes in new, empty table..."
 
 	echo "Dropping index  Account(screen_name)..."
-	mysql -u $USERNAME $pwdOption -e "USE EdxPrivate; DROP INDEX AccountIdxUname ON Account_New;"
+	mysql $MYSQL_AUTH -e "USE EdxPrivate; DROP INDEX AccountIdxUname ON Account_New;"
 	echo "Dropping index  Account(anon_screen_name)..."
-	mysql -u $USERNAME $pwdOption -e "USE EdxPrivate; DROP INDEX AccountIdxAnonUname ON Account_New;"
+	mysql $MYSQL_AUTH -e "USE EdxPrivate; DROP INDEX AccountIdxAnonUname ON Account_New;"
 	echo "Dropping index  Account(zipcode)..."
-	mysql -u $USERNAME $pwdOption -e "USE EdxPrivate; DROP INDEX AccountIdxZip ON Account_New;"
+	mysql $MYSQL_AUTH -e "USE EdxPrivate; DROP INDEX AccountIdxZip ON Account_New;"
 	echo "Dropping index  Account(country)..."
-	mysql -u $USERNAME $pwdOption -e "USE EdxPrivate; DROP INDEX AccountIdxCoun ON Account_New;"
+	mysql $MYSQL_AUTH -e "USE EdxPrivate; DROP INDEX AccountIdxCoun ON Account_New;"
 	echo "Dropping index  Account(gender)..."
-	mysql -u $USERNAME $pwdOption -e "USE EdxPrivate; DROP INDEX AccountIdxGen ON Account_New;"
+	mysql $MYSQL_AUTH -e "USE EdxPrivate; DROP INDEX AccountIdxGen ON Account_New;"
 	echo "Dropping index  Account(year_of_birth'.."
-	mysql -u $USERNAME $pwdOption -e "USE EdxPrivate; DROP INDEX AccountIdxDOB ON Account_New;"
+	mysql $MYSQL_AUTH -e "USE EdxPrivate; DROP INDEX AccountIdxDOB ON Account_New;"
 	echo "Dropping index  Account(level_of_education)..."
-	mysql -u $USERNAME $pwdOption -e "USE EdxPrivate; DROP INDEX AccountIdxEdu ON Account_New;"
+	mysql $MYSQL_AUTH -e "USE EdxPrivate; DROP INDEX AccountIdxEdu ON Account_New;"
 	echo "Dropping index  Account(course_id)..."
-	mysql -u $USERNAME $pwdOption -e "USE EdxPrivate; DROP INDEX AccountIdxCouID ON Account_New;"
+	mysql $MYSQL_AUTH -e "USE EdxPrivate; DROP INDEX AccountIdxCouID ON Account_New;"
 
 	echo "Copying old Account content to Account_New..."
-	mysql -u $USERNAME $pwdOption -e "USE EdxPrivate; INSERT INTO Account_New SELECT * FROM Account;"
+	mysql $MYSQL_AUTH -e "USE EdxPrivate; INSERT INTO Account_New SELECT * FROM Account;"
 
 	echo "Dropping old Account..."
-	mysql -u $USERNAME $pwdOption -e "USE EdxPrivate; DROP TABLE Account;"
+	mysql $MYSQL_AUTH -e "USE EdxPrivate; DROP TABLE Account;"
 	
 	echo "Renaming Account_New to Account..."
-	mysql -u $USERNAME $pwdOption -e "USE EdxPrivate;  ALTER TABLE Account_New RENAME TO Account;"
+	mysql $MYSQL_AUTH -e "USE EdxPrivate;  ALTER TABLE Account_New RENAME TO Account;"
 
 	echo "Deleted all indexes from Account..."
 
@@ -254,30 +276,30 @@ do
     then
 
 	echo "Creating empty tbl shaped like ActivityGrade..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; CREATE TABLE ActivityGrade_New LIKE ActivityGrade;"
+	mysql $MYSQL_AUTH -e "USE Edx; CREATE TABLE ActivityGrade_New LIKE ActivityGrade;"
 	echo "Dropping all indexes in new, empty table..."
 
 	echo "Dropping index ActivityGrade(anon_screen_name)..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP INDEX ActGrdAnonSNIdx ON ActivityGrade_New;"
+	mysql $MYSQL_AUTH -e "USE Edx; DROP INDEX ActGrdAnonSNIdx ON ActivityGrade_New;"
 	echo "Dropping index ActivityGrade(course_display_name)..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP INDEX ActGrdCourseDisNmIdx  ON ActivityGrade_New;"
+	mysql $MYSQL_AUTH -e "USE Edx; DROP INDEX ActGrdCourseDisNmIdx  ON ActivityGrade_New;"
 	echo "Dropping index ActivityGrade(module_id)..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP INDEX ActGrdModIdIdx ON ActivityGrade_New;"
+	mysql $MYSQL_AUTH -e "USE Edx; DROP INDEX ActGrdModIdIdx ON ActivityGrade_New;"
 	echo "Dropping index ActivityGrade(resource_display_name)..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP INDEX ActGrdResDispNmIdx ON ActivityGrade_New;"
+	mysql $MYSQL_AUTH -e "USE Edx; DROP INDEX ActGrdResDispNmIdx ON ActivityGrade_New;"
 	echo "Dropping index ActivityGrade(last_submit)..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP INDEX ActGrdLastSubmitIdx ON ActivityGrade_New;"
+	mysql $MYSQL_AUTH -e "USE Edx; DROP INDEX ActGrdLastSubmitIdx ON ActivityGrade_New;"
 	echo "Dropping index ActivityGrade(num_attempts)..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP INDEX ActGrdNumAttemptsIdx ON ActivityGrade_New;"
+	mysql $MYSQL_AUTH -e "USE Edx; DROP INDEX ActGrdNumAttemptsIdx ON ActivityGrade_New;"
 
 	echo "Copying old ActivityGrade content to ActivityGrade_New..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; INSERT INTO ActivityGrade_New SELECT * FROM ActivityGrade;"
+	mysql $MYSQL_AUTH -e "USE Edx; INSERT INTO ActivityGrade_New SELECT * FROM ActivityGrade;"
 
 	echo "Dropping old ActivityGrade..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx; DROP TABLE ActivityGrade;"
+	mysql $MYSQL_AUTH -e "USE Edx; DROP TABLE ActivityGrade;"
 	
 	echo "Renaming ActivityGrade_New to ActivityGrade..."
-	mysql -u $USERNAME $pwdOption -e "USE Edx;  ALTER TABLE ActivityGrade_New RENAME TO ActivityGrade;"
+	mysql $MYSQL_AUTH -e "USE Edx;  ALTER TABLE ActivityGrade_New RENAME TO ActivityGrade;"
 
 	echo "Deleted all indexes from ActivityGrade..."
 
