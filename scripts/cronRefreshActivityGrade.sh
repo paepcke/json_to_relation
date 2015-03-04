@@ -135,9 +135,9 @@ then
 fi
 
 #**********
-#echo 'Local MySQL uid: '$USERNAME
-#echo 'Local MySQL pwd: '$MYSQL_PWD
-#exit 0
+# echo 'Local MySQL uid: '$USERNAME
+# echo 'Local MySQL pwd: '$MYSQL_PWD
+# exit 0
 #**********
 
 # ------------------ Signin -------------------
@@ -231,24 +231,50 @@ echo `date`": Done creating auxiliary table."  | tee --append $LOG_FILE
 
 echo `date`": About to add percent_grade, resolve resource id, add anon_screen_name, and module_id..."  | tee --append $LOG_FILE
 
+if [[ $MYSQL_VERSION == '5.6+' ]]
+then
+    echo "    "`date`": Begin disable ActivityGrade indexing."  | tee --append $LOG_FILE
+    mysql --login-path=root -e "ALTER TABLE Edx.ActivityGrade DISABLE KEYS;"
+    echo "    "`date`": Done done disable ActivityGrade indexing."  | tee --append $LOG_FILE
+    KEYS_DISABLED=1
+else
+    KEYS_DISABLED=0
+fi
+
 if [ ! -z $MYSQL_PWD ]
 then
     # Turn off indexing while bulk-adding:
-    mysql -u $USERNAME -w $MYSQL_PWD -e "ALTER TABLE Edx.ActivityGrade DISABLE KEYS;"
+    if [[ $KEYS_DISABLED == 0 ]]
+    then
+	echo "    "`date`": Begin disable ActivityGrade indexing."  | tee --append $LOG_FILE
+	mysql -u $USERNAME -w $MYSQL_PWD -e "ALTER TABLE Edx.ActivityGrade DISABLE KEYS;"
+	echo "    "`date`": Done done disable ActivityGrade indexing."  | tee --append $LOG_FILE
+    fi
     $currScriptsDir/addAnonToActivityGradeTable.py -u $USERNAME -w $MYSQL_PWD
 else
     # Turn off indexing while bulk-adding:
-    mysql -u $USERNAME -e "ALTER TABLE Edx.ActivityGrade DISABLE KEYS;"
+    if [[ $KEYS_DISABLED == 0 ]]
+    then
+        echo "    "`date`": Begin disable ActivityGrade indexing."  | tee --append $LOG_FILE
+	mysql -u $USERNAME -e "ALTER TABLE Edx.ActivityGrade DISABLE KEYS;"
+        echo "    "`date`": Done done disable ActivityGrade indexing."  | tee --append $LOG_FILE
+    fi
     $currScriptsDir/addAnonToActivityGradeTable.py -u $USERNAME
 fi
 
 echo "    "`date`": Done loading new entries into ActivityGrade."  | tee --append $LOG_FILE
 echo "    "`date`": Start re-enabling indexing in ActivityGrade..."  | tee --append $LOG_FILE
-if [ ! -z $MYSQL_PWD ]
+
+if [[ $MYSQL_VERSION == '5.6+' ]]
 then
-    mysql -u $USERNAME -w $MYSQL_PWD -e "ALTER TABLE Edx.ActivityGrade ENABLE KEYS;"
+    mysql --login-path=root -e "ALTER TABLE Edx.ActivityGrade ENABLE KEYS;"
 else
-    mysql -u $USERNAME -e "ALTER TABLE Edx.ActivityGrade ENABLE KEYS;"
+    if [ ! -z $MYSQL_PWD ]
+    then
+        mysql -u $USERNAME -w $MYSQL_PWD -e "ALTER TABLE Edx.ActivityGrade ENABLE KEYS;"
+    else
+        mysql -u $USERNAME -e "ALTER TABLE Edx.ActivityGrade ENABLE KEYS;"
+    fi
 fi
 
 echo `date`": Done adding percent_grade, ..."  | tee --append $LOG_FILE
