@@ -66,7 +66,7 @@ class AnonAndModIDAdder(object):
 
     # Number of rows to process in memory
     # before writing to ActivityGrade:
-    BATCH_SIZE = 1000
+    BATCH_SIZE = 10000
     
     # For explanation of the following regex patterns,
     # see header comment of parseStateJSON:
@@ -104,7 +104,7 @@ class AnonAndModIDAdder(object):
     MODULE_ID_INDEX = 14
     
     
-    def __init__(self, uid, pwd, db='Edx'):
+    def __init__(self, uid, pwd, db='Edx', testing=False):
         '''
         ****** Update this comment header
         Make connection to MySQL wrapper.
@@ -123,8 +123,30 @@ class AnonAndModIDAdder(object):
         self.colSpec = AnonAndModIDAdder.ACTIVITY_GRADE_COL_NAMES[0]
         for colName in AnonAndModIDAdder.ACTIVITY_GRADE_COL_NAMES[1:]:
             self.colSpec += ',' + colName
-        
+    
+        self.cacheIdInt2Anon(testing)
         self.pullRowByRow()
+
+    def cacheIdInt2Anon(self, testing=False):
+        '''
+        Builds a dict to map platform integers to anon_screen_names. 
+        
+    :param testing: If set true, then all tables are assumed to be in MySQL DB unittest.
+        :type testing: boolean
+        '''
+        self.int2AnonCache = {}
+        if testing:
+            queryIt = self.mysqldbStudModule.query("SELECT student_id AS user_int_id, \
+                                                           unittest.UserGrade.anon_screen_name \
+                                                      FROM unittest.StudentmoduleExcerpt LEFT JOIN unittest.UserGrade \
+                                                        ON unittest.StudentmoduleExcerpt.student_id = unittest.UserGrade.user_int_id;")
+        else:
+            queryIt = self.mysqldbStudModule.query("SELECT student_id AS user_int_id, \
+                                                           EdxPrivate.UserGrade.anon_screen_name \
+                                                      FROM edxprod.StudentmoduleExcerpt LEFT JOIN EdxPrivate.UserGrade \
+                                                        ON edxprod.StudentmoduleExcerpt.student_id = EdxPrivate.UserGrade.user_int_id;")
+        for user_int_id, anon_screen_name in queryIt:
+            self.int2AnonCache[user_int_id] = anon_screen_name;
 
     def pullRowByRow(self):
         rowBatch = []
@@ -151,7 +173,7 @@ class AnonAndModIDAdder(object):
             # Compute the anon_screen_name:
             studentIntId = studmodTuple[AnonAndModIDAdder.STUDENT_INT_ID_INDEX]
             try:
-                studmodTuple[AnonAndModIDAdder.ANON_SCREEN_NAME_INDEX] = self.getAnonFromIntID(studentIntId)
+                studmodTuple[AnonAndModIDAdder.ANON_SCREEN_NAME_INDEX] = self.int2AnonCache[studentIntId]
             except TypeError:
                 studmodTuple[AnonAndModIDAdder.ANON_SCREEN_NAME_INDEX] = ''
 
@@ -343,14 +365,15 @@ class AnonAndModIDAdder(object):
         #return (successResults, badAnswers, numAttempts)
         return (successResults, answers, numAttempts)
         
-    def getAnonFromIntID(self, intStudentId):
-        theAnonName = ''
-        for anonName in self.mysqldbStudModule.query("SELECT Edx.idInt2Anon(%d)" % intStudentId):
-            if anonName is not None:
-                # Results come back as tuples; singleton tuple in this case:
-                return anonName[0]
-            else:
-                theAnonName
+      # Commented, because replaced by an in-memory cache:
+#     def getAnonFromIntID(self, intStudentId):
+#         theAnonName = ''
+#         for anonName in self.mysqldbStudModule.query("SELECT Edx.idInt2Anon(%d)" % intStudentId):
+#             if anonName is not None:
+#                 # Results come back as tuples; singleton tuple in this case:
+#                 return anonName[0]
+#             else:
+#                 theAnonName
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]), formatter_class=argparse.RawTextHelpFormatter)
