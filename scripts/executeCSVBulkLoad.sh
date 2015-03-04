@@ -25,6 +25,15 @@
 
 usage="Usage: "`basename $0`" [-u username][-p][-w rootpass] logDir bulkLoadSqlFile # You may be asked for MySQL root pwd."
 
+# Get MySQL version on this machine
+MYSQL_VERSION=$(mysql --version | sed -ne 's/.*Distrib \([0-9][.][0-9]\).*/\1/p')
+if [[ $MYSQL_VERSION > 5.5 ]]
+then 
+    MYSQL_VERSION='5.6+'
+else 
+    MYSQL_VERSION='5.5'
+fi
+
 if [ $# -lt 2 ]
 then
     echo $usage
@@ -127,7 +136,17 @@ echo "Load process is logging to "$LOG_FILE
 # Do the actual loading of CSV files into their respective tables;
 # We simply source the passed-in bulk load file to MySQL:
 echo "`date`: starting load from $bulkLoadFile"  >> $LOG_FILE 2>&1
-{ mysql -f -u root -p$password --local_infile=1 < "${bulkLoadFile}"; } >> "${LOG_FILE}" 2>&1
+
+if [[ $MYSQL_VERSION == '5.6+' ]]
+then
+    { mysql --login-path=root -f --local_infile=1 < "${bulkLoadFile}"; } >> "${LOG_FILE}" 2>&1
+else
+    { mysql -f -u root -p$password --local_infile=1 < "${bulkLoadFile}"; } >> "${LOG_FILE}" 2>&1
+fi
+
+
+
+
 echo "`date`: done loading from $bulkLoadFile"  >> $LOG_FILE 2>&1
 
 exit

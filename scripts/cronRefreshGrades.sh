@@ -146,14 +146,14 @@ echo `date`": Start updating table UserGrade..." | tee --append $LOG_FILE
 # Different auth for different MySQL versions:
 if [[ $MYSQL_VERSION == '5.6+' ]]
 then
-    mysqlTmpDir=`mysql --login-path=root --silent --skip-column-names -e "SHOW VARIABLES LIKE 'tmpdir';" | cut --delimiter=' ' --fields=2`
+    mysqlTmpDir=`mysql --login-path=root --silent --skip-column-names -e "SHOW VARIABLES LIKE 'tmpdir';" | cut --fields=2`
 else
     if [ -z $MYSQL_PASSWD ]
     then
-        mysqlTmpDir=`mysql -u $MYSQL_USERNAME --silent --skip-column-names -e "SHOW VARIABLES LIKE 'tmpdir';" | cut --delimiter=' ' --fields=2`
+        mysqlTmpDir=`mysql -u $MYSQL_USERNAME --silent --skip-column-names -e "SHOW VARIABLES LIKE 'tmpdir';" | cut --fields=2`
     else
         mysqlTmpDir=`mysql -u $MYSQL_USERNAME -p$MYSQL_PASSWD --silent --skip-column-names -e "SHOW VARIABLES LIKE 'tmpdir';"`
-        mysqlTmpDir=`echo $mysqlTmpDir | cut --delimiter=' ' --fields=2`
+        mysqlTmpDir=`echo $mysqlTmpDir | cut --fields=2`
     fi
 fi
 
@@ -269,7 +269,7 @@ then
     # Do the load:
     if [[ $MYSQL_VERSION == '5.6+' ]]
     then
-	mysql --local-infile --login-path=root -e "USE EdxPrivate; $MYSQL_LOAD_CMD"
+	mysql --login-path=root --local-infile -e "USE EdxPrivate; $MYSQL_LOAD_CMD"
     else
 	mysql --local-infile -u $MYSQL_USERNAME -p$MYSQL_PASSWD -e "USE EdxPrivate; $MYSQL_LOAD_CMD"
     fi
@@ -308,7 +308,7 @@ else
     echo `date`": About to load TSV into UserGrade table..." | tee --append $LOG_FILE
     if [[ $MYSQL_VERSION == '5.6+' ]]
     then
-	mysql --local-infile --login-path=root -e "USE EdxPrivate; $MYSQL_LOAD_CMD"
+	mysql --login-path=root --local-infile -e "USE EdxPrivate; $MYSQL_LOAD_CMD"
     else
 	mysql --local-infile -u $MYSQL_USERNAME -e "USE EdxPrivate; $MYSQL_LOAD_CMD"
     fi
