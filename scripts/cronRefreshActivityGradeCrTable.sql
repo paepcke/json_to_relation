@@ -4,7 +4,7 @@
 CREATE DATABASE IF NOT EXISTS Edx;
 USE Edx;
 CREATE TABLE IF NOT EXISTS Edx.ActivityGrade (
-    activity_grade_id int(11) PRIMARY KEY,
+    activity_grade_id int(11),
     student_id int(11) NOT NULL,
     course_display_name varchar(255) NOT NULL,
     grade double,

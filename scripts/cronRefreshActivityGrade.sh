@@ -233,43 +233,60 @@ echo `date`": About to add percent_grade, resolve resource id, add anon_screen_n
 
 if [ ! -z $MYSQL_PWD ]
 then
+    # Turn off indexing while bulk-adding:
+    mysql -u $USERNAME -w $MYSQL_PWD -e "ALTER TABLE Edx.ActivityGrade DISABLE KEYS;"
     $currScriptsDir/addAnonToActivityGradeTable.py -u $USERNAME -w $MYSQL_PWD
 else
+    # Turn off indexing while bulk-adding:
+    mysql -u $USERNAME -e "ALTER TABLE Edx.ActivityGrade DISABLE KEYS;"
     $currScriptsDir/addAnonToActivityGradeTable.py -u $USERNAME
+fi
+
+echo "    "`date`": Done loading new entries into ActivityGrade."  | tee --append $LOG_FILE
+echo "    "`date`": Start re-enabling indexing in ActivityGrade..."  | tee --append $LOG_FILE
+if [ ! -z $MYSQL_PWD ]
+then
+    mysql -u $USERNAME -w $MYSQL_PWD -e "ALTER TABLE Edx.ActivityGrade ENABLE KEYS;"
+else
+    mysql -u $USERNAME -e "ALTER TABLE Edx.ActivityGrade ENABLE KEYS;"
 fi
 
 echo `date`": Done adding percent_grade, ..."  | tee --append $LOG_FILE
 
-echo `date`": Creating indexes ..."  | tee --append $LOG_FILE
+# The following is commented out, b/c we now ensure that all
+# indexes on ActivityGrade have been built before this script is called.
+# We DISABLE/ENABLE those indexes above.
 
-if [[ $MYSQL_VERSION == '5.6+' ]]
-then
-        mysql --login-path=root Edx -e "CREATE INDEX ActGrdAnonSNIdx ON ActivityGrade (anon_screen_name);"
-        mysql --login-path=root Edx -e "CREATE INDEX ActGrdCourseDisNmIdx ON ActivityGrade (course_display_name);"
-        mysql --login-path=root Edx -e "CREATE INDEX ActGrdNumAttemptsIdx ON ActivityGrade (num_attempts);"
-        mysql --login-path=root Edx -e "CREATE INDEX ActGrdModIdIdx ON ActivityGrade (module_id);"
-        mysql --login-path=root Edx -e "CREATE INDEX ActGrdResDispNmIdx ON ActivityGrade (resource_display_name);"
-        mysql --login-path=root Edx -e "CREATE INDEX ActGrdLastSubmitIdx ON ActivityGrade (last_submit);"           
-else
-    if [ -z $MYSQL_PWD ]
-    then
-        mysql -u $USERNAME Edx -e "CREATE INDEX ActGrdAnonSNIdx ON ActivityGrade (anon_screen_name);"
-        mysql -u $USERNAME Edx -e "CREATE INDEX ActGrdCourseDisNmIdx ON ActivityGrade (course_display_name);"
-        mysql -u $USERNAME Edx -e "CREATE INDEX ActGrdNumAttemptsIdx ON ActivityGrade (num_attempts);"
-        mysql -u $USERNAME Edx -e "CREATE INDEX ActGrdModIdIdx ON ActivityGrade (module_id);"
-        mysql -u $USERNAME Edx -e "CREATE INDEX ActGrdResDispNmIdx ON ActivityGrade (resource_display_name);"
-        mysql -u $USERNAME Edx -e "CREATE INDEX ActGrdLastSubmitIdx ON ActivityGrade (last_submit);"           
-    else
-        mysql -u $USERNAME -p$MYSQL_PWD Edx -e "CREATE INDEX ActGrdAnonSNIdx ON ActivityGrade (anon_screen_name);"          
-        mysql -u $USERNAME -p$MYSQL_PWD Edx -e "CREATE INDEX ActGrdCourseDisNmIdx ON ActivityGrade (course_display_name);"  
-        mysql -u $USERNAME -p$MYSQL_PWD Edx -e "CREATE INDEX ActGrdNumAttemptsIdx ON ActivityGrade (num_attempts);"
-        mysql -u $USERNAME -p$MYSQL_PWD Edx -e "CREATE INDEX ActGrdModIdIdx ON ActivityGrade (module_id);"                  
-        mysql -u $USERNAME -p$MYSQL_PWD Edx -e "CREATE INDEX ActGrdResDispNmIdx ON ActivityGrade (resource_display_name);"  
-        mysql -u $USERNAME -p$MYSQL_PWD Edx -e "CREATE INDEX ActGrdLastSubmitIdx ON ActivityGrade (last_submit);"           
-    fi
-fi
+# echo `date`": Creating indexes ..."  | tee --append $LOG_FILE
+#
+# if [[ $MYSQL_VERSION == '5.6+' ]]
+# then
+#         mysql --login-path=root Edx -e "CREATE INDEX ActGrdAnonSNIdx ON ActivityGrade (anon_screen_name);"
+#         mysql --login-path=root Edx -e "CREATE INDEX ActGrdCourseDisNmIdx ON ActivityGrade (course_display_name);"
+#         mysql --login-path=root Edx -e "CREATE INDEX ActGrdNumAttemptsIdx ON ActivityGrade (num_attempts);"
+#         mysql --login-path=root Edx -e "CREATE INDEX ActGrdModIdIdx ON ActivityGrade (module_id);"
+#         mysql --login-path=root Edx -e "CREATE INDEX ActGrdResDispNmIdx ON ActivityGrade (resource_display_name);"
+#         mysql --login-path=root Edx -e "CREATE INDEX ActGrdLastSubmitIdx ON ActivityGrade (last_submit);"           
+# else
+#     if [ -z $MYSQL_PWD ]
+#     then
+#         mysql -u $USERNAME Edx -e "CREATE INDEX ActGrdAnonSNIdx ON ActivityGrade (anon_screen_name);"
+#         mysql -u $USERNAME Edx -e "CREATE INDEX ActGrdCourseDisNmIdx ON ActivityGrade (course_display_name);"
+#         mysql -u $USERNAME Edx -e "CREATE INDEX ActGrdNumAttemptsIdx ON ActivityGrade (num_attempts);"
+#         mysql -u $USERNAME Edx -e "CREATE INDEX ActGrdModIdIdx ON ActivityGrade (module_id);"
+#         mysql -u $USERNAME Edx -e "CREATE INDEX ActGrdResDispNmIdx ON ActivityGrade (resource_display_name);"
+#         mysql -u $USERNAME Edx -e "CREATE INDEX ActGrdLastSubmitIdx ON ActivityGrade (last_submit);"           
+#     else
+#         mysql -u $USERNAME -p$MYSQL_PWD Edx -e "CREATE INDEX ActGrdAnonSNIdx ON ActivityGrade (anon_screen_name);"          
+#         mysql -u $USERNAME -p$MYSQL_PWD Edx -e "CREATE INDEX ActGrdCourseDisNmIdx ON ActivityGrade (course_display_name);"  
+#         mysql -u $USERNAME -p$MYSQL_PWD Edx -e "CREATE INDEX ActGrdNumAttemptsIdx ON ActivityGrade (num_attempts);"
+#         mysql -u $USERNAME -p$MYSQL_PWD Edx -e "CREATE INDEX ActGrdModIdIdx ON ActivityGrade (module_id);"                  
+#         mysql -u $USERNAME -p$MYSQL_PWD Edx -e "CREATE INDEX ActGrdResDispNmIdx ON ActivityGrade (resource_display_name);"  
+#         mysql -u $USERNAME -p$MYSQL_PWD Edx -e "CREATE INDEX ActGrdLastSubmitIdx ON ActivityGrade (last_submit);"           
+#     fi
+# fi
 
-echo `date`": Done creating indexes ..."  | tee --append $LOG_FILE
+# echo `date`": Done creating indexes ..."  | tee --append $LOG_FILE
 
 # ------------------ Cleanup -------------------
 
