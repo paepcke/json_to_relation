@@ -1458,6 +1458,7 @@ CREATE VIEW EventXtract AS
 # Performance
 #------------
 
+DROP TABLE IF EXISTS Performance;
 DROP VIEW IF EXiSTS Performance;
 CREATE VIEW Performance AS
 SELECT anon_screen_name, 
