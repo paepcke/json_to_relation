@@ -44,7 +44,7 @@ CREATE PROCEDURE createIndexIfNotExists (IN the_index_name varchar(255),
 this_proc: BEGIN
       # Check whether table exists:
       IF ((SELECT COUNT(*) AS table_exists 
-           FROM information_schema.statistics 
+           FROM information_schema.tables 
            WHERE TABLE_SCHEMA = DATABASE() 
              AND table_name = the_table_name)
           = 0)
@@ -54,7 +54,7 @@ this_proc: BEGIN
       END IF;
 	   
       IF ((SELECT COUNT(*) AS index_exists 
-           FROM information_schema.statistics 
+           FROM information_schema.statistics
            WHERE TABLE_SCHEMA = DATABASE() 
              AND table_name = the_table_name 
     	 AND index_name = the_index_name)  
