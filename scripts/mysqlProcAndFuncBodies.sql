@@ -1471,6 +1471,7 @@ GROUP BY anon_screen_name, course_display_name;
 # FinalGrade 
 #-----------
 
+DROP TABLE IF EXISTS FinalGrade;
 DROP VIEW IF EXiSTS FinalGrade;
 CREATE VIEW FinalGrade AS
 SELECT anon_screen_name,
@@ -1483,6 +1484,7 @@ FROM EdxPrivate.UserGrade;
 # VideoInteraction
 #-----------------
 
+DROP TABLE IF EXISTS VideoInteraction;
 DROP VIEW IF EXISTS VideoInteraction;
 CREATE VIEW VideoInteraction AS
 SELECT event_type,
@@ -1518,6 +1520,7 @@ WHERE  CHAR_LENGTH(video_code) > 0 OR
 # age at time of SELECT, and level of education.
 # Each row is for one anon_screen_name.
 
+DROP TABLE IF EXISTS Demographics;
 DROP VIEW IF EXiSTS Demographics;
 CREATE VIEW Demographics AS
 SELECT EdxPrivate.UserGrade.anon_screen_name, 
