@@ -16,7 +16,8 @@
 # needed for those tables. If no tables are given,
 # will create the indexes for all tables.
 
-usage="Usage: "`basename $0`" [-u username][-p] [tableName [tableName ...]]"
+usage="Usage: "`basename $0`" [-h][-u username][-p] [tableName [tableName ...]]"
+help="Create indexes for one or more Edx/EdxPrivate tables. No argument: all indexes for all tables."
 
 # Get MySQL version on this machine
 MYSQL_VERSION=$(mysql --version | sed -ne 's/.*Distrib \([0-9][.][0-9]\).*/\1/p')
@@ -63,6 +64,10 @@ do
       ;;
     p) # ask for mysql root pwd
       askForPasswd=true
+      NEXT_ARG=$((NEXT_ARG + 1))
+      ;;
+    h) # help
+      echo $help
       NEXT_ARG=$((NEXT_ARG + 1))
       ;;
     \?)
@@ -144,6 +149,7 @@ allTables=( ["EdxTrackEvent"]="Edx" \
             ["ABExperiment"]="Edx" \
             ["OpenAssessment"]="Edx" \
             ["Account"]="EdxPrivate" \
+            ["Demographics"]="Edx" \
     )
 
 # If no table name was given, create the appropriate indexes
@@ -231,24 +237,26 @@ do
 	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('AnswerIdxAns', 'Answer', 'answer', 255);"
 	echo "Creating index on Answer(course_id) if needed..."
 	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('AnswerIdxCourseID', 'Answer', 'course_id', 255);"
+
     elif [ $table == 'Account' ]
     then
 	echo "Creating index on Account(screen_name) if needed..."
-	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('AccountIdxUname', 'Account', 'screen_name', 255);"
+	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE EdxPrivate; CALL createIndexIfNotExists('AccountIdxUname', 'Account', 'screen_name', 255);"
 	echo "Creating index on Account(anon_screen_name) if needed..."
-	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('AccountIdxAnonUname', 'Account', 'anon_screen_name', 40);"
+	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE EdxPrivate; CALL createIndexIfNotExists('AccountIdxAnonUname', 'Account', 'anon_screen_name', 40);"
 	echo "Creating index on Account(zipcode) if needed..."
-	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('AccountIdxZip', 'Account', 'zipcode', 10);"
+	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE EdxPrivate; CALL createIndexIfNotExists('AccountIdxZip', 'Account', 'zipcode', 10);"
 	echo "Creating index on Account(country) if needed..."
-	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('AccountIdxCoun', 'Account', 'country', 255);"
+	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE EdxPrivate; CALL createIndexIfNotExists('AccountIdxCoun', 'Account', 'country', 255);"
 	echo "Creating index on Account(gender) if needed..."
-	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('AccountIdxGen', 'Account', 'gender', 6);"
+	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE EdxPrivate; CALL createIndexIfNotExists('AccountIdxGen', 'Account', 'gender', 6);"
 	echo "Creating index on Account(year_of_birth'..."
-	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('AccountIdxDOB', 'Account', 'year_of_birth', NULL);"
+	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE EdxPrivate; CALL createIndexIfNotExists('AccountIdxDOB', 'Account', 'year_of_birth', NULL);"
 	echo "Creating index on Account(level_of_education) if needed..."
-	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('AccountIdxEdu', 'Account', 'level_of_education', 10);"
+	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE EdxPrivate; CALL createIndexIfNotExists('AccountIdxEdu', 'Account', 'level_of_education', 10);"
 	echo "Creating index on Account(course_id) if needed..."
-	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('AccountIdxCouID', 'Account', 'course_id', 255);"
+	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE EdxPrivate; CALL createIndexIfNotExists('AccountIdxCouID', 'Account', 'course_id', 255);"
+
     elif [ $table == 'ActivityGrade' ]
     then
 	echo "Creating index on ActivityGrade(last_submit) if needed..."
@@ -312,24 +320,25 @@ do
 	# b/c that function isn't written to consider fulltext
 	# indexing:
 
-	indxExists=$(mysql --silent $MYSQL_AUTH -e "USE Edx; SELECT indexExists('OpenAssessment','submission_text');")
-	if [[ $indxExists == 0 ]]
-	then
-	    echo "Creating index on OpenAssessment(submission_text) (fulltext)..."
-	    mysql $MYSQL_AUTH -e "USE Edx; CREATE FULLTEXT INDEX OpAssSubmTxtIdx ON OpenAssessment(submission_text);"
-	fi
-	indxExists=$(mysql --silent $MYSQL_AUTH -e "USE Edx; SELECT indexExists('OpenAssessment','feedback_text');")
-	if [[ $indxExists == 0 ]]
-	then
-	    echo "Creating index on OpenAssessment(feedback_text) (fulltext)..."
-	    mysql $MYSQL_AUTH -e "USE Edx; CREATE FULLTEXT INDEX OpAssFeedbkTxtIdx ON OpenAssessment(feedback_text);"
-        fi
-	indxExists=$(mysql --silent $MYSQL_AUTH -e "USE Edx; SELECT indexExists('OpenAssessment','comment_text');")
-	if [[ $indxExists == 0 ]]
-	then
-	    echo "Creating index on OpenAssessment(comment_text) (fulltext)..."
-	    mysql $MYSQL_AUTH -e "USE Edx; CREATE FULLTEXT INDEX OpAssCommentTxtIdx ON OpenAssessment(comment_text);"
-        fi
+	# MySQL complains that FULLTEXT not available for MyISAM:
+	# indxExists=$(mysql --silent $MYSQL_AUTH -e "USE Edx; SELECT indexExists('OpenAssessment','submission_text');")
+	# if [[ $indxExists == 0 ]]
+	# then
+	#     echo "Creating index on OpenAssessment(submission_text) (fulltext)..."
+	#     mysql $MYSQL_AUTH -e "USE Edx; CREATE FULLTEXT INDEX OpAssSubmTxtIdx ON OpenAssessment(submission_text);"
+	# fi
+	# indxExists=$(mysql --silent $MYSQL_AUTH -e "USE Edx; SELECT indexExists('OpenAssessment','feedback_text');")
+	# if [[ $indxExists == 0 ]]
+	# then
+	#     echo "Creating index on OpenAssessment(feedback_text) (fulltext)..."
+	#     mysql $MYSQL_AUTH -e "USE Edx; CREATE FULLTEXT INDEX OpAssFeedbkTxtIdx ON OpenAssessment(feedback_text);"
+        # fi
+	# indxExists=$(mysql --silent $MYSQL_AUTH -e "USE Edx; SELECT indexExists('OpenAssessment','comment_text');")
+	# if [[ $indxExists == 0 ]]
+	# then
+	#     echo "Creating index on OpenAssessment(comment_text) (fulltext)..."
+	#     mysql $MYSQL_AUTH -e "USE Edx; CREATE FULLTEXT INDEX OpAssCommentTxtIdx ON OpenAssessment(comment_text);"
+        # fi
 
     elif [ $table == 'Demographics' ]
     then
