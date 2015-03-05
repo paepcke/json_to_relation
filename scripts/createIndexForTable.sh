@@ -331,5 +331,19 @@ do
 	    mysql $MYSQL_AUTH -e "USE Edx; CREATE FULLTEXT INDEX OpAssCommentTxtIdx ON OpenAssessment(comment_text);"
         fi
 
+    elif [ $table == 'Demographics' ]
+    then
+	echo "Creating index on Demographics(anon_screen_name) if needed..."
+	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('DemogrIdxAnon', 'Demographics', 'anon_screen_name', 40);"
+	echo "Creating index on Demographics(gender) if needed..."
+	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('DemogrIdxGender', 'Demographics', 'gender', 6);"
+	echo "Creating index on Demographics(year_of_birth) if needed..."
+	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('DemogrIdxYOB', 'Demographics', 'year_of_birth', NULL);"
+	echo "Creating index on Demographics(level_of_education) if needed..."
+	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('DemogrIdxEdu', 'Demographics', 'level_of_education', 42);"
+	echo "Creating index on Demographics(country_three_letters) if needed..."
+	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('DemogrIdxCountry3', 'Demographics', 'country_three_letters', 3);"
+	echo "Creating index on Demographics(country_name) if needed..."
+	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('DemogrIdxCountryFull', 'Demographics', 'country_name', 255);"
     fi
 done
