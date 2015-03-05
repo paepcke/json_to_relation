@@ -1071,17 +1071,17 @@ END//
 # enrollmentNovoEd().
 
 DROP FUNCTION IF EXISTS enrollment//
-CREATE FUNCTION enrollment(course_display_name varchar(255))
+CREATE FUNCTION enrollment(the_course_display_name varchar(255))
 RETURNS INT
 BEGIN
     # Name starts with a zero?
-    IF (SELECT isTrueCourseName(course_display_name) = 0)
+    IF (SELECT isTrueCourseName(the_course_display_name) = 0)
     THEN
         RETURN -1; 
     END IF;
     SELECT COUNT(user_id) AS 'enrollment' 
 	   FROM edxprod.true_courseenrollment 
-	   WHERE course_display = course_display_name
+	   WHERE course_display_name = the_course_display_name
 	   INTO @totalEnrollment;
     RETURN @totalEnrollment;
 END//
