@@ -139,14 +139,35 @@ echo "`date`: starting load from $bulkLoadFile"  >> $LOG_FILE 2>&1
 
 if [[ $MYSQL_VERSION == '5.6+' ]]
 then
-    { mysql --login-path=root -f --local_infile=1 < "${bulkLoadFile}"; } >> "${LOG_FILE}" 2>&1
+   MYSQL_AUTH='--login-path=dataman'
 else
-    { mysql -f -u root -p$password --local_infile=1 < "${bulkLoadFile}"; } >> "${LOG_FILE}" 2>&1
+   MYSQL_AUTH='-u root -p$password'
 fi
 
+# Get the local MySQL server's data directory
+# path, such as "/var/lib/mysql/":
+MYSQL_DATA_DIR=$(mysql $MYSQL_AUTH --skip-column-names  -e "SHOW VARIABLES LIKE 'datadir';" | sed -ne 's/datadir[^/]*//p')
 
+mysqladmin $MYSQL_DATA_DIR flush-tables
+# For each table: disable keys:
 
+echo "`date`: Disable indexing on all tables..."  >> $LOG_FILE 2>&1
+myisamchk $MYSQL_AUTH --keys-used=0 -rq ${MYSQL_DATA_DIR}EdxTrackEvent
+myisamchk $MYSQL_AUTH --keys-used=0 -rq ${MYSQL_DATA_DIR}State
+myisamchk $MYSQL_AUTH --keys-used=0 -rq ${MYSQL_DATA_DIR}InputState
+myisamchk $MYSQL_AUTH --keys-used=0 -rq ${MYSQL_DATA_DIR}Answer
+myisamchk $MYSQL_AUTH --keys-used=0 -rq ${MYSQL_DATA_DIR}CorrectMap
+myisamchk $MYSQL_AUTH --keys-used=0 -rq ${MYSQL_DATA_DIR}LoadInfo
+myisamchk $MYSQL_AUTH --keys-used=0 -rq ${MYSQL_DATA_DIR}Account
+myisamchk $MYSQL_AUTH --keys-used=0 -rq ${MYSQL_DATA_DIR}EventIp
+myisamchk $MYSQL_AUTH --keys-used=0 -rq ${MYSQL_DATA_DIR}ABExperiment
+myisamchk $MYSQL_AUTH --keys-used=0 -rq ${MYSQL_DATA_DIR}OpenAssessment
+myisamchk $MYSQL_AUTH --keys-used=0 -rq ${MYSQL_DATA_DIR}EdxPrivate.EventIp
+echo "`date`: Done disabling indexing on all tables..."  >> $LOG_FILE 2>&1
 
+# Now load the big file:
+echo "`date`: Start loading from $bulkLoadFile..."  >> $LOG_FILE 2>&1
+mysql $MYSQL_AUTH -f --local_infile=1 < "${bulkLoadFile}"; } >> "${LOG_FILE}" 2>&1
 echo "`date`: done loading from $bulkLoadFile"  >> $LOG_FILE 2>&1
 
 exit

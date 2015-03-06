@@ -15,7 +15,7 @@
 # It turns out that we also must disable the primary keys
 # of EdxTrackEvent, and EventIp. The only way to do this
 # is to remove those keys, and add them later. They cannot
-# be disabled like the primary keys.
+# be disabled like the secondary keys.
 #
 # So after loading is done we must:
 #    - Re-enable the secondary keys
@@ -81,17 +81,23 @@ echo "    ) ENGINE=MyISAM;"
 
 
 echo "LOCK TABLES \`EdxTrackEvent\` WRITE, \`State\` WRITE, \`InputState\` WRITE, \`Answer\` WRITE, \`CorrectMap\` WRITE, \`LoadInfo\` WRITE, \`Account\` WRITE, \`EventIp\` WRITE, \`ABExperiment\` WRITE, \`OpenAssessment\` WRITE;"
-echo "/*!40000 ALTER TABLE \`EdxTrackEvent\` DISABLE KEYS */;"
-echo "/*!40000 ALTER TABLE \`State\` DISABLE KEYS */;"
-echo "/*!40000 ALTER TABLE \`InputState\` DISABLE KEYS */;"
-echo "/*!40000 ALTER TABLE \`Answer\` DISABLE KEYS */;"
-echo "/*!40000 ALTER TABLE \`CorrectMap\` DISABLE KEYS */;"
-echo "/*!40000 ALTER TABLE \`LoadInfo\` DISABLE KEYS */;"
-echo "/*!40000 ALTER TABLE \`Account\` DISABLE KEYS */;"
-echo "/*!40000 ALTER TABLE \`EventIp\` DISABLE KEYS */;"
-echo "/*!40000 ALTER TABLE \`ABExperiment\` DISABLE KEYS */;"
-echo "/*!40000 ALTER TABLE \`OpenAssessment\` DISABLE KEYS */;"
-echo "/*!40000 ALTER TABLE \`EdxPrivate.EventIp\` DISABLE KEYS */;"
+
+# The following are commented out, b/c we switched to 
+# myisamchk to disable, and then re-create the indexes
+# (see executeCSVBulkLoad.sh)
+
+# echo "/*!40000 ALTER TABLE \`EdxTrackEvent\` DISABLE KEYS */;"
+# echo "/*!40000 ALTER TABLE \`State\` DISABLE KEYS */;"
+# echo "/*!40000 ALTER TABLE \`InputState\` DISABLE KEYS */;"
+# echo "/*!40000 ALTER TABLE \`Answer\` DISABLE KEYS */;"
+# echo "/*!40000 ALTER TABLE \`CorrectMap\` DISABLE KEYS */;"
+# echo "/*!40000 ALTER TABLE \`LoadInfo\` DISABLE KEYS */;"
+# echo "/*!40000 ALTER TABLE \`Account\` DISABLE KEYS */;"
+# echo "/*!40000 ALTER TABLE \`EventIp\` DISABLE KEYS */;"
+# echo "/*!40000 ALTER TABLE \`ABExperiment\` DISABLE KEYS */;"
+# echo "/*!40000 ALTER TABLE \`OpenAssessment\` DISABLE KEYS */;"
+# echo "/*!40000 ALTER TABLE \`EdxPrivate.EventIp\` DISABLE KEYS */;"
+
 echo "SET sql_log_bin=0;"
 echo "SET autocommit=0;"
 
@@ -125,21 +131,29 @@ else
     done
 fi    
 
-echo "-- /*!40000 ALTER TABLE \`EdxTrackEvent\` ENABLE KEYS */;"
-echo "-- /*!40000 ALTER TABLE \`State\` ENABLE KEYS */;"
-echo "-- /*!40000 ALTER TABLE \`InputState\` ENABLE KEYS */;"
-echo "-- /*!40000 ALTER TABLE \`Answer\` ENABLE KEYS */;"
-echo "-- /*!40000 ALTER TABLE \`CorrectMap\` ENABLE KEYS */;"
-echo "-- /*!40000 ALTER TABLE \`LoadInfo\` ENABLE KEYS */;"
-echo "-- /*!40000 ALTER TABLE \`Account\` ENABLE KEYS */;"
-echo "-- /*!40000 ALTER TABLE \`ABExperiment\` ENABLE KEYS */;"
-echo "-- /*!40000 ALTER TABLE \`OpenAssessment\` ENABLE KEYS */;"
+# The following are commented out, b/c we switched to 
+# myisamchk to disable, and then re-create the indexes
+# (see executeCSVBulkLoad.sh)
+# echo "-- /*!40000 ALTER TABLE \`EdxTrackEvent\` ENABLE KEYS */;"
+# echo "-- /*!40000 ALTER TABLE \`State\` ENABLE KEYS */;"
+# echo "-- /*!40000 ALTER TABLE \`InputState\` ENABLE KEYS */;"
+# echo "-- /*!40000 ALTER TABLE \`Answer\` ENABLE KEYS */;"
+# echo "-- /*!40000 ALTER TABLE \`CorrectMap\` ENABLE KEYS */;"
+# echo "-- /*!40000 ALTER TABLE \`LoadInfo\` ENABLE KEYS */;"
+# echo "-- /*!40000 ALTER TABLE \`Account\` ENABLE KEYS */;"
+# echo "-- /*!40000 ALTER TABLE \`ABExperiment\` ENABLE KEYS */;"
+# echo "-- /*!40000 ALTER TABLE \`OpenAssessment\` ENABLE KEYS */;"
 
 echo "UNLOCK TABLES;"
 echo "REPLACE INTO EdxPrivate.Account (account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails) SELECT account_id,screen_name,name,anon_screen_name,mailing_address,zipcode,country,gender,year_of_birth,level_of_education,goals,honor_code,terms_of_service,course_id,enrollment_action,email,receive_emails FROM Edx.Account;"
 echo "DROP TABLE Edx.Account;"
 echo "REPLACE INTO EdxPrivate.EventIp (event_table_id,event_ip) SELECT event_table_id,event_ip FROM Edx.EventIp;"
-echo "-- /*!40000 ALTER TABLE \`EdxPrivate.EventIp\` ENABLE KEYS */;"
+
+# The following are commented out, b/c we switched to 
+# myisamchk to disable, and then re-create the indexes
+# (see executeCSVBulkLoad.sh)
+#echo "-- /*!40000 ALTER TABLE \`EdxPrivate.EventIp\` ENABLE KEYS */;"
+
 echo "DROP TABLE Edx.EventIp;"
 echo "COMMIT;"
 echo "SET autocommit=1;"
