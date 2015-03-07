@@ -1499,6 +1499,7 @@ SELECT event_type,
        video_code,
        time,
        course_display_name,
+       quarter,
        anon_screen_name,
        video_id
 FROM Edx.EdxTrackEvent

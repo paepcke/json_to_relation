@@ -316,6 +316,17 @@ do
 	echo "Creating index on OpenAssessment(points) if needed..."
 	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('OpAssPtsidx', 'OpenAssessment', 'points', 40);"
 
+    elif [ $table == 'UserCountry' ]
+    then
+	echo "Creating index on UserCountry(anon_screen_name) if needed..."
+	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('UserCountryIdxAnon', 'UserCountry', 'anon_screen_name', 40);"
+	echo "Creating index on UserCountry(three_letter_country) if needed..."
+	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('UserCountryIdx3LtrCntry', 'UserCountry', 'three_letter_country', 3);"
+	echo "Creating index on UserCountry(two_letter_country) if needed..."
+	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('UserCountryIdx2LtrCntry', 'UserCountry', 'two_letter_country', 2);"
+	echo "Creating index on UserCountry(country) if needed..."
+	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('UserCountryIdxCntry', 'UserCountry', 'country', 255);"
+
 	# Three fulltext indexes are created (if needed) here
 	# as opposed to using function createIndexIfNotExists()
 	# b/c that function isn't written to consider fulltext
@@ -340,5 +351,5 @@ do
 	#     echo "Creating index on OpenAssessment(comment_text) (fulltext)..."
 	#     mysql $MYSQL_AUTH -e "USE Edx; CREATE FULLTEXT INDEX OpAssCommentTxtIdx ON OpenAssessment(comment_text);"
         # fi
-
+    fi
 done
