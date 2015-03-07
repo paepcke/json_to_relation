@@ -149,7 +149,7 @@ allTables=( ["EdxTrackEvent"]="Edx" \
             ["ABExperiment"]="Edx" \
             ["OpenAssessment"]="Edx" \
             ["Account"]="EdxPrivate" \
-            ["Demographics"]="Edx" \
+            ["UserCountry"]="Edx" \
     )
 
 # If no table name was given, create the appropriate indexes
