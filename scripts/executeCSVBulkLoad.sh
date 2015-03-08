@@ -173,7 +173,7 @@ echo "`date`: Done disabling indexing on all tables..."  >> $LOG_FILE 2>&1
 
 # Now load the big file:
 echo "`date`: Start loading from $bulkLoadFile..."  >> $LOG_FILE 2>&1
-mysql $MYSQL_AUTH -f --local_infile=1 < "${bulkLoadFile}" >> "${LOG_FILE}" 2>&1
+#*************mysql $MYSQL_AUTH -f --local_infile=1 < "${bulkLoadFile}" >> "${LOG_FILE}" 2>&1
 echo "`date`: done loading from $bulkLoadFile"  >> $LOG_FILE 2>&1
 
 # Re-build the indexes:
