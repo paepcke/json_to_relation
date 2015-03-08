@@ -164,10 +164,10 @@ fi
 # For each table: disable keys:
 
 echo "`date`: Disable indexing on all tables..."  >> $LOG_FILE 2>&1
-for table in ${allTables[@]}
+for table in ${!allTables[*]}
 do
-  echo "    `date`: Disable indexing on $table..."  >> $LOG_FILE 2>&1
-  mysql $MYSQL_AUTH -e "ALTER TABLE $table DISABLE KEYS;"
+  echo "    `date`: Disable indexing on ${allTables[$table]}.${table}..."  >> $LOG_FILE 2>&1
+  mysql $MYSQL_AUTH -e "ALTER TABLE ${allTables[$table]}.${table} DISABLE KEYS;"
 done
 echo "`date`: Done disabling indexing on all tables..."  >> $LOG_FILE 2>&1
 
@@ -178,21 +178,20 @@ echo "`date`: done loading from $bulkLoadFile"  >> $LOG_FILE 2>&1
 
 # Re-build the indexes:
 echo "`date`: Rebuilding indexes on tables..."  >> $LOG_FILE 2>&1
-for table in ${allTables[@]}
+for table in ${!allTables[*]}
 do
-  MYSQL_CMD="USE Edx; SET SESSION read_buffer_size = 64*1024*1024; \
+  MYSQL_CMD="USE ${allTables[$table]}; SET SESSION read_buffer_size = 64*1024*1024; \
              SET GLOBAL repair_cache.key_buffer_size = 50*1024*1024*1024; \
-             CACHE INDEX $table IN repair_cache; \
-             LOAD INDEX INTO CACHE $table; \
-             REPAIR NO_WRITE_TO_BINLOG TABLE $table; \
+             CACHE INDEX ${allTables[$table]}.${table} IN repair_cache; \
+             LOAD INDEX INTO CACHE ${allTables[$table]}.${table}; \
+             REPAIR NO_WRITE_TO_BINLOG TABLE ${allTables[$table]}.${table}; \
              SET GLOBAL repair_cache.key_buffer_size = 0; \
             "
   #********************
   echo "Re-index cmd: '$MYSQL_CMD'"
-  exit
   #********************
   echo "    `date`: Rebuilding index on $table..."  >> $LOG_FILE 2>&1
-  mysql $MYSQL_AUTH -e 'MYSQL_CMD'
+  #*************mysql $MYSQL_AUTH -e 'MYSQL_CMD'
   echo "    `date`: Doen rebuilding index on $table..."  >> $LOG_FILE 2>&1
 done
 exit
