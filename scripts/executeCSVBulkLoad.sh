@@ -167,7 +167,7 @@ echo "`date`: Disable indexing on all tables..."  >> $LOG_FILE 2>&1
 for table in ${!allTables[*]}
 do
   echo "    `date`: Disable indexing on ${allTables[$table]}.${table}..."  >> $LOG_FILE 2>&1
-  mysql $MYSQL_AUTH -e "ALTER TABLE ${allTables[$table]}.${table} DISABLE KEYS;"
+  mysql $MYSQL_AUTH -e "ALTER TABLE ${allTables[$table]}.${table} DISABLE KEYS;" >> $LOG_FILE 2>&1
 done
 echo "`date`: Done disabling indexing on all tables..."  >> $LOG_FILE 2>&1
 
@@ -191,7 +191,7 @@ do
   #echo "Re-index cmd: '$MYSQL_CMD'"
   #********************
   echo "    `date`: Rebuilding index on ${allTables[$table]}.${table}..."  >> $LOG_FILE 2>&1
-  mysql $MYSQL_AUTH -e "$MYSQL_CMD"
+  mysql $MYSQL_AUTH -e "$MYSQL_CMD" >> $LOG_FILE 2>&1
   echo "    `date`: Done rebuilding index on ${allTables[$table]}.${table}..."  >> $LOG_FILE 2>&1
 done
 exit
