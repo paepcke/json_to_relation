@@ -191,7 +191,16 @@ do
   #echo "Re-index cmd: '$MYSQL_CMD'"
   #********************
   echo "    `date`: Rebuilding index on ${allTables[$table]}.${table}..."  >> $LOG_FILE 2>&1
-  mysql $MYSQL_AUTH -e "$MYSQL_CMD" >> $LOG_FILE 2>&1
+#*********  mysql $MYSQL_AUTH -e "$MYSQL_CMD" >> $LOG_FILE 2>&1
   echo "    `date`: Done rebuilding index on ${allTables[$table]}.${table}..."  >> $LOG_FILE 2>&1
 done
+
+echo "`date`: Enable indexing on all tables..."  >> $LOG_FILE 2>&1
+for table in ${!allTables[*]}
+do
+  echo "    `date`: Enable indexing on ${allTables[$table]}.${table}..."  >> $LOG_FILE 2>&1
+  mysql $MYSQL_AUTH -e "ALTER TABLE ${allTables[$table]}.${table} ENABLE KEYS;" >> $LOG_FILE 2>&1
+done
+echo "`date`: Done enabling indexing on all tables..."  >> $LOG_FILE 2>&1
+
 exit
