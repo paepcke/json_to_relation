@@ -191,7 +191,7 @@ do
   #echo "Re-index cmd: '$MYSQL_CMD'"
   #********************
   echo "    `date`: Rebuilding index on ${allTables[$table]}.${table}..."  >> $LOG_FILE 2>&1
-  mysql $MYSQL_AUTH -e '$MYSQL_CMD'
+  mysql $MYSQL_AUTH -e "$MYSQL_CMD"
   echo "    `date`: Done rebuilding index on ${allTables[$table]}.${table}..."  >> $LOG_FILE 2>&1
 done
 exit
