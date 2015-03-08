@@ -180,7 +180,7 @@ echo "`date`: done loading from $bulkLoadFile"  >> $LOG_FILE 2>&1
 echo "`date`: Rebuilding indexes on tables..."  >> $LOG_FILE 2>&1
 for table in ${allTables[@]}
 do
-  MYSQL_CMD="SET SESSION read_buffer_size = 64*1024*1024; \
+  MYSQL_CMD="USE Edx; SET SESSION read_buffer_size = 64*1024*1024; \
              SET GLOBAL repair_cache.key_buffer_size = 50*1024*1024*1024; \
              CACHE INDEX $table IN repair_cache; \
              LOAD INDEX INTO CACHE $table; \
