@@ -1035,30 +1035,19 @@ BEGIN
     END IF;
     SELECT LOWER(course_display_name) INTO @courseIDLowCase;
 
-    SELECT @courseIDLowCase REGEXP 'jbau|janeu|sefu|davidu|caitlynx|josephtest|nickdupuniversity|nathanielu' INTO @badNames_1;
-    SELECT @courseIDLowCase REGEXP 'gracelyou|sandbox|demo|sampleuniversity|joeu|grbuniversity' INTO @badNames_2;
-    SELECT @courseIDLowCase REGEXP 'stanford_spcs/001/spcs_test_course1|.*zzz.*|/test/' INTO @badNames_3;
-    SELECT @courseIDLowCase REGEXP 'business/123/gsb-test|foundation/wtc01/wadhwani_test_course' INTO @badNames_4;
-    SELECT @courseIDLowCase REGEXP 'grb/101/grb_test_course|gsb/af1/alfresco_testing' INTO @badNames_5;
-    SELECT @courseIDLowCase REGEXP 'internal/101/private_testing_course|openedx/testeduc2000c/2013_sept' INTO @badNames_6;
-    SELECT @courseIDLowCase REGEXP 'stanford/exp1/experimental_assessment_test' INTO @badNames_7;
-    SELECT @courseIDLowCase REGEXP 'stanford/shib_only/on_campus_stanford_only_test_class' INTO @badNames_8;
-    SELECT @courseIDLowCase REGEXP 'stanford_spcs/001/spcs_test_course1|testing/testing123/evergreen' INTO @badNames_9;
-    SELECT @courseIDLowCase REGEXP 'testing_settings/for_non_display|tocc/1/eqptest' INTO @badNames_10;
-    SELECT @courseIDLowCase REGEXP 'worldview/wvtest/worldview_testing|stanford/xxxx/yyyy' INTO @badNames_11;
-    SELECT @courseIDLowCase REGEXP 'testtest|nickdup|monx/' INTO @badNames_12;
-
-
-    if ((@badNames_1  + @badNames_2   + @badNames_3 +
-         @badNames_4  + @badNames_5   + @badNames_6 +
-	 @badNames_7  + @badNames_8   + @badNames_9 +
-	 @badNames_10 + @badNames_11  + @badNames_12
-	 ) = 0)
-    THEN
-        RETURN 1;
-    ELSE
-        RETURN 0;
-    END IF;
+    IF @courseIDLowCase REGEXP 'jbau|janeu|sefu|davidu|caitlynx|josephtest|nickdupuniversity|nathanielu'  THEN RETURN 0; END IF;
+    IF @courseIDLowCase REGEXP 'gracelyou|sandbox|demo|sampleuniversity|joeu|grbuniversity'  THEN RETURN 0; END IF;
+    IF @courseIDLowCase REGEXP 'stanford_spcs/001/spcs_test_course1|.*zzz.*|/test/'  THEN RETURN 0; END IF;
+    IF @courseIDLowCase REGEXP 'business/123/gsb-test|foundation/wtc01/wadhwani_test_course'  THEN RETURN 0; END IF;
+    IF @courseIDLowCase REGEXP 'grb/101/grb_test_course|gsb/af1/alfresco_testing'  THEN RETURN 0; END IF;
+    IF @courseIDLowCase REGEXP 'internal/101/private_testing_course|openedx/testeduc2000c/2013_sept'  THEN RETURN 0; END IF;
+    IF @courseIDLowCase REGEXP 'stanford/exp1/experimental_assessment_test'  THEN RETURN 0; END IF;
+    IF @courseIDLowCase REGEXP 'stanford/shib_only/on_campus_stanford_only_test_class'  THEN RETURN 0; END IF;
+    IF @courseIDLowCase REGEXP 'stanford_spcs/001/spcs_test_course1|testing/testing123/evergreen'  THEN RETURN 0; END IF;
+    IF @courseIDLowCase REGEXP 'testing_settings/for_non_display|tocc/1/eqptest'  THEN RETURN 0; END IF;
+    IF @courseIDLowCase REGEXP 'worldview/wvtest/worldview_testing|stanford/xxxx/yyyy'  THEN RETURN 0; END IF;
+    IF @courseIDLowCase REGEXP 'testtest|nickdup|monx/'  THEN RETURN 0; END IF;
+    RETURN 1;
 END//
 
 #--------------------------
