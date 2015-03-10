@@ -231,6 +231,8 @@ do
 	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxCourseNameTime', 'EdxTrackEvent', 'course_display_name,time', NULL);"
 	echo "Creating index on EdxTrackEvent(video_id) if needed..."
 	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxVideoId', 'EdxTrackEvent', 'video_id', 255);"
+	echo "Creating index on EdxTrackEvent(video_code) if needed..."
+	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('EdxTrackEventIdxVideoCode', 'EdxTrackEvent', 'video_code', 255);"
 
     elif [ $table == 'Answer' ]
     then
