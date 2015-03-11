@@ -42,8 +42,10 @@ fi
 # file .ssh/mysql_root with the password.
 
 # Array of tables to get from edxprod (NOTE: no commas between tables!):
+# Tbl courseware_studentmodulehistory is commented out b/c it takes
+# so long to refresh:
 TABLES=(courseware_studentmodule \
-        courseware_studentmodulehistory \
+        #courseware_studentmodulehistory \
         auth_user \
         certificates_generatedcertificate \
         auth_userprofile \
