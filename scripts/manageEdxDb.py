@@ -424,12 +424,15 @@ class TrackLogPuller(object):
             fileComponents = gzFilePart.split('.')
             
             # Normalize those two types of names into
-            #    appX/log-20140608-1402247821
+            #    tracking/appX/log-20140608-1402247821
+            # or appX/log-20140608-1402247821
             firstFileEl = fileComponents[0]
             if firstFileEl.startswith('app'):
-                hashKey = firstFileEl + '.' + fileComponents[-1] + '.gz'
+                fileElementsToKeep = [el for el in fileComponents if el != 'tracking']
             else:
-                hashKey = fileComponents[1] + '.' + fileComponents[-1] + '.gz'
+                fileElementsToKeep = ['tracking'] + [el for el in fileComponents if el != 'tracking']
+
+            hashKey = '.'.join(fileElementsToKeep)
             #print(hashKey)
             normalizedSQLFiles[hashKey] = 1
             
@@ -440,27 +443,27 @@ class TrackLogPuller(object):
             # logFile is a full path of a .gz tracking log file.
             # Get the normalized file name to see whether the file is
             # in the hash table:
+            
+            # Chop off the LOCAL_LOG_STORE_ROOT front-end;
+            #    so: from '/home/dataman/Data/EdX/tracking/app1/tracking/tracking.log-20141008-1412767021.gz'
+            #         get 'app1/tracking/tracking.log-20141008-1412767021.gz'
+            # while  from '/home/dataman/Data/EdX/tracking/tracking/app2/tracking/tracking.log-20140408.gz
+            #         get 'tracking/app2/tracking/tracking.log-20140408.gz'
+            relPath = os.path.relpath(logFile, TrackLogPuller.LOCAL_LOG_STORE_ROOT)
+            
+            # Chop the '.gz', and replace slashes by dots:
+            dottedFilename = relPath.replace('/', '.').split('.gz')[0]
+            dottedFilenameComponents = dottedFilename.split('.')
+            if dottedFilename.startswith('app'):
+                fileElementsToKeep = [el for el in dottedFilenameComponents if el != 'tracking']
+            else:
+                fileElementsToKeep = ['tracking'] + [el for el in dottedFilenameComponents if el != 'tracking']
 
-            # Extract something like
-            #      'appX.log-20141008-1412767021.gz'
-            # from log file paths that look like this:
-            #      /home/dataman/Data/EdX/tracking/app2/tracking/tracking.log-20140531-1401571021.gz
-            #  or: /home/dataman/Data/EdX/tracking/tracking/app1/tracking.log-20140608-1402247821.gz
-            fileComponents = logFile.split('/')
-            for component in fileComponents:
-                # Component is like
-                #    ['', 'home', 'dataman', 'Data', 'EdX', 'tracking', 'app2', 'tracking', 'tracking.log-20140531-1401571021.gz]
-                # or ['', 'home', 'dataman', 'Data', 'EdX', 'tracking', tracking', 'app1', 'tracking.log-20140531-1401571021.gz]
-                if component.startswith('app'):
-                    # Normalize by grabbing the 'appXX', and the 'log....gz' part:
-                    logPart = fileComponents[-1].split('.')[-2] + '.gz'
-                    key = component + '.' + logPart
-                    break
-            #print(logFile + ':' + key)
+            hashKey = '.'.join(fileElementsToKeep)
             # If hash table contains that key, the transform
             # was done earlier:
             try:
-                normalizedSQLFiles[key]
+                normalizedSQLFiles[hashKey]
             except KeyError:
                 toDo.append(logFile)
 

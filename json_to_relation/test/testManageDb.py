@@ -14,8 +14,8 @@ class TestManageDb(unittest.TestCase):
 
     csvFName1  = 'tracking.app2.tracking.tracking.log-20141008-1412767021.gz.2015-03-07T20_18_53.273290_7501.sql'
     csvFName2  = 'app1.tracking.tracking.log-20141007-1412648221.gz.2014-12-20T12_45_23.610765_12632.sql'
-    jsonFName1 = 'tracking.log-20141008-1412767021.gz'
-    jsonFName2 = 'tracking.log-20141007-1412648221.gz'
+    jsonFName1 = 'tracking.log-20141007-1412648221.gz'
+    jsonFName2 = 'tracking.log-20141008-1412767021.gz'
 
     def touch(self, filePath):
         with open(filePath, 'a'):
@@ -53,16 +53,31 @@ class TestManageDb(unittest.TestCase):
         self.touch(os.path.join(self.csvDir, TestManageDb.csvFName1))
         
         self.puller = TrackLogPuller()
-        TrackLogPuller.LOCAL_LOG_STORE_ROOT = '/tmp/unittest/'
+        TrackLogPuller.LOCAL_LOG_STORE_ROOT = '/tmp/unittest/tracking'
         
     def tearDown(self):
         shutil.rmtree(self.jsonDirApp2)
         shutil.rmtree(self.jsonDirApp1)
 
-    def testTransformsStillToDo(self):
+    def testTransformsStillToDoOneOfTwoDone(self):
         
-        self.puller.identifyNotTransformedLogFiles(localTrackingLogFilePaths=None, csvDestDir=self.csvDir)          
+        filesToTransform = self.puller.identifyNotTransformedLogFiles(localTrackingLogFilePaths=None, csvDestDir=self.csvDir)
+        self.assertEqual(filesToTransform, ['/tmp/unittest/tracking/app1/tracking/tracking.log-20141007-1412648221.gz'])          
 
+    def testTransformsStillToDoAllDone(self):
+    
+        self.touch(os.path.join(self.csvDir, TestManageDb.csvFName2))    
+        filesToTransform = self.puller.identifyNotTransformedLogFiles(localTrackingLogFilePaths=None, csvDestDir=self.csvDir)
+        self.assertEqual(filesToTransform, [])
+        
+    def testTransformsStillDoNoneDone(self):
+    
+        os.remove(os.path.join(self.csvDir, TestManageDb.csvFName1))    
+        filesToTransform = self.puller.identifyNotTransformedLogFiles(localTrackingLogFilePaths=None, csvDestDir=self.csvDir)
+        self.assertEqual(filesToTransform,
+                         ['/tmp/unittest/tracking/app1/tracking/tracking.log-20141007-1412648221.gz',
+                          '/tmp/unittest/tracking/tracking/app2/tracking/tracking.log-20141008-1412767021.gz'])
+         
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
