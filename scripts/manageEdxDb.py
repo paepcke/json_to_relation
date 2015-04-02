@@ -406,13 +406,30 @@ class TrackLogPuller(object):
         normalizedSQLFiles = {}
     
         # Extract the pieces from the SQL file names that
-        # will be used as keys to the hash table:
+        # will be used as keys to the hash table. Due to
+        # file directory changes in the platform at some
+        # point, we have to deal with two file name formats
+        # for the .sql files from previous transforms:
+        #   /home/dataman/Data/Edx/tracking/tracking.app2.tracking.tracking.log-20141008-1412767021.gz.2015-03-07T20_18_53.273290_7501.sql
+        #   /home/dataman/Data/Edx/tracking/app1.tracking.tracking.log-20140608-1402247821.gz.2014-12-20T11_35_45.608695_10319.sql
+        # Unify these to create keys for the table:
+
         for sqlFile in allTransformSQLFiles:
+            # Get something like 
+            #       'tracking.app2.tracking.tracking.log-20141008-1412767021'
+            #   or  'app1.tracking.tracking.log-20140608-1402247821'
             gzFilePart = sqlFile.split('.gz')[0]
+            # Get this: ['tracking', 'app2', 'tracking', 'tracking', 'log-20141008-1412767021']
+            #       or: ['app1', 'tracking', 'tracking', 'log-20140608-1402247821']
             fileComponents = gzFilePart.split('.')
-            app = fileComponents[0]
             
-            hashKey = app + '.tracking.' + fileComponents[-1] + '.gz'
+            # Normalize those two types of names into
+            #    appX/log-20140608-1402247821
+            firstFileEl = fileComponents[0]
+            if firstFileEl.startswith('app'):
+                hashKey = firstFileEl + '.' + fileComponents[-1] + '.gz'
+            else:
+                hashKey = fileComponents[1] + '.' + fileComponents[-1] + '.gz'
             #print(hashKey)
             normalizedSQLFiles[hashKey] = 1
             
@@ -420,13 +437,25 @@ class TrackLogPuller(object):
         # misses to signal to-do files:
         toDo = []
         for logFile in localTrackingLogFilePaths:
-            fileComponents = logFile.split('/')
-            # Extract something like 'app2.tracking.log-20140531-1401571021.gz'
+            # logFile is a full path of a .gz tracking log file.
+            # Get the normalized file name to see whether the file is
+            # in the hash table:
+
+            # Extract something like
+            #      'appX.log-20141008-1412767021.gz'
             # from log file paths that look like this:
-            # /home/dataman/Data/EdX/tracking/app2/tracking/tracking.log-20140531-1401571021.gz
+            #      /home/dataman/Data/EdX/tracking/app2/tracking/tracking.log-20140531-1401571021.gz
+            #  or: /home/dataman/Data/EdX/tracking/tracking/app1/tracking.log-20140608-1402247821.gz
+            fileComponents = logFile.split('/')
             for component in fileComponents:
+                # Component is like
+                #    ['', 'home', 'dataman', 'Data', 'EdX', 'tracking', 'app2', 'tracking', 'tracking.log-20140531-1401571021.gz]
+                # or ['', 'home', 'dataman', 'Data', 'EdX', 'tracking', tracking', 'app1', 'tracking.log-20140531-1401571021.gz]
                 if component.startswith('app'):
-                    key = component + '.' + fileComponents[-1]
+                    # Normalize by grabbing the 'appXX', and the 'log....gz' part:
+                    logPart = fileComponents[-1].split('.')[-2] + '.gz'
+                    key = component + '.' + logPart
+                    break
             #print(logFile + ':' + key)
             # If hash table contains that key, the transform
             # was done earlier:
@@ -443,7 +472,6 @@ class TrackLogPuller(object):
             self.logDebug("all of : '%s'" % toDo)
 
         return list(toDo)
-       
        
     def identifySQLToLoad(self, csvDir=None):
         '''
