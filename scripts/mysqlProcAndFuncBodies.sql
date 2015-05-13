@@ -607,7 +607,7 @@ RETURNS BOOL
 BEGIN
     -- IFNULL ensures return of 0 when learner or course not found.
     SELECT IFNULL(
-      (SELECT IF(status = 'downloadable', 0, 1)
+      (SELECT IF(status = 'downloadable', 1, 0)
        FROM edxprod.certificates_generatedcertificate 
        WHERE course_id = course_display_name
        AND idInt2Anon(user_id) = anon_screen_name
