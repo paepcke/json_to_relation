@@ -35,8 +35,9 @@ class IpToCountryTester(unittest.TestCase):
         twoLetThreeLetCountryTuple = lookup.lookupIP('107.203.248.200')
         self.assertTupleEqual(twoLetThreeLetCountryTuple, ('US','USA','United States'))
         
+        # This one tests case when guessed lookup index needs to backtrack:
         twoLetThreeLetCountryTuple = lookup.lookupIP('39.63.53.92')
-        self.assertTupleEqual(twoLetThreeLetCountryTuple, ('US','USA','United States'))
+        self.assertTupleEqual(twoLetThreeLetCountryTuple, ('PK','PAK','Pakistan'))
         
 
 if __name__ == "__main__":
