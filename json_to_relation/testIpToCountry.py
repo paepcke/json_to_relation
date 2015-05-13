@@ -44,6 +44,11 @@ class IpToCountryTester(unittest.TestCase):
         
         twoLetThreeLetCountryTuple = lookup.lookupIP('121.247.4.157')
         self.assertTupleEqual(twoLetThreeLetCountryTuple, ('IN','IND','India'))
+        
+        twoLetThreeLetCountryTuple = lookup.lookupIP('203.38.148.185')
+        self.assertTupleEqual(twoLetThreeLetCountryTuple, ('AU','AUS','Australia'))
+        
+        
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
