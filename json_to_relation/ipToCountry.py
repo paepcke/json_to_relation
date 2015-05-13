@@ -159,17 +159,24 @@ class IpCountryDict(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    import sys
+    if len(sys.argv) < 2:
+        raise ValueError("Usage: python ipToCountry.py <ipAddress>")
+        
     #lookup = IpCountryDict('ipToCountrySoftware77DotNet.csv')
     lookup = IpCountryDict()
+    (twoLetter,threeLetter,country) = lookup.lookupIP(sys.argv[1])
+    print('%s; %s; %s' % (twoLetter,threeLetter,country))
+    
     #(ip,lookupKey) = lookup.ipStrToIntAndKey('171.64.64.64')
-    (twoLetter,threeLetter,country) = lookup.lookupIP('171.64.75.96')
+    #(twoLetter,threeLetter,country) = lookup.lookupIP('171.64.75.96')
     #*****lookup.assertEqual((twoLetter,threeLetter,country),('US','USA','United States'))
-    print('%s, %s, %s' % (twoLetter,threeLetter,country))
-    (twoLetter,threeLetter,country) = lookup.lookupIP('5.96.4.5')
-    print('%s, %s, %s' % (twoLetter,threeLetter,country)) 
-    (twoLetter,threeLetter,country) = lookup.lookupIP('91.96.4.5')
-    print('%s, %s, %s' % (twoLetter,threeLetter,country)) 
-    (twoLetter,threeLetter,country) = lookup.lookupIP('105.48.87.6')
-    print('%s, %s, %s' % (twoLetter,threeLetter,country)) 
+#     print('%s, %s, %s' % (twoLetter,threeLetter,country))
+#     (twoLetter,threeLetter,country) = lookup.lookupIP('5.96.4.5')
+#     print('%s, %s, %s' % (twoLetter,threeLetter,country)) 
+#     (twoLetter,threeLetter,country) = lookup.lookupIP('91.96.4.5')
+#     print('%s, %s, %s' % (twoLetter,threeLetter,country)) 
+#     (twoLetter,threeLetter,country) = lookup.lookupIP('105.48.87.6')
+#     print('%s, %s, %s' % (twoLetter,threeLetter,country)) 
     
     
