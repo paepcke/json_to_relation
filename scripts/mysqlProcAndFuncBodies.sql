@@ -515,8 +515,8 @@ END//
 
 
 #--------------------------
-# idAnon2Ext [OLD]
-#-----------
+# idAnon2ExtByCourse
+#-------------------
 
 # External user ids are LTI based IDs used by
 # the OpenEdX platform when participants are involved
@@ -536,7 +536,7 @@ END//
 # the corresponding anonymized UID used by
 # outside services, such as Qualtrix or Piazza
 # For testing:
-#Testing idAnon2Ext():
+#Testing idAnon2ExtByCourse():
 #
 #   one row of student_anonuserid:
 #   284347 | 5cbdc8b38171f3641845cb17784de87b | Engineering/CVX101/Winter2014
@@ -544,30 +544,30 @@ END//
 #   Using idInt2Anon():
 #   284347 int = 0686bef338f8c6f0696cc7d4b0650daf2473f59d anon
 # 
-#   SELECT idAnon2Ext('0686bef338f8c6f0696cc7d4b0650daf2473f59d', 'Engineering/CVX101/Winter2014');
+#   SELECT idAnon2ExtByCourse('0686bef338f8c6f0696cc7d4b0650daf2473f59d', 'Engineering/CVX101/Winter2014');
 #   should be: 5cbdc8b38171f3641845cb17784de87b
 
--- DROP FUNCTION IF EXISTS idAnon2Ext//
--- CREATE FUNCTION idAnon2Ext(the_anon_id varchar(255), course_display_name varchar(255))
--- RETURNS varchar(32)
--- BEGIN
---       SELECT -1 INTO @int_id;
---       SELECT user_int_id INTO @int_id
---       FROM EdxPrivate.UserGrade
---       WHERE anon_screen_name = the_anon_id;
+DROP FUNCTION IF EXISTS idAnon2ExtByCourse//
+CREATE FUNCTION idAnon2ExtByCourse(the_anon_id varchar(255), course_display_name varchar(255))
+RETURNS varchar(32)
+BEGIN
+      SELECT -1 INTO @int_id;
+      SELECT user_int_id INTO @int_id
+      FROM EdxPrivate.UserGrade
+      WHERE anon_screen_name = the_anon_id;
 
---       IF @int_id >= 0
---       THEN
---           SELECT anonymous_user_id AS extId INTO @extId
---           FROM edxprod.student_anonymoususerid
---           WHERE user_id = @int_id
--- 	    AND course_id = course_display_name;
---           RETURN @extId;
---       ELSE
---           RETURN null;
---       END IF;
+      IF @int_id >= 0
+      THEN
+          SELECT anonymous_user_id AS extId INTO @extId
+          FROM edxprod.student_anonymoususerid
+          WHERE user_id = @int_id
+	    AND course_id = course_display_name;
+          RETURN @extId;
+      ELSE
+          RETURN null;
+      END IF;
 
--- END//
+END//
 
 #--------------------------
 # idAnon2Exts
