@@ -467,6 +467,12 @@ END//
 # or Piazza, return the corresponding
 # anon_screen_name. The 32 char uids are
 # LTI: learning technology interchange.
+# Multiple LTIs may map to the same 
+# anon_screen_name, b/c EdX assigns
+# both a course-dependent, and a global
+# LTI to learners. Any of these LTIs
+# may be given to this functions, and
+# it will work.
 
 DROP FUNCTION IF EXISTS idExt2Anon//
 
@@ -474,17 +480,42 @@ CREATE FUNCTION idExt2Anon(extId varchar(32))
 RETURNS varchar(40)
 BEGIN
       DECLARE anonId varchar(255);
-      SELECT user_id INTO @int_id
-      FROM edxprod.student_anonymoususerid
-      WHERE anonymous_user_id = extId;
+      SELECT anon_screen_name INTO @anonId
+        FROM edxprod.Lti2Anon
+       WHERE lti_id = extId;
+      return @anonId;
+END//
 
-      SELECT idInt2Anon(@int_id) INTO anonId;
-      return anonId;
+#--------------------------
+# idAnon2Ext
+#-----------------
+
+# Given an anon_screen_name, return the LTI equivalent
+# that is the course-independent external learner ID.
+# I.e. the returned LTI is the universally applicable
+# one for the given learner. There may be more LTIs
+# for the same learner: one for each course they
+# took.
+
+DROP FUNCTION IF EXISTS idAnon2Ext//
+
+CREATE FUNCTION idAnon2Ext(the_anon_screen_name varchar(40)) 
+RETURNS varchar(32)
+BEGIN
+      DECLARE ltiId varchar(255);
+      SELECT DISTINCT lti_id INTO @ltiId
+        FROM (SELECT lti_id 
+             	FROM edxprod.Lti2Anon
+	       WHERE anon_screen_name = the_anon_screen_name
+             ) AS LtiCandidates,
+             edxprod.Lti2GlobalLti
+       WHERE edxprod.LtiCandidates.lti_id = edxprod.Lti2GlobalLti.global_lti_id;
+      return @ltiId;
 END//
 
 
 #--------------------------
-# idAnon2Ext
+# idAnon2Ext [OLD]
 #-----------
 
 # External user ids are LTI based IDs used by
@@ -516,27 +547,27 @@ END//
 #   SELECT idAnon2Ext('0686bef338f8c6f0696cc7d4b0650daf2473f59d', 'Engineering/CVX101/Winter2014');
 #   should be: 5cbdc8b38171f3641845cb17784de87b
 
-DROP FUNCTION IF EXISTS idAnon2Ext//
-CREATE FUNCTION idAnon2Ext(the_anon_id varchar(255), course_display_name varchar(255))
-RETURNS varchar(32)
-BEGIN
-      SELECT -1 INTO @int_id;
-      SELECT user_int_id INTO @int_id
-      FROM EdxPrivate.UserGrade
-      WHERE anon_screen_name = the_anon_id;
+-- DROP FUNCTION IF EXISTS idAnon2Ext//
+-- CREATE FUNCTION idAnon2Ext(the_anon_id varchar(255), course_display_name varchar(255))
+-- RETURNS varchar(32)
+-- BEGIN
+--       SELECT -1 INTO @int_id;
+--       SELECT user_int_id INTO @int_id
+--       FROM EdxPrivate.UserGrade
+--       WHERE anon_screen_name = the_anon_id;
 
-      IF @int_id >= 0
-      THEN
-          SELECT anonymous_user_id AS extId INTO @extId
-          FROM edxprod.student_anonymoususerid
-          WHERE user_id = @int_id
-	    AND course_id = course_display_name;
-          RETURN @extId;
-      ELSE
-          RETURN null;
-      END IF;
+--       IF @int_id >= 0
+--       THEN
+--           SELECT anonymous_user_id AS extId INTO @extId
+--           FROM edxprod.student_anonymoususerid
+--           WHERE user_id = @int_id
+-- 	    AND course_id = course_display_name;
+--           RETURN @extId;
+--       ELSE
+--           RETURN null;
+--       END IF;
 
-END//
+-- END//
 
 #--------------------------
 # idAnon2Exts
