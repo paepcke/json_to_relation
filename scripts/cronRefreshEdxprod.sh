@@ -328,7 +328,7 @@ echo `date`": Creating Lti2GlobalLti."
 newTblCmd="DROP TABLE IF EXISTS Lti2GlobalLti;
 	   CREATE TABLE Lti2GlobalLti (course_dependent_lti_id varchar(32),
 	           	     	       global_lti_id varchar(32)) 
-	   SELECT anonymous_user_id AS course_dependent_lti, 
+	   SELECT anonymous_user_id AS course_dependent_lti_id, 
 	          IntIdGlobalLti.global_lti_id
 	     FROM edxprod.student_anonymoususerid,
 	          (SELECT user_id, anonymous_user_id AS global_lti_id
