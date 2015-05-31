@@ -353,6 +353,7 @@ DROP FUNCTION IF EXISTS idAnon2Int//
 
 CREATE FUNCTION idAnon2Int(anonId varchar(40))
 RETURNS int(11)
+DETERMINISTIC
 BEGIN
     SELECT user_int_id 
     FROM EdxPrivate.UserGrade
@@ -375,6 +376,7 @@ DROP FUNCTION IF EXISTS idInt2Forum//
 
 CREATE FUNCTION idInt2Forum(intId int(11))
 RETURNS varchar(40)
+DETERMINISTIC
 BEGIN
     DECLARE forumUid varchar(255);
     if @forumKey IS NULL
@@ -398,6 +400,7 @@ DROP FUNCTION IF EXISTS idForum2Anon//
 
 CREATE FUNCTION idForum2Anon(forumId varchar(255))
 RETURNS varchar(40)
+DETERMINISTIC
 BEGIN
     DECLARE theIntId INT;
     DECLARE anonId varchar(255);
@@ -423,6 +426,7 @@ DROP FUNCTION IF EXISTS idForum2Int//
 
 CREATE FUNCTION idForum2Int(forumId varchar(255))
 RETURNS varchar(40)
+DETERMINISTIC
 BEGIN
     DECLARE theIntId INT;
     DECLARE anonId varchar(255);
@@ -448,6 +452,7 @@ DROP FUNCTION IF EXISTS idInt2Anon//
 
 CREATE FUNCTION idInt2Anon(intId int(11))
 RETURNS varchar(40)
+DETERMINISTIC
 BEGIN
     DECLARE anonId varchar(255);
     SELECT anon_screen_name
@@ -478,6 +483,7 @@ DROP FUNCTION IF EXISTS idExt2Anon//
 
 CREATE FUNCTION idExt2Anon(extId varchar(32)) 
 RETURNS varchar(40)
+DETERMINISTIC
 BEGIN
       DECLARE anonId varchar(255);
       SELECT anon_screen_name INTO @anonId
@@ -501,6 +507,7 @@ DROP FUNCTION IF EXISTS idAnon2Ext//
 
 CREATE FUNCTION idAnon2Ext(the_anon_screen_name varchar(40)) 
 RETURNS varchar(32)
+DETERMINISTIC
 BEGIN
       DECLARE ltiId varchar(255);
       SELECT DISTINCT lti_id INTO @ltiId
@@ -550,6 +557,7 @@ END//
 DROP FUNCTION IF EXISTS idAnon2ExtByCourse//
 CREATE FUNCTION idAnon2ExtByCourse(the_anon_id varchar(255), course_display_name varchar(255))
 RETURNS varchar(32)
+DETERMINISTIC
 BEGIN
       SELECT -1 INTO @int_id;
       SELECT user_int_id INTO @int_id
@@ -605,6 +613,7 @@ END//
 
 DROP PROCEDURE IF EXISTS idAnon2Exts//
 CREATE PROCEDURE idAnon2Exts(the_anon_id varchar(255))
+DETERMINISTIC
 BEGIN
       DROP TEMPORARY TABLE IF EXISTS ExtCourseTable;      
 
