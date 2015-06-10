@@ -255,7 +255,7 @@ CREATE TABLE `OpenAssessment` (
   KEY `OpAssEvTypeIdx` (`event_type`(255)),
   KEY `OpAssAnonScNmIdx` (`anon_screen_name`),
   KEY `OpAssPtsidx` (`points`(40))
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 
 CREATE TABLE `UserCountry` (

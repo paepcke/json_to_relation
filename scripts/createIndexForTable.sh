@@ -262,6 +262,8 @@ do
 
     elif [ $table == 'ActivityGrade' ]
     then
+	echo "Creating index on ActivityGrade(first_submit) if needed..."
+	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('activityGradeFirst_submitIdx', 'ActivityGrade', 'first_submit', NULL);"
 	echo "Creating index on ActivityGrade(last_submit) if needed..."
 	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('activityGradeLast_submitIdx', 'ActivityGrade', 'last_submit', NULL);"
 	echo "Creating index on ActivityGrade(ActGrdAnonSNIdx) if needed..."
@@ -270,6 +272,8 @@ do
 	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('ActGrdCourseDisNmIdx', 'ActivityGrade', 'course_display_name', 255);"
 	echo "Creating index on ActivityGrade(module_id) if needed..."
 	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('ActGrdModIdIdx', 'ActivityGrade', 'module_id', 255);"
+	echo "Creating index on ActivityGrade(module_type) if needed..."
+	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('ActGrdModTypeIdx', 'ActivityGrade', 'module_type', 255);"
 	echo "Creating index on ActivityGrade(resource_display_name) if needed..."
 	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('ActGrdResDispNmIdx', 'ActivityGrade', 'resource_display_name', 255);"
 	echo "Creating index on ActivityGrade(num_attempts) if needed..."
