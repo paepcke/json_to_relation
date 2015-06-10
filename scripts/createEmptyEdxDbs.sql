@@ -331,7 +331,7 @@ USE EdxPrivate;
 CREATE TABLE IF NOT EXISTS `UserGrade` (
   `name` varchar(255) NOT NULL DEFAULT '',
   `screen_name` varchar(255) NOT NULL DEFAULT '',
-  `grade` int(11) NOT NULL DEFAULT '0',
+  `grade` double NOT NULL DEFAULT '0',
   `course_id` varchar(255) NOT NULL DEFAULT '',
   `distinction` tinyint(4) NOT NULL DEFAULT '0',
   `status` varchar(50) NOT NULL DEFAULT '',
