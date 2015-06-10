@@ -114,12 +114,17 @@ class IpCountryDict(unittest.TestCase):
         while lookupKey > 0:
             try:
                 ipRangeChain = self.ipToCountryDict[lookupKey]
+                if ipRangeChain is None:
+                    raise ValueError("IP string is not a valid IP address: '%s'" % str(ipStr))
+                # Sometimes the correct entry is *lower* than
+                # where the initial lookup key points:
+                if ipRangeChain[0][0] > ipNum:
+                    # Backtrack to an earlier key:
+                    raise KeyError()
                 break
             except KeyError:
                 lookupKey = str(int(lookupKey) - 1).zfill(4)[0:4]
                 continue
-        if ipRangeChain is None:
-            raise KeyError("IP string is not a valid IP address: '%s'" % str(ipStr))
         for ipInfo in ipRangeChain:
             # Have (rangeStart,rangeEnd,country2Let,country3Let,county)
             # Sorted by rangeStart:
@@ -137,7 +142,8 @@ class IpCountryDict(unittest.TestCase):
     def ipStrToIntAndKey(self, ipStr):
         '''
         Given an IP string, return two-tuple: the numeric
-        int, and a lookup key into self.ipToCountryDict. 
+        int, and a lookup key into self.ipToCountryDict.
+         
         :param ipStr: ip string like '171.64.65.66'
         :type ipStr: string
         :return: two-tuple of ip int and the first four digits, i.e. a lookup key. Like (16793600, 1679). Returns (None,None) if IP was not a four-octed str.
@@ -153,17 +159,24 @@ class IpCountryDict(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    import sys
+    if len(sys.argv) < 2:
+        raise ValueError("Usage: python ipToCountry.py <ipAddress>")
+        
     #lookup = IpCountryDict('ipToCountrySoftware77DotNet.csv')
     lookup = IpCountryDict()
+    (twoLetter,threeLetter,country) = lookup.lookupIP(sys.argv[1])
+    print('%s; %s; %s' % (twoLetter,threeLetter,country))
+    
     #(ip,lookupKey) = lookup.ipStrToIntAndKey('171.64.64.64')
-    (twoLetter,threeLetter,country) = lookup.lookupIP('171.64.75.96')
+    #(twoLetter,threeLetter,country) = lookup.lookupIP('171.64.75.96')
     #*****lookup.assertEqual((twoLetter,threeLetter,country),('US','USA','United States'))
-    print('%s, %s, %s' % (twoLetter,threeLetter,country))
-    (twoLetter,threeLetter,country) = lookup.lookupIP('5.96.4.5')
-    print('%s, %s, %s' % (twoLetter,threeLetter,country)) 
-    (twoLetter,threeLetter,country) = lookup.lookupIP('91.96.4.5')
-    print('%s, %s, %s' % (twoLetter,threeLetter,country)) 
-    (twoLetter,threeLetter,country) = lookup.lookupIP('105.48.87.6')
-    print('%s, %s, %s' % (twoLetter,threeLetter,country)) 
+#     print('%s, %s, %s' % (twoLetter,threeLetter,country))
+#     (twoLetter,threeLetter,country) = lookup.lookupIP('5.96.4.5')
+#     print('%s, %s, %s' % (twoLetter,threeLetter,country)) 
+#     (twoLetter,threeLetter,country) = lookup.lookupIP('91.96.4.5')
+#     print('%s, %s, %s' % (twoLetter,threeLetter,country)) 
+#     (twoLetter,threeLetter,country) = lookup.lookupIP('105.48.87.6')
+#     print('%s, %s, %s' % (twoLetter,threeLetter,country)) 
     
     

@@ -353,6 +353,7 @@ DROP FUNCTION IF EXISTS idAnon2Int//
 
 CREATE FUNCTION idAnon2Int(anonId varchar(40))
 RETURNS int(11)
+DETERMINISTIC
 BEGIN
     SELECT user_int_id 
     FROM EdxPrivate.UserGrade
@@ -375,6 +376,7 @@ DROP FUNCTION IF EXISTS idInt2Forum//
 
 CREATE FUNCTION idInt2Forum(intId int(11))
 RETURNS varchar(40)
+DETERMINISTIC
 BEGIN
     DECLARE forumUid varchar(255);
     if @forumKey IS NULL
@@ -398,6 +400,7 @@ DROP FUNCTION IF EXISTS idForum2Anon//
 
 CREATE FUNCTION idForum2Anon(forumId varchar(255))
 RETURNS varchar(40)
+DETERMINISTIC
 BEGIN
     DECLARE theIntId INT;
     DECLARE anonId varchar(255);
@@ -423,6 +426,7 @@ DROP FUNCTION IF EXISTS idForum2Int//
 
 CREATE FUNCTION idForum2Int(forumId varchar(255))
 RETURNS varchar(40)
+DETERMINISTIC
 BEGIN
     DECLARE theIntId INT;
     DECLARE anonId varchar(255);
@@ -448,6 +452,7 @@ DROP FUNCTION IF EXISTS idInt2Anon//
 
 CREATE FUNCTION idInt2Anon(intId int(11))
 RETURNS varchar(40)
+DETERMINISTIC
 BEGIN
     DECLARE anonId varchar(255);
     SELECT anon_screen_name
@@ -467,25 +472,58 @@ END//
 # or Piazza, return the corresponding
 # anon_screen_name. The 32 char uids are
 # LTI: learning technology interchange.
+# Multiple LTIs may map to the same 
+# anon_screen_name, b/c EdX assigns
+# both a course-dependent, and a global
+# LTI to learners. Any of these LTIs
+# may be given to this functions, and
+# it will work.
 
 DROP FUNCTION IF EXISTS idExt2Anon//
 
 CREATE FUNCTION idExt2Anon(extId varchar(32)) 
 RETURNS varchar(40)
+DETERMINISTIC
 BEGIN
       DECLARE anonId varchar(255);
-      SELECT user_id INTO @int_id
-      FROM edxprod.student_anonymoususerid
-      WHERE anonymous_user_id = extId;
+      SELECT anon_screen_name INTO @anonId
+        FROM edxprod.Lti2Anon
+       WHERE lti_id = extId;
+      return @anonId;
+END//
 
-      SELECT idInt2Anon(@int_id) INTO anonId;
-      return anonId;
+#--------------------------
+# idAnon2Ext
+#-----------------
+
+# Given an anon_screen_name, return the LTI equivalent
+# that is the course-independent external learner ID.
+# I.e. the returned LTI is the universally applicable
+# one for the given learner. There may be more LTIs
+# for the same learner: one for each course they
+# took.
+
+DROP FUNCTION IF EXISTS idAnon2Ext//
+
+CREATE FUNCTION idAnon2Ext(the_anon_screen_name varchar(40)) 
+RETURNS varchar(32)
+DETERMINISTIC
+BEGIN
+      DECLARE ltiId varchar(255);
+      SELECT DISTINCT lti_id INTO @ltiId
+        FROM (SELECT lti_id 
+             	FROM edxprod.Lti2Anon
+	       WHERE anon_screen_name = the_anon_screen_name
+             ) AS LtiCandidates,
+             edxprod.Lti2GlobalLti
+       WHERE edxprod.LtiCandidates.lti_id = edxprod.Lti2GlobalLti.global_lti_id;
+      return @ltiId;
 END//
 
 
 #--------------------------
-# idAnon2Ext
-#-----------
+# idAnon2ExtByCourse
+#-------------------
 
 # External user ids are LTI based IDs used by
 # the OpenEdX platform when participants are involved
@@ -505,7 +543,7 @@ END//
 # the corresponding anonymized UID used by
 # outside services, such as Qualtrix or Piazza
 # For testing:
-#Testing idAnon2Ext():
+#Testing idAnon2ExtByCourse():
 #
 #   one row of student_anonuserid:
 #   284347 | 5cbdc8b38171f3641845cb17784de87b | Engineering/CVX101/Winter2014
@@ -513,12 +551,13 @@ END//
 #   Using idInt2Anon():
 #   284347 int = 0686bef338f8c6f0696cc7d4b0650daf2473f59d anon
 # 
-#   SELECT idAnon2Ext('0686bef338f8c6f0696cc7d4b0650daf2473f59d', 'Engineering/CVX101/Winter2014');
+#   SELECT idAnon2ExtByCourse('0686bef338f8c6f0696cc7d4b0650daf2473f59d', 'Engineering/CVX101/Winter2014');
 #   should be: 5cbdc8b38171f3641845cb17784de87b
 
-DROP FUNCTION IF EXISTS idAnon2Ext//
-CREATE FUNCTION idAnon2Ext(the_anon_id varchar(255), course_display_name varchar(255))
+DROP FUNCTION IF EXISTS idAnon2ExtByCourse//
+CREATE FUNCTION idAnon2ExtByCourse(the_anon_id varchar(255), course_display_name varchar(255))
 RETURNS varchar(32)
+DETERMINISTIC
 BEGIN
       SELECT -1 INTO @int_id;
       SELECT user_int_id INTO @int_id
@@ -574,6 +613,7 @@ END//
 
 DROP PROCEDURE IF EXISTS idAnon2Exts//
 CREATE PROCEDURE idAnon2Exts(the_anon_id varchar(255))
+DETERMINISTIC
 BEGIN
       DROP TEMPORARY TABLE IF EXISTS ExtCourseTable;      
 
@@ -607,7 +647,7 @@ RETURNS BOOL
 BEGIN
     -- IFNULL ensures return of 0 when learner or course not found.
     SELECT IFNULL(
-      (SELECT IF(status = 'downloadable', 0, 1)
+      (SELECT IF(status = 'downloadable', 1, 0)
        FROM edxprod.certificates_generatedcertificate 
        WHERE course_id = course_display_name
        AND idInt2Anon(user_id) = anon_screen_name

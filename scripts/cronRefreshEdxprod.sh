@@ -250,6 +250,8 @@ do
 
 done
 
+# ------------------ Create Table of Enrollments Excluding Casual Browsers -------------------
+
 # Now create the true_enrollment table, which only
 # contains rows for learners that fully enrolled, i.e.
 # answered the confirmation email, and who do not
@@ -282,14 +284,75 @@ newTblCmd="DROP TABLE IF EXISTS true_courseenrollment;
 	     WHERE student_courseenrollment.is_active = 1;
 	   ALTER TABLE true_courseenrollment ENABLE KEYS;
          "
+
+echo `date`": Creating true_courseenrollment."
 if [[ $MYSQL_VERSION == '5.6+' ]]
 then
     echo $newTblCmd | mysql --login-path=root edxprod
 else
     echo $newTblCmd | mysql -u root -p$MYSQL_PASSWD edxprod
 fi
+echo `date`": Done creating true_courseenrollment."
+
+# ------------------ Table mapping any LTI to anon_screen_name -------------------
+
+echo `date`": Creating Lti2Anon."
+newTblCmd="DROP TABLE IF EXISTS Lti2Anon;
+           CREATE TABLE Lti2Anon (lti_id varchar(32), anon_screen_name varchar(40))
+           SELECT anonymous_user_id AS lti_id, anon_screen_name
+             FROM edxprod.student_anonymoususerid LEFT JOIN EdxPrivate.UserGrade 
+               ON edxprod.student_anonymoususerid.user_id = EdxPrivate.UserGrade.user_int_id;
+          "
+
+if [[ $MYSQL_VERSION == '5.6+' ]]
+then
+    echo $newTblCmd | mysql --login-path=root edxprod
+    echo `date`": Building index Lti2Anon.lti_id."
+    echo 'CREATE INDEX ltianon_lti_idx ON edxprod.Lti2Anon (lti_id);' | mysql --login-path=root edxprod
+    echo `date`": Building index Lti2Anon.anon_screen_name."
+    echo 'CREATE INDEX ltianon_anon_idx ON edxprod.Lti2Anon (anon_screen_name);' | mysql --login-path=root edxprod
+else
+    echo $newTblCmd | mysql -u root -p$MYSQL_PASSWD edxprod
+    echo `date`": Building index on Lti2Anon.lti_id."
+    echo 'CREATE INDEX ltianon_lti_idx ON edxprod.Lti2Anon (lti_id);' | mysql -u root -p$MYSQL_PASSWD edxprod
+    echo `date`": Building index Lti2Anon.anon_screen_name."
+    echo 'CREATE INDEX ltianon_anon_idx ON edxprod.Lti2Anon (anon_screen_name);' | mysql -u root -p$MYSQL_PASSWD edxprod
+fi
+
+echo `date`": Done creating Lti2Anon."
 
 
+# ------------------ Table mapping any LTI to corresponding GlobalLti -------------------
+
+echo `date`": Creating Lti2GlobalLti."
+newTblCmd="DROP TABLE IF EXISTS Lti2GlobalLti;
+	   CREATE TABLE Lti2GlobalLti (course_dependent_lti_id varchar(32),
+	           	     	       global_lti_id varchar(32)) 
+	   SELECT anonymous_user_id AS course_dependent_lti_id, 
+	          IntIdGlobalLti.global_lti_id
+	     FROM edxprod.student_anonymoususerid,
+	          (SELECT user_id, anonymous_user_id AS global_lti_id
+	           FROM edxprod.student_anonymoususerid
+	          WHERE course_id = '') AS IntIdGlobalLti
+	   WHERE  IntIdGlobalLti.user_id = edxprod.student_anonymoususerid.user_id;
+          "
+
+if [[ $MYSQL_VERSION == '5.6+' ]]
+then
+    echo $newTblCmd | mysql --login-path=root edxprod
+    echo `date`": Building index Lti2GlobalLti.course_dependent_lti_id."
+    echo 'CREATE INDEX lti2global_local_lti_idx ON edxprod.Lti2GlobalLti (course_dependent_lti_id);' | mysql --login-path=root edxprod
+    echo `date`": Building index Lti2GlobalLti.global_lti_id."
+    echo 'CREATE INDEX lti2global_global_id_idx ON edxprod.Lti2GlobalLti (global_lti_id);' | mysql --login-path=root edxprod
+else
+    echo $newTblCmd | mysql -u root -p$MYSQL_PASSWD edxprod
+    echo `date`": Building index Lti2GlobalLti.course_dependent_lti_id."
+    echo 'CREATE INDEX lti2global_local_lti_idx ON edxprod.Lti2GlobalLti (course_dependent_lti_id);' | mysql -u root -p$MYSQL_PASSWD edxprod
+    echo `date`": Building index Lti2GlobalLti.global_lti_id."
+    echo 'CREATE INDEX lti2global_global_id_idx ON edxprod.Lti2GlobalLti (global_lti_id);' | mysql -u root -p$MYSQL_PASSWD edxprod
+fi
+
+echo `date`": Done creating Lti2GlobalLti."
 
 # ------------------ Signout -------------------
 echo `date`": Finished refreshing edxprod tables."  | tee --append $LOG_FILE
