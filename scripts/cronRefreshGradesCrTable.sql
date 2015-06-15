@@ -3,7 +3,7 @@ USE EdxPrivate;
 CREATE TABLE IF NOT EXISTS EdxPrivate.UserGrade (
     name VARCHAR(255) NOT NULL DEFAULT '',
     screen_name VARCHAR(255) NOT NULL DEFAULT '',
-    grade int NOT NULL DEFAULT 0,
+    grade double NOT NULL DEFAULT 0.0,
     course_id VARCHAR(255) NOT NULL DEFAULT '',
     distinction TINYINT NOT NULL DEFAULT 0,
     status VARCHAR(50) NOT NULL DEFAULT '',
