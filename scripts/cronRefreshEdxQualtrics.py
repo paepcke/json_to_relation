@@ -1,8 +1,12 @@
 from surveyextractor import QualtricsExtractor
-import getopt, sys
+import getopt
+import sys
 
-# Script for scheduling regular EdxQualtrics updates
-# Usage for cron should be "cronRefreshEdxQualtrics.py -m -s -r"
+### Script for scheduling regular EdxQualtrics updates
+### Usage for cron should be "cronRefreshEdxQualtrics.py -m -s -r"
+
+# Append directory for dependencies to PYTHONPATH
+sys.path.append("/home/dataman/Code/qualtrics_etl/src/qualtrics_etl/")
 
 qe = QualtricsExtractor()
 opts, args = getopt.getopt(sys.argv[1:], 'amsr', ['--reset', '--loadmeta', '--loadsurveys', '--loadresponses'])
