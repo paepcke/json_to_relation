@@ -211,6 +211,9 @@ fi
 
 echo `date`": Done constructing amalgam from certificates_generatedcertificate and auth_user." | tee --append $LOG_FILE
 
+# Copy intermediate file to tmp for checking
+cp $targetFile /tmp/intermediate.tsv
+
 # ----------------- Fill in the Screen Name Hash Column anon_screen_name ----------
 
 # Get directory in which this script is running,
