@@ -242,7 +242,7 @@ cp $targetFile /tmp/intermediate2.tsv
 
 # Construct the TSV load command for
 # use below:
-MYSQL_LOAD_CMD="LOAD DATA LOCAL INFILE '$targetFile' IGNORE INTO TABLE UserGrade FIELDS TERMINATED BY '\t' IGNORE 1 LINES;"
+MYSQL_LOAD_CMD="LOAD DATA LOCAL INFILE '$targetFile' INTO TABLE UserGrade FIELDS TERMINATED BY '\t' IGNORE 1 LINES;"
 
 # Distinguish between MySQL pwd known, vs. unspecified.
 # If $MYSQL_PASSWD is empty, then don't provide
