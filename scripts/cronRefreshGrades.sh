@@ -235,6 +235,9 @@ fi
 
 echo `date`": Done adding anon_screen_name to UserGrade TSV..." | tee --append $LOG_FILE
 
+# Copy intermediate file after adding ASNs
+cp $targetFile /tmp/intermediate2.tsv
+
 # ------------------ Load TSV Into Local MySQL -------------------
 
 # Construct the TSV load command for
