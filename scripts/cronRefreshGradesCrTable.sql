@@ -7,6 +7,6 @@ CREATE TABLE IF NOT EXISTS EdxPrivate.UserGrade (
     course_id VARCHAR(255) NOT NULL DEFAULT '',
     distinction TINYINT NOT NULL DEFAULT 0,
     status VARCHAR(50) NOT NULL DEFAULT '',
-    user_int_id int NOT NULL PRIMARY KEY,
+    user_int_id int NOT NULL,
     anon_screen_name varchar(40) NOT NULL DEFAULT ''
     ) engine = MyISAM;
