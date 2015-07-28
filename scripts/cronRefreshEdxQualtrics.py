@@ -1,4 +1,4 @@
-from surveyextractor import QualtricsExtractor
+from surveyextractorimport QualtricsExtractor
 import getopt
 import sys
 
@@ -6,7 +6,12 @@ import sys
 ### Usage for cron should be "cronRefreshEdxQualtrics.py -m -s -r"
 
 # Append directory for dependencies to PYTHONPATH
-sys.path.append("/home/dataman/Code/qualtrics_etl/src/qualtrics_etl/")
+# sys.path.append("/home/dataman/Code/qualtrics_etl/src/qualtrics_etl/")
+source_dir = [os.path.join(os.path.dirname(os.path.abspath(__file__)), "../json_to_relation/")]
+source_dir.extend(sys.path)
+sys.path = source_dir
+
+from surveyextractor import QualtricsExtractor
 
 qe = QualtricsExtractor()
 opts, args = getopt.getopt(sys.argv[1:], 'amsr', ['--reset', '--loadmeta', '--loadsurveys', '--loadresponses'])
