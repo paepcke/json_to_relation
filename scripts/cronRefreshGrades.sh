@@ -6,13 +6,13 @@
 # Refreshes the EdxPrivate.UserGrade table. Retrieves a subset of
 # columns from tables auth_user and certificates_generatedcertificate. Drops
 # the local EdxPrivate.UserGrade table, and recreates it empty.
-# Loads the auth_user/certificates_generatedcertificate excerpt into 
+# Loads the auth_user/certificates_generatedcertificate excerpt into
 # the local MySQL's EdxPrivate.UserGrade table, and creates
 # indexes.
 #
 # To figure out what all the preliminary sections do,
 # uncomment the lines between '#***********'; then
-# invoke the script with various combinations of 
+# invoke the script with various combinations of
 # user ids and pwds on the commandline.
 
 USAGE='Usage: '`basename $0`' [-u localMySQLUser][-p][-pLocalMySQLPwd]'
@@ -20,9 +20,9 @@ USAGE='Usage: '`basename $0`' [-u localMySQLUser][-p][-pLocalMySQLPwd]'
 # Get MySQL version on this machine
 MYSQL_VERSION=$(mysql --version | sed -ne 's/.*Distrib \([0-9][.][0-9]\).*/\1/p')
 if [[ $MYSQL_VERSION > 5.5 ]]
-then 
+then
     MYSQL_VERSION='5.6+'
-else 
+else
     MYSQL_VERSION='5.5'
 fi
 
@@ -37,7 +37,7 @@ needLocalPasswd=false
 
 # ------------------ Process Commandline Options -------------------
 
-# Check whether given -pPassword, i.e. fused -p with a 
+# Check whether given -pPassword, i.e. fused -p with a
 # pwd string:
 
 for arg in $@
@@ -73,7 +73,7 @@ do
       ;;
     \?)
       # If $MYSQL_PASSWD is
-      # set, we *assume* that 
+      # set, we *assume* that
       # the unrecognized option was a
       # -pMyPassword or -rMyPassword, and don't signal
       # an error. Therefore, if either of those
@@ -81,7 +81,7 @@ do
       # is on the command line, it is quietly
       # ignored:
       if [ ! -z $MYSQL_PASSWD ]
-      then 
+      then
 	  continue
       else
 	  echo $USAGE
@@ -254,7 +254,7 @@ then
 	mysql -u $MYSQL_USERNAME -p$MYSQL_PASSWD -e "USE EdxPrivate; DROP TABLE IF EXISTS UserGrade;\n"
     fi
     echo `date`": Done dropping UserGrade table..." | tee --append $LOG_FILE
-    
+
     echo `date`": About to create UserGrade table..." | tee --append $LOG_FILE
     # Create table 'UserGrade' in EdxPrivate, if it doesn't exist:
     if [[ $MYSQL_VERSION == '5.6+' ]]
@@ -326,8 +326,8 @@ fi
 
 # ------------------ Cleanup -------------------
 
-rm $targetFile
+# rm $targetFile
 
 # ------------------ Signout -------------------
 echo `date`": Finished updating table UserGrade." | tee --append $LOG_FILE
-echo "----------"   
+echo "----------"
