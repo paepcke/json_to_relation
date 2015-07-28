@@ -1,4 +1,3 @@
-from surveyextractorimport QualtricsExtractor
 import getopt
 import sys
 
