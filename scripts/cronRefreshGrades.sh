@@ -211,9 +211,6 @@ fi
 
 echo `date`": Done constructing amalgam from certificates_generatedcertificate and auth_user." | tee --append $LOG_FILE
 
-# Copy intermediate file to tmp for checking
-cp $targetFile /tmp/intermediate.tsv
-
 # ----------------- Fill in the Screen Name Hash Column anon_screen_name ----------
 
 # Get directory in which this script is running,
@@ -235,8 +232,6 @@ fi
 
 echo `date`": Done adding anon_screen_name to UserGrade TSV..." | tee --append $LOG_FILE
 
-# Copy intermediate file after adding ASNs
-cp $targetFile /tmp/intermediate2.tsv
 
 # ------------------ Load TSV Into Local MySQL -------------------
 
@@ -332,7 +327,7 @@ fi
 
 # ------------------ Cleanup -------------------
 
-# rm $targetFile
+rm $targetFile
 
 # ------------------ Signout -------------------
 echo `date`": Finished updating table UserGrade." | tee --append $LOG_FILE
