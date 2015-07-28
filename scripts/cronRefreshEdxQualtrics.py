@@ -1,5 +1,6 @@
 import getopt
 import sys
+import os
 
 ### Script for scheduling regular EdxQualtrics updates
 ### Usage for cron should be "cronRefreshEdxQualtrics.py -m -s -r"
