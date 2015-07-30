@@ -9,14 +9,14 @@
 #       column content. But it got to crufty, and
 #       vulnerable to future MySQL version mods.
 #
-#       Instead this file is 'source'ed 
-#       by defineMySQLProcedures.sh. into 
+#       Instead this file is 'source'ed
+#       by defineMySQLProcedures.sh. into
 #       MySQL for each database where they are
-#       to be used 
+#       to be used
 
 # NOTE: any function that should only exist in EdxPrivate
 #       has a DROP...<DB>.funcName  statement at the bottom
-#       of this file. There, <DB> is any db where 
+#       of this file. There, <DB> is any db where
 #       this file might be sourced.
 
 # ------------- Grant EXECUTE Privileges for User Level Functions -----
@@ -43,37 +43,37 @@ CREATE PROCEDURE createIndexIfNotExists (IN the_index_name varchar(255),
 					 IN the_prefix_len INT)
 this_proc: BEGIN
       # Check whether table exists:
-      IF ((SELECT COUNT(*) AS table_exists 
-           FROM information_schema.tables 
-           WHERE TABLE_SCHEMA = DATABASE() 
+      IF ((SELECT COUNT(*) AS table_exists
+           FROM information_schema.tables
+           WHERE TABLE_SCHEMA = DATABASE()
              AND table_name = the_table_name)
           = 0)
       THEN
            SELECT concat("**** Table ", DATABASE(), ".", the_table_name, " does not exist.");
 	   LEAVE this_proc;
       END IF;
-	   
-      IF ((SELECT COUNT(*) AS index_exists 
+
+      IF ((SELECT COUNT(*) AS index_exists
            FROM information_schema.statistics
-           WHERE TABLE_SCHEMA = DATABASE() 
-             AND table_name = the_table_name 
-    	 AND index_name = the_index_name)  
+           WHERE TABLE_SCHEMA = DATABASE()
+             AND table_name = the_table_name
+    	 AND index_name = the_index_name)
           = 0)
       THEN
           # Different CREATE INDEX statement depending on whether
           # a prefix length is required:
           IF the_prefix_len IS NULL
           THEN
-          	  SET @s = CONCAT('CREATE INDEX ' , 
-          	                  the_index_name , 
-          			  ' ON ' , 
-          			  the_table_name, 
+          	  SET @s = CONCAT('CREATE INDEX ' ,
+          	                  the_index_name ,
+          			  ' ON ' ,
+          			  the_table_name,
           			  '(', the_col_name, ')');
           ELSE
-          	  SET @s = CONCAT('CREATE INDEX ' , 
-          	                  the_index_name , 
- 			          ' ON ' , 
-          			  the_table_name, 
+          	  SET @s = CONCAT('CREATE INDEX ' ,
+          	                  the_index_name ,
+ 			          ' ON ' ,
+          			  the_table_name,
           			  '(', the_col_name, '(',the_prefix_len,'))');
          END IF;
          PREPARE stmt FROM @s;
@@ -91,16 +91,16 @@ CREATE PROCEDURE dropIndexIfExists (IN the_table_name varchar(255),
 BEGIN
     DECLARE indx_name varchar(255);
     IF ((SELECT COUNT(*) AS index_exists
-         FROM information_schema.statistics 
-         WHERE TABLE_SCHEMA = DATABASE() 
-           AND table_name = the_table_name 
-  	   AND column_name = the_col_name)  
+         FROM information_schema.statistics
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND table_name = the_table_name
+  	   AND column_name = the_col_name)
         > 0)
     THEN
         SELECT index_name INTO @indx_name
 	FROM information_schema.statistics
-	WHERE TABLE_SCHEMA = DATABASE() 
- 	   AND table_name = the_table_name 
+	WHERE TABLE_SCHEMA = DATABASE()
+ 	   AND table_name = the_table_name
  	   AND column_name = the_col_name;
         SET @s = CONCAT('DROP INDEX `' ,
                         @indx_name ,
@@ -122,18 +122,18 @@ DROP PROCEDURE IF EXISTS addPrimaryIfNotExists //
 CREATE PROCEDURE addPrimaryIfNotExists (IN the_table_name varchar(255),
 					IN the_col_name   varchar(255))
 BEGIN
-      IF ((SELECT COUNT(*) AS index_exists 
-           FROM information_schema.statistics 
-           WHERE TABLE_SCHEMA = DATABASE() 
-             AND table_name = the_table_name 
-    	 AND index_name = 'PRIMARY')  
+      IF ((SELECT COUNT(*) AS index_exists
+           FROM information_schema.statistics
+           WHERE TABLE_SCHEMA = DATABASE()
+             AND table_name = the_table_name
+    	 AND index_name = 'PRIMARY')
          = 0)
       THEN
           # 'IGNORE' will refuse to add duplicates:
-      	  SET @s = CONCAT('ALTER IGNORE TABLE ' , 
-      			  the_table_name, 
+      	  SET @s = CONCAT('ALTER IGNORE TABLE ' ,
+      			  the_table_name,
 			  ' ADD PRIMARY KEY ( ',
-      			  the_col_name, 
+      			  the_col_name,
 			  ' )'
 			  );
           PREPARE stmt FROM @s;
@@ -151,11 +151,11 @@ END//
 DROP PROCEDURE IF EXISTS dropPrimaryIfExists //
 CREATE PROCEDURE dropPrimaryIfExists (IN the_table_name varchar(255))
 BEGIN
-    IF ((SELECT COUNT(*) AS index_exists 
-         FROM information_schema.statistics 
-         WHERE TABLE_SCHEMA = DATABASE() 
-           AND table_name = the_table_name 
-  	   AND index_name = 'PRIMARY')  
+    IF ((SELECT COUNT(*) AS index_exists
+         FROM information_schema.statistics
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND table_name = the_table_name
+  	   AND index_name = 'PRIMARY')
         > 0)
     THEN
         SET @s = CONCAT('ALTER TABLE ' ,
@@ -171,7 +171,7 @@ END//
 # indexExists
 #-----------
 
-# Given a table and column name, return 1 if 
+# Given a table and column name, return 1 if
 # an index exists on that column, else returns 0.
 
 DROP FUNCTION IF EXISTS indexExists//
@@ -180,9 +180,9 @@ CREATE FUNCTION indexExists(the_table_name varchar(255),
 RETURNS BOOL
 BEGIN
     IF ((SELECT COUNT(*)
-         FROM information_schema.statistics 
-         WHERE TABLE_SCHEMA = DATABASE() 
-           AND table_name = the_table_name 
+         FROM information_schema.statistics
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND table_name = the_table_name
     	   AND column_name = the_col_name) > 0)
    THEN
        RETURN 1;
@@ -203,9 +203,9 @@ CREATE FUNCTION anyIndexExists(the_table_name varchar(255))
 RETURNS BOOL
 BEGIN
     IF ((SELECT COUNT(*)
-         FROM information_schema.statistics 
-         WHERE TABLE_SCHEMA = DATABASE() 
-           AND table_name = the_table_name 
+         FROM information_schema.statistics
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND table_name = the_table_name
     	   AND Index_name != 'Primary') > 0)
    THEN
        RETURN 1;
@@ -218,7 +218,7 @@ END//
 # functionExists
 #----------------
 
-# Given a fully qualified function name, return 1 if 
+# Given a fully qualified function name, return 1 if
 # the function exists in the respective db, else returns 0.
 # Example: SELECT functionExists('Edx.idInt2Anon');
 
@@ -231,7 +231,7 @@ BEGIN
     IF ((SELECT COUNT(*)
          FROM information_schema.routines
          WHERE ROUTINE_TYPE = 'FUNCTION'
-           AND ROUTINE_SCHEMA = @the_db_name 
+           AND ROUTINE_SCHEMA = @the_db_name
     	   AND ROUTINE_NAME = @the_func_name) > 0)
    THEN
        RETURN 1;
@@ -264,11 +264,11 @@ END//
 # latestLog
 #----------
 
-# Return the load date, and log collection date of the 
-# most recent tracking log that has been loaded 
+# Return the load date, and log collection date of the
+# most recent tracking log that has been loaded
 # into Edx.
 #
-# Returns the load date and the date when the 
+# Returns the load date and the date when the
 # log was collected.
 #
 # Uses the load_file name field of the LoadInfo table.
@@ -283,7 +283,7 @@ END//
 #       in the call SUBSTR(str,startPos,len): The "8" is the length
 #       of the file names date part.
 #
-# Returns string of form: Loaded: 2013-12-30 13:20:57; Collected: 20130610 
+# Returns string of form: Loaded: 2013-12-30 13:20:57; Collected: 20130610
 
 DROP FUNCTION IF EXISTS latestLog//
 
@@ -291,7 +291,7 @@ CREATE FUNCTION latestLog()
 RETURNS varchar(50)
 BEGIN
     # See header comment for explanation of this SELECT
-    SELECT load_date_time, 
+    SELECT load_date_time,
            MAX(SUBSTR(load_file, LOCATE('log-', load_file)+4, 8)) AS log_date
     FROM Edx.LoadInfo
     INTO @loadDateTime, @collectDate;
@@ -305,8 +305,8 @@ END//
 # earliestLog
 #------------
 
-# Return the load date, and log collection date of the 
-# oldest tracking log that has been loaded 
+# Return the load date, and log collection date of the
+# oldest tracking log that has been loaded
 # into Edx.
 #
 # Returns (load date, date when log was collected)
@@ -323,7 +323,7 @@ END//
 #       in the call SUBSTR(str,startPos,len): The "8" is the length
 #       of the file names date part.
 #
-# Returns string of form: Loaded: 2013-12-30 13:20:57; Collected: 20130610 
+# Returns string of form: Loaded: 2013-12-30 13:20:57; Collected: 20130610
 
 DROP FUNCTION IF EXISTS earliestLog//
 
@@ -331,7 +331,7 @@ CREATE FUNCTION earliestLog()
 RETURNS varchar(50)
 BEGIN
     # See header comment for explanation of this SELECT
-    SELECT load_date_time, 
+    SELECT load_date_time,
            MIN(SUBSTR(load_file, LOCATE('log-', load_file)+4, 8)) AS log_date
     FROM Edx.LoadInfo
     INTO @loadDateTime, @collectDate;
@@ -345,7 +345,7 @@ END//
 # idAnon2Int
 #-----------
 
-# Given user ID hash as used in Edx, return 
+# Given user ID hash as used in Edx, return
 # the corresponding row number that is used
 # in some edxprod tables.
 
@@ -355,7 +355,7 @@ CREATE FUNCTION idAnon2Int(anonId varchar(40))
 RETURNS int(11)
 DETERMINISTIC
 BEGIN
-    SELECT user_int_id 
+    SELECT user_int_id
     FROM EdxPrivate.UserGrade
     WHERE anon_screen_name = anonId
     INTO @intId;
@@ -367,7 +367,7 @@ END//
 #------------
 
 # Given a user_int_id, as used to id users
-# in the platform tables, return 
+# in the platform tables, return
 # the corresponding user ID as used
 # in the forum table.
 # This function should live in EdxPrivate.
@@ -391,7 +391,7 @@ END//
 # idForum2Anon
 #-----------
 
-# Given a Forum uid,  return 
+# Given a Forum uid,  return
 # the corresponding user ID as used
 # in tables other than the forum contents tbl.
 # This function should live in EdxPrivate.
@@ -417,7 +417,7 @@ END//
 # idForum2Int
 #-----------
 
-# Given a Forum uid,  return 
+# Given a Forum uid,  return
 # the user int ID as used
 # in platform tables.
 # This function should live in EdxPrivate.
@@ -443,8 +443,8 @@ END//
 # idInt2Anon
 #-----------
 
-# Given an integer user ID as used in 
-# some edxprod tables, return 
+# Given an integer user ID as used in
+# some edxprod tables, return
 # the corresponding hash-type user ID
 # that is used in Edx and EdxPrivate
 
@@ -472,24 +472,31 @@ END//
 # or Piazza, return the corresponding
 # anon_screen_name. The 32 char uids are
 # LTI: learning technology interchange.
-# Multiple LTIs may map to the same 
+# Multiple LTIs may map to the same
 # anon_screen_name, b/c EdX assigns
 # both a course-dependent, and a global
 # LTI to learners. Any of these LTIs
 # may be given to this functions, and
 # it will work.
 
+# NOTE: Changed variable to varchar(100). When passed string
+# with char_length > 32, function was returning erroneous ASN.
+# This issue may reoccur with other conversions.
+
 DROP FUNCTION IF EXISTS idExt2Anon//
 
-CREATE FUNCTION idExt2Anon(extId varchar(32)) 
+CREATE FUNCTION idExt2Anon(extId varchar(100))
 RETURNS varchar(40)
 DETERMINISTIC
 BEGIN
-      DECLARE anonId varchar(255);
-      SELECT anon_screen_name INTO @anonId
-        FROM edxprod.Lti2Anon
-       WHERE lti_id = extId;
-      return @anonId;
+    DECLARE anonId varchar(255);
+    IF char_length(extId) <> 32
+    THEN
+      RETURN null;
+    ELSE
+      SELECT anon_screen_name INTO @anonId FROM edxprod.Lti2Anon WHERE lti_id = extId;
+      RETURN @anonId;
+    END IF;
 END//
 
 #--------------------------
@@ -505,13 +512,13 @@ END//
 
 DROP FUNCTION IF EXISTS idAnon2Ext//
 
-CREATE FUNCTION idAnon2Ext(the_anon_screen_name varchar(40)) 
+CREATE FUNCTION idAnon2Ext(the_anon_screen_name varchar(40))
 RETURNS varchar(32)
 DETERMINISTIC
 BEGIN
       DECLARE ltiId varchar(255);
       SELECT DISTINCT lti_id INTO @ltiId
-        FROM (SELECT lti_id 
+        FROM (SELECT lti_id
              	FROM edxprod.Lti2Anon
 	       WHERE anon_screen_name = the_anon_screen_name
              ) AS LtiCandidates,
@@ -532,7 +539,7 @@ END//
 # a separate LTI is created for each course the participant
 # takes. Therefore there are two facilities for converting
 # anon_screen_names to LTI (a.k.a. 'External') user ids:
-# Function idAnon2Ext() takes an anon_screen_name, and 
+# Function idAnon2Ext() takes an anon_screen_name, and
 # a course_display_name, and returns an external Id.
 #
 # Procedure idAnon2Exts() instead just takes an anon_screen_name,
@@ -550,7 +557,7 @@ END//
 #
 #   Using idInt2Anon():
 #   284347 int = 0686bef338f8c6f0696cc7d4b0650daf2473f59d anon
-# 
+#
 #   SELECT idAnon2ExtByCourse('0686bef338f8c6f0696cc7d4b0650daf2473f59d', 'Engineering/CVX101/Winter2014');
 #   should be: 5cbdc8b38171f3641845cb17784de87b
 
@@ -588,7 +595,7 @@ END//
 # a separate LTI is created for each course the participant
 # takes. Therefore there are two facilities for converting
 # anon_screen_names to LTI (a.k.a. 'External') user ids:
-# Function idAnon2Ext() takes an anon_screen_name, and 
+# Function idAnon2Ext() takes an anon_screen_name, and
 # a course_display_name, and returns an external Id.
 #
 # Procedure idAnon2Exts() instead just takes an anon_screen_name,
@@ -615,7 +622,7 @@ DROP PROCEDURE IF EXISTS idAnon2Exts//
 CREATE PROCEDURE idAnon2Exts(the_anon_id varchar(255))
 DETERMINISTIC
 BEGIN
-      DROP TEMPORARY TABLE IF EXISTS ExtCourseTable;      
+      DROP TEMPORARY TABLE IF EXISTS ExtCourseTable;
 
       SELECT -1 INTO @int_id;
       SELECT user_int_id INTO @int_id
@@ -629,7 +636,7 @@ BEGIN
           FROM edxprod.student_anonymoususerid
           WHERE user_id = @int_id;
       END IF;
- 
+
       SELECT * FROM ExtCourseTable;
 
 END//
@@ -648,7 +655,7 @@ BEGIN
     -- IFNULL ensures return of 0 when learner or course not found.
     SELECT IFNULL(
       (SELECT IF(status = 'downloadable', 1, 0)
-       FROM edxprod.certificates_generatedcertificate 
+       FROM edxprod.certificates_generatedcertificate
        WHERE course_id = course_display_name
        AND idInt2Anon(user_id) = anon_screen_name
     ),0) INTO @wasCertified;
@@ -662,11 +669,11 @@ END//
 # Given a Coursera database name, such as coursera_networksonline-001_anonymized_forum,
 # extract the course and run parts, in this case: 'networksonline-001'.
 # If a MOOCDb version is available, 'MOOCDb Coursera' is appended.
-# 
+#
 # You can use this function to list all Coursera courses, like this:
 #
-#  SELECT DISTINCT extractCourseraCourseName(SCHEMA_NAME) 
-#  FROM information_schema.SCHEMATA 
+#  SELECT DISTINCT extractCourseraCourseName(SCHEMA_NAME)
+#  FROM information_schema.SCHEMATA
 #  WHERE schema_name LIKE 'Coursera%' LIMIT 100;
 
 DROP FUNCTION IF EXISTS extractCourseraCourseName;
@@ -682,13 +689,13 @@ BEGIN
 	return '';
     END IF;
 
-    # Extract substring between 'coursera_' (or 'coursera-'), and the 
+    # Extract substring between 'coursera_' (or 'coursera-'), and the
     # 'sub database': '_anonymized_forum', '_hash_mapping', etc.:
     IF (@startPosUnderscore = 1)
     THEN
         SELECT SUBSTRING_INDEX(courseraDbName,'_',2) INTO @RIGHT_CHOPPED;
         SELECT SUBSTRING_INDEX(@RIGHT_CHOPPED,'_',-1) INTO @RES;
-    ELSE 
+    ELSE
         SELECT SUBSTRING_INDEX(courseraDbName,'-',2) INTO @RIGHT_CHOPPED;
         SELECT SUBSTRING_INDEX(@RIGHT_CHOPPED,'-',-1) INTO @RES;
     END IF;
@@ -711,7 +718,7 @@ END//
 #-----------
 
 # Given a course name, return 1 if the course is sharable
-# outside of Stanford, else return 0. To be sharable, the 
+# outside of Stanford, else return 0. To be sharable, the
 # must have run after June 14, 2014, not be designated as
 # 'internal,' and have enrollment > 500.
 
@@ -724,7 +731,7 @@ BEGIN
             SELECT course_display_name
               FROM CourseInfo
               WHERE course_display_name = the_course_display_name
-                AND (academic_year > 2014 
+                AND (academic_year > 2014
                      OR (academic_year = 2013 AND quarter = 'summer')
                      OR (academic_year = 2014 AND quarter = 'fall')
                      AND is_internal = 0
@@ -831,7 +838,7 @@ BEGIN
 
     # Add NovoEd case here when NovoEd MOOCDb is supported.
 
-    RETURN '';    
+    RETURN '';
 END//
 
 #--------------------------
@@ -881,17 +888,17 @@ DROP FUNCTION IF EXISTS isUserEvent //
 CREATE FUNCTION isUserEvent (an_event_type varchar(255))
 RETURNS BOOL DETERMINISTIC
 BEGIN
-    IF 	 an_event_type = 'book' OR 
-	 an_event_type = 'fullscreen' OR 
-	 an_event_type = 'hide_transcript' OR 
-	 an_event_type = 'hide_transcript' OR 
-	 an_event_type = 'load_video' OR 
-	 an_event_type = 'not_fullscreen' OR 
-	 an_event_type = 'oe_feedback_response_selected' OR 
-	 an_event_type = 'oe_hide_question' OR 
-	 an_event_type = 'oe_show_question' OR 
-	 an_event_type = 'oe_show_full_feedback' OR 
-	 an_event_type = 'oe_show_respond_to_feedback' OR 
+    IF 	 an_event_type = 'book' OR
+	 an_event_type = 'fullscreen' OR
+	 an_event_type = 'hide_transcript' OR
+	 an_event_type = 'hide_transcript' OR
+	 an_event_type = 'load_video' OR
+	 an_event_type = 'not_fullscreen' OR
+	 an_event_type = 'oe_feedback_response_selected' OR
+	 an_event_type = 'oe_hide_question' OR
+	 an_event_type = 'oe_show_question' OR
+	 an_event_type = 'oe_show_full_feedback' OR
+	 an_event_type = 'oe_show_respond_to_feedback' OR
 	 an_event_type = 'openassessmentblock.get_peer_submission' OR
          an_event_type = 'openassessmentblock.peer_assess' OR
          an_event_type = 'openassessmentblock.self_assess' OR
@@ -900,25 +907,25 @@ BEGIN
          an_event_type = 'openassessment.create_submission' OR
          an_event_type = 'openassessment.save_submission' OR
          an_event_type = 'openassessment.upload_file' OR
-	 an_event_type = 'page_close' OR 
-	 an_event_type = 'pause_video' OR 
-	 an_event_type = 'peer_grading_hide_question' OR 
-	 an_event_type = 'peer_grading_show_question' OR 
-	 an_event_type = 'play_video' OR 
-	 an_event_type = 'problem_check' OR 
-	 an_event_type = 'problem_graded' OR 
-	 an_event_type = 'problem_fail' OR 
-	 an_event_type = 'problem_reset' OR 
-	 an_event_type = 'problem_save' OR 
-	 an_event_type = 'problem_show' OR 
-	 an_event_type = 'rubric_select' OR 
-	 an_event_type = 'seek_video' OR 
-	 an_event_type = 'seq_goto' OR 
-	 an_event_type = 'seq_next' OR 
-	 an_event_type = 'seq_prev' OR 
-	 an_event_type = 'show_transcript' OR 
-	 an_event_type = 'speed_change_video' OR 
-	 an_event_type = 'staff_grading_hide_question' OR 
+	 an_event_type = 'page_close' OR
+	 an_event_type = 'pause_video' OR
+	 an_event_type = 'peer_grading_hide_question' OR
+	 an_event_type = 'peer_grading_show_question' OR
+	 an_event_type = 'play_video' OR
+	 an_event_type = 'problem_check' OR
+	 an_event_type = 'problem_graded' OR
+	 an_event_type = 'problem_fail' OR
+	 an_event_type = 'problem_reset' OR
+	 an_event_type = 'problem_save' OR
+	 an_event_type = 'problem_show' OR
+	 an_event_type = 'rubric_select' OR
+	 an_event_type = 'seek_video' OR
+	 an_event_type = 'seq_goto' OR
+	 an_event_type = 'seq_next' OR
+	 an_event_type = 'seq_prev' OR
+	 an_event_type = 'show_transcript' OR
+	 an_event_type = 'speed_change_video' OR
+	 an_event_type = 'staff_grading_hide_question' OR
 	 an_event_type = 'staff_grading_show_question'
    THEN
        RETURN 1;
@@ -941,8 +948,8 @@ DROP FUNCTION IF EXISTS isEngagementEvent //
 CREATE FUNCTION isEngagementEvent (an_event_type varchar(255))
 RETURNS BOOL DETERMINISTIC
 BEGIN
-    IF 	 an_event_type = 'load_video' OR 
-	 an_event_type = 'oe_feedback_response_selected' OR 
+    IF 	 an_event_type = 'load_video' OR
+	 an_event_type = 'oe_feedback_response_selected' OR
 	 an_event_type = 'openassessmentblock.get_peer_submission' OR
          an_event_type = 'openassessmentblock.peer_assess' OR
          an_event_type = 'openassessmentblock.self_assess' OR
@@ -951,16 +958,16 @@ BEGIN
          an_event_type = 'openassessment.create_submission' OR
          an_event_type = 'openassessment.save_submission' OR
          an_event_type = 'openassessment.upload_file' OR
-	 an_event_type = 'pause_video' OR 
-	 an_event_type = 'peer_grading_hide_question' OR 
-	 an_event_type = 'peer_grading_show_question' OR 
-	 an_event_type = 'play_video' OR 
-	 an_event_type = 'problem_check' OR 
-	 an_event_type = 'problem_graded' OR 
-	 an_event_type = 'problem_save' OR 
-	 an_event_type = 'seek_video' OR 
-	 an_event_type = 'speed_change_video' OR 
-	 an_event_type = 'staff_grading_hide_question' OR 
+	 an_event_type = 'pause_video' OR
+	 an_event_type = 'peer_grading_hide_question' OR
+	 an_event_type = 'peer_grading_show_question' OR
+	 an_event_type = 'play_video' OR
+	 an_event_type = 'problem_check' OR
+	 an_event_type = 'problem_graded' OR
+	 an_event_type = 'problem_save' OR
+	 an_event_type = 'seek_video' OR
+	 an_event_type = 'speed_change_video' OR
+	 an_event_type = 'staff_grading_hide_question' OR
 	 an_event_type = 'staff_grading_show_question'
 
    THEN
@@ -978,7 +985,7 @@ END;//
 # Procedure to create a table of mappings between anon_screen_name,
 # and the external anon id used for Qualtrix and Piazza. The mapping
 # will contain all students of a given course specification.
-# Course specification is course name that can contain MySQL 
+# Course specification is course name that can contain MySQL
 # wildcards.
 #
 # Example: createExtIdMapByCourse('Engineering/Solar/Fall2013', 'myTable')
@@ -993,8 +1000,8 @@ BEGIN
     SET @the_table_name := tblName;
 
     SET @tblFilling = CONCAT(
-       
-    ' CREATE TABLE ',tblName, 
+
+    ' CREATE TABLE ',tblName,
     ' SELECT idInt2Anon(user_int_id) AS anon_screen_name,'
     '        student_anonymoususerid.anonymous_user_id AS ext_anon_name '
     ' FROM EdxPrivate.UserGrade '
@@ -1050,15 +1057,15 @@ CREATE FUNCTION wordcount(str TEXT)
 # likely to be a true OpenEdX course name. Else returns 0.
 # Filters out names that start with a digit, that contain the
 # word 'text' as an element in a name triplet: foo/test/bar.
-# Filters all known Stanford platform, team methods for 
-# polluting the course name space. 
+# Filters all known Stanford platform, team methods for
+# polluting the course name space.
 #
 # Intended to be one of 'only' three places where this filter must
 # be maintained. The other is open_edx_class_export/scripts/filterCourseNames.sh,
-# which is used a filter in a Linux shell pipe, and 
+# which is used a filter in a Linux shell pipe, and
 # json_to_relation/scripts/modulestoreJavaScriptUtilsTest.js.
 #
-# For testing: 
+# For testing:
 #    SELECT course_display_name, isTrueCourseName(course_display_name) FROM CourseInfo HAVING NOT isTrueCourseName(course_display_name);
 # should show only course names that are bad.
 #    SELECT course_display_name FROM CourseInfo HAVING isTrueCourseName(course_display_name);
@@ -1071,7 +1078,7 @@ BEGIN
     # Name starts with a zero?
     IF ((SELECT course_display_name REGEXP '^[0-9]') = 1)
     THEN
-        RETURN 0; 
+        RETURN 0;
     END IF;
     SELECT LOWER(course_display_name) INTO @courseIDLowCase;
 
@@ -1106,10 +1113,10 @@ BEGIN
     # Name starts with a zero?
     IF (SELECT isTrueCourseName(the_course_display_name) = 0)
     THEN
-        RETURN -1; 
+        RETURN -1;
     END IF;
-    SELECT COUNT(user_id) AS 'enrollment' 
-	   FROM edxprod.true_courseenrollment 
+    SELECT COUNT(user_id) AS 'enrollment'
+	   FROM edxprod.true_courseenrollment
 	   WHERE course_display_name = the_course_display_name
 	   INTO @totalEnrollment;
     RETURN @totalEnrollment;
@@ -1120,7 +1127,7 @@ END//
 #--------------------------
 
 # Takes a Coursera course name, and returns its enrollment.
-# The course name may be given with, our without the 
+# The course name may be given with, our without the
 # leading 'coursera'. Also, any of the standard Coursera
 # database names may or may not be appended. All of the
 # following are legal as course_name values:
@@ -1147,7 +1154,7 @@ BEGIN
     # as it should?
     IF (LOCATE('coursera_', goodName) != 1)
     THEN
-        SET goodName := concat('coursera_', goodName);    
+        SET goodName := concat('coursera_', goodName);
     END IF;
 
     # Remove any of the 'subdatabase' names, such
@@ -1193,7 +1200,7 @@ END//
 #------------------------
 
 # Takes a NovoEd course name, and returns its enrollment.
-# The course name may be given with, our without the 
+# The course name may be given with, our without the
 # leading 'novoed_crs_'. Also, the standard NovoEd email
 # version of the course db name: foo_email_bar may
 # be given. The following are legal as course_name values:
@@ -1220,9 +1227,9 @@ BEGIN
     # as it should?
     IF (LOCATE('novoed_crs_', goodName) != 1)
     THEN
-        SET goodName := CONCAT('novoed_crs_', goodName);    
+        SET goodName := CONCAT('novoed_crs_', goodName);
     END IF;
-    # If the given name is an email db, remove the _email_ 
+    # If the given name is an email db, remove the _email_
     # part:
     IF (LOCATE('_email_', goodName) != 0)
     THEN
@@ -1292,10 +1299,10 @@ proc_start_lbl: BEGIN
     insert into MySchemaNames
     SELECT distinct
         TABLE_SCHEMA as SchemaName
-    FROM 
+    FROM
         `information_schema`.`TABLES`,
 	`information_schema`.`SCHEMATA`
-    where 
+    where
         `information_schema`.`SCHEMATA`.`SCHEMA_NAME` LIKE dbNameRegex
       AND
         TABLE_NAME = tableName;
@@ -1345,7 +1352,7 @@ END//
 # if the given date is in the proper quarter of any year.
 # Numeric year may be provided as int or string.
 #
-# Quarter must be one of 'fall', 'winter', 'spring', 'summer'. 
+# Quarter must be one of 'fall', 'winter', 'spring', 'summer'.
 # Case does not matter.
 #
 # Examples:
@@ -1403,7 +1410,7 @@ END//
 # quarter arguments are fall,winter,spring, and summer.
 
 DROP FUNCTION IF EXISTS makeUpperQuarterDate //
-CREATE FUNCTION makeUpperQuarterDate(quarter varchar(6), academic_year INT) 
+CREATE FUNCTION makeUpperQuarterDate(quarter varchar(6), academic_year INT)
 RETURNS date DETERMINISTIC
 BEGIN
     IF (quarter = 'fall')
@@ -1432,7 +1439,7 @@ END//
 # quarter arguments are fall,winter,spring, and summer.
 
 DROP FUNCTION IF EXISTS makeLowQuarterDate //
-CREATE FUNCTION `makeLowQuarterDate`(quarter varchar(6), academic_year INT) 
+CREATE FUNCTION `makeLowQuarterDate`(quarter varchar(6), academic_year INT)
 RETURNS date DETERMINISTIC
 BEGIN
     IF (quarter = 'fall')
@@ -1490,14 +1497,14 @@ CREATE VIEW EventXtract AS
 DROP TABLE IF EXISTS Performance;
 DROP VIEW IF EXiSTS Performance;
 CREATE VIEW Performance AS
-SELECT anon_screen_name, 
+SELECT anon_screen_name,
        course_display_name,
        SUM(percent_grade)/COUNT(percent_grade) AS avg_grade
 FROM Edx.ActivityGrade
 GROUP BY anon_screen_name, course_display_name;
 
 #--------------------------
-# FinalGrade 
+# FinalGrade
 #-----------
 
 DROP TABLE IF EXISTS FinalGrade;
@@ -1553,11 +1560,11 @@ WHERE  CHAR_LENGTH(video_code) > 0 OR
 DROP TABLE IF EXISTS Demographics;
 DROP VIEW IF EXiSTS Demographics;
 CREATE VIEW Demographics AS
-SELECT EdxPrivate.UserGrade.anon_screen_name, 
+SELECT EdxPrivate.UserGrade.anon_screen_name,
        gender,
        year_of_birth,
        Year(CURDATE())-year_of_birth AS curr_age,
-       CASE level_of_education 
+       CASE level_of_education
           WHEN 'p' THEN 'Doctorate'
 	  WHEN 'm' THEN 'Masters or professional degree'
 	  WHEN 'b' THEN 'Bachelors'
@@ -1572,7 +1579,7 @@ SELECT EdxPrivate.UserGrade.anon_screen_name,
        END AS level_of_education,
        Edx.UserCountry.three_letter_country AS country_three_letters,
        Edx.UserCountry.country AS country_name
-       
+
 FROM edxprod.auth_userprofile
  JOIN EdxPrivate.UserGrade
    ON EdxPrivate.UserGrade.user_int_id = edxprod.auth_userprofile.user_id
