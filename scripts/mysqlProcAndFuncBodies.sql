@@ -494,7 +494,7 @@ BEGIN
     THEN
       RETURN null;
     ELSE
-      SELECT anon_screen_name INTO @anonId FROM edxprod.Lti2Anon WHERE lti_id = extId;
+      SELECT anon_screen_name INTO @anonId FROM edxprod.Lti2Anon WHERE lti_id = extId LIMIT 1;
       RETURN @anonId;
     END IF;
 END//
