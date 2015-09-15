@@ -11,9 +11,9 @@ usage="Usage: "`basename $0`" [-u username][-p][-n noindexex]"
 # Get MySQL version on this machine
 MYSQL_VERSION=$(mysql --version | sed -ne 's/.*Distrib \([0-9][.][0-9]\).*/\1/p')
 if [[ $MYSQL_VERSION > 5.5 ]]
-then 
+then
     MYSQL_VERSION='5.6+'
-else 
+else
     MYSQL_VERSION='5.5'
 fi
 
@@ -35,7 +35,7 @@ fi
 
 # -------------------  Process Commandline Option -----------------
 
-# Check whether given -pPassword, i.e. fused -p with a 
+# Check whether given -pPassword, i.e. fused -p with a
 # pwd string:
 
 for arg in $@
@@ -72,14 +72,14 @@ do
       NEXT_ARG=$((NEXT_ARG + 1))
       ;;
     \?)
-      # If the $PASSWD is set, we *assume* that 
+      # If the $PASSWD is set, we *assume* that
       # the unrecognized option was a
       # -pMyPassword, and don't signal
-      # an error. Therefore, if $PASSWD is 
-      # set then illegal options are quietly 
+      # an error. Therefore, if $PASSWD is
+      # set then illegal options are quietly
       # ignored:
       if [ ! -z $PASSWD ]
-      then 
+      then
 	  continue
       else
 	  echo $USAGE
@@ -111,9 +111,9 @@ then
 fi
 
 #**************
-# echo 'UID of script caller: '$USERNAME
-# echo 'UID used for MySQL operations: root'
-# echo 'MySQL root password: '$PASSWD
+ echo 'UID of script caller: '$USERNAME
+ echo 'UID used for MySQL operations: root'
+ echo 'MySQL root password: '$PASSWD
 # exit 0
 #**************
 
@@ -158,4 +158,3 @@ then
 else
     echo "No index creation requested; no indexes defined."
 fi
-
