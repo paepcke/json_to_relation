@@ -2,7 +2,7 @@
 # with required empty tables inside.
 # CAUTION: deletes dbs Edx and EdxPrivate.
 #
-# This .sql file is sourced from 
+# This .sql file is sourced from
 # createEmptyEdxDbs.sh, where an appropriate
 # warning is issued before running.
 
@@ -156,7 +156,7 @@ CREATE TABLE IF NOT EXISTS EdxTrackEvent (
     answer_fk VARCHAR(40) NOT NULL,
     state_fk VARCHAR(40) NOT NULL,
     load_info_fk VARCHAR(40) NOT NULL
-    ) 
+    )
 ENGINE=MyISAM
 PARTITION BY LIST COLUMNS(quarter) (
     PARTITION pAY2012_Spring VALUES IN ('spring2013'),
@@ -195,7 +195,7 @@ CREATE TABLE IF NOT EXISTS ActivityGrade (
     student_id             int(11) 	 NOT NULL,
     course_display_name    varchar(255)  NOT NULL,
     grade                  double,
-    max_grade              double,     
+    max_grade              double,
     percent_grade          double        NOT NULL,
     parts_correctness      varchar(50),
     answers                varchar(255)  NOT NULL,
@@ -336,7 +336,7 @@ CREATE TABLE IF NOT EXISTS `UserGrade` (
   `distinction` tinyint(4) NOT NULL DEFAULT '0',
   `status` varchar(50) NOT NULL DEFAULT '',
   `user_int_id` int(11) NOT NULL,
-  `anon_screen_name` varchar(40) NOT NULL DEFAULT ''
+  `anon_screen_name` varchar(40) NOT NULL DEFAULT '',
   KEY `GradesUIDIdx` (`user_int_id`),
   KEY `UserGradeGradeIdx` (`grade`),
   KEY `UserGradeCourseIDIdx` (`course_id`),
@@ -424,4 +424,3 @@ CREATE TABLE IF NOT EXISTS `auth_userprofile` (
   KEY `auth_userprofile_551e365c` (`level_of_education`),
   CONSTRAINT `user_id_refs_id_3daaa960628b4c11` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=631396 DEFAULT CHARSET=utf8;
-
