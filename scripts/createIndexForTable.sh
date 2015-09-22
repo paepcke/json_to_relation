@@ -6,13 +6,13 @@
 #          (and thereby created) from scratch. In that case
 #          all the indexes would be missing. No need to
 #          use this script if using manageEdxDb.sh
-#       2. when manageEdxDb.py loads new events 
+#       2. when manageEdxDb.py loads new events
 #          it disables indexes to speed up the load.
 #          When loading finishes, indexes need to be
 #          rebuilt to reflect the additional rows.
 #
-# Optionally given one or more table names in the Edx 
-# or EdxPrivate databases, create the indexes that are 
+# Optionally given one or more table names in the Edx
+# or EdxPrivate databases, create the indexes that are
 # needed for those tables. If no tables are given,
 # will create the indexes for all tables.
 
@@ -22,9 +22,9 @@ help="Create indexes for one or more Edx/EdxPrivate tables. No argument: all ind
 # Get MySQL version on this machine
 MYSQL_VERSION=$(mysql --version | sed -ne 's/.*Distrib \([0-9][.][0-9]\).*/\1/p')
 if [[ $MYSQL_VERSION > 5.5 ]]
-then 
+then
     MYSQL_VERSION='5.6+'
-else 
+else
     MYSQL_VERSION='5.5'
 fi
 
@@ -32,9 +32,9 @@ USERNAME=`whoami`
 PASSWD=''
 askForPasswd=false
 
-# -------------------  Process Commandline Option -----------------                
+# -------------------  Process Commandline Option -----------------
 
-# Check whether given -pPassword, i.e. fused -p with a 
+# Check whether given -pPassword, i.e. fused -p with a
 # pwd string:
 
 for arg in $@
@@ -71,14 +71,14 @@ do
       NEXT_ARG=$((NEXT_ARG + 1))
       ;;
     \?)
-      # If the $PASSWD is set, we *assume* that 
+      # If the $PASSWD is set, we *assume* that
       # the unrecognized option was a
       # -pMyPassword, and don't signal
-      # an error. Therefore, if $PASSWD is 
-      # set then illegal options are quietly 
+      # an error. Therefore, if $PASSWD is
+      # set then illegal options are quietly
       # ignored:
       if [ ! -z $PASSWD ]
-      then 
+      then
 	  continue
       else
 	  echo $USAGE
@@ -176,7 +176,7 @@ fi
 # Build a variable MYSQL_AUTH that depends on
 # the MySQL server version. Versions <5.6 use
 #   -u $USERNAME $pwdOption
-# For newer servers we use --login-path=root 
+# For newer servers we use --login-path=root
 
 if [[ $MYSQL_VERSION == '5.6+' ]]
 then
@@ -194,7 +194,7 @@ do
 
 	# If creating indexes on an already populated table, you would
 	# use the following for increased efficiency (one statement for
-	# all indexes). But if any of the index(es) exists, I think 
+	# all indexes). But if any of the index(es) exists, I think
 	# this statement would bomb. So we instead use the form below,
 	# with one statement per index. On an empty table this is perfectly
 	# fast:
@@ -273,12 +273,12 @@ do
 	echo "Creating index on ActivityGrade(module_id) if needed..."
 	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('ActGrdModIdIdx', 'ActivityGrade', 'module_id', 255);"
 	echo "Creating index on ActivityGrade(module_type) if needed..."
-	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('ActGrdModTypeIdx', 'ActivityGrade', 'module_type', 255);"
+	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('ActGrdModTypeIdx', 'ActivityGrade', 'module_type', 32);" #255
 	echo "Creating index on ActivityGrade(resource_display_name) if needed..."
 	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('ActGrdResDispNmIdx', 'ActivityGrade', 'resource_display_name', 255);"
 	echo "Creating index on ActivityGrade(num_attempts) if needed..."
 	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('ActGrdNumAttemptsIdx', 'ActivityGrade', 'num_attempts', NULL);"
-    elif [ $table == 'ABExperiment' ]	
+    elif [ $table == 'ABExperiment' ]
     then
 	echo "Creating index on ABExperiment(event_type) if needed..."
 	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('ABExpEventTypeIdx', 'ABExperiment', 'event_type', NULL);"
@@ -293,7 +293,7 @@ do
 	echo "Creating index on ABExperiment(num_attempts) if needed..."
 	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('ABExpChldModIdIdx', 'ABExperiment', 'child_module_id', 255);"
 
-    elif [ $table == 'OpenAssessment' ]	
+    elif [ $table == 'OpenAssessment' ]
     then
 	echo "Creating index on OpenAssessment(event_type) if needed..."
 	mysql $MYSQL_AUTH --silent --skip-column-names -e "USE Edx; CALL createIndexIfNotExists('OpAssEvTypeIdx', 'OpenAssessment', 'event_type', 255);"
