@@ -135,7 +135,7 @@ class TrackLogPuller(object):
     elif hostname == 'datastage2':
         LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/EdX/tracking"
     elif hostname == 'datastage2go':
-        LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/Edx/tracking"
+        LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/EdX/tracking"
     else:
         LOCAL_LOG_STORE_ROOT = None
     LOG_BUCKETNAME = "stanford-edx-logs"
