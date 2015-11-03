@@ -447,6 +447,9 @@ END//
 # some edxprod tables, return
 # the corresponding hash-type user ID
 # that is used in Edx and EdxPrivate
+#
+# NOTE: since UserGrade contains multiple entries,
+# use 'max' to select only one ASN.
 
 DROP FUNCTION IF EXISTS idInt2Anon//
 
@@ -455,7 +458,7 @@ RETURNS varchar(40)
 DETERMINISTIC
 BEGIN
     DECLARE anonId varchar(255);
-    SELECT anon_screen_name
+    SELECT max(anon_screen_name)
     FROM EdxPrivate.UserGrade
     WHERE user_int_id  = intId
     INTO anonId;
