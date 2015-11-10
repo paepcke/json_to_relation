@@ -898,7 +898,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
             # Instructor events:
             elif eventType in ['list-students',  'dump-grades',  'dump-grades-raw',  'dump-grades-csv',
                                'dump-grades-csv-raw', 'dump-answer-dist-csv', 'dump-graded-assignments-config',
-                               'list-staff',  'list-instructors',  'list-beta-testers'
+                               'list-staff',  'list-instructors',  'list-beta-testers', 'edx.user.settings.changed'
                                ]:
                 # These events have no additional info. The event_type says it all,
                 # and that's already been stuck into the table:
