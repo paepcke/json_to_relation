@@ -759,6 +759,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                     cleanJSONStr = self.makeJSONSafe(eventJSONStrOrDict)
                     event = json.loads(cleanJSONStr)
                 except ValueError:
+                    if '{' not in eventJSONStrOrDict:
+                        event = eventJSONStrOrDict # pass along simple case of problem_check/reset/save event
                     # Last ditch: event types like goto_seq, need backslashes removed:
                     event = json.loads(re.sub(r'\\','',eventJSONStrOrDict))
                 except Exception as e1:
