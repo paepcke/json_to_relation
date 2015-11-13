@@ -9,13 +9,13 @@
 '''
 Created on Sep 14, 2013
 
-Given a source with JSON structures, derive a schema, and construct 
+Given a source with JSON structures, derive a schema, and construct
 a relational table. Source can be a local file name, a URL, a
 StringIO pseudofile, or a Unix pipe.
 
-JSON structures in the source must be one per line. That is, each line in 
+JSON structures in the source must be one per line. That is, each line in
 the source must be a self contained JSON object. Pretty printed strings
-won't work. 
+won't work.
 
 @author: paepcke
 
@@ -45,18 +45,18 @@ from output_disposition import OutputDisposition, OutputFile, OutputPipe
 
 class JSONToRelation(object):
     '''
-    Given a source with JSON structures, derive a schema, and construct 
+    Given a source with JSON structures, derive a schema, and construct
     a relational table. Source can be a local file name, a URL, a
     StringIO pseudofile, or a Unix pipe.
-    
-    JSON structures in the source must be one per line. That is, each line in 
+
+    JSON structures in the source must be one per line. That is, each line in
     the source must be a self contained JSON object. Pretty printed strings
-    won't work. 
+    won't work.
     '''
-    
+
     MAX_SQL_INT = math.pow(2,31) - 1
     MIN_SQL_INT = -math.pow(2,31)
-    
+
     # Regex pattern to check whether a string
     # contains only chars legal in a MySQL identifier
     #, i.e. alphanumeric plus underscore plus dollar sign:
@@ -65,7 +65,7 @@ class JSONToRelation(object):
     # How long a MySQL packet is allowed to be.
     # MySQL server default is 1M as per documentation,
     # but 16M as per observation. Change that value
-    # on server via either  
+    # on server via either
     #     mysqld --max_allowed_packet=32M
     # or putting this into /etc/mysql/my.cnf
     #       [mysqld]
@@ -74,16 +74,16 @@ class JSONToRelation(object):
     # new limit minus about 1K to allow for
     # the INSERT, and column name specs. Or round
     # down like this:
-    MAX_ALLOWED_PACKET_SIZE = 1000000; 
-    
+    MAX_ALLOWED_PACKET_SIZE = 1000000;
+
 
     # Remember whether logging has been initialized (class var!):
     loggingInitialized = False
     logger = None
-        
-    def __init__(self, 
-                 jsonSource, 
-                 destination, 
+
+    def __init__(self,
+                 jsonSource,
+                 destination,
                  schemaHints=OrderedDict(),
                  jsonParserInstance=None,
                  loggingLevel=logging.INFO,
@@ -94,25 +94,25 @@ class JSONToRelation(object):
         Create a JSON-to-Relation converter. The JSON source can be
         a file with JSON objects, a StringIO.StringIO string pseudo file,
         stdin, or a MongoDB
-        
+
         The destination can be a file, where CSV is written in Excel-readable
         form, stdout, or a MySQL table specification, where the ouput rows
         will be inserted.
-        
+
         SchemaHints optionally specify the SQL types of particular columns.
         By default the processJSONObs() method will be conservative, and
         specify numeric columns as DOUBLE. Even though all encountered values
         for one column could be examined, and a more appropriate type chosen,
         such as INT when only 4-byte integers are ever seen, future additions
         to the table might exceed the INT capacity for that column. Example
-        
+
         If schemaHints is provided, it is a Dict mapping column names to ColDataType.
         The column names in schemaHints must match the corresponding (fully nested)
         key names in the JSON objects::
-        
+
             schemaHints dict: {'msg.length' : ColDataType.INT,
                                'chunkSize' : ColDataType.INT}
-        
+
         For unit testing isolated methods in this class, set jsonSource and
         destination to None.
 
@@ -120,7 +120,7 @@ class JSONToRelation(object):
         table that will hold all results from the JSON parsers in relational
         form. However, parsers may call startNewTable() to build any new tables
         they wish.
-        
+
         :param jsonSource: subclass of InputSource that wraps containing JSON structures, or a URL to such a source
         :type jsonSource: {InPipe | InString | InURI | InMongoDB} (InMongoDB not implemented)
         :param destination: instruction to were resulting rows are to be directed
@@ -128,10 +128,10 @@ class JSONToRelation(object):
         :param schemaHints: Dict mapping col names to data types (optional). Affects the default (main) table.
         :type schemaHints: OrderedDict<String,ColDataTYpe>
         :param jsonParserInstance: a parser that takes one JSON string, and returns a CSV row, or other
-                                   desired output, like SQL dump statements. Parser also must inform this 
+                                   desired output, like SQL dump statements. Parser also must inform this
                                    parent object of any generated column names.
         :type jsonParserInstance: {GenericJSONParser | EdXTrackLogJSONParser | CourseraTrackLogJSONParser}
-        :param loggingLevel: level at which logging output is show. 
+        :param loggingLevel: level at which logging output is show.
         :type loggingLevel: {logging.DEBUG | logging.WARN | logging.INFO | logging.ERROR | logging.CRITICAL}
         :param logFile: path to file where log is to be written. Default is None: log to stdout.
                         A warning is logged if logFile is None and the destination is OutputPipe. In this
@@ -141,7 +141,7 @@ class JSONToRelation(object):
         :type  progressEvery: {int | None}
         @raise ValueErrer: when value of jsonParserInstance is neither None, nor an instance of GenericJSONParser,
                         nor one of its subclasses.
-        @raise ValueError: when jsonSource is not an instance of InPipe, InString, InURI, or InMongoDB  
+        @raise ValueError: when jsonSource is not an instance of InPipe, InString, InURI, or InMongoDB
         '''
 
         # If jsonSource and destination are both None,
@@ -151,10 +151,10 @@ class JSONToRelation(object):
             return
         if not isinstance(jsonSource, InputSource):
             raise ValueError("JSON source must be an instance of InPipe, InString, InURI, or InMongoDB; is %s" % type(jsonSource))
-        
+
         if not isinstance(schemaHints, OrderedDict):
             raise ValueError("The schemaHints, if provided, must be an OrderedDict.")
-        
+
         self.jsonSource = jsonSource
         self.destination = destination
         self.mainTableName = mainTableName
@@ -171,48 +171,48 @@ class JSONToRelation(object):
         self.userDefinedHints = schemaHints
 
         # The following three instance vars are used for accumulating INSERT
-        # values when output is a MySQL dump. 
+        # values when output is a MySQL dump.
         # Current table for which insert values are being collected:
         self.currOutTable = None
-        
+
         # Insert values so far (array of value arrays):
         self.currValsArray = []
-        
+
         # Column names for which INSERT values are being collected.
         # Ex.: 'col1,col2':
         self.currInsertSig = None
-        
-        # Current approximate len of INSERT statement 
+
+        # Current approximate len of INSERT statement
         # for cached values:
         self.valsCacheSize = 0;
 
         # Count JSON objects (i.e. JSON file lines) as they are passed
         # to us for parsing. Used for logging malformed entries:
         self.lineCounter = -1
-        
+
         self.setupLogging(loggingLevel, logFile)
 
         # Check whether log output would interleave with data output:
         if logFile is None and isinstance(destination, OutputPipe):
             JSONToRelation.logger.warn("If output is to a Unix pipe and no log file name is provided, log output will be mixed with data output.")
-        
+
         if jsonParserInstance is None:
             self.jsonParserInstance = GenericJSONParser(self)
         elif isinstance(jsonParserInstance, GenericJSONParser):
             self.jsonParserInstance = jsonParserInstance
         else:
             raise ValueError("Parameter jsonParserInstance needs to be of class GenericJSONParser, or one of its subclasses.")
-        
+
         #************ Unimplemented Options **************
         #if self.outputFormat == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
         #    raise NotImplementedError("Output as MySQL statements not yet implemented")
         #*************************************************
-        
+
         # Dict col name to ColumnSpec object:
         self.cols = OrderedDict()
-        
+
         # Position of column for next col name that is
-        # newly encountered: 
+        # newly encountered:
         self.nextNewColPos = 0;
 
     def flush(self):
@@ -223,14 +223,14 @@ class JSONToRelation(object):
         statement. This speeds up load times into the databases later.
         If flush() is not called, output may be missing.
         '''
-        self.processFinishedRow('FLUSH', self.destination)        
+        self.processFinishedRow('FLUSH', self.destination)
 
     def setupLogging(self, loggingLevel, logFile):
         if JSONToRelation.loggingInitialized:
             # Remove previous file or console handlers,
             # else we get logging output doubled:
             JSONToRelation.logger.handlers = []
-            
+
         # Set up logging:
         JSONToRelation.logger = logging.getLogger('jsonToRel')
         JSONToRelation.logger.setLevel(loggingLevel)
@@ -252,14 +252,14 @@ class JSONToRelation(object):
         #JSONToRelation.logger.warn("Warning for you")
         #JSONToRelation.logger.debug("Debug for you")
         #**********************
-        
+
         JSONToRelation.loggingInitialized = True
 
     def setParser(self, parserInstance):
         '''
         Set the parser instance to use for upcoming calls to the convert() method.
 
-        :param parserInstance: must be instance of GenericJSONParser or one of its subclasses 
+        :param parserInstance: must be instance of GenericJSONParser or one of its subclasses
         :type parserInstance: {GenericJSONParser | subclass}
         '''
         self.jsonParserInstance = parserInstance
@@ -270,7 +270,7 @@ class JSONToRelation(object):
         Called by parsers when they need to start a new relational
         table beyond the one that is created for them. Ex: edxTrackLogJSONParser.py
         needs auxiliary tables for deeply embedded JSON structures with unpredictable
-        numbers of elements (e.g. problem state). The schemaHintsNewTable 
+        numbers of elements (e.g. problem state). The schemaHintsNewTable
         is an optionally ordered dict. Parsers may add additional columns later
         via calls to ensureColExistence(). Note that for MySQL load files such
         subsequent addition generates ALTER table, which might be expensive. So,
@@ -283,15 +283,15 @@ class JSONToRelation(object):
         :type schemaHintsNewTable: [Ordered]Dict<String,ColumnSpec>
         '''
         self.destination.startNewTable(tableName, schemaHintsNewTable)
-        
+
     def getSourceName(self):
         '''
-        Request a human-readable name of the JSON source, which 
+        Request a human-readable name of the JSON source, which
         might be a pipe, or a file, or something else. Each input source
         class knows to provide such a name.
         '''
         return self.jsonSource.getSourceName()
-        
+
     def setSchemaHints(self, schemaHints, tableName=None):
         '''
         Given a schema hint dictionary, set the given table's schema
@@ -314,12 +314,12 @@ class JSONToRelation(object):
 
         :param colName: name of column whose ColumnSpec instance is wanted
         :type colName: String
-        :param tableName: name of table of which the column is a part 
+        :param tableName: name of table of which the column is a part
         :type tableName: {String | None}
         :return: a ColumnSpec object that contains the SQL type name of the column
 
         :rtype: ColumnSpec
-        @raise KeyError: if either the table or the column don't exist.  
+        @raise KeyError: if either the table or the column don't exist.
         '''
         if tableName is None:
             tableName = self.mainTableName
@@ -329,8 +329,8 @@ class JSONToRelation(object):
         if tableName is None:
             tableName = self.mainTableName
         return self.destination.getSchemaHintByPos(pos, tableName)
-        
-    
+
+
     def ensureColExistence(self, colName, colDataType, tableName=None):
         if tableName is None:
             tableName = self.mainTableName
@@ -351,11 +351,11 @@ class JSONToRelation(object):
                 will have the column names prepended. Note that this option requires that
                 the output file is first written to a temp file, and then merged with the
                 completed column name header row to the final destination that was specified
-                by the client. 
+                by the client.
         :type prependColHeader: Boolean
         '''
         savedFinalOutDest = None
-        if self.destination.getOutputFormat() != self.destination.OutputFormat.SQL_INSERT_STATEMENTS: 
+        if self.destination.getOutputFormat() != self.destination.OutputFormat.SQL_INSERT_STATEMENTS:
             if prependColHeader:
                 savedFinalOutDest = self.destination
                 tmpFd  = tempfile.NamedTemporaryFile(suffix='.csv',prefix='jsonToRelationTmp')
@@ -376,7 +376,7 @@ class JSONToRelation(object):
                     continue
                 newRow = []
                 try:
-                    # processOneJSONObject will call pushtToTable() for all 
+                    # processOneJSONObject will call pushtToTable() for all
                     # tables necessary for each event type. The method will
                     # direct the top level event information to the table
                     # called self.mainTableName.
@@ -390,7 +390,7 @@ class JSONToRelation(object):
                     #numErrorsSoFar += 1
                     #if numErrorsSoFar > 5:
                     #    raise
-                    
+
                     # Uncomment to get stacktrace for the above caught errors:
                     #import sys
                     #import traceback
@@ -404,11 +404,11 @@ class JSONToRelation(object):
             # call to processOneJSONObject:
 #             if self.destination.getOutputFormat() == OutputDisposition.OutputFormat.SQL_INSERT_STATEMENTS:
 #                 self.processFinishedRow('FLUSH', outFd)
-#                 # Give parser a chance to seal the sql file: 
+#                 # Give parser a chance to seal the sql file:
 #                 self.jsonParserInstance.finish()
-        
+
             self.processFinishedRow('FLUSH', outFd)
-            # Give parser a chance to seal the sql file. If we are 
+            # Give parser a chance to seal the sql file. If we are
             # outputting only CSV, and the parser that was used generated MySQL INSERT statements,
             # then let the finish() method know; it will include the CSV load commands, so
             # that the main file can simply be sourced into MySQL:
@@ -416,8 +416,8 @@ class JSONToRelation(object):
                 self.jsonParserInstance.finish(includeCSVLoadCommands=True, outputDisposition=self.destination)
             else:
                 self.jsonParserInstance.finish(includeCSVLoadCommands=False)
-        
-        
+
+
         # If output to other than MySQL table (e.g. CSV file), check whether
         # we are to prepend the column header row:
         if prependColHeader and savedFinalOutDest is not None:
@@ -429,30 +429,30 @@ class JSONToRelation(object):
                     shutil.copyfileobj(inFd, finalOutFd.fileHandle)
             finally:
                 try:
-                    # Will fail for String file inputs, b/c strings 
+                    # Will fail for String file inputs, b/c strings
                     # don't get closed:
                     self.tmpFileName.close() # This deletes the file
                 except:
                     pass
-                
+
 
     def pushString(self, whatToWrite):
         '''
         Pushes the given string straight to the output (pipe or file).
-        No error checking is done. Used by underlying parsers 
-        for SQL other than INSERT statements, such as DROP, CREATE. 
+        No error checking is done. Used by underlying parsers
+        for SQL other than INSERT statements, such as DROP, CREATE.
 
         :param whatToWrite: a complete SQL statement.
         :type whatToWrite: String
         '''
         self.destination.write(whatToWrite)
-        
+
     def pushToTable(self, row, outFd=None):
         '''
-        Called both from convert(), and from some parsers to add one row to 
+        Called both from convert(), and from some parsers to add one row to
         one table. For CSV outputs the target table is implied: there is only
         one. But for parsers that generate INSERT statements, the targets
-        might be different tables on each call. 
+        might be different tables on each call.
 
         :param row: either an array of CSV values, or a triplet (tableName, insertSig, valsArray) (from MySQL INSERT-generating parsers)
         :type row: {[<any>] | (String, String, [<any>])}
@@ -462,7 +462,7 @@ class JSONToRelation(object):
         #****************************
         #if row.count('eventID') > 1:
         #    raise ValueError("Found it!: %s" % self.tmpJSONStr)
-        #****************************        
+        #****************************
         if outFd is None:
             outFd = self.destination
         self.processFinishedRow(row, outFd)
@@ -472,20 +472,20 @@ class JSONToRelation(object):
         When a row is finished, this method processes the row as per
         the user's disposition. The method writes the row to a CSV
         file, or pipe, or generates an SQL insert statement for later.
-        
+
         The filledNewRow parameter looks different, depending on whether
         the underlying parser generates MySQL insert statement information,
         or CSV rows. The latter are just written to outFD. MySQL insert info
         looks like this: ('tableName', 'insertSig', [valsArray]). The insertSig
-        is a string as needed for the INSERT statement's column names part. 
+        is a string as needed for the INSERT statement's column names part.
         Ex.: 'col1,col2'. The filledNewRow may also be the string 'FLUSH', which
         triggers flushing all buffers.
-        
-        :param filledNewRow: the list of values for one row, possibly including empty fields  
+
+        :param filledNewRow: the list of values for one row, possibly including empty fields
         :type filledNewRow: {(String,String,List<<any>>) | List<<any>> | String}
         :param outFd: an instance of a class that writes to the destination
         :type outFd: OutputDisposition
-        '''
+        ''''
         # We handle 'rows' destined for MySQL dumps differently
         # from rows destined to CSV. Parsers that generate dump
         # information as they translate JSON provide different
@@ -504,18 +504,18 @@ class JSONToRelation(object):
     def prepareMySQLRow(self, insertInfo):
         '''
         Receives either a triple ('tableName', 'insertSig', [valsArray]),
-        or the string 'FLUSH'. Generates either None, or a legal MySQL insert statement. 
+        or the string 'FLUSH'. Generates either None, or a legal MySQL insert statement.
         The method is lazy.
-        
+
         It collects values to be inserted into the same table, and the same
         columns within that table, and returns a non-Null string only when
         the incoming insertInfo is for a different table, or a different set
         of columns in the same table (as the previous calls). In that case the
         returned string is a legal MySQL INSERT statement, possibly multi-valued.
-        
+
         If insertInfo is the string 'FLUSH', then an INSERT statement is
-        returned for any held-back prior values. 
-        
+        returned for any held-back prior values.
+
         :param insertInfo: information on what to generate for MySQL dumps
         :type insertInfo: {(String, String, [<any>]) | String)}
         '''
@@ -529,9 +529,9 @@ class JSONToRelation(object):
 
         # Compute approximate new size of hold-back buffer with these new values:
         newCacheSize = self.valsCacheSize + self.calculateHeldBackDataSize(valsArray)
-        
+
         # Have we started accumulating values in an earlier call?
-        if self.currInsertSig is not None: 
+        if self.currInsertSig is not None:
             if tableName == self.currOutTable and insertSig == self.currInsertSig:
                 if newCacheSize > JSONToRelation.MAX_ALLOWED_PACKET_SIZE:
                     # New vals could be held back, but buffer is full:
@@ -560,7 +560,7 @@ class JSONToRelation(object):
                 # because all row values are base types:
                 self.currValsArray = [copy.copy(valsArray)]
                 return insertStatement
-            
+
         # We have not yet started to accumulate values:
         else:
             # If even the first INSERT values are too big for
@@ -580,13 +580,13 @@ class JSONToRelation(object):
             # because all row values are base types:
             self.currValsArray = [copy.copy(valsArray)]
             return None
-         
+
     def finalizeInsertStatement(self):
         '''
         Create a possibly multivalued INSERT statement from what is
         stored in self.currOutTable, self.currInsertSig, and self.currValsArray.
         Example return::
-        
+
            INSERT INTO myTable (col2, col2) VALUES
               ('foo',10),
               ('bar',20);
@@ -594,15 +594,15 @@ class JSONToRelation(object):
         :return: a fully formed SQL INSERT statement, possibly including multiple values. None if nothing to insert.
         :rtype: {String | None}
         '''
-        
+
         try:
             if len(self.currValsArray) == 0:
                 # Nothing to INSERT:
                 res = None
                 return res
-            
+
             valsFileStr = self.constructValuesStr(self.currValsArray)
-            
+
             res = "INSERT INTO %s (%s) VALUES %s;" % (self.currOutTable, self.currInsertSig, valsFileStr.getvalue())
         finally:
             # We are no longer accumulating INSERT values right now:
@@ -614,7 +614,7 @@ class JSONToRelation(object):
 
     def constructValuesStr(self, valsArrays):
         '''
-        Takes an array of arrays that hold the values to use in 
+        Takes an array of arrays that hold the values to use in
         an INSERT statement. Ex: [['foo',10],['bar',20]]. Returns
         a StringIO string file containing a legal INSERT statement's
         VALUES part: ('foo',10),('bar',20)
@@ -624,10 +624,10 @@ class JSONToRelation(object):
         :return: IOString string file with legal VALUES section of INSERT statement
 
         :rtype: IOString
-        '''
+        ''''
         # Build the values part:
         valsFileStr = StringIO()
-        # Avoid putting anything into the 
+        # Avoid putting anything into the
         # file string in the nested loop below, so
         # that noting needs to be stripped
         # out afterwards; avoids a string copy.
@@ -650,7 +650,7 @@ class JSONToRelation(object):
                 # for 'null', which needs to be written without quotes:
                 if insertVal == 'null':
                     valsFileStr.write(insertVal)
-                # Turn 'None' entries from JSON-converted empty JSON flds to null: 
+                # Turn 'None' entries from JSON-converted empty JSON flds to null:
                 elif insertVal == None:
                     valsFileStr.write('null')
                 else:
@@ -664,11 +664,11 @@ class JSONToRelation(object):
         Returns an ordered list of ColumnSpec instances.
         Each such instance holds column name and SQL type.
 
-        :param tableName: name of table for which schema is wanted. None: the main (default) table. 
+        :param tableName: name of table for which schema is wanted. None: the main (default) table.
         :type tableName: String
         :return: ordered list of column information
 
-        :rtype: (ColumnSpec) 
+        :rtype: (ColumnSpec)
         '''
         if tableName is None:
             tableName = self.mainTableName
@@ -678,7 +678,7 @@ class JSONToRelation(object):
         '''
         Returns a list of column header names collected so far.
 
-        :return: list of column headers that were discovered so far by an 
+        :return: list of column headers that were discovered so far by an
                  associated JSON parser descending into a JSON structure.
 
         :rtype: [String]
@@ -696,20 +696,20 @@ class JSONToRelation(object):
 
         :return: position in schema where the next new discovered column header is to go.
 
-        :rtype: int 
+        :rtype: int
         '''
         return self.nextNewColPos
-    
+
     def bumpNextNewColPos(self):
         self.nextNewColPos += 1
 
     def calculateHeldBackDataSize(self, valueArray):
         '''
         Computes number of ASCII bytes needed for the
-        values in the given array. Used to estimate 
+        values in the given array. Used to estimate
         when held-back INSERT data needs to be flushed
         to server. Ex: ['foo', 10] returns 7.
-        
+
         :param valueArray: array of mixed-type values to be INSERTed into MySQL at some point
         :type valueArray: [<any>]
         '''
@@ -721,7 +721,7 @@ class JSONToRelation(object):
         # every value being a string:
         arrSize += 4*len(valueArray)
         return arrSize
-    
+
     def ensureLegalIdentifierChars(self, proposedMySQLName):
         '''
         Given a proposed MySQL identifier, such as a column name,
@@ -729,7 +729,7 @@ class JSONToRelation(object):
         a MySQL database. MySQL accepts alphanumeric, underscore,
         and dollar sign. Identifiers with other chars must be quoted.
         Quote characters embedded within the identifiers must be
-        doubled to be escaped. 
+        doubled to be escaped.
 
         :param proposedMySQLName: input name
         :type proposedMySQLName: String
@@ -740,7 +740,7 @@ class JSONToRelation(object):
         if JSONToRelation.LEGAL_MYSQL_ATTRIBUTE_PATTERN.match(proposedMySQLName) is not None:
             return proposedMySQLName
         # Got an illegal char. Quote the name, doubling any
-        # embedded quote chars (sick, sick, sick proposed name): 
+        # embedded quote chars (sick, sick, sick proposed name):
         quoteChar = '"'
         if proposedMySQLName.find(quoteChar) > -1:
             quoteChar = "'"
@@ -761,7 +761,7 @@ class JSONToRelation(object):
 
     def bumpLineCounter(self):
         self.lineCounter += 1
-        
+
 if __name__ == "__main__":
     # Just have this main to test the imports
     print("I ran.")
