@@ -485,7 +485,7 @@ class JSONToRelation(object):
         :type filledNewRow: {(String,String,List<<any>>) | List<<any>> | String}
         :param outFd: an instance of a class that writes to the destination
         :type outFd: OutputDisposition
-        ''''
+        '''
         # We handle 'rows' destined for MySQL dumps differently
         # from rows destined to CSV. Parsers that generate dump
         # information as they translate JSON provide different
@@ -624,7 +624,7 @@ class JSONToRelation(object):
         :return: IOString string file with legal VALUES section of INSERT statement
 
         :rtype: IOString
-        ''''
+        '''
         # Build the values part:
         valsFileStr = StringIO()
         # Avoid putting anything into the
