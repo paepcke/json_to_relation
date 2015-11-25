@@ -747,7 +747,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 raise ValueError("Event of type %s has no event field" % eventType)
 
             try:
-                event = json.loads(eventJSONStrOrDict)
+                if '{' not in eventJSON or eventJSON[:5] == 'input':
+                    event = eventJSON # pass along simple case of problem_check/reset/save event (not JSON)
+                else:
+                    event = json.loads(eventJSONStrOrDict)
             except TypeError:
                 # Was already a dict
                 event = eventJSONStrOrDict
