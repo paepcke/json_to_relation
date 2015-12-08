@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Copies the latest modulestore tar ball from Stanford's backup server.
-# Does the following: 
+# Does the following:
 #   - imports the entire store into the local MongoDB
 #   - queries the local MongoDB, retrieving the information needed
 #     for table CourseInfo. Truncates that table, and re-loads
@@ -54,9 +54,9 @@ USAGE="Usage: "`basename $0`" [-p]"
 # Get MySQL version on this machine
 MYSQL_VERSION=$(mysql --version | sed -ne 's/.*Distrib \([0-9][.][0-9]\).*/\1/p')
 if [[ $MYSQL_VERSION > 5.5 ]]
-then 
+then
     MYSQL_VERSION='5.6+'
-else 
+else
     MYSQL_VERSION='5.5'
 fi
 
@@ -151,13 +151,13 @@ echo `date`": Unpack modulestore-latest.tar.gz."
 cd $EDXPROD_DUMP_DIR
 tar zxvf modulestore-latest.tar.gz
 
-# Cd to the newly untarred directory: 
+# Cd to the newly untarred directory:
 # 'ls -dt': list directories, sorted by time, newest first.
 # The '| head -2 | tail -1' grabs the second of the list. The first will
-# always be the modulestore-latest.tar.gz that we just 
+# always be the modulestore-latest.tar.gz that we just
 # downloaded. The second will be the directory created by
 # untarring that file. The time stamp of that directory
-# is the time it was created earlier on the *backup server*, 
+# is the time it was created earlier on the *backup server*,
 # not the time it was created by the untarring:
 cd $EDXPROD_DUMP_DIR
 cd `ls -dt * | head -2 | tail -1`
@@ -172,16 +172,29 @@ mongorestore --db modulestore modulestore.bson
 TMP_FILE=`mktemp`
 chmod a+r $TMP_FILE
 
-# Create command that loads modulestoreJavaScriptUtils.js into 
+# Detect modulestore version.
+SPLIT=false
+ms_collections=mongo modulestore --eval "db.getCollectionNames()"
+if [[ $ms_collections =~ "active_versions" ]]
+then
+    SPLIT=true
+fi
+
+# Create command that loads modulestoreJavaScriptUtils.js into
 # MongoDB, creates a CourseInfoExtractor instance, and invokes
 # method createCourseCSV() on it. We give the method 0 for the
 # academic year, b/c we want a list of all years, and the string
-# 'all' to get all quarters of each year. The result, when the 
+# 'all' to get all quarters of each year. The result, when the
 # mongo application is run with this command to --eval is a
 # stream of course information in CSV format:
 mongoCmd="load('"${currScriptsDir}/modulestoreJavaScriptUtils.js"'); \
-          courseExtractor = new CourseInfoExtractor(); \
-          courseExtractor.createCourseCSV(0, 'all');"
+          courseExtractor = new CourseInfoExtractor();"
+if $SPLIT
+then
+    mongoCmd="${mongoCmd} courseExtractor.createCourseCSV(0, 'all', true);"
+else
+    mongoCmd="${mongoCmd} courseExtractor.createCourseCSV(0, 'all', false);"
+fi
 mongo modulestore --eval "$mongoCmd" > $TMP_FILE
 
 #************
@@ -191,7 +204,7 @@ mongo modulestore --eval "$mongoCmd" > $TMP_FILE
 MYSQL_CMD="LOAD DATA LOCAL INFILE '"$TMP_FILE"' INTO TABLE Edx.CourseInfo \
            FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
            LINES TERMINATED BY '\n' \
-           IGNORE 1 LINES;"
+           IGNORE 3 LINES;"
 
 #************
 # echo "TMP_FILE: $TMP_FILE"
@@ -212,7 +225,7 @@ else
         mysql -u $MYSQL_USERNAME -p$MYSQL_PASSWD Edx -e "TRUNCATE TABLE CourseInfo; ""$MYSQL_CMD"
     else
         mysql -u $MYSQL_USERNAME Edx -e "TRUNCATE TABLE CourseInfo; ""$MYSQL_CMD"
-    fi  
+    fi
 fi
 echo `date`": Deleting temp file."
 rm $TMP_FILE

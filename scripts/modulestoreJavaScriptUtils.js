@@ -43,7 +43,7 @@ function CourseInfoExtractor() {
     this.stanfordEnrollDomain = "shib:https://idp.stanford.edu/";
 
     this.allQuartersArr = ["fall", "winter", "spring", "summer"];
-    // To change start month/day of quarter starts, 
+    // To change start month/day of quarter starts,
     // change the following four partial month-dayTtime strings:
     this.fallStartStr   = "-09-01T00:00:00Z";
     this.winterStartStr = "-12-01T00:00:00Z";
@@ -67,8 +67,8 @@ function CourseInfoExtractor() {
 /* ************* Methods for CourseInfoExtractor *************** */
 
 //------------------------------
-// getQuarterStartDate 
-//---------------- 
+// getQuarterStartDate
+//----------------
 
 CourseInfoExtractor.prototype.getQuarterStartDate = function(theYear, quarter) {
     switch (quarter) {
@@ -88,8 +88,8 @@ CourseInfoExtractor.prototype.getQuarterStartDate = function(theYear, quarter) {
 }
 
 //------------------------------
-// getQuarterFromDate 
-//---------------- 
+// getQuarterFromDate
+//----------------
 
 CourseInfoExtractor.prototype.getQuarterFromDate = function(dateStr) {
 
@@ -111,14 +111,14 @@ CourseInfoExtractor.prototype.getQuarterFromDate = function(dateStr) {
 }
 
 //------------------------------
-// getNumQuartersDuration 
-//---------------- 
+// getNumQuartersDuration
+//----------------
 
 // Given two date strings, return the number of quarters that
 // lie between those dates. If either of the given date is a
 // null date, or not a legal datetime string, return -1. The
 // quarters in which the dates lie are included in the count.
-// Example: 
+// Example:
 //   getNumQuartersDuration("2014-08-21", "2013-12-31") => 3
 // winter, spring, and summer.
 
@@ -180,8 +180,8 @@ CourseInfoExtractor.prototype.getNumQuartersDuration = function(startCalDate, en
 }
 
 //------------------------------
-// getNextQuarter 
-//---------------- 
+// getNextQuarter
+//----------------
 
 // Given a quarter string ('winter', 'spring,'...), return
 // the name of the following academic quarter.
@@ -195,15 +195,16 @@ CourseInfoExtractor.prototype.getNextQuarter = function(thisQuarter) {
 }
 
 //------------------------------
-// createCourseCSV 
-//---------------- 
+// createCourseCSV
+//----------------
 
-CourseInfoExtractor.prototype.createCourseCSV = function(academicYear, quartersToDo) {
+CourseInfoExtractor.prototype.createCourseCSV = function(academicYear, quartersToDo, splitMongo) {
     // Main, workhorse method.
     // Create CSV with course info, and print to stdout.
     // If "year" is 0, include all years on record.
     // If "quarter" is "all", include all quarters.
-
+    // If "splitMongo" is true, handle split case instead
+    var split = (typeof split !== 'undefined') ? splitMongo : false;
     this.year = Number(academicYear);
     this.quartersToDo  = quartersToDo;
     var quartersToCover = [];
@@ -272,14 +273,71 @@ CourseInfoExtractor.prototype.createCourseCSV = function(academicYear, quartersT
 
      	// Get get course info for courses in
      	// one academic year, one particular quarter:
+
+      if (split) {
+        var courseCursor = db.modulestore.active_versions.find({},
+           {"versions.published-branch": true, "org": true, "course": true, "run": true});
+
+        while (true) {
+          // Iterate through each course
+          // We need the ms.active_version entry as well as the course structure from ms.structures
+          var doc = courseCursor.hasNext() ? courseCursor.next() : null;
+          if (doc === null) { break; }
+          var def = db.modulestore.structures.find({"_id": doc.versions["published-branch"]},
+             {"blocks": {$elemMatch: {"block_type": "course"}}})[0]["blocks"][0]["fields"];
+
+          // Parse CDN and reject if test course
+          var course_display_name = doc.org + "/" + doc.course + "/" + doc.run;
+          if (!isTrueCourseName(course_display_name)) { continue; }
+
+          // Parse course start and end dates
+          startDate = def["start"];
+          startDate = new RealDate(startDate).getMySqlDateStr(this.NO_TIME_OUTPUT);
+          endDate = def["end"];
+          endDate = new RealDate(endDate).getMySqlDateStr(this.NO_TIME_OUTPUT);
+
+          // Reject if startDate not within bounds
+          if (startDate < quarterStartDate || startDate >= nextQuarterStartDate ) { continue; }
+
+          // Recover if endDate not defined
+          if (endDate === undefined) {
+            endDate = RealDate.prototype.getNullDateStr();
+          }
+
+          // Get number of quarters
+          numQuarters = this.getNumQuartersDuration(def["start"], def["end"]);
+
+          // Get enrollment start date and internal indicator for sharing
+          enrollmentStartDate = def["enrollment_start"];
+          enrollmentStartDate = new RealDate(enrollmentStartDate).getMySqlDateStr(this.NO_TIME_OUTPUT);
+          enrollmentDomain = def["enrollment_domain"];
+          isInternal == (isInternal == this.stanfordEnrollDomain || doc.org == "ohsx" || doc.org == "ohs") ? 1 : 0;
+
+          // Parse platform display name
+          display_name = def["display_name"];
+
+          // Print result
+          print(course_display_name +
+     		  ",\"" + display_name + "\"" +
+     		  "," + thisAcademicYear +
+     		  "," + currQuarter +
+     		  "," + numQuarters +
+     		  "," + isInternal +
+     		  "," + enrollmentStartDate +
+     		  "," + startDate +
+     		  "," + endDate);
+        }
+      } else {
+
      	courseCursor = db.modulestore.find({"_id.category": "course",
         				    "metadata.start": {$gte: quarterStartDate, $lt: nextQuarterStartDate}
      					   },
-                           		   {"metadata.start": true, 
-     					    "metadata.end": true, 
-     					    "metadata.enrollment_domain":true, 
-     					    "metadata.enrollment_start":true, 
-     					    "metadata.display_name":true}
+                 {"metadata.start": true,
+     					    "metadata.end": true,
+     					    "metadata.enrollment_domain":true,
+     					    "metadata.enrollment_start":true,
+     					    "metadata.display_name":true
+                 }
      					  );
 
      	while (true) {
@@ -288,7 +346,7 @@ CourseInfoExtractor.prototype.createCourseCSV = function(academicYear, quartersT
      		break;
      	    }
 
-	    // Filter out courses injected for testing by platform staff:
+      // Filter out courses injected for testing by platform staff:
 	    course_display_name = doc._id.org + "/" + doc._id.course + "/" + doc._id.name;
 	    if (! isTrueCourseName(course_display_name)) {
 		continue;
@@ -329,6 +387,7 @@ CourseInfoExtractor.prototype.createCourseCSV = function(academicYear, quartersT
      		  "," + startDate +
      		  "," + endDate);
      	}
+  }
      	// Done with one quarter
 	if (currQuarter != "all" && this.year > 0) {
 	    moreYearsToDo = false;
@@ -363,7 +422,7 @@ CourseInfoExtractor.prototype.createCourseCSV = function(academicYear, quartersT
      		    continue;
      		}
      	    }
-     	    // Do next year with same series of 
+     	    // Do next year with same series of
      	    // quarters we just did for this year:
 	    //**************************
 	    //print('*********thisAcademicYear: ' + thisAcademicYear);
@@ -376,7 +435,7 @@ CourseInfoExtractor.prototype.createCourseCSV = function(academicYear, quartersT
      	// Calendar date increments, if switching from
         // Fall quarter to winter:
      	if (currQuarter == "fall") {
-     	    // Just did fall quarter, or want all years for one 
+     	    // Just did fall quarter, or want all years for one
      	    // Spring quarter happens in second
      	    // calendar year of the academic year:
      	    thisCalYear += 1;
@@ -392,7 +451,7 @@ CourseInfoExtractor.prototype.createCourseCSV = function(academicYear, quartersT
 	//print('*********quartersToCover[theQuarterIndx]: ' + quartersToCover[theQuarterIndx]);
 	//**************************
     }
-}    
+}
 
 /* ************* Class RealDate *************** */
 
@@ -417,7 +476,7 @@ function RealDate(isoDateStr) {
 
 //------------------------------
 // toDateObj
-//---------------- 
+//----------------
 
 // Return an ISO date string.
 
@@ -430,8 +489,8 @@ RealDate.prototype.toDateObj = function() {
 }
 
 //------------------------------
-// getYear 
-//---------------- 
+// getYear
+//----------------
 
 RealDate.prototype.getYear = function() {
     if (this.dateComponents.length > 0) {
@@ -442,8 +501,8 @@ RealDate.prototype.getYear = function() {
 }
 
 //------------------------------
-// getFullYear 
-//---------------- 
+// getFullYear
+//----------------
 
 RealDate.prototype.getFullYear = function() {
     // Synonym to getYear()
@@ -455,8 +514,8 @@ RealDate.prototype.getFullYear = function() {
 }
 
 //------------------------------
-// getMonth 
-//---------------- 
+// getMonth
+//----------------
 
 RealDate.prototype.getMonth = function() {
     if (this.dateComponents.length > 1) {
@@ -467,8 +526,8 @@ RealDate.prototype.getMonth = function() {
 }
 
 //------------------------------
-// getDay 
-//---------------- 
+// getDay
+//----------------
 
 RealDate.prototype.getDay = function() {
     if (this.dateComponents.length > 2) {
@@ -481,8 +540,8 @@ RealDate.prototype.getDay = function() {
 }
 
 //------------------------------
-// getTimeWithTimezone 
-//---------------- 
+// getTimeWithTimezone
+//----------------
 
 RealDate.prototype.getTimeWithTimezone = function() {
     if (this.dateComponents.length > 2) {
@@ -494,8 +553,8 @@ RealDate.prototype.getTimeWithTimezone = function() {
     }}
 
 //------------------------------
-// getTimeNoTimezone 
-//---------------- 
+// getTimeNoTimezone
+//----------------
 
 RealDate.prototype.getTimeNoTimezone = function() {
     if (this.dateComponents.length > 2) {
@@ -511,12 +570,12 @@ RealDate.prototype.getTimeNoTimezone = function() {
 
 
 //------------------------------
-// getMySqlDateStr 
-//---------------- 
+// getMySqlDateStr
+//----------------
 
 // Get either date+time, or just date
 // from the RealDate object. Example output
-// for a RealDate instance created using 
+// for a RealDate instance created using
 // "2014-08-21T04:20:02", getMySqlDataStr()
 // returns 2014-08-21 04:20:02, while
 // getMySqlDataStr(true) returns just 2014-08-21.
@@ -544,14 +603,14 @@ RealDate.prototype.getMySqlDateStr = function(noTimeOption) {
     if (noTimeOption) {
 	mySqlStr = mySqlDateStr;
     } else {
-	mySqlStr = mySqlDateStr + ' ' + this.getTimeNoTimezone();	
+	mySqlStr = mySqlDateStr + ' ' + this.getTimeNoTimezone();
     }
     return mySqlStr;
 }
 
 //------------------------------
-// getNullDateStr 
-//---------------- 
+// getNullDateStr
+//----------------
 
 RealDate.prototype.getNullDateStr = function() {
     // Return a MongoDB legal zero ISO date.
@@ -563,7 +622,7 @@ RealDate.prototype.getNullDateStr = function() {
 
 //------------------------------
 // isNullDateObj
-//---------------- 
+//----------------
 
 // Return true if given RealDate *instance* is a null date,
 // else return false
@@ -579,7 +638,7 @@ RealDate.prototype.isNullDateObj = function(realDateObj) {
 
 //------------------------------
 // isNullDateStr
-//---------------- 
+//----------------
 
 // Return true if given string is a null date,
 // else return false
@@ -749,4 +808,3 @@ function courseInfoExtractorUnittests() {
     else
 	dualEnvPrint('getNextQuarter() OK.');
 }
-
