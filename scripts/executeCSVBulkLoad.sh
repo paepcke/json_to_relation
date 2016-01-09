@@ -6,7 +6,7 @@
 # running many LOAD DATA INFILE statements. The functions
 # are then reinstated, and tables are re-indexed.
 #
-# This script needs to use MySQL as root. There are multiple 
+# This script needs to use MySQL as root. There are multiple
 # methods for accomplishing this from the cmd line:
 #   If -p is specified, the script asks for the pwd.
 #   If -u myuid is specified, the script looks in myuid's
@@ -20,7 +20,7 @@
 #      by whoami
 #   If -w rootpwd is specified, then that given pwd is used.
 #   If none of -p, -u, -w are specified and/or no mysql_root
-#      file is found, then the script attempts to access 
+#      file is found, then the script attempts to access
 #      MySQL as root without a pwd.
 
 usage="Usage: "`basename $0`" [-u username][-p][-w rootpass] logDir bulkLoadSqlFile # You may be asked for MySQL root pwd."
@@ -28,9 +28,9 @@ usage="Usage: "`basename $0`" [-u username][-p][-w rootpass] logDir bulkLoadSqlF
 # Get MySQL version on this machine
 MYSQL_VERSION=$(mysql --version | sed -ne 's/.*Distrib \([0-9][.][0-9]\).*/\1/p')
 if [[ $MYSQL_VERSION > 5.5 ]]
-then 
+then
     MYSQL_VERSION='5.6+'
-else 
+else
     MYSQL_VERSION='5.5'
 fi
 
@@ -156,9 +156,9 @@ echo "`date`: starting load from $bulkLoadFile"  >> $LOG_FILE 2>&1
 
 if [[ $MYSQL_VERSION == '5.6+' ]]
 then
-   MYSQL_AUTH='--login-path=root'
+   MYSQL_AUTH="--login-path=root"
 else
-   MYSQL_AUTH='-u root -p$password'
+   MYSQL_AUTH="-u root -p$password"
 fi
 
 # For each table: disable keys:
