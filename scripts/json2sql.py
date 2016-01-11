@@ -24,7 +24,7 @@ from output_disposition import OutputDisposition, OutputFile
 # relational tables. See argparse below for options.
 
 # For non-Stanford installations, customize the following
-# setting of LOCAL_LOG_STORE_ROOT. This is the file system 
+# setting of LOCAL_LOG_STORE_ROOT. This is the file system
 # directory from which S3 key paths descend. Example: Stanford's
 # S3 file keys where .json tracking logs are stored are of the form
 #    tracking/app10/tracking.log-<date>.gz
@@ -37,12 +37,14 @@ LOCAL_LOG_STORE_ROOT = None
 
 hostname = socket.gethostname()
 if hostname == 'duo':
-    LOCAL_LOG_STORE_ROOT = "/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsTests/"                            
+    LOCAL_LOG_STORE_ROOT = "/home/paepcke/Project/VPOL/Data/EdX/EdXTrackingLogsTests/"
 elif hostname == 'mono':
     LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/EdX/tracking"
 elif hostname == 'datastage':
     LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/EdX/tracking"
 elif hostname == 'datastage2':
+    LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/EdX/tracking"
+elif hostname == 'datastage2go':
     LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/EdX/tracking"
 
 def buildOutputFileName(inFilePath, destDir, fileStamp):
@@ -55,21 +57,21 @@ def buildOutputFileName(inFilePath, destDir, fileStamp):
     and given destDir of /tmp, and LOCAL_LOG_STORE_ROOT being /EdX/EdXTrackingLogsTests/
     /returns something like::
       /tmp/racking.app10.tracking.log-20130610.gz.2013-12-05T00_33_10.462711_5050.sql
-    
+
     That is the LOCAL_STORE_ROOT is removed from the infile, leaving just
     tracking/app10/tracking.log-20130610.gz. Then the destDir is prepended,
     the fileStamp is appended, together with a trailing .sql
-    
+
     If the inFilePath does not end with '.gz', but '.gz' is part of the
     inner part of the file name then enough of the file
     name tail is removed to have the name end in .gz. If no '.gz' is
     anywhwere in the filename, the filename is left alone. This odd behavior
-    takes care of a particularity of the compute cluster implementation for 
+    takes care of a particularity of the compute cluster implementation for
     transforms. Script transformGivenLogFilesOnCluster.sh appends '.DONE' to
     file names as part of the file selection protocol that all the cluster
     machines follow. We don't want that '.DONE' to be part of the name
     we return here.
-     
+
     @param inFilePath: full path to .json file
     @type inFilePath: String
     @param destDir: full path to destination directory
@@ -85,13 +87,13 @@ def buildOutputFileName(inFilePath, destDir, fileStamp):
     # an output file name:
     if inFilePath.endswith('.DONE.gz'):
         inFilePath = inFilePath[:-8]
-    
+
     # If file name has no .gz at all, simply proceed,
     # not worrying about any unwanted extensions:
     if  re.search('.gz', inFilePath) is not None:
         while not inFilePath.endswith('.gz'):
             inFilePath,oldExtension = os.path.splitext(inFilePath) #@UnusedVariable
-    
+
     if LOCAL_LOG_STORE_ROOT is None:
         return os.path.join(destDir, os.path.basename(inFilePath)) + '.' + fileStamp + '.sql'
     rootEnd = inFilePath.find(LOCAL_LOG_STORE_ROOT)
@@ -113,25 +115,25 @@ if __name__ == "__main__":
                         dest='dropTables',
                         action='store_true',
                         default=False)
-    # parser.add_argument('-l', '--logFile', 
+    # parser.add_argument('-l', '--logFile',
     #                     help='fully qualified log file name. Default: no logging.',
     #                     dest='logFile',
     #                     default='/tmp/j2s.sql');
-    parser.add_argument('-v', '--verbose', 
-                        help='print operational info to console.', 
+    parser.add_argument('-v', '--verbose',
+                        help='print operational info to console.',
                         dest='verbose',
                         action='store_true');
-    parser.add_argument('-t', '--targetFormat', 
-                        help='Output one CSV file per table, a dump file as would be created my mysqldump, or both. Default: sql_dump', 
+    parser.add_argument('-t', '--targetFormat',
+                        help='Output one CSV file per table, a dump file as would be created my mysqldump, or both. Default: sql_dump',
                         dest='targetFormat',
                         default='sql_dump',
                         choices = ['csv', 'sql_dump', 'sql_dump_and_csv']);
     parser.add_argument('destDir',
-                        help='file path for the destination .sql/csv file(s)')                        
+                        help='file path for the destination .sql/csv file(s)')
     parser.add_argument('inFilePath',
-                        help='json file path to be converted to sql/csv.') 
-    
-    
+                        help='json file path to be converted to sql/csv.')
+
+
     args = parser.parse_args();
 
     # Output file is name of input file with the
@@ -141,7 +143,7 @@ if __name__ == "__main__":
     dt = datetime.datetime.fromtimestamp(time.time())
     fileStamp = dt.isoformat().replace(':','_') + '_' + str(os.getpid())
 
-    outFullPath = buildOutputFileName(args.inFilePath, args.destDir, fileStamp) 
+    outFullPath = buildOutputFileName(args.inFilePath, args.destDir, fileStamp)
 
     #********************
     #print('In: %s' % args.inFilePath)
@@ -159,7 +161,7 @@ if __name__ == "__main__":
             pass
 
     logFile = os.path.join(logDir, 'j2s_%s_%s.log' % (os.path.basename(args.inFilePath), fileStamp))
-    
+
 
 #    print('xpunge: %s' % args.dropTables)
 #    print('verbose: %s' % args.verbose)
@@ -185,15 +187,15 @@ if __name__ == "__main__":
     				               logFile=logFile
                                    )
     try:
-        jsonConverter.setParser(EdXTrackLogJSONParser(jsonConverter, 
-        						  'EdxTrackEvent', 
-        						  replaceTables=args.dropTables, 
+        jsonConverter.setParser(EdXTrackLogJSONParser(jsonConverter,
+        						  'EdxTrackEvent',
+        						  replaceTables=args.dropTables,
         						  dbName='Edx'
         						  ))
     except Exception as e:
         with open(logFile, 'w') as fd:
             fd.write("In json2sql: could not create EdXTrackLogJSONParser; infile: %s; outfile: %s; logfile: %s (%s)" % (InURI(args.inFilePath), outSQLFile, logFile, `e`))
-        # Try to delete the .sql file that was created when 
+        # Try to delete the .sql file that was created when
         # the OutputFile instance was made in the JSONToRelation
         # instantiation statement above:
         try:
@@ -201,6 +203,5 @@ if __name__ == "__main__":
         except Exception as e:
             pass
         sys.exit(1)
-        
-    jsonConverter.convert()
 
+    jsonConverter.convert()
