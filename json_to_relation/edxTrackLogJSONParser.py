@@ -1167,7 +1167,8 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         createStatement = createStatement[0:-2] + '\n    ) ENGINE=InnoDB'
         if tableName == 'EdxTrackEvent':
             createStatement += '\nPARTITION BY LIST COLUMNS(quarter) ( \n' +\
-    				 "PARTITION pAY2012_Spring VALUES IN ('spring2013'),\n" +\
+                     "PARTITION pAY2012_Winter VALUES IN ('winter2013'),\n" +\
+                     "PARTITION pAY2012_Spring VALUES IN ('spring2013'),\n" +\
     				 "PARTITION pAY2012_Summer VALUES IN ('summer2013'),\n" +\
     				 "PARTITION pAY2013_Fall VALUES IN ('fall2013'),\n" +\
     				 "PARTITION pAY2013_Winter VALUES IN ('winter2014'),\n" +\
