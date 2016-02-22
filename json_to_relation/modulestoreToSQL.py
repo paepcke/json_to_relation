@@ -30,11 +30,6 @@ from pymysql_utils1 import MySQLDB
 import pymongo as mng
 
 
-class ObjectReprEncoder(json.JSONEncoder):
-    def default(self, obj):
-        return repr(obj)
-
-
 class EdxProblemExtractor(MySQLDB):
 
     def __init__(self, split=True, old=True):
