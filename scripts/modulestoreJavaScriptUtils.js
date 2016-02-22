@@ -327,7 +327,7 @@ CourseInfoExtractor.prototype.createCourseCSV = function(academicYear, quartersT
      		  "," + startDate +
      		  "," + endDate);
         }
-      } else {
+      }
 
      	courseCursor = db.modulestore.find({"_id.category": "course",
         				    "metadata.start": {$gte: quarterStartDate, $lt: nextQuarterStartDate}
@@ -387,7 +387,7 @@ CourseInfoExtractor.prototype.createCourseCSV = function(academicYear, quartersT
      		  "," + startDate +
      		  "," + endDate);
      	}
-  }
+
      	// Done with one quarter
 	if (currQuarter != "all" && this.year > 0) {
 	    moreYearsToDo = false;
