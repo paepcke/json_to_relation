@@ -154,12 +154,24 @@ echo `date`": Start refreshing modulestore extract..."  | tee --append $LOG_FILE
 #                 > $targetFile
 
 
-echo `date`": Begin copying modulestore-latest.tar.gz from backup server."
+echo `date`": Begin copying modulestore dump tarballs from backup server."
 scp $EDX_PLATFORM_DUMP_MACHINE:/data/dump/modulestore-latest.tar.gz \
+	$EDXPROD_DUMP_DIR/old
+scp $EDX_PLATFORM_DUMP_MACHINE:/data/dump/modulestore_active_versions-latest.tar.gz \
+  $EDXPROD_DUMP_DIR/
+scp $EDX_PLATFORM_DUMP_MACHINE:/data/dump/modulestore_definitions-latest.tar.gz \
 	$EDXPROD_DUMP_DIR/
-echo `date`": Unpack modulestore-latest.tar.gz."
+scp $EDX_PLATFORM_DUMP_MACHINE:/data/dump/modulestore_structures-latest.tar.gz \
+	$EDXPROD_DUMP_DIR/
+scp $EDX_PLATFORM_DUMP_MACHINE:/data/dump/modulestore_location_map-latest.tar.gz \
+	$EDXPROD_DUMP_DIR/
+echo `date`": Unpack modulestore dump tarballs."
 cd $EDXPROD_DUMP_DIR
 tar zxvf modulestore-latest.tar.gz
+tar zxvf modulestore_active_versions-latest.tar.gz
+tar zxvf modulestore_definitions-latest.tar.gz
+tar zxvf modulestore_structures-latest.tar.gz
+tar zxvf modulestore_location_map-latest.tar.gz
 
 # Cd to the newly untarred directory:
 # 'ls -dt': list directories, sorted by time, newest first.
@@ -169,15 +181,30 @@ tar zxvf modulestore-latest.tar.gz
 # untarring that file. The time stamp of that directory
 # is the time it was created earlier on the *backup server*,
 # not the time it was created by the untarring:
-cd $EDXPROD_DUMP_DIR
-cd `ls -dt * | head -2 | tail -1`
-cd stanford-edx-prod
+# CHANGED:
+# cd $EDXPROD_DUMP_DIR
+# cd `ls -dt * | head -2 | tail -1`
+# cd stanford-edx-prod
+
+# cp new modulestore dumps to staging directory
+mkdir modulestore_latest_stage
+cp *store-20*/stanford-edx-prod/modulestore*.*son ./modulestore_latest_stage/
+cp *active_versions*/stanford-edx-prod/*active_versions*.*son ./modulestore_latest_stage/
+cp *definitions*/stanford-edx-prod/*definitions*.*son ./modulestore_latest_stage/
+cp *structures*/stanford-edx-prod/*structures*.*son ./modulestore_latest_stage/
+cp *location_map*/stanford-edx-prod/*location_map*.*son ./modulestore_latest_stage/
+cd modulestore_latest_stage
 
 echo `date`": Deleting old modulestore from local MongoDB."
-mongo modulestore --eval "db.modulestore.remove({})"
+# CHANGED: mongo modulestore --eval "db.modulestore.remove({})"
+mongo modulestore --eval "db.dropDatabase()"
 
 echo `date`": Loading new modulestore copy into local MongoDB."
 mongorestore --db modulestore modulestore.bson
+mongorestore --db modulestore modulestore.active_versions.bson
+mongorestore --db modulestore modulestore.structures.bson
+mongorestore --db modulestore modulestore.definitions.bson
+mongorestore --db modulestore modulestore.location_map.bson
 
 TMP_FILE=`mktemp`
 chmod a+r $TMP_FILE
