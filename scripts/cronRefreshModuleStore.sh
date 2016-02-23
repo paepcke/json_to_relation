@@ -188,7 +188,9 @@ tar zxvf modulestore_location_map-latest.tar.gz
 
 # cp new modulestore dumps to staging directory
 mkdir modulestore_latest_stage
-cp *store-20*/stanford-edx-prod/modulestore*.*son ./modulestore_latest_stage/
+cd `ls -dt *store-20* | head -1`
+cp ./stanford-edx-prod/modulestore*.*son ../modulestore_latest_stage/
+cd ..
 cp *active_versions*/stanford-edx-prod/*active_versions*.*son ./modulestore_latest_stage/
 cp *definitions*/stanford-edx-prod/*definitions*.*son ./modulestore_latest_stage/
 cp *structures*/stanford-edx-prod/*structures*.*son ./modulestore_latest_stage/
