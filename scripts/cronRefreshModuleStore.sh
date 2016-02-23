@@ -156,7 +156,7 @@ echo `date`": Start refreshing modulestore extract..."  | tee --append $LOG_FILE
 
 echo `date`": Begin copying modulestore dump tarballs from backup server."
 scp $EDX_PLATFORM_DUMP_MACHINE:/data/dump/modulestore-latest.tar.gz \
-	$EDXPROD_DUMP_DIR/old
+	$EDXPROD_DUMP_DIR/
 scp $EDX_PLATFORM_DUMP_MACHINE:/data/dump/modulestore_active_versions-latest.tar.gz \
   $EDXPROD_DUMP_DIR/
 scp $EDX_PLATFORM_DUMP_MACHINE:/data/dump/modulestore_definitions-latest.tar.gz \
