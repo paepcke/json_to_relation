@@ -206,6 +206,9 @@ mongorestore --db modulestore modulestore.structures.bson
 mongorestore --db modulestore modulestore.definitions.bson
 mongorestore --db modulestore modulestore.location_map.bson
 
+cd ..
+rm -rf modulestore_latest_stage
+
 TMP_FILE=`mktemp`
 chmod a+r $TMP_FILE
 
