@@ -26,4 +26,4 @@ source ./cronRefreshActivityGrade.sh > /home/dataman/cronlog/cronRefreshActivity
 source ./cronRefreshGrades.sh > /home/dataman/cronlog/cronRefreshGrades.txt 2>&1
 ./cronRefreshUserCountryTable.py > /home/dataman/cronlog/cronRefreshUserCountryTable.txt 2>&1
 source ./cronRefreshEdxForum.sh > /home/dataman/cronlog/cronRefreshEdxForum.txt 2>&1
-./cronRefreshEdxQualtrics.py -amsr > /home/dataman/cronlog/cronRefreshEdxQualtrics.txt 2>&1
+./cronRefreshEdxQualtrics.py -amsri > /home/dataman/cronlog/cronRefreshEdxQualtrics.txt 2>&1
