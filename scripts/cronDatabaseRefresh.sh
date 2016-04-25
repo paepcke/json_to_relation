@@ -19,11 +19,12 @@ cd /home/dataman/Code/json_to_relation/scripts/
 # Execute refresh scripts.
 # Call shell scripts using `source` to ensure virtualenv works.
 # Python scripts use #!/usr/bin/env python to let virtualenv work correctly.
-./manageEdxDb.py pullTransformLoad > /home/dataman/cronlog/manageEdxDb.txt 2>&1
-source ./cronRefreshEdxprod.sh > /home/dataman/cronlog/cronRefreshEdxprod.txt 2>&1
-source ./cronRefreshModuleStore.sh > /home/dataman/cronlog/cronRefreshModuleStore.txt 2>&1
-source ./cronRefreshActivityGrade.sh > /home/dataman/cronlog/cronRefreshActivityGrade.txt 2>&1
-source ./cronRefreshGrades.sh > /home/dataman/cronlog/cronRefreshGrades.txt 2>&1
-./cronRefreshUserCountryTable.py > /home/dataman/cronlog/cronRefreshUserCountryTable.txt 2>&1
-source ./cronRefreshEdxForum.sh > /home/dataman/cronlog/cronRefreshEdxForum.txt 2>&1
-./cronRefreshEdxQualtrics.py -amsr > /home/dataman/cronlog/cronRefreshEdxQualtrics.txt 2>&1
+/home/dataman/Code/json_to_relation/scripts/manageEdxDb.py pullTransformLoad >> /home/dataman/cronlog/manageEdxDb.txt 2>&1
+source /home/dataman/Code/json_to_relation/scripts/cronRefreshEdxprod.sh >> /home/dataman/cronlog/cronRefreshEdxprod.txt 2>&1
+source /home/dataman/Code/json_to_relation/scripts/cronRefreshModuleStore.sh >> /home/dataman/cronlog/cronRefreshModuleStore.txt 2>&1
+source /home/dataman/Code/json_to_relation/json_to_relation/modulestoreToSQL.py >> /home/dataman/cronlog/cronRefreshEdxProblem.txt 2>&1
+source /home/dataman/Code/json_to_relation/scripts/cronRefreshActivityGrade.sh >> /home/dataman/cronlog/cronRefreshActivityGrade.txt 2>&1
+source /home/dataman/Code/json_to_relation/scripts/cronRefreshGrades.sh >> /home/dataman/cronlog/cronRefreshGrades.txt 2>&1
+/home/dataman/Code/json_to_relation/scripts/cronRefreshUserCountryTable.py >> /home/dataman/cronlog/cronRefreshUserCountryTable.txt 2>&1
+source /home/dataman/Code/json_to_relation/scripts/cronRefreshEdxForum.sh >> /home/dataman/cronlog/cronRefreshEdxForum.txt 2>&1
+/home/dataman/Code/json_to_relation/scripts/cronRefreshEdxQualtrics.py -amsr >> /home/dataman/cronlog/cronRefreshEdxQualtrics.txt 2>&1
