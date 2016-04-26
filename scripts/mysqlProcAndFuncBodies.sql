@@ -1135,6 +1135,28 @@ BEGIN
     RETURN @totalEnrollment;
 END//
 
+#-------------------
+# isDirectAccessUser
+#-------------------
+
+# Takes an anon_screen_name and outputs a boolean
+# indicating whether the corresponding user account
+# was generated using the direct access feature
+# on the Lagunita platform.
+
+DROP FUNCTION IF EXISTS isDirectAccessUser//
+CREATE FUNCTION `isDirectAccessUser`(anon_screen_name varchar(255)) RETURNS tinyint(1)
+BEGIN
+	SELECT LOCATE("anon__", username)
+	FROM (
+		SELECT username
+		FROM edxprod.auth_user
+		WHERE id = idAnon2Int(anon_screen_name)
+	) AS au
+	INTO @isDirectAccess;
+	RETURN @isDirectAccess;
+END//
+
 #--------------------------
 # computeEnrollmentCoursera
 #--------------------------
