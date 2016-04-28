@@ -73,7 +73,8 @@ class EdxProblemExtractor(MySQLDB):
               `weight` INT DEFAULT NULL,
               `revision` VARCHAR(10) DEFAULT NULL,
               `max_attempts` INT DEFAULT NULL,
-              `trackevent_hook` VARCHAR(200) DEFAULT NULL
+              `trackevent_hook` VARCHAR(200) DEFAULT NULL,
+              `vertical_uri` VARCHAR(200) DEFAULT NULL
             ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
         """
 
@@ -137,6 +138,17 @@ class EdxProblemExtractor(MySQLDB):
         return cdn
 
 
+    def __resolveVerticalID(self, problem):
+        '''
+        Given the a problem, return the resource URI of
+        the encapsulating 'vertical' module.
+        '''
+        resource_uri = self.__resolveResourceURI(problem)
+        vertical = self.msdb.modulestore.find({"definition.children": resource_uri})[0]
+        vertical_uri = self.__resolveResourceURI(vertical)
+        return vertical_uri
+
+
     def __extractOldMS(self):
         '''
         Extract problem data from old-style MongoDB modulestore.
@@ -156,6 +168,7 @@ class EdxProblemExtractor(MySQLDB):
             data['revision'] = problem['_id'].get('revision', 'False')
             data['max_attempts'] = problem['metadata'].get('max_attempts', -1)
             data['trackevent_hook'] = self.__resolveResourceURI(problem)
+            data['vertical_id'] = self.__resolveVerticalID(problem)
             table.append(data)
 
         return table
