@@ -74,7 +74,10 @@ class EdxProblemExtractor(MySQLDB):
               `revision` VARCHAR(10) DEFAULT NULL,
               `max_attempts` INT DEFAULT NULL,
               `trackevent_hook` VARCHAR(200) DEFAULT NULL,
-              `vertical_uri` VARCHAR(200) DEFAULT NULL
+              `vertical_uri` VARCHAR(200) DEFAULT NULL,
+              `problem_idx` INT DEFAULT NULL,
+              `sequential_uri` VARCHAR(200) DEFAULT NULL,
+              `vertical_idx` INT DEFAULT NULL
             ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
         """
 
@@ -138,15 +141,19 @@ class EdxProblemExtractor(MySQLDB):
         return cdn
 
 
-    def __resolveVerticalID(self, problem):
+    def __locateModuleInParent(self, resource_uri):
         '''
-        Given the a problem, return the resource URI of
-        the encapsulating 'vertical' module.
+        Given URI for a vertical, return the URI of the encapsulating sequential
+        and an integer for what order in the sequence the vertical occurred.
         '''
-        resource_uri = self.__resolveResourceURI(problem)
-        vertical = self.msdb.modulestore.find({"definition.children": resource_uri})[0]
-        vertical_uri = self.__resolveResourceURI(vertical)
-        return vertical_uri
+        try:
+            parent_module = self.msdb.modulestore.find({"definition.children": resource_uri}).next()
+        except StopIteration:
+            print vertical_uri
+            return None
+        parent_module_uri = self.__resolveResourceURI(parent_module)
+        order = parent_module['defintion']['children'].index(resource_uri)
+        return parent_module_uri, order
 
 
     def __extractOldMS(self):
@@ -167,8 +174,17 @@ class EdxProblemExtractor(MySQLDB):
             data['weight'] = problem['metadata'].get('weight', -1)
             data['revision'] = problem['_id'].get('revision', 'False')
             data['max_attempts'] = problem['metadata'].get('max_attempts', -1)
-            data['trackevent_hook'] = self.__resolveResourceURI(problem)
-            data['vertical_id'] = self.__resolveVerticalID(problem)
+
+            problem_uri = self.__resolveResourceURI(problem)
+            data['trackevent_hook'] = problem_uri
+
+            vertical_uri, problem_idx = self.__locateModuleInParent(problem_uri)
+            data['vertical_uri'] = vertical_uri
+            data['problem_idx'] = problem_idx  # We leave this as is but there may be additional modules on the page
+
+            sequential_uri, vertical_idx = self.__locateModuleInParent(vertical_uri)
+            data['sequential_uri'] = sequential_uri
+            data['vertical_idx'] = vertical_idx + 1  # EdxTrackEvent sequence navigation track events are 1-indexed
             table.append(data)
 
         return table
