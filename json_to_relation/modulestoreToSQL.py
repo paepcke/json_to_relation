@@ -150,7 +150,7 @@ class EdxProblemExtractor(MySQLDB):
             parent_module = self.msdb.modulestore.find({"definition.children": resource_uri}).next()
         except StopIteration:
             print vertical_uri
-            return None
+            return None, None
         parent_module_uri = self.__resolveResourceURI(parent_module)
         order = parent_module['definition']['children'].index(resource_uri)
         return parent_module_uri, order
