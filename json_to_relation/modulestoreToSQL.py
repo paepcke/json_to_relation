@@ -77,7 +77,10 @@ class EdxProblemExtractor(MySQLDB):
               `vertical_uri` VARCHAR(200) DEFAULT NULL,
               `problem_idx` INT DEFAULT NULL,
               `sequential_uri` VARCHAR(200) DEFAULT NULL,
-              `vertical_idx` INT DEFAULT NULL
+              `vertical_idx` INT DEFAULT NULL,
+              `chapter_uri` VARCHAR(200) DEFAULT NULL,
+              `sequential_idx` INT DEFAULT NULL,
+              `chapter_idx` INT DEFAULT NULL
             ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
         """
 
@@ -154,7 +157,7 @@ class EdxProblemExtractor(MySQLDB):
             print resource_uri
             return None, -2
         parent_module_uri = self.__resolveResourceURI(parent_module)
-        order = parent_module['definition']['children'].index(resource_uri)
+        order = parent_module['definition']['children'].index(resource_uri) + 1  # Use 1-indexing
         return parent_module_uri, order
 
 
@@ -163,7 +166,7 @@ class EdxProblemExtractor(MySQLDB):
         Extract problem data from old-style MongoDB modulestore.
         SQL load method expects a list of dicts mapping column names to data.
         '''
-        problems = self.msdb.modulestore.find({"_id.category": "problem"})
+        problems = self.msdb.modulestore.find({"_id.category": "problem"}).batch_size(20)
         table = []
         for problem in problems:
             # Each row in the table is a dictionary
@@ -177,16 +180,29 @@ class EdxProblemExtractor(MySQLDB):
             data['revision'] = problem['_id'].get('revision', 'False')
             data['max_attempts'] = problem['metadata'].get('max_attempts', -1)
 
+            # Reconstruct URI for problem
             problem_uri = self.__resolveResourceURI(problem)
             data['trackevent_hook'] = problem_uri
 
+            # Get URI for enclosing vertical and location of problem therein
             vertical_uri, problem_idx = self.__locateModuleInParent(problem_uri)
             data['vertical_uri'] = vertical_uri
-            data['problem_idx'] = problem_idx  # We leave this as is but there may be additional modules on the page
+            data['problem_idx'] = problem_idx
 
+            # Get URI for enclosing sequential and location of vertical therein
             sequential_uri, vertical_idx = self.__locateModuleInParent(vertical_uri)
             data['sequential_uri'] = sequential_uri
-            data['vertical_idx'] = vertical_idx + 1  # EdxTrackEvent sequence navigation track events are 1-indexed
+            data['vertical_idx'] = vertical_idx
+
+            # URI for enclosing chapter and location of sequential
+            chapter_uri, sequential_idx = self.__locateModuleInParent(sequential_uri)
+            data['chapter_uri'] = chapter_uri
+            data['sequential_idx'] = sequential_idx
+
+            # URI for course and location of chapter
+            course_uri, chapter_idx = self.__locateModuleInParent(chapter_uri)
+            data['chapter_idx'] = chapter_idx
+
             table.append(data)
 
         return table
