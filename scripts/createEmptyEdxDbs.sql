@@ -63,16 +63,18 @@ CREATE TABLE IF NOT EXISTS State (
     correct_map VARCHAR(40) NOT NULL,
     input_state VARCHAR(40) NOT NULL
     ) ENGINE=MyISAM;
-CREATE TABLE IF NOT EXISTS CourseInfo (
-    course_display_name varchar(255),
-    course_catalog_name varchar(255),
-    academic_year int,
-    quarter varchar(7),
-    num_quarters int,
-    is_internal tinyint,
-    enrollment_start datetime,
-    start_date datetime,
-    end_date datetime
+CREATE TABLE IF NOT EXISTS `CourseInfo` (
+    `course_display_name` varchar(255) DEFAULT NULL,
+    `course_catalog_name` varchar(255) DEFAULT NULL,
+    `academic_year` int(11) DEFAULT NULL,
+    `quarter` varchar(7) DEFAULT NULL,
+    `is_internal` tinyint(4) DEFAULT NULL,
+    `enrollment_start` datetime DEFAULT NULL,
+    `start_date` datetime DEFAULT NULL,
+    `enrollment_end` datetime DEFAULT NULL,
+    `end_date` datetime DEFAULT NULL,
+    `grade_policy` text DEFAULT NULL,
+    `certs_policy` text DEFAULT NULL
 ) ENGINE=MyISAM;
 CREATE TABLE IF NOT EXISTS EdxPrivate.EventIp (
     event_table_id varchar(40) NOT NULL,
