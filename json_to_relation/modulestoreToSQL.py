@@ -31,14 +31,15 @@ from pymysql_utils1 import MySQLDB
 import pymongo as mng
 
 
+# Data type for AY_[quarter][year] date ranges
+Quarter = namedtuple('Quarter', ['start_date', 'end_date', 'quarter'])
+
+# Class variables for determining internal status of course
+SU_ENROLLMENT_DOMAIN = "shib:https://idp.stanford.edu/"
+INTERNAL_ORGS = ['ohsx', 'ohs']
+
+
 class ModulestoreExtractor(MySQLDB):
-
-    # Class variables for determining internal status of course
-    SU_ENROLLMENT_DOMAIN = "shib:https://idp.stanford.edu/"
-    INTERNAL_ORGS = ['ohsx', 'ohs']
-
-    # Data type for AY_[quarter][year] date ranges
-    Quarter = namedtuple('Quarter', ['start_date', 'end_date', 'quarter'])
 
     def __init__(self, split=True, old=True, edxproblem=True, courseinfo=True):
         '''
@@ -121,7 +122,7 @@ class ModulestoreExtractor(MySQLDB):
                 `end_date` datetime DEFAULT NULL,
                 `grade_policy` text DEFAULT NULL,
                 `certs_policy` text DEFAULT NULL
-            )
+            ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
         """
 
         # Execute table definition queries
@@ -139,19 +140,19 @@ class ModulestoreExtractor(MySQLDB):
 
         if self.split and self.update_EP:
             splitEPData = self.__extractSplitEdxProblem()
-            self.__loadToSQL(splitEPData)
+            self.__loadToSQL(splitEPData, "EdxProblem")
 
         if self.split and self.update_CI:
             splitCIData = self.__extractSplitCourseInfo()
-            self.__loadToSQL(splitCIData)
+            self.__loadToSQL(splitCIData, "CourseInfo")
 
         if self.old and self.update_EP:
             oldEPData = self.__extractOldEdxProblem()
-            self.__loadToSQL(oldEPData)
+            self.__loadToSQL(oldEPData, "EdxProblem")
 
         if self.old and self.update_CI:
             oldCIData = self.__extractOldCourseInfo()
-            self.__loadToSQL(oldCIData)
+            self.__loadToSQL(oldCIData, "CourseInfo")
 
 
     @staticmethod
@@ -303,15 +304,13 @@ class ModulestoreExtractor(MySQLDB):
         '''
         Return boolean indicating whether date is contained in date_range.
         '''
-        if not type(date_range) is Quarter:
+        if not type(quarter) is Quarter:
             raise TypeError('Function inRange expects date_range of type Quarter.')
-
         msdb_time = lambda timestamp: datetime.datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%SZ")
-        if (msdb_time(date) >= msdb_time(date_range.start_date)) and (msdb_time(date) <= msdb_time(date_range.end_date)):
+        if (msdb_time(date) >= msdb_time(quarter.start_date)) and (msdb_time(date) <= msdb_time(quarter.end_date)):
             return quarter.quarter
         else:
             return False
-
 
     @staticmethod
     def genQuartersForAY(ay):
@@ -320,7 +319,7 @@ class ModulestoreExtractor(MySQLDB):
         '''
         ayb = str(int(ay) + 1)  # academic years bleed over into the next calendar year
         AYfall = Quarter('%s-09-01T00:00:00Z' % ay, '%s-11-30T00:00:00Z' % ay, 'fall')
-        AYwinter = Quarter('%s-12-01T00:00:00Z' % ay, '%s-02-29T00:00:00Z' % ayb, 'winter')
+        AYwinter = Quarter('%s-12-01T00:00:00Z' % ay, '%s-02-28T00:00:00Z' % ayb, 'winter')
         AYspring = Quarter('%s-03-01T00:00:00Z' % ayb, '%s-05-31T00:00:00Z' % ayb, 'spring')
         AYsummer = Quarter('%s-06-01T00:00:00Z' % ayb, '%s-08-31T00:00:00Z' % ayb, 'summer')
         return AYfall, AYwinter, AYspring, AYsummer
@@ -337,17 +336,17 @@ class ModulestoreExtractor(MySQLDB):
         # Generate quarters given start date and determine starting quarter
         start_ay = str(year(start_date)) if month(start_date) >= 9 else str(year(start_date) - 1)
         sFall, sWinter, sSpring, sSummer = self.genQuartersForAY(start_ay)
-        start_quarter = inRange(sFall) or inRange(sWinter) or inRange(sSpring) or inRange(sSummer)
+        start_quarter = self.inRange(start_date, sFall) or self.inRange(start_date, sWinter) or self.inRange(start_date, sSpring) or self.inRange(start_date, sSummer)
 
         # Calculate number of quarters
         months_passed = (year(end_date) - year(start_date)) * 12 + (month(end_date) - month(start_date))
-        n_quarters = math.ceil(months_passed / 4)
+        n_quarters = int(math.ceil(months_passed / 4))
 
-        return start_ay, start_quarter, n_quarters
+        return int(start_ay), start_quarter, n_quarters
 
 
     @staticmethod
-    def isInternal(self, enroll_domain, org):
+    def isInternal(enroll_domain, org):
         '''
         Return boolean indicating whether course is internal.
         '''
@@ -400,31 +399,41 @@ class ModulestoreExtractor(MySQLDB):
                 continue  # Ignore if not a 'published' course
             # Get this course block and corresponding definition document from modulestore
             structure = self.msdb['modulestore.structures'].find({"_id": cid, "blocks.block_type": "course"})[0]
-            block = filter(lambda b: b['block_type'] == 'course', structure['blocks'])
-            definition = self.msdb['modulestore.definitions'].find({"_id": structure['definition']})
+            block = filter(lambda b: b['block_type'] == 'course', structure['blocks'])[0]
+            definition = self.msdb['modulestore.definitions'].find({"_id": block['definition']})[0]
 
             data = dict()
             data['course_display_name'] = "%s/%s/%s" % (course['org'], course['course'], course['run'])
             data['course_catalog_name'] = block['fields']['display_name']
-            start_date = block['fields']['start']
-            end_date = block['fields']['end']
-            data['start_date'] = start_date
+	    datestr = lambda d: datetime.datetime.strftime(d, "%Y-%m-%dT%H:%M:%SZ")
+	    start_date = block['fields'].get('start', '0000-00-00T00:00:00Z')
+            end_date = block['fields'].get('end', '0000-00-00T00:00:00Z') 
+	    start_date = datestr(start_date) if type(start_date) is datetime.datetime else start_date
+	    end_date = datestr(end_date) if type(end_date) is datetime.datetime else end_date
+	    data['start_date'] = start_date
             data['end_date'] = end_date
             academic_year, quarter, num_quarters = self.__lookupAYDataFromDates(start_date, end_date)
             data['academic_year'] = academic_year
             data['quarter'] = quarter
             data['num_quarters'] = num_quarters
             data['is_internal'] = self.isInternal("", course['org'])
-            data['enrollment_start'] = block['fields']['enrollment_start']
-            data['enrollment_end'] = block['fields']['enrollment_end']
-            data['grade_policy'] = definition['fields']['grading_policy'].get('GRADER', 'NA')
-            data['certs_policy'] = ("minimum_grade_credit: %s" % block['fields']['minimum_grade_credit']) + definition['fields']['grading_policy'].get('GRADE_CUTOFFS', 'NA')
-
-            table.append(data)
+            enrollment_start = block['fields'].get('enrollment_start', '0000-00-00T00:00:00Z')
+            enrollment_end = block['fields'].get('enrollment_end', '0000-00-00T00:00:00Z')
+	    enrollment_start = datestr(enrollment_start) if type(enrollment_start) is datetime.datetime else enrollment_start
+	    enrollment_end = datestr(enrollment_end) if type(enrollment_end) is datetime.datetime else enrollment_end
+	    data['enrollment_start'] = enrollment_start
+	    data['enrollment_end'] = enrollment_end
+	    try:
+		data['grade_policy'] = str(definition['fields'].get('grading_policy').get('GRADER', 'NA'))
+                data['certs_policy'] = ("minimum_grade_credit: %s certificate_policy: " % block['fields']['minimum_grade_credit']) + str(definition['fields'].get('grading_policy').get('GRADE_CUTOFFS', 'NA'))
+            except AttributeError:
+		data['grade_policy'] = 'NA'
+		data['certs_policy'] = 'NA'
+	    table.append(data)
 
         return table
 
-    def __loadToSQL(self, table):
+    def __loadToSQL(self, table, table_name):
         '''
         Build columns tuple and list of row tuples for MySQLDB bulkInsert operation, then execute.
         We hold tables in memory to minimize query load on the receiving database.
@@ -436,7 +445,7 @@ class ModulestoreExtractor(MySQLDB):
             values = tuple(row.values())  # Convert each dict value set to tuple for loading
             data.append(values)
 
-        self.bulkInsert('EdxProblem', columns, data)
+        self.bulkInsert(table_name, columns, data)
 
 
 
