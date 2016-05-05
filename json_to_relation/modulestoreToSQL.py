@@ -405,12 +405,12 @@ class ModulestoreExtractor(MySQLDB):
             data = dict()
             data['course_display_name'] = "%s/%s/%s" % (course['org'], course['course'], course['run'])
             data['course_catalog_name'] = block['fields']['display_name']
-	    datestr = lambda d: datetime.datetime.strftime(d, "%Y-%m-%dT%H:%M:%SZ")
-	    start_date = block['fields'].get('start', '0000-00-00T00:00:00Z')
-            end_date = block['fields'].get('end', '0000-00-00T00:00:00Z') 
-	    start_date = datestr(start_date) if type(start_date) is datetime.datetime else start_date
-	    end_date = datestr(end_date) if type(end_date) is datetime.datetime else end_date
-	    data['start_date'] = start_date
+            datestr = lambda d: datetime.datetime.strftime(d, "%Y-%m-%dT%H:%M:%SZ")
+            start_date = block['fields'].get('start', '0000-00-00T00:00:00Z')
+            end_date = block['fields'].get('end', '0000-00-00T00:00:00Z')
+            start_date = datestr(start_date) if type(start_date) is datetime.datetime else start_date
+            end_date = datestr(end_date) if type(end_date) is datetime.datetime else end_date
+            data['start_date'] = start_date
             data['end_date'] = end_date
             academic_year, quarter, num_quarters = self.__lookupAYDataFromDates(start_date, end_date)
             data['academic_year'] = academic_year
@@ -419,17 +419,18 @@ class ModulestoreExtractor(MySQLDB):
             data['is_internal'] = self.isInternal("", course['org'])
             enrollment_start = block['fields'].get('enrollment_start', '0000-00-00T00:00:00Z')
             enrollment_end = block['fields'].get('enrollment_end', '0000-00-00T00:00:00Z')
-	    enrollment_start = datestr(enrollment_start) if type(enrollment_start) is datetime.datetime else enrollment_start
-	    enrollment_end = datestr(enrollment_end) if type(enrollment_end) is datetime.datetime else enrollment_end
-	    data['enrollment_start'] = enrollment_start
-	    data['enrollment_end'] = enrollment_end
-	    try:
-		data['grade_policy'] = str(definition['fields'].get('grading_policy').get('GRADER', 'NA'))
+            enrollment_start = datestr(enrollment_start) if type(enrollment_start) is datetime.datetime else enrollment_start
+            enrollment_end = datestr(enrollment_end) if type(enrollment_end) is datetime.datetime else enrollment_end
+            data['enrollment_start'] = enrollment_start
+            data['enrollment_end'] = enrollment_end
+            try:
+                data['grade_policy'] = str(definition['fields'].get('grading_policy').get('GRADER', 'NA'))
                 data['certs_policy'] = ("minimum_grade_credit: %s certificate_policy: " % block['fields']['minimum_grade_credit']) + str(definition['fields'].get('grading_policy').get('GRADE_CUTOFFS', 'NA'))
             except AttributeError:
-		data['grade_policy'] = 'NA'
-		data['certs_policy'] = 'NA'
-	    table.append(data)
+                data['grade_policy'] = 'NA'
+                data['certs_policy'] = 'NA'
+
+            table.append(data)
 
         return table
 
