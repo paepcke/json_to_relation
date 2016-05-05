@@ -10,7 +10,7 @@
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-## Class: EdxProblemExtractor
+## Class: ModulestoreExtractor
 ## Author: Alex Kindel
 ## Date: 8 February 2016
 ## Converts modulestore mongo structure to SQL.
@@ -22,15 +22,23 @@
 
 import sys
 import json
+import math
 import os.path
 import datetime
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 from pymysql_utils1 import MySQLDB
 import pymongo as mng
 
 
-class EdxProblemExtractor(MySQLDB):
+class ModulestoreExtractor(MySQLDB):
+
+    # Class variables for determining internal status of course
+    SU_ENROLLMENT_DOMAIN = "shib:https://idp.stanford.edu/"
+    INTERNAL_ORGS = ['ohsx', 'ohs']
+
+    # Data type for AY_[quarter][year] date ranges
+    Quarter = namedtuple('Quarter', ['start_date', 'end_date', 'quarter'])
 
     def __init__(self, split=True, old=True):
         '''
@@ -89,18 +97,58 @@ class EdxProblemExtractor(MySQLDB):
         self.execute(emptyEdxProblemTableQuery)
 
 
+    def __buildEmptyCourseInfoTable(self):
+        '''
+        Reset CourseInfo table and rebuild.
+        '''
+        # Build table drop and table definition queries
+        dropOldTableQuery = """DROP TABLE IF EXISTS `CourseInfo`;"""
+        emptyCourseInfoTableQuery = """
+            CREATE TABLE IF NOT EXISTS `CourseInfo` (
+                `course_display_name` varchar(255) DEFAULT NULL,
+                `course_catalog_name` varchar(255) DEFAULT NULL,
+                `academic_year` int(11) DEFAULT NULL,
+                `quarter` varchar(7) DEFAULT NULL,
+                `num_quarters` int(11) DEFAULT NULL,
+                `is_internal` tinyint(4) DEFAULT NULL,
+                `enrollment_start` datetime DEFAULT NULL,
+                `start_date` datetime DEFAULT NULL,
+                `enrollment_end` datetime DEFAULT NULL,
+                `end_date` datetime DEFAULT NULL,
+                `grade_policy` text DEFAULT NULL,
+                `certs_policy` text DEFAULT NULL
+            )
+        """
+
+        # Execute table definition queries
+        self.execute(dropOldTableQuery)
+        self.execute(emptyCourseInfoTableQuery)
+
+
     def export(self):
         '''
         Client method builds tables and loads various modulestore cases to MySQL.
-        We reload each time. The full load takes less than a minute.
+        We reload both tables from scratch each time since the tables are relatively small.
         '''
+        # Destroy old MS-derived tables
         self.__buildEmptyEdxProblemTable()
+        self.__buildEmptyCourseInfoTable()
+
+        # Handle split MS case
         if self.split:
-            splitdata = self.__extractSplitMS()
-            self.__loadToSQL(splitdata)
+            splitEPData = self.__extractSplitEdxProblem()
+            self.__loadToSQL(splitEPData)
+
+            splitCIData = self.__extractSplitCourseInfo()
+            self.__loadToSQL(splitCIData)
+
+        # Handle old MS case
         if self.old:
-            oldmsdata = self.__extractOldMS()
-            self.__loadToSQL(oldmsdata)
+            oldEPData = self.__extractOldEdxProblem()
+            self.__loadToSQL(oldEPData)
+
+            oldCIData = self.__extractOldCourseInfo()
+            self.__loadToSQL(oldCIData)
 
 
     @staticmethod
@@ -122,6 +170,7 @@ class EdxProblemExtractor(MySQLDB):
         '''
         Convert published_date array from modulestore to python datetime object.
         '''
+        # FIXME: This function is 100% wrong, lol
         dtarr = problem['metadata'].get('published_date', False)
         if not dtarr:
             return None
@@ -161,7 +210,7 @@ class EdxProblemExtractor(MySQLDB):
         return parent_module_uri, order
 
 
-    def __extractOldMS(self):
+    def __extractOldEdxProblem(self):
         '''
         Extract problem data from old-style MongoDB modulestore.
         SQL load method expects a list of dicts mapping column names to data.
@@ -208,7 +257,7 @@ class EdxProblemExtractor(MySQLDB):
         return table
 
 
-    def __extractSplitMS(self):
+    def __extractSplitEdxProblem(self):
         '''
         Extract problem data from Split MongoDB modulestore.
         SQL load method expects a list of dicts mapping column names to data.
@@ -246,6 +295,96 @@ class EdxProblemExtractor(MySQLDB):
         return table
 
 
+    @staticmethod
+    def inRange(date, quarter):
+        '''
+        Return boolean indicating whether date is contained in date_range.
+        '''
+        if not type(date_range) is Quarter:
+            raise TypeError('Function inRange expects date_range of type Quarter.')
+
+        msdb_time = lambda timestamp: datetime.datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%SZ")
+        if (msdb_time(date) >= msdb_time(date_range.start_date)) and (msdb_time(date) <= msdb_time(date_range.end_date)):
+            return quarter.quarter
+        else:
+            return False
+
+
+    @staticmethod
+    def genQuartersForAY(ay):
+        '''
+        Return date ranges for quarters for a given academic year.
+        '''
+        ayb = str(int(ay) + 1)  # academic years bleed over into the next calendar year
+        AYfall = Quarter('%s-09-01T00:00:00Z' % ay, '%s-11-30T00:00:00Z' % ay, 'fall')
+        AYwinter = Quarter('%s-12-01T00:00:00Z' % ay, '%s-02-29T00:00:00Z' % ayb, 'winter')
+        AYspring = Quarter('%s-03-01T00:00:00Z' % ayb, '%s-05-31T00:00:00Z' % ayb, 'spring')
+        AYsummer = Quarter('%s-06-01T00:00:00Z' % ayb, '%s-08-31T00:00:00Z' % ayb, 'summer')
+        return AYfall, AYwinter, AYspring, AYsummer
+
+
+    def __lookupAYDataFromDates(self, start_date, end_date):
+        '''
+        Return course calendar data from hardcoded lookup table.
+        '''
+        # Quick functions to parse out month/year/academic year
+        month = lambda x: int(x[5:7])
+        year = lambda x: int(x[:4])
+
+        # Generate quarters given start date and determine starting quarter
+        start_ay = str(year(start_date)) if month(start_date) >= 9 else str(year(start_date) - 1)
+        sFall, sWinter, sSpring, sSummer = self.genQuartersForAY(start_ay)
+        start_quarter = inRange(sFall) or inRange(sWinter) or inRange(sSpring) or inRange(sSummer)
+
+        # Calculate number of quarters
+        months_passed = (year(end_date) - year(start_date)) * 12 + (month(end_date) - month(start_date))
+        n_quarters = math.ceil(months_passed / 4)
+
+        return start_ay, start_quarter, n_quarters
+
+
+    @staticmethod
+    def isInternal(self, enroll_domain, org):
+        '''
+        Return boolean indicating whether course is internal.
+        '''
+        return (enroll_domain == SU_ENROLLMENT_DOMAIN) or (org in INTERNAL_ORGS)
+
+
+    def __extractOldCourseInfo(self):
+        '''
+        Extract course metadata from old-style MongoDB modulestore.
+        Returns a list of dicts mapping column names to data.
+        '''
+        table = []
+        courses = self.msdb.modulestore.find({"_id.category": "course"})
+
+        for course in courses:
+            data = dict()
+            data['course_display_name'] = self.__resolveCDN(course)
+            data['course_catalog_name'] = course['metadata']['display_name']
+            start_date = course['metadata']['start_date']
+            end_date = course['metadata']['end_date']
+            data['start_date'] = start_date
+            data['end_date'] = end_date
+            academic_year, quarter, num_quarters = self.__lookupAYDataFromDates(start_date, end_date)
+            data['academic_year'] = academic_year
+            data['quarter'] = quarter
+            data['num_quarters'] = num_quarters
+            data['is_internal'] = self.isInternal(course['metadata']['enrollment_domain'], course['_id']['org'])
+            data['enrollment_start'] = course['metadata']['enrollment_start']
+            data['enrollment_end'] = course['metadata']['enrollment_end']
+            data['grade_policy'] = course['definition']['data']['grading_policy'].pop('GRADER', 'NA')
+            data['certs_policy'] = course['definition']['data']['grading_policy'].pop('GRADE_CUTOFFS', 'NA')
+
+            table.append(data)
+
+        return table
+
+    def __extractSplitCourseInfo(self):
+        pass  # TODO: Implement
+
+
     def __loadToSQL(self, table):
         '''
         Build columns tuple and list of row tuples for MySQLDB bulkInsert operation, then execute.
@@ -262,5 +401,5 @@ class EdxProblemExtractor(MySQLDB):
 
 
 if __name__ == '__main__':
-    extractor = EdxProblemExtractor()
+    extractor = ModulestoreExtractor()
     extractor.export()
