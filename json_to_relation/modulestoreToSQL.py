@@ -307,7 +307,7 @@ class ModulestoreExtractor(MySQLDB):
         if not type(quarter) is Quarter:
             raise TypeError('Function inRange expects date_range of type Quarter.')
         msdb_time = lambda timestamp: datetime.datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%SZ")
-	if (msdb_time(date) >= msdb_time(quarter.start_date)) and (msdb_time(date) <= msdb_time(quarter.end_date)):
+        if (msdb_time(date) >= msdb_time(quarter.start_date)) and (msdb_time(date) <= msdb_time(quarter.end_date)):
             return quarter.quarter
         else:
             return False
@@ -329,8 +329,8 @@ class ModulestoreExtractor(MySQLDB):
         '''
         Return course calendar data from hardcoded lookup table.
         '''
-	if start_date == '0000-00-00T00:00:00Z':
-	    return 0, 'NA', 0
+        if start_date == '0000-00-00T00:00:00Z':
+            return 0, 'NA', 0
         # Quick functions to parse out month/year/academic year
         month = lambda x: int(x[5:7])
         year = lambda x: int(x[:4])
@@ -368,8 +368,8 @@ class ModulestoreExtractor(MySQLDB):
             data = dict()
             data['course_display_name'] = self.__resolveCDN(course)
             data['course_catalog_name'] = course['metadata']['display_name']
-            start_date = course['metadata'].get('start_date', '0000-00-00T00:00:00Z')
-            end_date = course['metadata'].get('end_date', '0000-00-00T00:00:00Z')
+            start_date = course['metadata'].get('start', '0000-00-00T00:00:00Z')
+            end_date = course['metadata'].get('end', '0000-00-00T00:00:00Z')
             data['start_date'] = start_date
             data['end_date'] = end_date
             academic_year, quarter, num_quarters = self.__lookupAYDataFromDates(start_date, end_date)
@@ -379,12 +379,12 @@ class ModulestoreExtractor(MySQLDB):
             data['is_internal'] = self.isInternal(course['metadata'].get('enrollment_domain', 'NA'), course['_id']['org'])
             data['enrollment_start'] = course['metadata'].get('enrollment_start', '0000-00-00T00:00:00Z')
             data['enrollment_end'] = course['metadata'].get('enrollment_end', '0000-00-00T00:00:00Z')
-	    try:
+            try:
                 data['grade_policy'] = str(course['definition']['data'].get('grading_policy', 'NA').get('GRADER', 'NA'))
                 data['certs_policy'] = str(course['definition']['data'].get('grading_policy', 'NA').get('GRADE_CUTOFFS', 'NA'))
-	    except AttributeError:
-		data['grade_policy'] = 'NA'
-		data['certs_policy'] = 'NA'
+            except AttributeError:
+                data['grade_policy'] = 'NA'
+                data['certs_policy'] = 'NA'
 
             table.append(data)
 
