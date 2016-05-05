@@ -307,7 +307,7 @@ class ModulestoreExtractor(MySQLDB):
         if not type(quarter) is Quarter:
             raise TypeError('Function inRange expects date_range of type Quarter.')
         msdb_time = lambda timestamp: datetime.datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%SZ")
-        if (msdb_time(date) >= msdb_time(quarter.start_date)) and (msdb_time(date) <= msdb_time(quarter.end_date)):
+	if (msdb_time(date) >= msdb_time(quarter.start_date)) and (msdb_time(date) <= msdb_time(quarter.end_date)):
             return quarter.quarter
         else:
             return False
@@ -329,6 +329,8 @@ class ModulestoreExtractor(MySQLDB):
         '''
         Return course calendar data from hardcoded lookup table.
         '''
+	if start_date == '0000-00-00T00:00:00Z':
+	    return 0, 'NA', 0
         # Quick functions to parse out month/year/academic year
         month = lambda x: int(x[5:7])
         year = lambda x: int(x[:4])
@@ -374,11 +376,15 @@ class ModulestoreExtractor(MySQLDB):
             data['academic_year'] = academic_year
             data['quarter'] = quarter
             data['num_quarters'] = num_quarters
-            data['is_internal'] = self.isInternal(course['metadata']['enrollment_domain'], course['_id']['org'])
+            data['is_internal'] = self.isInternal(course['metadata'].get('enrollment_domain', 'NA'), course['_id']['org'])
             data['enrollment_start'] = course['metadata'].get('enrollment_start', '0000-00-00T00:00:00Z')
             data['enrollment_end'] = course['metadata'].get('enrollment_end', '0000-00-00T00:00:00Z')
-            data['grade_policy'] = str(course['definition']['data']['grading_policy'].get('GRADER', 'NA'))
-            data['certs_policy'] = str(course['definition']['data']['grading_policy'].get('GRADE_CUTOFFS', 'NA'))
+	    try:
+                data['grade_policy'] = str(course['definition']['data'].get('grading_policy', 'NA').get('GRADER', 'NA'))
+                data['certs_policy'] = str(course['definition']['data'].get('grading_policy', 'NA').get('GRADE_CUTOFFS', 'NA'))
+	    except AttributeError:
+		data['grade_policy'] = 'NA'
+		data['certs_policy'] = 'NA'
 
             table.append(data)
 
