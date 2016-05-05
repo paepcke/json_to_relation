@@ -115,7 +115,7 @@ class ModulestoreExtractor(MySQLDB):
                 `course_catalog_name` varchar(255) DEFAULT NULL,
                 `academic_year` int(11) DEFAULT NULL,
                 `quarter` varchar(7) DEFAULT NULL,
-                `num_quarters` int(11) DEFAULT NULL,
+                # `num_quarters` int(11) DEFAULT NULL,  # NOTE: num_quarters field deprecated 5 May 2016
                 `is_internal` tinyint(4) DEFAULT NULL,
                 `enrollment_start` datetime DEFAULT NULL,
                 `start_date` datetime DEFAULT NULL,
@@ -334,9 +334,9 @@ class ModulestoreExtractor(MySQLDB):
             return 0, 'NA', 0
         end_date = '0000-00-00T00:00:00Z' if not end_date else end_date
 
-	if start_date.count(':') < 2:
-	    start_date = start_date[:-1] + ":00Z"
-	# Quick functions to parse out month/year/academic year
+        if start_date.count(':') < 2:
+            start_date = start_date[:-1] + ":00Z"
+        # Quick functions to parse out month/year/academic year
         month = lambda x: int(x[5:7])
         year = lambda x: int(x[:4])
 
@@ -348,10 +348,10 @@ class ModulestoreExtractor(MySQLDB):
         # Calculate number of quarters
         months_passed = (year(end_date) - year(start_date)) * 12 + (month(end_date) - month(start_date))
         n_quarters = int(math.ceil(months_passed / 4))
-	if n_quarters == 0:
-	    n_quarters = 1  # Round up to one quarter minimum
-	if n_quarters < 0:
-	    n_quarters = 0  # Self-paced courses have no quarters
+        if n_quarters == 0:
+            n_quarters = 1  # Round up to one quarter minimum
+        if n_quarters < 0:
+            n_quarters = 0  # Self-paced courses have no quarters
 
         return int(start_ay), start_quarter, n_quarters
 
@@ -384,7 +384,7 @@ class ModulestoreExtractor(MySQLDB):
             academic_year, quarter, num_quarters = self.__lookupAYDataFromDates(start_date, end_date)
             data['academic_year'] = academic_year
             data['quarter'] = quarter
-            data['num_quarters'] = num_quarters
+            # data['num_quarters'] = num_quarters
             data['is_internal'] = self.isInternal(course['metadata'].get('enrollment_domain', 'NA'), course['_id']['org'])
             data['enrollment_start'] = course['metadata'].get('enrollment_start', '0000-00-00T00:00:00Z')
             data['enrollment_end'] = course['metadata'].get('enrollment_end', '0000-00-00T00:00:00Z')
@@ -395,8 +395,8 @@ class ModulestoreExtractor(MySQLDB):
                 data['grade_policy'] = 'NA'
                 data['certs_policy'] = 'NA'
 
-	    if data['academic_year'] not in VALID_AYS:
-		continue
+            if data['academic_year'] not in VALID_AYS:
+                continue
             table.append(data)
 
         return table
@@ -432,7 +432,7 @@ class ModulestoreExtractor(MySQLDB):
             academic_year, quarter, num_quarters = self.__lookupAYDataFromDates(start_date, end_date)
             data['academic_year'] = academic_year
             data['quarter'] = quarter
-            data['num_quarters'] = num_quarters
+            # data['num_quarters'] = num_quarters
             data['is_internal'] = self.isInternal("", course['org'])
             enrollment_start = block['fields'].get('enrollment_start', '0000-00-00T00:00:00Z')
             enrollment_end = block['fields'].get('enrollment_end', '0000-00-00T00:00:00Z')
@@ -447,7 +447,7 @@ class ModulestoreExtractor(MySQLDB):
                 data['grade_policy'] = 'NA'
                 data['certs_policy'] = 'NA'
 
-	    if data['academic_year'] not in VALID_AYS:
+            if data['academic_year'] not in VALID_AYS:
                 continue
             table.append(data)
 
