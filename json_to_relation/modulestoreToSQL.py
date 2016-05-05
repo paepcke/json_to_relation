@@ -53,8 +53,8 @@ class ModulestoreExtractor(MySQLDB):
         self.old = old
 
         # Switch for updating EdxProblem and CourseInfo separately (useful for testing)
-        update_EP = edxproblem
-        update_CI = courseinfo
+        self.update_EP = edxproblem
+        self.update_CI = courseinfo
 
         # Initialize MySQL connection from config file
         home = os.path.expanduser('~')
