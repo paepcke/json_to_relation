@@ -366,8 +366,8 @@ class ModulestoreExtractor(MySQLDB):
             data = dict()
             data['course_display_name'] = self.__resolveCDN(course)
             data['course_catalog_name'] = course['metadata']['display_name']
-            start_date = course['metadata']['start_date']
-            end_date = course['metadata']['end_date']
+            start_date = course['metadata'].get('start_date', '0000-00-00T00:00:00Z')
+            end_date = course['metadata'].get('end_date', '0000-00-00T00:00:00Z')
             data['start_date'] = start_date
             data['end_date'] = end_date
             academic_year, quarter, num_quarters = self.__lookupAYDataFromDates(start_date, end_date)
@@ -375,10 +375,10 @@ class ModulestoreExtractor(MySQLDB):
             data['quarter'] = quarter
             data['num_quarters'] = num_quarters
             data['is_internal'] = self.isInternal(course['metadata']['enrollment_domain'], course['_id']['org'])
-            data['enrollment_start'] = course['metadata']['enrollment_start']
-            data['enrollment_end'] = course['metadata']['enrollment_end']
-            data['grade_policy'] = course['definition']['data']['grading_policy'].get('GRADER', 'NA')
-            data['certs_policy'] = course['definition']['data']['grading_policy'].get('GRADE_CUTOFFS', 'NA')
+            data['enrollment_start'] = course['metadata'].get('enrollment_start', '0000-00-00T00:00:00Z')
+            data['enrollment_end'] = course['metadata'].get('enrollment_end', '0000-00-00T00:00:00Z')
+            data['grade_policy'] = str(course['definition']['data']['grading_policy'].get('GRADER', 'NA'))
+            data['certs_policy'] = str(course['definition']['data']['grading_policy'].get('GRADE_CUTOFFS', 'NA'))
 
             table.append(data)
 
