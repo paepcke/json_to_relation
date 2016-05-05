@@ -40,7 +40,7 @@ class ModulestoreExtractor(MySQLDB):
     # Data type for AY_[quarter][year] date ranges
     Quarter = namedtuple('Quarter', ['start_date', 'end_date', 'quarter'])
 
-    def __init__(self, split=True, old=True):
+    def __init__(self, split=True, old=True, edxproblem=True, courseinfo=True):
         '''
         Get interface to modulestore backup.
         Note: This class presumes modulestore was recently loaded to mongod.
@@ -51,6 +51,10 @@ class ModulestoreExtractor(MySQLDB):
         # Need to handle Split and Old modulestore cases
         self.split = split
         self.old = old
+
+        # Switch for updating EdxProblem and CourseInfo separately (useful for testing)
+        update_EP = edxproblem
+        update_CI = courseinfo
 
         # Initialize MySQL connection from config file
         home = os.path.expanduser('~')
@@ -130,23 +134,22 @@ class ModulestoreExtractor(MySQLDB):
         Client method builds tables and loads various modulestore cases to MySQL.
         We reload both tables from scratch each time since the tables are relatively small.
         '''
-        # Destroy old MS-derived tables
-        self.__buildEmptyEdxProblemTable()
-        self.__buildEmptyCourseInfoTable()
+        self.__buildEmptyEdxProblemTable() if self.update_EP else None
+        self.__buildEmptyCourseInfoTable() if self.update_CI else None
 
-        # Handle split MS case
-        if self.split:
+        if self.split and self.update_EP:
             splitEPData = self.__extractSplitEdxProblem()
             self.__loadToSQL(splitEPData)
 
+        if self.split and self.update_CI:
             splitCIData = self.__extractSplitCourseInfo()
             self.__loadToSQL(splitCIData)
 
-        # Handle old MS case
-        if self.old:
+        if self.old and self.update_EP:
             oldEPData = self.__extractOldEdxProblem()
             self.__loadToSQL(oldEPData)
 
+        if self.old and self.update_CI:
             oldCIData = self.__extractOldCourseInfo()
             self.__loadToSQL(oldCIData)
 
@@ -357,8 +360,9 @@ class ModulestoreExtractor(MySQLDB):
         Returns a list of dicts mapping column names to data.
         '''
         table = []
-        courses = self.msdb.modulestore.find({"_id.category": "course"})
 
+        # Iterate through all 'course' type documents in modulestore
+        courses = self.msdb.modulestore.find({"_id.category": "course"})
         for course in courses:
             data = dict()
             data['course_display_name'] = self.__resolveCDN(course)
@@ -374,20 +378,56 @@ class ModulestoreExtractor(MySQLDB):
             data['is_internal'] = self.isInternal(course['metadata']['enrollment_domain'], course['_id']['org'])
             data['enrollment_start'] = course['metadata']['enrollment_start']
             data['enrollment_end'] = course['metadata']['enrollment_end']
-            data['grade_policy'] = course['definition']['data']['grading_policy'].pop('GRADER', 'NA')
-            data['certs_policy'] = course['definition']['data']['grading_policy'].pop('GRADE_CUTOFFS', 'NA')
+            data['grade_policy'] = course['definition']['data']['grading_policy'].get('GRADER', 'NA')
+            data['certs_policy'] = course['definition']['data']['grading_policy'].get('GRADE_CUTOFFS', 'NA')
 
             table.append(data)
 
         return table
 
     def __extractSplitCourseInfo(self):
-        pass  # TODO: Implement
+        '''
+        Extract course metadata from Split MongoDB modulestore.
+        Returns a list of dicts mapping column names to data.
+        '''
+        table = []
 
+        # Get all most recent versions of 'course' type documents from modulestore
+        courses = self.msdb['modulestore.active_versions'].find()
+        for course in courses:
+            cid = course['versions'].get('published-branch', None)
+            if not cid:
+                continue  # Ignore if not a 'published' course
+            # Get this course block and corresponding definition document from modulestore
+            structure = self.msdb['modulestore.structures'].find({"_id": cid, "blocks.block_type": "course"})[0]
+            block = filter(lambda b: b['block_type'] == 'course', structure['blocks'])
+            definition = self.msdb['modulestore.definitions'].find({"_id": structure['definition']})
+
+            data = dict()
+            data['course_display_name'] = "%s/%s/%s" % (course['org'], course['course'], course['run'])
+            data['course_catalog_name'] = block['fields']['display_name']
+            start_date = block['fields']['start']
+            end_date = block['fields']['end']
+            data['start_date'] = start_date
+            data['end_date'] = end_date
+            academic_year, quarter, num_quarters = self.__lookupAYDataFromDates(start_date, end_date)
+            data['academic_year'] = academic_year
+            data['quarter'] = quarter
+            data['num_quarters'] = num_quarters
+            data['is_internal'] = self.isInternal("", course['org'])
+            data['enrollment_start'] = block['fields']['enrollment_start']
+            data['enrollment_end'] = block['fields']['enrollment_end']
+            data['grade_policy'] = definition['fields']['grading_policy'].get('GRADER', 'NA')
+            data['certs_policy'] = ("minimum_grade_credit: %s" % block['fields']['minimum_grade_credit']) + definition['fields']['grading_policy'].get('GRADE_CUTOFFS', 'NA')
+
+            table.append(data)
+
+        return table
 
     def __loadToSQL(self, table):
         '''
         Build columns tuple and list of row tuples for MySQLDB bulkInsert operation, then execute.
+        We hold tables in memory to minimize query load on the receiving database.
         '''
         columns = table[0].keys()
 
@@ -401,5 +441,5 @@ class ModulestoreExtractor(MySQLDB):
 
 
 if __name__ == '__main__':
-    extractor = ModulestoreExtractor()
+    extractor = ModulestoreExtractor(edxproblem=False)
     extractor.export()
