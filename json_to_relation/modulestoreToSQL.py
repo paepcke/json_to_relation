@@ -37,6 +37,7 @@ Quarter = namedtuple('Quarter', ['start_date', 'end_date', 'quarter'])
 # Class variables for determining internal status of course
 SU_ENROLLMENT_DOMAIN = "shib:https://idp.stanford.edu/"
 INTERNAL_ORGS = ['ohsx', 'ohs']
+VALID_AYS = [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019]
 
 
 class ModulestoreExtractor(MySQLDB):
@@ -331,7 +332,11 @@ class ModulestoreExtractor(MySQLDB):
         '''
         if start_date == '0000-00-00T00:00:00Z':
             return 0, 'NA', 0
-        # Quick functions to parse out month/year/academic year
+        end_date = '0000-00-00T00:00:00Z' if not end_date else end_date
+
+	if start_date.count(':') < 2:
+	    start_date = start_date[:-1] + ":00Z"
+	# Quick functions to parse out month/year/academic year
         month = lambda x: int(x[5:7])
         year = lambda x: int(x[:4])
 
@@ -343,6 +348,10 @@ class ModulestoreExtractor(MySQLDB):
         # Calculate number of quarters
         months_passed = (year(end_date) - year(start_date)) * 12 + (month(end_date) - month(start_date))
         n_quarters = int(math.ceil(months_passed / 4))
+	if n_quarters == 0:
+	    n_quarters = 1  # Round up to one quarter minimum
+	if n_quarters < 0:
+	    n_quarters = 0  # Self-paced courses have no quarters
 
         return int(start_ay), start_quarter, n_quarters
 
@@ -352,7 +361,7 @@ class ModulestoreExtractor(MySQLDB):
         '''
         Return boolean indicating whether course is internal.
         '''
-        return (enroll_domain == SU_ENROLLMENT_DOMAIN) or (org in INTERNAL_ORGS)
+        return 1 if (enroll_domain == SU_ENROLLMENT_DOMAIN) or (org in INTERNAL_ORGS) else 0
 
 
     def __extractOldCourseInfo(self):
@@ -386,6 +395,8 @@ class ModulestoreExtractor(MySQLDB):
                 data['grade_policy'] = 'NA'
                 data['certs_policy'] = 'NA'
 
+	    if data['academic_year'] not in VALID_AYS:
+		continue
             table.append(data)
 
         return table
@@ -436,6 +447,8 @@ class ModulestoreExtractor(MySQLDB):
                 data['grade_policy'] = 'NA'
                 data['certs_policy'] = 'NA'
 
+	    if data['academic_year'] not in VALID_AYS:
+                continue
             table.append(data)
 
         return table
