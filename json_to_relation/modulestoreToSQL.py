@@ -84,7 +84,7 @@ class ModulestoreExtractor(MySQLDB):
               `course_display_name` VARCHAR(100) DEFAULT NULL,
               `problem_text` LONGTEXT,
               `date` VARCHAR(50) DEFAULT NULL,
-              `weight` INT DEFAULT NULL,
+              `weight` DECIMAL DEFAULT NULL,
               `revision` VARCHAR(10) DEFAULT NULL,
               `max_attempts` INT DEFAULT NULL,
               `trackevent_hook` VARCHAR(200) DEFAULT NULL,
