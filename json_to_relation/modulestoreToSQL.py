@@ -94,7 +94,8 @@ class ModulestoreExtractor(MySQLDB):
               `vertical_idx` INT DEFAULT NULL,
               `chapter_uri` VARCHAR(200) DEFAULT NULL,
               `sequential_idx` INT DEFAULT NULL,
-              `chapter_idx` INT DEFAULT NULL
+              `chapter_idx` INT DEFAULT NULL,
+              `staff_only` tinyint(4) DEFAULT NULL
             ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
         """
 
@@ -257,6 +258,9 @@ class ModulestoreExtractor(MySQLDB):
             course_uri, chapter_idx = self.__locateModuleInParent(chapter_uri)
             data['chapter_idx'] = chapter_idx
 
+            # Staff-only indicator
+            data['staff_only'] = self.msdb.modulestore.find({"_id.name": vertical_uri}).next()['metadata'].get('visible_to_staff_only', False)
+
             table.append(data)
 
         return table
@@ -290,6 +294,7 @@ class ModulestoreExtractor(MySQLDB):
                 data['problem_text'] = definition['fields']['data']
 
                 # TODO: Test the below on real course data from split modulestore
+                # TODO: Add context metadata
                 data['date'] = False
                 data['weight'] = -1
                 data['revision'] = False
