@@ -259,7 +259,10 @@ class ModulestoreExtractor(MySQLDB):
             data['chapter_idx'] = chapter_idx
 
             # Staff-only indicator
-            data['staff_only'] = self.msdb.modulestore.find({"_id.name": vertical_uri}).next()['metadata'].get('visible_to_staff_only', False)
+            if not vertical_uri:
+                data['staff_only'] = False
+            else:
+                data['staff_only'] = self.msdb.modulestore.find({"_id.name": vertical_uri}).next()['metadata'].get('visible_to_staff_only', False)
 
             table.append(data)
 
