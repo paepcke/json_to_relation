@@ -262,7 +262,8 @@ class ModulestoreExtractor(MySQLDB):
             if not vertical_uri:
                 data['staff_only'] = False
             else:
-                data['staff_only'] = self.msdb.modulestore.find({"_id.name": vertical_uri}).next()['metadata'].get('visible_to_staff_only', False)
+                name = vertical_uri.split('/')[6]
+                data['staff_only'] = self.msdb.modulestore.find({"_id.name": name}).next()['metadata'].get('visible_to_staff_only', False)
 
             table.append(data)
 
