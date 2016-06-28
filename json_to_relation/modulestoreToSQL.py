@@ -66,7 +66,8 @@ class ModulestoreExtractor(MySQLDB):
         dbFile = home + "/.ssh/mysql_user"
         if not os.path.isfile(dbFile):
             sys.exit("MySQL user credentials not found: " + dbFile)
-        dbuser, dbpass = None
+        dbuser = None
+        dbpass = None
         with open(dbFile, 'r') as f:
             dbuser = f.readline().rstrip()
             dbpass = f.readline().rstrip()
