@@ -563,13 +563,12 @@ class ModulestoreExtractor(MySQLDB):
 
 
 if __name__ == '__main__':
-    opts, args = getopt.getopt(sys.argv[1:], 'socpvr', ['--split', '--old', '--loadCourseInfo', '--loadEdxProblem', '--loadEdxVideo', '--refresh'])
+    opts, args = getopt.getopt(sys.argv[1:], 'socpv', ['--split', '--old', '--loadCourseInfo', '--loadEdxProblem', '--loadEdxVideo'])
     split = ('-s' or '--split') in opts
     old = ('-o' or '--old') in opts
     ci = ('-c' or '--loadCourseInfo') in opts
     ep = ('-p' or '--loadEdxProblem') in opts
     ev = ('-v' or '--loadEdxVideo') in opts
-    refresh = ('-r' or '--refresh') in opts
 
-    extractor = ModulestoreExtractor(split, old, ci, ep, ev, refresh)
+    extractor = ModulestoreExtractor(split, old, ci, ep, ev)
     extractor.export()
