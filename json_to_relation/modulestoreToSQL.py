@@ -376,8 +376,10 @@ class ModulestoreExtractor(MySQLDB):
                 continue
 
             # Retrieve course structure from published branch and filter out non-problem blocks
-            structure = self.msdb['modulestore.structures'].find({"_id": cid, "blocks.block_type": "video"})[0]
-            for block in filter(lambda b: b['block_type'] == 'video', structure['blocks']):
+            structure = self.msdb['modulestore.structures'].find({"_id": cid, "blocks.block_type": "video"})
+            if not structure:
+                continue  # Some courses don't have videos
+            for block in filter(lambda b: b['block_type'] == 'video', structure[0]['blocks']):
                 definition = self.msdb['modulestore.definitions'].find({"_id": block['definition']})[0]
 
                 data = dict()
