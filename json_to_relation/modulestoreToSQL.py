@@ -567,5 +567,5 @@ class ModulestoreExtractor(MySQLDB):
 
 
 if __name__ == '__main__':
-    extractor = ModulestoreExtractor(edxproblem=False, courseinfo=False)
+    extractor = ModulestoreExtractor()
     extractor.export()
