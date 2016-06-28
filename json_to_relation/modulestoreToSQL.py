@@ -43,7 +43,7 @@ VALID_AYS = [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019]
 
 class ModulestoreExtractor(MySQLDB):
 
-    def __init__(self, split, old, edxproblem, courseinfo, edxvideo):
+    def __init__(self, split=True, old=True, edxproblem=True, courseinfo=True, edxvideo=True):
         '''
         Get interface to modulestore backup.
         Note: This class presumes modulestore was recently loaded to mongod.
@@ -112,7 +112,7 @@ class ModulestoreExtractor(MySQLDB):
         '''
         dropOldTableQuery = """DROP TABLE IF EXISTS `EdxVideo`;"""
         emptyEdxVideoTableQuery = """
-            CREATE TABLE IF NOT EXSITS `EdxVideo` (
+            CREATE TABLE IF NOT EXISTS `EdxVideo` (
                 `video_id` VARCHAR(32) DEFAULT NULL,
                 `video_display_name` VARCHAR(100) DEFAULT NULL,
                 `course_display_name` VARCHAR(100) DEFAULT NULL,
@@ -384,7 +384,7 @@ class ModulestoreExtractor(MySQLDB):
                 data['video_id'] = block['block_id']
                 data['video_display_name'] = block['fields'].get('display_name', 'NA')
                 data['course_display_name'] = cdn
-                data['video_uri'] = block['html5_sources']
+                data['video_uri'] = block['fields'].get('html5_sources', 'NA')
                 data['video_code'] = block['fields'].get('youtube_id_1_0', 'NA')
                 table.append(data)
 
@@ -564,12 +564,5 @@ class ModulestoreExtractor(MySQLDB):
 
 
 if __name__ == '__main__':
-    opts, args = getopt.getopt(sys.argv[1:], 'socpv', ['--split', '--old', '--loadCourseInfo', '--loadEdxProblem', '--loadEdxVideo'])
-    split = ('-s' or '--split') in opts
-    old = ('-o' or '--old') in opts
-    ci = ('-c' or '--loadCourseInfo') in opts
-    ep = ('-p' or '--loadEdxProblem') in opts
-    ev = ('-v' or '--loadEdxVideo') in opts
-
-    extractor = ModulestoreExtractor(split, old, ci, ep, ev)
+    extractor = ModulestoreExtractor(edxproblem=False, courseinfo=False)
     extractor.export()
