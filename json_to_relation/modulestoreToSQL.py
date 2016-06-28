@@ -378,7 +378,7 @@ class ModulestoreExtractor(MySQLDB):
             # Retrieve course structure from published branch and filter out non-problem blocks
             try:
                 structure = self.msdb['modulestore.structures'].find({"_id": cid, "blocks.block_type": "video"})[0]
-            except TypeError:
+            except IndexError:
                 continue  # Some courses don't have any video content
             for block in filter(lambda b: b['block_type'] == 'video', structure['blocks']):
                 definition = self.msdb['modulestore.definitions'].find({"_id": block['definition']})[0]
