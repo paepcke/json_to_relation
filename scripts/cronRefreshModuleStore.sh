@@ -214,63 +214,64 @@ rm -rf modulestore_latest_stage
 TMP_FILE=`mktemp`
 chmod a+r $TMP_FILE
 
-# Detect modulestore version.
-SPLIT=false
+# Detect modulestore version and refresh accordingly
 ms_collections=mongo modulestore --eval "db.getCollectionNames()"
 if [[ $ms_collections =~ "active_versions" ]]
 then
-    SPLIT=true
-fi
-
-# Create command that loads modulestoreJavaScriptUtils.js into
-# MongoDB, creates a CourseInfoExtractor instance, and invokes
-# method createCourseCSV() on it. We give the method 0 for the
-# academic year, b/c we want a list of all years, and the string
-# 'all' to get all quarters of each year. The result, when the
-# mongo application is run with this command to --eval is a
-# stream of course information in CSV format:
-mongoCmd="load('"${currScriptsDir}/modulestoreJavaScriptUtils.js"'); \
-          courseExtractor = new CourseInfoExtractor();"
-if $SPLIT
-then
-    mongoCmd="${mongoCmd} courseExtractor.createCourseCSV(0, 'all', true);"
+    modulestoreToSQL.py -socpv
 else
-    mongoCmd="${mongoCmd} courseExtractor.createCourseCSV(0, 'all', false);"
+    modulestoreToSQL.py -ocpv
 fi
-mongo modulestore --eval "$mongoCmd" > $TMP_FILE
 
-#************
-#echo "TMP_FILE: $TMP_FILE"
-#exit 0
-#************
-MYSQL_CMD="LOAD DATA LOCAL INFILE '"$TMP_FILE"' INTO TABLE Edx.CourseInfo \
-           FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
-           LINES TERMINATED BY '\n' \
-           IGNORE 3 LINES;"
-
-#************
-# echo "TMP_FILE: $TMP_FILE"
-# ls -l $TMP_FILE
-# echo $MYSQL_CMD
-# exit 0
-#************
-
-echo `date`": Truncating current CourseInfo table, and importing new modulestore."
-if [[ $MYSQL_VERSION == '5.6+' ]]
-then
-    # Use 5.6 auth to MySQL:
-    mysql --login-path=root Edx -e "TRUNCATE TABLE CourseInfo; ""$MYSQL_CMD"
-else
-    # Use 5.5 auth to MySQL:
-    if $needPasswd
-    then
-        mysql -u $MYSQL_USERNAME -p$MYSQL_PASSWD Edx -e "TRUNCATE TABLE CourseInfo; ""$MYSQL_CMD"
-    else
-        mysql -u $MYSQL_USERNAME Edx -e "TRUNCATE TABLE CourseInfo; ""$MYSQL_CMD"
-    fi
-fi
-echo `date`": Deleting temp file."
-rm $TMP_FILE
+# # Create command that loads modulestoreJavaScriptUtils.js into
+# # MongoDB, creates a CourseInfoExtractor instance, and invokes
+# # method createCourseCSV() on it. We give the method 0 for the
+# # academic year, b/c we want a list of all years, and the string
+# # 'all' to get all quarters of each year. The result, when the
+# # mongo application is run with this command to --eval is a
+# # stream of course information in CSV format:
+# mongoCmd="load('"${currScriptsDir}/modulestoreJavaScriptUtils.js"'); \
+#           courseExtractor = new CourseInfoExtractor();"
+# if $SPLIT
+# then
+#     mongoCmd="${mongoCmd} courseExtractor.createCourseCSV(0, 'all', true);"
+# else
+#     mongoCmd="${mongoCmd} courseExtractor.createCourseCSV(0, 'all', false);"
+# fi
+# mongo modulestore --eval "$mongoCmd" > $TMP_FILE
+#
+# #************
+# #echo "TMP_FILE: $TMP_FILE"
+# #exit 0
+# #************
+# MYSQL_CMD="LOAD DATA LOCAL INFILE '"$TMP_FILE"' INTO TABLE Edx.CourseInfo \
+#            FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' \
+#            LINES TERMINATED BY '\n' \
+#            IGNORE 3 LINES;"
+#
+# #************
+# # echo "TMP_FILE: $TMP_FILE"
+# # ls -l $TMP_FILE
+# # echo $MYSQL_CMD
+# # exit 0
+# #************
+#
+# echo `date`": Truncating current CourseInfo table, and importing new modulestore."
+# if [[ $MYSQL_VERSION == '5.6+' ]]
+# then
+#     # Use 5.6 auth to MySQL:
+#     mysql --login-path=root Edx -e "TRUNCATE TABLE CourseInfo; ""$MYSQL_CMD"
+# else
+#     # Use 5.5 auth to MySQL:
+#     if $needPasswd
+#     then
+#         mysql -u $MYSQL_USERNAME -p$MYSQL_PASSWD Edx -e "TRUNCATE TABLE CourseInfo; ""$MYSQL_CMD"
+#     else
+#         mysql -u $MYSQL_USERNAME Edx -e "TRUNCATE TABLE CourseInfo; ""$MYSQL_CMD"
+#     fi
+# fi
+# echo `date`": Deleting temp file."
+# rm $TMP_FILE
 
 # ------------------ Extract Display Name Information For OpenEdX 32-bit Hashes -------------------
 

@@ -25,6 +25,7 @@ import json
 import math
 import os.path
 import datetime
+import getopt
 from collections import defaultdict, namedtuple
 
 from pymysql_utils1 import MySQLDB
@@ -42,12 +43,13 @@ VALID_AYS = [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019]
 
 class ModulestoreExtractor(MySQLDB):
 
-    def __init__(self, split=True, old=True, edxproblem=True, courseinfo=True):
+    def __init__(self, split, old, edxproblem, courseinfo, edxvideo):
         '''
         Get interface to modulestore backup.
         Note: This class presumes modulestore was recently loaded to mongod.
         Class also presumes that mongod is running on localhost:27017.
         '''
+        # FIXME: don't presume modulestore is recently loaded and running
         self.msdb = mng.MongoClient().modulestore
 
         # Need to handle Split and Old modulestore cases
@@ -57,14 +59,14 @@ class ModulestoreExtractor(MySQLDB):
         # Switch for updating EdxProblem and CourseInfo separately (useful for testing)
         self.update_EP = edxproblem
         self.update_CI = courseinfo
+        self.update_EV = edxvideo
 
         # Initialize MySQL connection from config file
         home = os.path.expanduser('~')
         dbFile = home + "/.ssh/mysql_user"
         if not os.path.isfile(dbFile):
             sys.exit("MySQL user credentials not found: " + dbFile)
-        dbuser = None
-        dbpass = None
+        dbuser, dbpass = None
         with open(dbFile, 'r') as f:
             dbuser = f.readline().rstrip()
             dbpass = f.readline().rstrip()
@@ -104,6 +106,25 @@ class ModulestoreExtractor(MySQLDB):
         self.execute(emptyEdxProblemTableQuery)
 
 
+    def __buildEmptyEdxVideoTable(self):
+        '''
+        '''
+        dropOldTableQuery = """DROP TABLE IF EXISTS `EdxVideo`;"""
+        emptyEdxVideoTableQuery = """
+            CREATE TABLE IF NOT EXSITS `EdxVideo` (
+                `video_id` VARCHAR(32) DEFAULT NULL,
+                `video_display_name` VARCHAR(100) DEFAULT NULL,
+                `course_display_name` VARCHAR(100) DEFAULT NULL,
+                `video_uri` TEXT DEFAULT NULL,
+                `video_code` TEXT DEFAULT NULL
+            ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+        """
+
+        # Execute table definition queries
+        self.execute(dropOldTableQuery)
+        self.execute(emptyEdxVideoTableQuery)
+
+
     def __buildEmptyCourseInfoTable(self):
         '''
         Reset CourseInfo table and rebuild.
@@ -139,6 +160,7 @@ class ModulestoreExtractor(MySQLDB):
         '''
         self.__buildEmptyEdxProblemTable() if self.update_EP else None
         self.__buildEmptyCourseInfoTable() if self.update_CI else None
+        self.__buildEmptyEdxVideoTable() if self.update_EV else None
 
         if self.split and self.update_EP:
             splitEPData = self.__extractSplitEdxProblem()
@@ -148,6 +170,10 @@ class ModulestoreExtractor(MySQLDB):
             splitCIData = self.__extractSplitCourseInfo()
             self.__loadToSQL(splitCIData, "CourseInfo")
 
+        if self.split and self.update_EV:
+            splitEVData = self.__extractSplitEdxVideo()
+            self.__loadToSQL(splitEVData, "EdxVideo")
+
         if self.old and self.update_EP:
             oldEPData = self.__extractOldEdxProblem()
             self.__loadToSQL(oldEPData, "EdxProblem")
@@ -155,6 +181,10 @@ class ModulestoreExtractor(MySQLDB):
         if self.old and self.update_CI:
             oldCIData = self.__extractOldCourseInfo()
             self.__loadToSQL(oldCIData, "CourseInfo")
+
+        if self.old and self.update_EV:
+            oldEVData = self.__extractOldEdxVideo()
+            self.__loadToSQL(oldEVData, "EdxVideo")
 
 
     @staticmethod
@@ -185,12 +215,12 @@ class ModulestoreExtractor(MySQLDB):
         return date
 
 
-    def __resolveCDN(self, problem):
+    def __resolveCDN(self, module):
         '''
-        Extract course display name from modulestore.
+        Extract course display name from old-style modulestore.
         '''
-        org = problem["_id"]["org"]
-        course = problem["_id"]["course"]
+        org = module["_id"]["org"]
+        course = module["_id"]["course"]
         definition = self.msdb.modulestore.find({"_id.category": "course",
                                                  "_id.org": org,
                                                  "_id.course": course})
@@ -309,6 +339,57 @@ class ModulestoreExtractor(MySQLDB):
         return table
 
 
+    def __extractOldEdxVideo(self):
+        '''
+        Extract video metadata from old MongoDB modulestore.
+        More or less identical to EdxProblem extract, but with different metadata.
+        '''
+        table = []
+
+        videos = self.msdb.modulestore.find({"_id.category": "video"}).batch_size(20)
+        for video in videos:
+            data = dict()
+            data['video_id'] = video['_id'].get('name', 'NA')
+            data['video_display_name'] = video['metadata'].get('display_name', 'NA')
+            data['course_display_name'] = self.__resolveCDN(video)
+            data['video_uri'] = video['metadata'].get('html5_sources', 'NA')
+            data['video_code'] = video['metadata'].get('youtube_id_1_0', 'NA')
+            table.append(data)
+
+        return table
+
+
+    def __extractSplitEdxVideo(self):
+        '''
+        Extract video metadata from Split MongoDB modulestore.
+        More or less identical to EdxProblem extract, but with different metadata.
+        '''
+        table = []
+
+        # Get a course generator and iterate through
+        courses = self.msdb['modulestore.active_versions'].find()
+        for course in courses:
+            cdn = "%s/%s/%s" % (course['org'], course['course'], course['run'])
+            cid = course['versions'].get('published-branch', None)
+            if not cid:
+                continue
+
+            # Retrieve course structure from published branch and filter out non-problem blocks
+            structure = self.msdb['modulestore.structures'].find({"_id": cid, "blocks.block_type": "problem"})[0]
+            for block in filter(lambda b: b['block_type'] == 'problem', structure['blocks']):
+                definition = self.msdb['modulestore.definitions'].find({"_id": block['definition']})[0]
+
+                data = dict()
+                data['video_id'] = block['block_id']
+                data['video_display_name'] = block['fields'].get('display_name', 'NA')
+                data['course_display_name'] = cdn
+                data['video_uri'] = block['html5_sources']
+                data['video_code'] = block['fields'].get('youtube_id_1_0', 'NA')
+                table.append(data)
+
+        return table
+
+
     @staticmethod
     def inRange(date, quarter):
         '''
@@ -321,6 +402,7 @@ class ModulestoreExtractor(MySQLDB):
             return quarter.quarter
         else:
             return False
+
 
     @staticmethod
     def genQuartersForAY(ay):
@@ -410,6 +492,7 @@ class ModulestoreExtractor(MySQLDB):
 
         return table
 
+
     def __extractSplitCourseInfo(self):
         '''
         Extract course metadata from Split MongoDB modulestore.
@@ -462,6 +545,7 @@ class ModulestoreExtractor(MySQLDB):
 
         return table
 
+
     def __loadToSQL(self, table, table_name):
         '''
         Build columns tuple and list of row tuples for MySQLDB bulkInsert operation, then execute.
@@ -479,5 +563,13 @@ class ModulestoreExtractor(MySQLDB):
 
 
 if __name__ == '__main__':
-    extractor = ModulestoreExtractor()
+    opts, args = getopt.getopt(sys.argv[1:], 'socpvr', ['--split', '--old', '--loadCourseInfo', '--loadEdxProblem', '--loadEdxVideo', '--refresh'])
+    split = ('-s' or '--split') in opts
+    old = ('-o' or '--old') in opts
+    ci = ('-c' or '--loadCourseInfo') in opts
+    ep = ('-p' or '--loadEdxProblem') in opts
+    ev = ('-v' or '--loadEdxVideo') in opts
+    refresh = ('-r' or '--refresh') in opts
+
+    extractor = ModulestoreExtractor(split, old, ci, ep, ev, refresh)
     extractor.export()
