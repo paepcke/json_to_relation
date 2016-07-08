@@ -1,0 +1,3 @@
+[submodule "qualtrics_etl"]
+	path = qualtrics_etl
+	url = https://github.com/paepcke/qualtrics_etl.git

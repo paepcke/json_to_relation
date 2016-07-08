@@ -125,7 +125,7 @@ class ModulestoreExtractor(MySQLDB):
                 `vertical_idx` INT DEFAULT NULL,
                 `chapter_uri` VARCHAR(200) DEFAULT NULL,
                 `sequential_idx` INT DEFAULT NULL,
-                `chapter_idx` INT DEFAULT NULL,
+                `chapter_idx` INT DEFAULT NULL
             ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
         """
 
