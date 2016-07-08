@@ -117,7 +117,15 @@ class ModulestoreExtractor(MySQLDB):
                 `video_display_name` VARCHAR(100) DEFAULT NULL,
                 `course_display_name` VARCHAR(100) DEFAULT NULL,
                 `video_uri` TEXT DEFAULT NULL,
-                `video_code` TEXT DEFAULT NULL
+                `video_code` TEXT DEFAULT NULL,
+                `trackevent_hook` VARCHAR(200) DEFAULT NULL,
+                `vertical_uri` VARCHAR(200) DEFAULT NULL,
+                `problem_idx` INT DEFAULT NULL,
+                `sequential_uri` VARCHAR(200) DEFAULT NULL,
+                `vertical_idx` INT DEFAULT NULL,
+                `chapter_uri` VARCHAR(200) DEFAULT NULL,
+                `sequential_idx` INT DEFAULT NULL,
+                `chapter_idx` INT DEFAULT NULL,
             ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
         """
 
@@ -350,11 +358,33 @@ class ModulestoreExtractor(MySQLDB):
         videos = self.msdb.modulestore.find({"_id.category": "video"}).batch_size(20)
         for video in videos:
             data = dict()
+
+            # Identifiers
             data['video_id'] = video['_id'].get('name', 'NA')
             data['video_display_name'] = video['metadata'].get('display_name', 'NA')
             data['course_display_name'] = self.__resolveCDN(video)
             data['video_uri'] = video['metadata'].get('html5_sources', 'NA')
             data['video_code'] = video['metadata'].get('youtube_id_1_0', 'NA')
+
+            # Context
+            video_uri = self.__resolveResourceURI(video)
+            data['trackevent_hook'] = video_uri
+
+            vertical_uri, problem_idx = self.__locateModuleInParent(video_uri)
+            data['vertical_uri'] = vertical_uri
+            data['problem_idx'] = problem_idx
+
+            sequential_uri, vertical_idx = self.__locateModuleInParent(vertical_uri)
+            data['sequential_uri'] = sequential_uri
+            data['vertical_idx'] = vertical_idx
+
+            chapter_uri, sequential_idx = self.__locateModuleInParent(sequential_uri)
+            data['chapter_uri'] = chapter_uri
+            data['sequential_idx'] = sequential_idx
+
+            course_uri, chapter_idx = self.__locateModuleInParent(chapter_uri)
+            data['chapter_idx'] = chapter_idx
+
             table.append(data)
 
         return table
