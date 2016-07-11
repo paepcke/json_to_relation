@@ -120,7 +120,7 @@ class ModulestoreExtractor(MySQLDB):
                 `video_code` TEXT DEFAULT NULL,
                 `trackevent_hook` VARCHAR(200) DEFAULT NULL,
                 `vertical_uri` VARCHAR(200) DEFAULT NULL,
-                `problem_idx` INT DEFAULT NULL,
+                `video_idx` INT DEFAULT NULL,
                 `sequential_uri` VARCHAR(200) DEFAULT NULL,
                 `vertical_idx` INT DEFAULT NULL,
                 `chapter_uri` VARCHAR(200) DEFAULT NULL,
