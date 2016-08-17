@@ -216,12 +216,14 @@ TMP_FILE=`mktemp`
 chmod a+r $TMP_FILE
 
 # Detect modulestore version and refresh accordingly
+cd $currScriptsDir/../json_to_relation/
 ms_collections=`mongo modulestore --quiet --eval "db.getCollectionNames()"`
 if [[ $ms_collections =~ "active_versions" ]]
+# TODO: Make sure this actually works
 then
-    modulestoreToSQL.py -socpv
+    python modulestoreToSQL.py
 else
-    modulestoreToSQL.py -ocpv
+    echo `date`": modulestore not reloaded correctly..."
 fi
 
 # # Create command that loads modulestoreJavaScriptUtils.js into
