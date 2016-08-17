@@ -126,10 +126,10 @@ then
 else
     if [ ! -f $HOME/.ssh/mysql_root ]
     then
-	echo "No password found for local MySQL in $HOME/.ssh/mysql_root; trying without a password."
+    echo "No password found for local MySQL in $HOME/.ssh/mysql_root; trying without a password."
     else
-	MYSQL_PASSWD=$(<$HOME/.ssh/mysql_root)
-	needPasswd=true
+    MYSQL_PASSWD=$(<$HOME/.ssh/mysql_root)
+    needPasswd=true
     fi
 fi
 
@@ -156,15 +156,15 @@ echo `date`": Start refreshing modulestore extract..."  | tee --append $LOG_FILE
 
 echo `date`": Begin copying modulestore dump tarballs from backup server."
 scp $EDX_PLATFORM_DUMP_MACHINE:/data/dump/modulestore-latest.tar.gz \
-	$EDXPROD_DUMP_DIR/
+    $EDXPROD_DUMP_DIR/
 scp $EDX_PLATFORM_DUMP_MACHINE:/data/dump/modulestore_active_versions-latest.tar.gz \
   $EDXPROD_DUMP_DIR/
 scp $EDX_PLATFORM_DUMP_MACHINE:/data/dump/modulestore_definitions-latest.tar.gz \
-	$EDXPROD_DUMP_DIR/
+    $EDXPROD_DUMP_DIR/
 scp $EDX_PLATFORM_DUMP_MACHINE:/data/dump/modulestore_structures-latest.tar.gz \
-	$EDXPROD_DUMP_DIR/
+    $EDXPROD_DUMP_DIR/
 scp $EDX_PLATFORM_DUMP_MACHINE:/data/dump/modulestore_location_map-latest.tar.gz \
-	$EDXPROD_DUMP_DIR/
+    $EDXPROD_DUMP_DIR/
 echo `date`": Unpack modulestore dump tarballs."
 cd $EDXPROD_DUMP_DIR
 tar zxvf modulestore-latest.tar.gz
@@ -199,7 +199,7 @@ cd modulestore_latest_stage
 
 echo `date`": Deleting old modulestore from local MongoDB."
 # CHANGED: mongo modulestore --eval "db.modulestore.remove({})"
-mongo modulestore --eval "db.dropDatabase()"
+mongo modulestore --quiet --eval "db.dropDatabase()"
 
 echo `date`": Loading new modulestore copy into local MongoDB."
 mongorestore --db modulestore modulestore.bson
@@ -209,13 +209,14 @@ mongorestore --db modulestore modulestore.definitions.bson
 mongorestore --db modulestore modulestore.location_map.bson
 
 cd ..
-rm -rf modulestore_latest_stage
+rm -rf modulestore_latest/
+mv modulestore_latest_stage/ modulestore_latest/
 
 TMP_FILE=`mktemp`
 chmod a+r $TMP_FILE
 
 # Detect modulestore version and refresh accordingly
-ms_collections=mongo modulestore --eval "db.getCollectionNames()"
+ms_collections=`mongo modulestore --quiet --eval "db.getCollectionNames()"`
 if [[ $ms_collections =~ "active_versions" ]]
 then
     modulestoreToSQL.py -socpv
