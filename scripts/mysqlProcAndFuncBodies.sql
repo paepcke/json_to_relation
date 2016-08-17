@@ -48,9 +48,9 @@ delimiter //
 
 DROP PROCEDURE IF EXISTS createIndexIfNotExists //
 CREATE PROCEDURE createIndexIfNotExists (IN the_index_name varchar(255),
-     		 			 IN the_table_name varchar(255),
-					 IN the_col_name   varchar(255),
-					 IN the_prefix_len INT)
+                           IN the_table_name varchar(255),
+                     IN the_col_name   varchar(255),
+                     IN the_prefix_len INT)
 this_proc: BEGIN
       # Check whether table exists:
       IF ((SELECT COUNT(*) AS table_exists
@@ -60,31 +60,31 @@ this_proc: BEGIN
           = 0)
       THEN
            SELECT concat("**** Table ", DATABASE(), ".", the_table_name, " does not exist.");
-	   LEAVE this_proc;
+       LEAVE this_proc;
       END IF;
 
       IF ((SELECT COUNT(*) AS index_exists
            FROM information_schema.statistics
            WHERE TABLE_SCHEMA = DATABASE()
              AND table_name = the_table_name
-    	 AND index_name = the_index_name)
+         AND index_name = the_index_name)
           = 0)
       THEN
           # Different CREATE INDEX statement depending on whether
           # a prefix length is required:
           IF the_prefix_len IS NULL
           THEN
-          	  SET @s = CONCAT('CREATE INDEX ' ,
-          	                  the_index_name ,
-          			  ' ON ' ,
-          			  the_table_name,
-          			  '(', the_col_name, ')');
+                SET @s = CONCAT('CREATE INDEX ' ,
+                                the_index_name ,
+                        ' ON ' ,
+                        the_table_name,
+                        '(', the_col_name, ')');
           ELSE
-          	  SET @s = CONCAT('CREATE INDEX ' ,
-          	                  the_index_name ,
- 			          ' ON ' ,
-          			  the_table_name,
-          			  '(', the_col_name, '(',the_prefix_len,'))');
+                SET @s = CONCAT('CREATE INDEX ' ,
+                                the_index_name ,
+                       ' ON ' ,
+                        the_table_name,
+                        '(', the_col_name, '(',the_prefix_len,'))');
          END IF;
          PREPARE stmt FROM @s;
          EXECUTE stmt;
@@ -97,26 +97,26 @@ END//
 
 DROP PROCEDURE IF EXISTS dropIndexIfExists //
 CREATE PROCEDURE dropIndexIfExists (IN the_table_name varchar(255),
-   		 	            IN the_col_name varchar(255))
+                            IN the_col_name varchar(255))
 BEGIN
     DECLARE indx_name varchar(255);
     IF ((SELECT COUNT(*) AS index_exists
          FROM information_schema.statistics
          WHERE TABLE_SCHEMA = DATABASE()
            AND table_name = the_table_name
-  	   AND column_name = the_col_name)
+         AND column_name = the_col_name)
         > 0)
     THEN
         SELECT index_name INTO @indx_name
-	FROM information_schema.statistics
-	WHERE TABLE_SCHEMA = DATABASE()
- 	   AND table_name = the_table_name
- 	   AND column_name = the_col_name;
+    FROM information_schema.statistics
+    WHERE TABLE_SCHEMA = DATABASE()
+        AND table_name = the_table_name
+        AND column_name = the_col_name;
         SET @s = CONCAT('DROP INDEX `' ,
                         @indx_name ,
-  		        '` ON ' ,
-        		the_table_name
-        		);
+                  '` ON ' ,
+                the_table_name
+                );
        PREPARE stmt FROM @s;
        EXECUTE stmt;
     END IF;
@@ -130,24 +130,24 @@ END//
 
 DROP PROCEDURE IF EXISTS addPrimaryIfNotExists //
 CREATE PROCEDURE addPrimaryIfNotExists (IN the_table_name varchar(255),
-					IN the_col_name   varchar(255))
+                    IN the_col_name   varchar(255))
 BEGIN
       IF ((SELECT COUNT(*) AS index_exists
            FROM information_schema.statistics
            WHERE TABLE_SCHEMA = DATABASE()
              AND table_name = the_table_name
-    	 AND index_name = 'PRIMARY')
+         AND index_name = 'PRIMARY')
          = 0)
       THEN
           # 'IGNORE' will refuse to add duplicates:
-      	  SET @s = CONCAT('ALTER IGNORE TABLE ' ,
-      			  the_table_name,
-			  ' ADD PRIMARY KEY ( ',
-      			  the_col_name,
-			  ' )'
-			  );
+            SET @s = CONCAT('ALTER IGNORE TABLE ' ,
+                    the_table_name,
+              ' ADD PRIMARY KEY ( ',
+                    the_col_name,
+              ' )'
+              );
           PREPARE stmt FROM @s;
- 	  EXECUTE stmt;
+       EXECUTE stmt;
       END IF;
 END//
 
@@ -165,13 +165,13 @@ BEGIN
          FROM information_schema.statistics
          WHERE TABLE_SCHEMA = DATABASE()
            AND table_name = the_table_name
-  	   AND index_name = 'PRIMARY')
+         AND index_name = 'PRIMARY')
         > 0)
     THEN
         SET @s = CONCAT('ALTER TABLE ' ,
-        		the_table_name,
-			' DROP PRIMARY KEY;'
-        		);
+                the_table_name,
+            ' DROP PRIMARY KEY;'
+                );
        PREPARE stmt FROM @s;
        EXECUTE stmt;
     END IF;
@@ -186,14 +186,14 @@ END//
 
 DROP FUNCTION IF EXISTS indexExists//
 CREATE FUNCTION indexExists(the_table_name varchar(255),
-       		 	    the_col_name varchar(255))
+                        the_col_name varchar(255))
 RETURNS BOOL
 BEGIN
     IF ((SELECT COUNT(*)
          FROM information_schema.statistics
          WHERE TABLE_SCHEMA = DATABASE()
            AND table_name = the_table_name
-    	   AND column_name = the_col_name) > 0)
+           AND column_name = the_col_name) > 0)
    THEN
        RETURN 1;
    ELSE
@@ -216,7 +216,7 @@ BEGIN
          FROM information_schema.statistics
          WHERE TABLE_SCHEMA = DATABASE()
            AND table_name = the_table_name
-    	   AND Index_name != 'Primary') > 0)
+           AND Index_name != 'Primary') > 0)
    THEN
        RETURN 1;
    ELSE
@@ -242,7 +242,7 @@ BEGIN
          FROM information_schema.routines
          WHERE ROUTINE_TYPE = 'FUNCTION'
            AND ROUTINE_SCHEMA = @the_db_name
-    	   AND ROUTINE_NAME = @the_func_name) > 0)
+           AND ROUTINE_NAME = @the_func_name) > 0)
    THEN
        RETURN 1;
    ELSE
@@ -307,8 +307,8 @@ BEGIN
     INTO @loadDateTime, @collectDate;
     return CONCAT('Loaded: ',
                   @loadDateTime,
-		  '; collected: ',
-		  @collectDate);
+          '; collected: ',
+          @collectDate);
 END//
 
 #--------------------------
@@ -347,8 +347,8 @@ BEGIN
     INTO @loadDateTime, @collectDate;
     return CONCAT('Loaded: ',
                   @loadDateTime,
-		  '; collected: ',
-		  @collectDate);
+          '; collected: ',
+          @collectDate);
 END//
 
 #--------------------------
@@ -532,8 +532,8 @@ BEGIN
       DECLARE ltiId varchar(255);
       SELECT DISTINCT lti_id INTO @ltiId
         FROM (SELECT lti_id
-             	FROM edxprod.Lti2Anon
-	       WHERE anon_screen_name = the_anon_screen_name
+                 FROM edxprod.Lti2Anon
+           WHERE anon_screen_name = the_anon_screen_name
              ) AS LtiCandidates,
              edxprod.Lti2GlobalLti
        WHERE edxprod.LtiCandidates.lti_id = edxprod.Lti2GlobalLti.global_lti_id;
@@ -589,7 +589,7 @@ BEGIN
           SELECT anonymous_user_id AS extId INTO @extId
           FROM edxprod.student_anonymoususerid
           WHERE user_id = @int_id
-	    AND course_id = course_display_name;
+        AND course_id = course_display_name;
           RETURN @extId;
       ELSE
           RETURN null;
@@ -699,7 +699,7 @@ BEGIN
     SELECT LOCATE('coursera-',courseraDbName) INTO @startPosDash;
     if (@startPosUnderscore != 1 && @startPosDash != 1)
     then
-	return '';
+    return '';
     END IF;
 
     # Extract substring between 'coursera_' (or 'coursera-'), and the
@@ -779,7 +779,7 @@ BEGIN
     SELECT LOCATE('novoed-',novoEdDbName) INTO @startPosDash;
     if (@startPosUnderscore != 1 && @startPosDash != 1)
     then
-	return '';
+    return '';
     END IF;
 
     IF (LOCATE('novoed_crs_email_', novoEdDbName) > 0) ||
@@ -818,7 +818,7 @@ BEGIN
     IF (LOCATE('openedx_moocdb_', openEdxMoocDbDbName) > 0)
     THEN
         SELECT SUBSTRING(openEdxMoocDbDbName FROM LENGTH('openedx_moocdb_')+1) INTO @RES;
-	SET @RES := CONCAT('MOOCDb OpenEdX ', @RES);
+    SET @RES := CONCAT('MOOCDb OpenEdX ', @RES);
     END IF;
     return @RES;
 END//
@@ -833,7 +833,7 @@ RETURNS varchar(255)
 BEGIN
     if (isMoocDbCourseName(maybeMoocDbName) = '')
     THEN
-	RETURN '';
+    RETURN '';
     END IF;
 
     # Is name an OpenEdX MOOCDb?
@@ -902,17 +902,17 @@ CREATE FUNCTION isUserEvent (an_event_type varchar(255))
 RETURNS BOOL DETERMINISTIC
 BEGIN
     IF 	 an_event_type = 'book' OR
-	 an_event_type = 'fullscreen' OR
-	 an_event_type = 'hide_transcript' OR
-	 an_event_type = 'hide_transcript' OR
-	 an_event_type = 'load_video' OR
-	 an_event_type = 'not_fullscreen' OR
-	 an_event_type = 'oe_feedback_response_selected' OR
-	 an_event_type = 'oe_hide_question' OR
-	 an_event_type = 'oe_show_question' OR
-	 an_event_type = 'oe_show_full_feedback' OR
-	 an_event_type = 'oe_show_respond_to_feedback' OR
-	 an_event_type = 'openassessmentblock.get_peer_submission' OR
+     an_event_type = 'fullscreen' OR
+     an_event_type = 'hide_transcript' OR
+     an_event_type = 'hide_transcript' OR
+     an_event_type = 'load_video' OR
+     an_event_type = 'not_fullscreen' OR
+     an_event_type = 'oe_feedback_response_selected' OR
+     an_event_type = 'oe_hide_question' OR
+     an_event_type = 'oe_show_question' OR
+     an_event_type = 'oe_show_full_feedback' OR
+     an_event_type = 'oe_show_respond_to_feedback' OR
+     an_event_type = 'openassessmentblock.get_peer_submission' OR
          an_event_type = 'openassessmentblock.peer_assess' OR
          an_event_type = 'openassessmentblock.self_assess' OR
          an_event_type = 'openassessmentblock.submit_feedback_on_assessments' OR
@@ -920,26 +920,26 @@ BEGIN
          an_event_type = 'openassessment.create_submission' OR
          an_event_type = 'openassessment.save_submission' OR
          an_event_type = 'openassessment.upload_file' OR
-	 an_event_type = 'page_close' OR
-	 an_event_type = 'pause_video' OR
-	 an_event_type = 'peer_grading_hide_question' OR
-	 an_event_type = 'peer_grading_show_question' OR
-	 an_event_type = 'play_video' OR
-	 an_event_type = 'problem_check' OR
-	 an_event_type = 'problem_graded' OR
-	 an_event_type = 'problem_fail' OR
-	 an_event_type = 'problem_reset' OR
-	 an_event_type = 'problem_save' OR
-	 an_event_type = 'problem_show' OR
-	 an_event_type = 'rubric_select' OR
-	 an_event_type = 'seek_video' OR
-	 an_event_type = 'seq_goto' OR
-	 an_event_type = 'seq_next' OR
-	 an_event_type = 'seq_prev' OR
-	 an_event_type = 'show_transcript' OR
-	 an_event_type = 'speed_change_video' OR
-	 an_event_type = 'staff_grading_hide_question' OR
-	 an_event_type = 'staff_grading_show_question'
+     an_event_type = 'page_close' OR
+     an_event_type = 'pause_video' OR
+     an_event_type = 'peer_grading_hide_question' OR
+     an_event_type = 'peer_grading_show_question' OR
+     an_event_type = 'play_video' OR
+     an_event_type = 'problem_check' OR
+     an_event_type = 'problem_graded' OR
+     an_event_type = 'problem_fail' OR
+     an_event_type = 'problem_reset' OR
+     an_event_type = 'problem_save' OR
+     an_event_type = 'problem_show' OR
+     an_event_type = 'rubric_select' OR
+     an_event_type = 'seek_video' OR
+     an_event_type = 'seq_goto' OR
+     an_event_type = 'seq_next' OR
+     an_event_type = 'seq_prev' OR
+     an_event_type = 'show_transcript' OR
+     an_event_type = 'speed_change_video' OR
+     an_event_type = 'staff_grading_hide_question' OR
+     an_event_type = 'staff_grading_show_question'
    THEN
        RETURN 1;
    ELSE
@@ -962,8 +962,8 @@ CREATE FUNCTION isEngagementEvent (an_event_type varchar(255))
 RETURNS BOOL DETERMINISTIC
 BEGIN
     IF 	 an_event_type = 'load_video' OR
-	 an_event_type = 'oe_feedback_response_selected' OR
-	 an_event_type = 'openassessmentblock.get_peer_submission' OR
+     an_event_type = 'oe_feedback_response_selected' OR
+     an_event_type = 'openassessmentblock.get_peer_submission' OR
          an_event_type = 'openassessmentblock.peer_assess' OR
          an_event_type = 'openassessmentblock.self_assess' OR
          an_event_type = 'openassessmentblock.submit_feedback_on_assessments' OR
@@ -971,17 +971,17 @@ BEGIN
          an_event_type = 'openassessment.create_submission' OR
          an_event_type = 'openassessment.save_submission' OR
          an_event_type = 'openassessment.upload_file' OR
-	 an_event_type = 'pause_video' OR
-	 an_event_type = 'peer_grading_hide_question' OR
-	 an_event_type = 'peer_grading_show_question' OR
-	 an_event_type = 'play_video' OR
-	 an_event_type = 'problem_check' OR
-	 an_event_type = 'problem_graded' OR
-	 an_event_type = 'problem_save' OR
-	 an_event_type = 'seek_video' OR
-	 an_event_type = 'speed_change_video' OR
-	 an_event_type = 'staff_grading_hide_question' OR
-	 an_event_type = 'staff_grading_show_question'
+     an_event_type = 'pause_video' OR
+     an_event_type = 'peer_grading_hide_question' OR
+     an_event_type = 'peer_grading_show_question' OR
+     an_event_type = 'play_video' OR
+     an_event_type = 'problem_check' OR
+     an_event_type = 'problem_graded' OR
+     an_event_type = 'problem_save' OR
+     an_event_type = 'seek_video' OR
+     an_event_type = 'speed_change_video' OR
+     an_event_type = 'staff_grading_hide_question' OR
+     an_event_type = 'staff_grading_show_question'
 
    THEN
        RETURN 1;
@@ -1129,9 +1129,9 @@ BEGIN
         RETURN -1;
     END IF;
     SELECT COUNT(user_id) AS 'enrollment'
-	   FROM edxprod.true_courseenrollment
-	   WHERE course_display_name = the_course_display_name
-	   INTO @totalEnrollment;
+       FROM edxprod.true_courseenrollment
+       WHERE course_display_name = the_course_display_name
+       INTO @totalEnrollment;
     RETURN @totalEnrollment;
 END//
 
@@ -1147,14 +1147,14 @@ END//
 DROP FUNCTION IF EXISTS isDirectAccessUser//
 CREATE FUNCTION `isDirectAccessUser`(anon_screen_name varchar(255)) RETURNS tinyint(1)
 BEGIN
-	SELECT LOCATE("anon__", username)
-	FROM (
-		SELECT username
-		FROM edxprod.auth_user
-		WHERE id = idAnon2Int(anon_screen_name)
-	) AS au
-	INTO @isDirectAccess;
-	RETURN @isDirectAccess;
+    SELECT LOCATE("anon__", username)
+    FROM (
+        SELECT username
+        FROM edxprod.auth_user
+        WHERE id = idAnon2Int(anon_screen_name)
+    ) AS au
+    INTO @isDirectAccess;
+    RETURN @isDirectAccess;
 END//
 
 #--------------------------
@@ -1197,25 +1197,25 @@ BEGIN
     # course name:
     IF (LOCATE('_anonymized_forum', goodName) != 0)
     THEN
-	SET goodName := SUBSTRING_INDEX(goodName, '_anonymized_forum', 1);
+    SET goodName := SUBSTRING_INDEX(goodName, '_anonymized_forum', 1);
     ELSEIF (LOCATE('_anonymized_general', goodName) != 0)
     THEN
         SET goodName := SUBSTRING_INDEX(goodName, '_anonymized_general', 1);
     ELSEIF (LOCATE('_demographics', goodName) != 0)
     THEN
-	SET goodName := SUBSTRING_INDEX(goodName, '_demographics', 1);
+    SET goodName := SUBSTRING_INDEX(goodName, '_demographics', 1);
     ELSEIF (LOCATE('_hash_mapping', goodName) != 0)
     THEN
-	SET goodName := SUBSTRING_INDEX(goodName, '_hash_mapping', 1);
+    SET goodName := SUBSTRING_INDEX(goodName, '_hash_mapping', 1);
     ELSEIF (LOCATE('_mdbfe', goodName) != 0)
     THEN
-	SET goodName := SUBSTRING_INDEX(goodName, '_mdbfe', 1);
+    SET goodName := SUBSTRING_INDEX(goodName, '_mdbfe', 1);
     ELSEIF (LOCATE('_moocdb', goodName) != 0)
     THEN
-	SET goodName := SUBSTRING_INDEX(goodName, '_moocdb', 1);
+    SET goodName := SUBSTRING_INDEX(goodName, '_moocdb', 1);
     ELSEIF (LOCATE('_unanonymizable', goodName) != 0)
     THEN
-	SET goodName := SUBSTRING_INDEX(goodName, '_unanonymizable', 1);
+    SET goodName := SUBSTRING_INDEX(goodName, '_unanonymizable', 1);
     END IF;
 
     SET goodName := concat("`", goodName, '_anonymized_general', "`", '.users');
@@ -1268,7 +1268,7 @@ BEGIN
     # part:
     IF (LOCATE('_email_', goodName) != 0)
     THEN
-	SET goodName := CONCAT(SUBSTRING_INDEX(goodName, '_email_', 1),'_',SUBSTRING_INDEX(goodName, '_email_', -1));
+    SET goodName := CONCAT(SUBSTRING_INDEX(goodName, '_email_', 1),'_',SUBSTRING_INDEX(goodName, '_email_', -1));
     END IF;
     SET goodName := CONCAT("`", goodName, "`", '.user_courses');
     # Need to prepare a statement, b/c table
@@ -1309,10 +1309,10 @@ END//
 DROP PROCEDURE IF EXISTS multipleDbQuery //
 CREATE PROCEDURE `multipleDbQuery`(dbNameRegex varchar(255),
                                    tableName varchar(255),
-				   resFieldList varchar(255),
-				   fieldList varchar(255),
-				   whereClause varchar(255),
-				   groupBy varchar(255))
+                   resFieldList varchar(255),
+                   fieldList varchar(255),
+                   whereClause varchar(255),
+                   groupBy varchar(255))
 proc_start_lbl: BEGIN
     declare scName varchar(250);
     declare q varchar(2000);
@@ -1336,7 +1336,7 @@ proc_start_lbl: BEGIN
         TABLE_SCHEMA as SchemaName
     FROM
         `information_schema`.`TABLES`,
-	`information_schema`.`SCHEMATA`
+    `information_schema`.`SCHEMATA`
     where
         `information_schema`.`SCHEMATA`.`SCHEMA_NAME` LIKE dbNameRegex
       AND
@@ -1346,19 +1346,19 @@ label1:
     LOOP
         set scName = (select schemaName from MySchemaNames limit 1);
 
-	set @progr = concat("SELECT 'Retrieving user_id for `", scName,"`' AS Db\G;");
+    set @progr = concat("SELECT 'Retrieving user_id for `", scName,"`' AS Db\G;");
         PREPARE stmt0 FROM @progr;
-	EXECUTE stmt0;
-	DEALLOCATE PREPARE stmt0;
+    EXECUTE stmt0;
+    DEALLOCATE PREPARE stmt0;
 
-	if groupBy is NULL
-	then
-	    set @q = concat('INSERT INTO ResultSet ',
-	                    'SELECT ', fieldList, ' FROM `', scName, '`.', tableName, ' WHERE ', whereClause);
-	else
-	    set @q = concat('INSERT INTO ResultSet ',
-	                    'SELECT ', fieldList ,' FROM `', scName, '`.', tableName,' WHERE ', whereClause, ' GROUP BY ', groupBy);
-	end if;
+    if groupBy is NULL
+    then
+        set @q = concat('INSERT INTO ResultSet ',
+                        'SELECT ', fieldList, ' FROM `', scName, '`.', tableName, ' WHERE ', whereClause);
+    else
+        set @q = concat('INSERT INTO ResultSet ',
+                        'SELECT ', fieldList ,' FROM `', scName, '`.', tableName,' WHERE ', whereClause, ' GROUP BY ', groupBy);
+    end if;
         PREPARE stmt1 FROM @q;
         EXECUTE stmt1;
         DEALLOCATE PREPARE stmt1;
@@ -1424,14 +1424,14 @@ BEGIN
         RETURN ((YEAR(dateInQuestion) LIKE academic_year) AND (LOWER(quarter) = 'spring'));
     ELSE # winter quarter: academic quarter straddles year boundary
         IF (academic_year = '%%')
-	THEN
-	    RETURN(LOWER(quarter) = 'winter');
-	END IF;
+    THEN
+        RETURN(LOWER(quarter) = 'winter');
+    END IF;
         IF (MONTH(dateInQuestion) = 12)
-	THEN
-	    RETURN (YEAR(dateInQuestion) = academic_year);
+    THEN
+        RETURN (YEAR(dateInQuestion) = academic_year);
         ELSE
-	    RETURN (YEAR(dateInQuestion) = academic_year + 1);
+        RETURN (YEAR(dateInQuestion) = academic_year + 1);
         END IF;
     END IF;
 END//
@@ -1494,6 +1494,40 @@ BEGIN
     END IF;
 END//
 
+#----------------------
+# videoNextProblem
+#----------------------
+
+# Given a course_display_name and a video_id, return the module_id
+# (i.e. link to ActivityGrade) for the next problem in the course.
+
+CREATE PROCEDURE `videoNextProblem`(IN in_course_display_name VARCHAR(255),
+                                    IN in_video_id VARCHAR(255),
+                                    OUT out_trackevent_hook VARCHAR(255))
+BEGIN
+    CREATE TEMPORARY TABLE epv AS
+    (SELECT ep.trackevent_hook, ep.problem_id, ep.problem_display_name,
+                   LPAD(CAST(ep.chapter_idx AS UNSIGNED INTEGER)*(1000000) +
+                      CAST(ep.sequential_idx AS UNSIGNED INTEGER)*(10000) +
+                      CAST(ep.vertical_idx AS UNSIGNED INTEGER)*(100) +
+                      CAST(ep.problem_idx AS UNSIGNED INTEGER), 8, '0') AS ep_idx,
+                   ev.video_id, ev.video_display_name, ev.video_code,
+                   LPAD(CAST(ev.chapter_idx AS UNSIGNED INTEGER)*(1000000) +
+                         CAST(ev.sequential_idx AS UNSIGNED INTEGER)*(10000) +
+                      CAST(ev.vertical_idx AS UNSIGNED INTEGER)*(100) +
+                      CAST(ev.problem_idx AS UNSIGNED INTEGER), 8, '0') AS ev_idx
+          FROM Edx.EdxProblem ep
+          LEFT JOIN Edx.EdxVideo ev
+              ON ep.course_display_name = ev.course_display_name
+          WHERE ep.course_display_name = in_course_display_name
+            AND ev.video_id = in_video_id
+            AND ep.chapter_idx > 0
+         HAVING ep_idx > ev_idx
+         ORDER BY ep_idx
+         LIMIT 1);
+    SELECT epv.trackevent_hook INTO out_trackevent_hook FROM epv;
+END//
+
 # Restore standard delimiter:
 delimiter ;
 
@@ -1506,23 +1540,23 @@ delimiter ;
 DROP VIEW IF EXiSTS EventXtract;
 CREATE VIEW EventXtract AS
    SELECT anon_screen_name,
-	  event_type,
-	  ip_country,
-	  time,
-	  quarter,
-	  course_display_name,
-	  resource_display_name,
-	  success,
-	  video_code,
-	  video_current_time,
-	  video_speed,
-	  video_old_time,
-	  video_new_time,
-	  video_seek_type,
-	  video_new_speed,
-	  video_old_speed,
-	  goto_from,
-	  goto_dest
+      event_type,
+      ip_country,
+      time,
+      quarter,
+      course_display_name,
+      resource_display_name,
+      success,
+      video_code,
+      video_current_time,
+      video_speed,
+      video_old_time,
+      video_new_time,
+      video_seek_type,
+      video_new_speed,
+      video_old_speed,
+      goto_from,
+      goto_dest
   FROM Edx.EdxTrackEvent;
 
 #--------------------------
@@ -1601,16 +1635,16 @@ SELECT EdxPrivate.UserGrade.anon_screen_name,
        Year(CURDATE())-year_of_birth AS curr_age,
        CASE level_of_education
           WHEN 'p' THEN 'Doctorate'
-	  WHEN 'm' THEN 'Masters or professional degree'
-	  WHEN 'b' THEN 'Bachelors'
-	  WHEN 'a' THEN 'Associates'
-	  WHEN 'hs' THEN 'Secondary/High School'
-	  WHEN 'jhs' THEN 'Junior secondary/junior high/middle School'
-	  WHEN 'el'  THEN 'Elementary/Primary School'
-	  WHEN 'none' THEN 'None'
-	  WHEN 'other' THEN 'Other'
-	  WHEN ''      THEN 'User withheld'
-	  WHEN 'NULL'  THEN 'Signup before level collected'
+      WHEN 'm' THEN 'Masters or professional degree'
+      WHEN 'b' THEN 'Bachelors'
+      WHEN 'a' THEN 'Associates'
+      WHEN 'hs' THEN 'Secondary/High School'
+      WHEN 'jhs' THEN 'Junior secondary/junior high/middle School'
+      WHEN 'el'  THEN 'Elementary/Primary School'
+      WHEN 'none' THEN 'None'
+      WHEN 'other' THEN 'Other'
+      WHEN ''      THEN 'User withheld'
+      WHEN 'NULL'  THEN 'Signup before level collected'
        END AS level_of_education,
        Edx.UserCountry.three_letter_country AS country_three_letters,
        Edx.UserCountry.country AS country_name
