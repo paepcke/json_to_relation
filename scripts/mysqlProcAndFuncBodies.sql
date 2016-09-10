@@ -1501,6 +1501,7 @@ END//
 # Given a course_display_name and a video_id, return the module_id
 # (i.e. link to ActivityGrade) for the next problem in the course.
 
+DROP PROCEDURE IF EXISTS videoNextProblem //
 CREATE PROCEDURE `videoNextProblem`(IN in_course_display_name VARCHAR(255),
                                     IN in_video_id VARCHAR(255),
                                     OUT out_trackevent_hook VARCHAR(255))
