@@ -1528,6 +1528,28 @@ BEGIN
     SELECT epv.trackevent_hook INTO out_trackevent_hook FROM epv;
 END//
 
+#--------------------------
+# allHomeworkSubmissions
+#---------------------
+
+# Given a course_display_name, produce all homework submissions.
+# Note: for the most recent, use table ActivityGrade.
+
+DROP PROCEDURE IF EXISTS allHomeworkSubmissions//
+CREATE PROCEDURE allHomeworkSubmissions(IN the_course_display_name varchar(255))
+BEGIN
+    SELECT DISTINCT course_display_name,
+                    time,
+                    anon_screen_name,
+                    Answer.problem_id,
+                    answer
+      FROM EdxTrackEvent, Answer
+     WHERE EdxTrackEvent.answer_fk = Answer.answer_id
+       AND event_type LIKE '%problem_check%'
+       AND course_display_name = the_course_display_name
+       AND answer_fk != '';
+END//
+
 # Restore standard delimiter:
 delimiter ;
 
@@ -1654,28 +1676,6 @@ FROM edxprod.auth_userprofile
    ON EdxPrivate.UserGrade.user_int_id = edxprod.auth_userprofile.user_id
  LEFT JOIN Edx.UserCountry
    ON Edx.UserCountry.anon_screen_name = EdxPrivate.UserGrade.anon_screen_name;
-
-#--------------------------
-# allHomeworkSubmissions
-#---------------------
-
-# Given a course_display_name, produce all homework submissions.
-# Note: for the most recent, use table ActivityGrade.
-
-DROP PROCEDURE IF EXISTS allHomeworkSubmissions//
-CREATE PROCEDURE allHomeworkSubmissions(IN the_course_display_name varchar(255))
-BEGIN
-    SELECT DISTINCT course_display_name,
-                    time,
-                    anon_screen_name,
-                    Answer.problem_id,
-                    answer
-      FROM EdxTrackEvent, Answer
-     WHERE EdxTrackEvent.answer_fk = Answer.answer_id
-       AND event_type LIKE '%problem_check%'
-       AND course_display_name = the_course_display_name
-       AND answer_fk != '';
-END//
 
 # ------------- Drop Functions that are only for EdxPrivate DB -----
 
