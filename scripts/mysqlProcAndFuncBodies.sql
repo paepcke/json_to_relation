@@ -1515,7 +1515,7 @@ BEGIN
                    LPAD(CAST(ev.chapter_idx AS UNSIGNED INTEGER)*(1000000) +
                          CAST(ev.sequential_idx AS UNSIGNED INTEGER)*(10000) +
                       CAST(ev.vertical_idx AS UNSIGNED INTEGER)*(100) +
-                      CAST(ev.problem_idx AS UNSIGNED INTEGER), 8, '0') AS ev_idx
+                      CAST(ev.video_idx AS UNSIGNED INTEGER), 8, '0') AS ev_idx
           FROM Edx.EdxProblem ep
           LEFT JOIN Edx.EdxVideo ev
               ON ep.course_display_name = ev.course_display_name
