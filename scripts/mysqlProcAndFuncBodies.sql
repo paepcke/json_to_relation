@@ -1501,6 +1501,7 @@ END//
 # Given a course_display_name and a video_id, return the module_id
 # (i.e. link to ActivityGrade) for the next problem in the course.
 
+DROP PROCEDURE IF EXISTS videoNextProblem //
 CREATE PROCEDURE `videoNextProblem`(IN in_course_display_name VARCHAR(255),
                                     IN in_video_id VARCHAR(255),
                                     OUT out_trackevent_hook VARCHAR(255))
@@ -1526,6 +1527,60 @@ BEGIN
          ORDER BY ep_idx
          LIMIT 1);
     SELECT epv.trackevent_hook INTO out_trackevent_hook FROM epv;
+END//
+
+#--------------------------
+# allHomeworkSubmissionsToFile
+#---------------------
+
+# Given a course_display_name, produce all homework submissions,
+# and produce a CSV file to the given filename.
+# Note: for the most recent, use table ActivityGrade.
+
+DROP PROCEDURE IF EXISTS allHomeworkSubmissionsToFile//
+CREATE PROCEDURE allHomeworkSubmissionsToFile(IN the_course_display_name varchar(255),
+                                              IN the_outfile varchar(255)
+                                       )
+BEGIN
+  set @theQuery := concat("SELECT 'course_display_name', 'time', 'anon_screen_name', 'problem_id', 'answer'
+                UNION
+                SELECT DISTINCT course_display_name,
+                     time,
+                     anon_screen_name,
+                     Answer.problem_id,
+                     answer
+      INTO OUTFILE '", the_outfile, "' ",
+      "FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '", '"', "'",
+      "FROM EdxTrackEvent, Answer
+     WHERE EdxTrackEvent.answer_fk = Answer.answer_id
+       AND event_type LIKE '%problem_check%' AND course_display_name = '", the_course_display_name, "' "
+       "AND answer_fk != ''");
+
+ PREPARE stmt1 FROM @theQuery;
+ EXECUTE stmt1;
+ DEALLOCATE prepare stmt1;
+END//
+
+#--------------------------
+# allHomeworkSubmissions
+#---------------------
+
+# Given a course_display_name, produce all homework submissions.
+# Note: for the most recent, use table ActivityGrade.
+
+DROP PROCEDURE IF EXISTS allHomeworkSubmissions//
+CREATE PROCEDURE allHomeworkSubmissions(IN the_course_display_name varchar(255))
+BEGIN
+    SELECT DISTINCT course_display_name,
+                    time,
+                    anon_screen_name,
+                    Answer.problem_id,
+                    answer
+      FROM EdxTrackEvent, Answer
+     WHERE EdxTrackEvent.answer_fk = Answer.answer_id
+       AND event_type LIKE '%problem_check%'
+       AND course_display_name = the_course_display_name
+       AND answer_fk != '';
 END//
 
 # Restore standard delimiter:
@@ -1681,6 +1736,8 @@ CALL grantExecuteIfExists('Edx.enrollment');
 CALL grantExecuteIfExists('Edx.computeEnrollmentCoursera');
 CALL grantExecuteIfExists('Edx.computeEnrollmentNovoEd');
 CALL grantExecuteIfExists('Edx.multipleDbQuery');
+CALL grantExecuteIfExists('Edx.allHomeworkSubmissions');
+CALL grantExecuteIfExists('Edx.allHomeworkSubmissionsToFile');
 
 CALL grantExecuteIfExists('EdxPrivate.idInt2Anon');
 CALL grantExecuteIfExists('EdxPrivate.idAnon2Int');
@@ -1694,6 +1751,8 @@ CALL grantExecuteIfExists('EdxPrivate.enrollment');
 CALL grantExecuteIfExists('EdxPrivate.computeEnrollmentCoursera');
 CALL grantExecuteIfExists('EdxPrivate.computeEnrollmentNovoEd');
 CALL grantExecuteIfExists('EdxPrivate.multipleDbQuery');
+CALL grantExecuteIfExists('EdxPrivate.allHomeworkSubmissions');
+CALL grantExecuteIfExists('EdxPrivate.allHomeworkSubmissionsToFile');
 
 CALL grantExecuteIfExists('EdxForum.idInt2Anon');
 CALL grantExecuteIfExists('EdxForum.idAnon2Int');
@@ -1707,6 +1766,8 @@ CALL grantExecuteIfExists('EdxForum.enrollment');
 CALL grantExecuteIfExists('EdxForum.computeEnrollmentCoursera');
 CALL grantExecuteIfExists('EdxForum.computeEnrollmentNovoEd');
 CALL grantExecuteIfExists('EdxForum.multipleDbQuery');
+CALL grantExecuteIfExists('EdxForum.allHomeworkSubmissions');
+CALL grantExecuteIfExists('EdxForum.allHomeworkSubmissionsToFile');
 
 CALL grantExecuteIfExists('EdxPiazza.idInt2Anon');
 CALL grantExecuteIfExists('EdxPiazza.idAnon2Int');
@@ -1720,6 +1781,8 @@ CALL grantExecuteIfExists('EdxPiazza.enrollment');
 CALL grantExecuteIfExists('EdxPiazza.computeEnrollmentCoursera');
 CALL grantExecuteIfExists('EdxPiazza.computeEnrollmentNovoEd');
 CALL grantExecuteIfExists('EdxPiazza.multipleDbQuery');
+CALL grantExecuteIfExists('EdxPiazza.allHomeworkSubmissions');
+CALL grantExecuteIfExists('EdxPiazza.allHomeworkSubmissionsToFile');
 
 CALL grantExecuteIfExists('EdxQualtrics.idInt2Anon');
 CALL grantExecuteIfExists('EdxQualtrics.idAnon2Int');
@@ -1733,6 +1796,8 @@ CALL grantExecuteIfExists('EdxQualtrics.enrollment');
 CALL grantExecuteIfExists('EdxQualtrics.computeEnrollmentCoursera');
 CALL grantExecuteIfExists('EdxQualtrics.computeEnrollmentNovoEd');
 CALL grantExecuteIfExists('EdxQualtrics.multipleDbQuery');
+CALL grantExecuteIfExists('EdxQualtrics.allHomeworkSubmissions');
+CALL grantExecuteIfExists('EdxQualtrics.allHomeworkSubmissionsToFile');
 
 CALL grantExecuteIfExists('unittest.idInt2Anon');
 CALL grantExecuteIfExists('unittest.idAnon2Int');
@@ -1746,3 +1811,5 @@ CALL grantExecuteIfExists('unittest.enrollment');
 CALL grantExecuteIfExists('unittest.computeEnrollmentCoursera');
 CALL grantExecuteIfExists('unittest.computeEnrollmentNovoEd');
 CALL grantExecuteIfExists('unittest.multipleDbQuery');
+CALL grantExecuteIfExists('unittest.allHomeworkSubmissions');
+CALL grantExecuteIfExists('unittest.allHomeworkSubmissionsToFile');
