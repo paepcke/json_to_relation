@@ -325,7 +325,10 @@ class ModulestoreExtractor(MySQLDB):
                 continue
 
             # Retrieve course structure from published branch and filter out non-problem blocks
-            structure = self.msdb['modulestore.structures'].find({"_id": cid, "blocks.block_type": "problem"})[0]
+            try:
+		structure = self.msdb['modulestore.structures'].find({"_id": cid, "blocks.block_type": "problem"}).next()  # changed from [0]
+            except StopIteration:
+		continue
             for block in filter(lambda b: b['block_type'] == 'problem', structure['blocks']):
                 definition = self.msdb['modulestore.definitions'].find({"_id": block['definition']})[0]
 
@@ -568,7 +571,7 @@ class ModulestoreExtractor(MySQLDB):
             data['enrollment_end'] = enrollment_end
             try:
                 data['grade_policy'] = str(definition['fields'].get('grading_policy').get('GRADER', 'NA'))
-                data['certs_policy'] = ("minimum_grade_credit: %s certificate_policy: " % block['fields']['minimum_grade_credit']) + str(definition['fields'].get('grading_policy').get('GRADE_CUTOFFS', 'NA'))
+                data['certs_policy'] = ("minimum_grade_credit: %s certificate_policy: " % block['fields'].get('minimum_grade_credit', 'NA')) + str(definition['fields'].get('grading_policy').get('GRADE_CUTOFFS', 'NA'))
             except AttributeError:
                 data['grade_policy'] = 'NA'
                 data['certs_policy'] = 'NA'
