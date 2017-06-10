@@ -88,8 +88,53 @@ this_proc: BEGIN
          END IF;
          PREPARE stmt FROM @s;
          EXECUTE stmt;
+	 DEALLOCATE PREPARE stmt;
       END IF;
 END//
+
+#--------------------------
+# createFulltextIndexIfNotExists
+#-----------
+
+# Create a fulltext index if it does not exist yet.
+# NOTE: ensure the database in which the table resides
+# is the current db. I.e. do USE <db> before calling.
+
+DROP PROCEDURE IF EXISTS createFulltextIndexIfNotExists //
+CREATE PROCEDURE createFulltextIndexIfNotExists (IN the_index_name varchar(255),
+                     IN the_table_name varchar(255),
+                     IN the_col_name   varchar(255))
+this_proc: BEGIN
+      # Check whether table exists:
+      IF ((SELECT COUNT(*) AS table_exists
+           FROM information_schema.tables
+           WHERE TABLE_SCHEMA = DATABASE()
+             AND table_name = the_table_name)
+          = 0)
+      THEN
+           SELECT concat("**** Table ", DATABASE(), ".", the_table_name, " does not exist.");
+           LEAVE this_proc;
+      END IF;
+
+      IF ((SELECT COUNT(*) AS index_exists
+           FROM information_schema.statistics
+           WHERE TABLE_SCHEMA = DATABASE()
+             AND table_name = the_table_name
+         AND index_name = the_index_name)
+          = 0)
+      THEN
+           SET @s = CONCAT('CREATE FULLTEXT INDEX ' ,
+                           the_index_name ,
+                           ' ON ' ,
+                           the_table_name,
+                           '(', the_col_name, ')'
+                           );
+         PREPARE stmt FROM @s;
+         EXECUTE stmt;
+	 DEALLOCATE PREPARE stmt;
+      END IF;
+END//
+
 
 #--------------------------
 # dropIndexIfExists
@@ -365,11 +410,13 @@ CREATE FUNCTION idAnon2Int(anonId varchar(40))
 RETURNS int(11)
 DETERMINISTIC
 BEGIN
-    SELECT user_int_id
+    DECLARE intId int;
+
+    SELECT user_int_id INTO intId
     FROM EdxPrivate.UserGrade
     WHERE anon_screen_name = anonId
-    INTO @intId;
-    return @intId;
+    LIMIT 1;
+    return intId;
 END//
 
 #--------------------------
