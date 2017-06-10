@@ -1548,10 +1548,10 @@ END//
 # Given a course_display_name and a video_id, return the module_id
 # (i.e. link to ActivityGrade) for the next problem in the course.
 
-DROP PROCEDURE IF EXISTS videoNextProblem //
-CREATE PROCEDURE `videoNextProblem`(IN in_course_display_name VARCHAR(255),
-                                    IN in_video_id VARCHAR(255),
-                                    OUT out_trackevent_hook VARCHAR(255))
+DROP FUNCTION IF EXISTS videoNextProblem //
+CREATE FUNCTION `videoNextProblem`(in_course_display_name VARCHAR(255),
+                                   in_video_id VARCHAR(255))
+RETURNS VARCHAR(255) DETERMINISTIC
 BEGIN
     CREATE TEMPORARY TABLE epv AS
     (SELECT ep.trackevent_hook, ep.problem_id, ep.problem_display_name,
@@ -1573,7 +1573,9 @@ BEGIN
          HAVING ep_idx > ev_idx
          ORDER BY ep_idx
          LIMIT 1);
-    SELECT epv.trackevent_hook INTO out_trackevent_hook FROM epv;
+    SELECT epv.trackevent_hook INTO @out_trackevent_hook FROM epv;
+    DROP TEMPORARY TABLE epv;
+    return @out_trackevent_hook;
 END//
 
 #--------------------------
