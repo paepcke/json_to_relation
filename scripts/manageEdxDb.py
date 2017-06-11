@@ -260,11 +260,30 @@ class TrackLogPuller(object):
         if rLogFileKeyObjs is None:
             return rfileObjsToGet
 
-        # This logInfo call runs the same loop
+        # Ensure trailing slash in tracking logs root dir:
+        localTrackingLogFileRoot = os.path.join(localTrackingLogFileRoot,'')
+        
+        # Find all .gz files below the root. They are 
+        # either in app<n>/... or in tracking/app<n>...
+        # The slash before || is to chop off the leading
+        # slash from the result: we want tracking/app1/tracking/foo.gz,
+        # not /tracking/app1/tracking/foo.gz:
+        
+        cmd = "find %s -name '*.gz' | sed -n 's|%s/||p'" % (localTrackingLogFileRoot,localTrackingLogFileRoot)
+        
+        # The split('\n') is needed b/c check_output returns
+        # letter by letter:
+        file_list = subprocess.check_output(cmd, shell=True).split('\n')
+        # Turn list of file names into an immutable
+        # set to speed up lookups:
+        done_files_set = frozenset([done_file for done_file in file_list if done_file != None and done_file != ''])
+
+        # This logInfo call would run the same loop
         # as the subsequent 'for' loop, just to
-        # get the number of files to examine. But
-        # who cares:
-        self.logInfo("Examining %d remote tracking log files." % self.getNumOfRemoteTrackingLogFiles())
+        # get the number of files to examine. This 
+        # is true even with logDebug() when log level 
+        # is above 'debug'. Too expensive for routine logInfo:
+        # self.logDebug("Examining %d remote tracking log files." % self.getNumOfRemoteTrackingLogFiles())
         for rlogFileKeyObj in rLogFileKeyObjs:
             # Get paths like:
             #   tracking/app10/tracking.log-20130609.gzq
@@ -274,19 +293,8 @@ class TrackLogPuller(object):
             if TrackLogPuller.TRACKING_LOG_FILE_NAME_PATTERN.search(rLogPath) is None:
                 continue
             self.logDebug('Looking at remote track log file %s' % rLogPath)
-            localEquivPath = os.path.join(localTrackingLogFileRoot, rLogPath)
-            self.logDebug("Check against local path: %s" % localEquivPath)
-            if os.path.exists(localEquivPath):
-                self.logDebug("Local path: %s does exist; compare lengths of remote & local." % localEquivPath)
-                # Ensure that the local file is the same as the remote one,
-                # i.e. that we already copied it over.
-                if self.checkFilesEqualSize(rlogFileKeyObj, localEquivPath):
-                    self.logDebug("File lengths match; will not pull remote file.")
-                    continue
-                else:
-                    self.logDebug("File MD5s do not match; pull remote file.")
-            else:
-                self.logDebug("Local path: %s does not exist." % localEquivPath)
+            if rLogPath in done_files_set:
+              continue
 
             rfileObjsToGet.append(rLogPath)
             if pullLimit is not None and len(rfileObjsToGet) >= pullLimit:
@@ -365,6 +373,10 @@ class TrackLogPuller(object):
         except TypeError:
             # File paths were already a list; keep only ones that exist:
             localTrackingLogFilePaths = filter(os.path.exists, localTrackingLogFilePaths)
+        except AttributeError:
+            # An empty list makes glob.glob throw
+            #    AttributeError: 'list' object has no attribute 'rfind'
+            pass
 
         # If no log files exist at all, don't need to transform anything
         if len(localTrackingLogFilePaths) == 0:
@@ -1137,6 +1149,15 @@ if __name__ == '__main__':
         # File already in place:
         pass
 
+    # If TrackLogPuller.LOCAL_LOG_STORE_ROOT is not set, then
+    # make sure that sqlDest was provided by the caller:
+    if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None:
+       if args.sqlDest is None:
+           tblCreator.logErr("You need to provide sqlDest, since TrackLogPuller.LOCAL_LOG_STORE_ROOT in manageEdxDb.py was not customized.")
+           sys.exit(1)
+       else:
+           TrackLogPuller.LOCAL_LOG_STORE_ROOT = args.sqlDest
+
 #************
 #    print('dryRun: %s' % args.dryRun)
 #    print('errLogFile: %s' % args.errLogFile)
@@ -1210,7 +1231,6 @@ if __name__ == '__main__':
         # ensured that it's an int:
         if args.pullLimit < 0:
             args.pullLimit = 0;
-
 
     #**********************
     # For testing different sections:
@@ -1358,12 +1378,6 @@ if __name__ == '__main__':
             if not ok:
                 tblCreator.logErr("Command aborted, no action was taken.")
                 sys.exit(1)
-
-        # If TrackLogPuller.LOCAL_LOG_STORE_ROOT is not set, then
-        # make sure that sqlDest was provided by the caller:
-        if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None and args.sqlDest is None:
-            tblCreator.logErr("You need to provide sqlDest, since TrackLogPuller.LOCAL_LOG_STORE_ROOT in manageEdxDb.py was not customized.")
-            sys.exit(1)
 
         # For DB ops need DB root pwd, which was
         # put into tblCreator.pwd above by various means:
