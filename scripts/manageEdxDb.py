@@ -140,6 +140,8 @@ class TrackLogPuller(object):
         LOCAL_LOG_STORE_ROOT = "/home/paepcke/Project/VPOL/Data/EdX/tracking/"
     elif hostname == 'mono':
         LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/EdX/tracking"
+    elif hostname == 'taffy':
+        LOCAL_LOG_STORE_ROOT = "/Users/dataman/Data/EdX/tracking"      
     elif hostname == 'datastage':
         LOCAL_LOG_STORE_ROOT = "/home/dataman/Data/EdX/tracking"
     elif hostname == 'datastage2':
@@ -1148,15 +1150,6 @@ if __name__ == '__main__':
     except OSError:
         # File already in place:
         pass
-
-    # If TrackLogPuller.LOCAL_LOG_STORE_ROOT is not set, then
-    # make sure that sqlDest was provided by the caller:
-    if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None:
-       if args.sqlDest is None:
-           tblCreator.logErr("You need to provide sqlDest, since TrackLogPuller.LOCAL_LOG_STORE_ROOT in manageEdxDb.py was not customized.")
-           sys.exit(1)
-       else:
-           TrackLogPuller.LOCAL_LOG_STORE_ROOT = args.sqlDest
 
 #************
 #    print('dryRun: %s' % args.dryRun)
