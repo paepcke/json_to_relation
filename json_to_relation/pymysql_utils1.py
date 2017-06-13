@@ -7,7 +7,6 @@
 # 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 '''
 Created on Sep 24, 2013
 
@@ -18,17 +17,19 @@ Modifications:
   - Dec 30, 2013: Added closing of connection to close() method
 
 '''
+#import pymysql
+#import MySQLdb
 
 import csv
+import os
 import re
 import subprocess
 import sys
 import tempfile
+
 import MySQLdb
-#import pymysql
 
 
-#import MySQLdb
 class MySQLDB(object):
     '''
     Shallow interface to MySQL databases. Some niceties nonetheless.
@@ -36,6 +37,13 @@ class MySQLDB(object):
         for result in mySqlObj.query('SELECT * FROM foo'):
             print result
     '''
+
+    #*****
+    # Set to True if this code is running on 
+    # a machine other than datastage, for instance
+    # inside of Eclipse. Normally this code is
+    # run as part of a CRON job on datastage:
+    RUN_REMOTELY = True
 
     def __init__(self, host='127.0.0.1', port=3306, user='root', passwd='', db='mysql'):
         '''
@@ -179,24 +187,22 @@ class MySQLDB(object):
             self.csvWriter.writerow([rowElement for rowElement in self.stringifyList(row)])
         tmpCSVFile.flush()
 
-        # Create the MySQL column name list needed in the LOAD INFILE below.
-        # We need '(colName1,colName2,...)':
-        if len(colNameTuple) == 0:
-            colSpec = '()'
-        else:
-            colSpec = '(' + colNameTuple[0]
-            for colName in colNameTuple[1:]:
-                colSpec += ',' + colName
-            colSpec += ')'
+        if MySQLDB.RUN_REMOTELY:
+          # For running surveyextractor.py (e.g. in Eclipse) on non-datastage machine,
+          # need to copy the temp file over to datastage:
+          subprocess.call(["scp", tmpCSVFile.name, '%s@datastage:/tmp' % self.user])
+          subprocess.call(["ssh", "%s@datastage" % self.user, "chmod a+r %s" % tmpCSVFile.name]) 
+
         try:
-            # Remove quotes from the values inside the colNameTuple's:
-            mySQLCmd = ("USE %s; LOAD DATA LOCAL INFILE '%s' INTO TABLE %s FIELDS TERMINATED BY ',' " +\
-                        "OPTIONALLY ENCLOSED BY '\"' ESCAPED BY '' LINES TERMINATED BY '\\n' %s" +\
-                        ";commit;") %  (self.db, tmpCSVFile.name, tblName, colSpec)
-            if len(self.pwd) > 0:
-                subprocess.call(['mysql', '--local_infile=1', '-u', self.user, '-p%s'%self.pwd, '-e', mySQLCmd])
-            else:
-                subprocess.call(['mysql', '--local_infile=1', '-u', self.user, '-e', mySQLCmd])
+          mySQLCmd = '''
+          USE %s;
+          LOAD DATA LOCAL INFILE '%s'
+            INTO TABLE %s
+            FIELDS TERMINATED BY ','
+            LINES TERMINATED BY '\n';
+          commit; 
+          ''' % (self.db, tmpCSVFile.name, tblName)
+          subprocess.call(['ssh', '%s@datastage' % self.user, 'mysql --login-path=%s -e "%s"' % (self.user, mySQLCmd)])
         finally:
             tmpCSVFile.close()
 

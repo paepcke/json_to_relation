@@ -32,6 +32,21 @@ then
     exit 1
 fi
 
+# Determine if this is a Mac. Some bash
+# commands are not available there:
+if [[ $(echo $OSTYPE | cut -c 1-6) == 'darwin' ]]
+then
+    PLATFORM='macos'
+    BASH_VERSION=$(echo $(bash --version) | sed -n 's/[^0-9]*version \([0-9]\).*/\1/p')
+    if [[ $BASH_VERSION < 4 ]]
+    then
+        echo "On MacOS Bash version must be 4.0 or higher."
+        exit 1
+    fi
+else
+    PLATFORM='other'
+fi    
+
 destDir=$1
 #echo $destDir
 if [ ! -d $destDir ]
@@ -43,7 +58,16 @@ shift
 #echo ${@}
 thisScriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+# BSD bash seems not to pass PATH down into
+# subshells; so hard-code parallel's location
+# for the MacOS case:
+
 echo "Transform-only start transform: `date`" >> /tmp/transformOnly.txt
-time parallel --gnu --progress $thisScriptDir/json2sql.py  -t csv $destDir ::: ${@};
+if [[ $PLATFORM == 'macos' ]]
+then   
+    time /usr/local/bin/parallel --gnu --progress $thisScriptDir/json2sql.py  -t csv $destDir ::: ${@};
+else
+    time parallel --gnu --progress $thisScriptDir/json2sql.py  -t csv $destDir ::: ${@};
+fi    
 echo "Transform-only transform done: `date`" >> /tmp/transformOnly.txt
 
