@@ -91,7 +91,7 @@ EDXPROD_DUMP_DIR=/home/dataman/Data/FullDumps/ModulestorePlatformDbs
 
 if [ ! -e $EDXPROD_DUMP_DIR ]
 then
-    mkdir $EDXPROD_DUMP_DIR
+    mkdir -p $EDXPROD_DUMP_DIR
 fi
 
 
