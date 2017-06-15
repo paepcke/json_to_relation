@@ -79,6 +79,7 @@ TARGET_DIR=$currScriptsDir/../json_to_relation/data
 # /data/dump, with file modulestore-latest.tar.gz.
 EDX_PLATFORM_DUMP_MACHINE=jenkins.prod.class.stanford.edu
 
+mkdir -p ${HOME}/Data/EdX/NonTransformLogs/
 LOG_FILE=${HOME}/Data/EdX/NonTransformLogs/refreshModuleStore.log
 needPasswd=false
 
@@ -88,6 +89,7 @@ MYSQL_USERNAME=root
 # Root dir of where downloaded snapshots of
 # modulestore go:
 EDXPROD_DUMP_DIR=${HOME}/Data/FullDumps/ModulestorePlatformDbs
+
 if [ ! -e $EDXPROD_DUMP_DIR ]
 then
     $(mkdir -p $EDXPROD_DUMP_DIR)

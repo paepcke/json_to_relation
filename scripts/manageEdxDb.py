@@ -267,6 +267,9 @@ class TrackLogPuller(object):
             return rfileObjsToGet
 
         done_files_set = self.getExistingLogFileNames(localTrackingLogFileRoot)
+        # Add files loaded into the db some time ago, whose .gz files
+        # are no longer in the file system:
+        done_files_set = done_files_set.union(self.getAllLoadedFilenames())
 
         # This logInfo call would run the same loop
         # as the subsequent 'for' loop, just to
@@ -303,6 +306,14 @@ class TrackLogPuller(object):
            tracking/app2/foo.gz
         
         Returns a frozenset of the file names.
+        
+        @param localTrackingLogFileRoot: directory below which all .gz json 
+            files are stored.
+        @type localTrackingLogFileRoot: str
+        @param include_loaded_files: if true, then files aready in the database
+            are included. Those may have been pulled, transformed, and loaded
+            a long time ago, and local .gz files deleted.
+        @rtype: frozenset 
         '''
         # Ensure trailing slash in tracking logs root dir:
         localTrackingLogFileRoot = os.path.join(localTrackingLogFileRoot,'')
@@ -351,24 +362,28 @@ class TrackLogPuller(object):
                 # Note: we check for this condition in main;
                 # nonetheless...
                 raise ValueError("If localTrackingLogFilePaths is None, then TrackLogPuller.LOCAL_LOG_STORE_ROOT must be set in manageEdxDb.py")
-#             oldLocalTrackingLogFileDirs = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'app*/')
-#             oldLocalTrackingLogFileDirs = glob.glob(oldLocalTrackingLogFileDirs)
-# 
-#             newLocalTrackingLogFileDirs = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking', 'app*/')
-#             newLocalTrackingLogFileDirs = glob.glob(newLocalTrackingLogFileDirs)
-# 
-#             localTrackingLogFileDirs = []
-#             localTrackingLogFileDirs.extend(oldLocalTrackingLogFileDirs)
-#             localTrackingLogFileDirs.extend(newLocalTrackingLogFileDirs)
-# 
-#             self.logDebug("localTrackingLogFileDirs: '%s'" % localTrackingLogFileDirs)
-#             localTrackingLogFilePaths = []
-#             for logFileDir in localTrackingLogFileDirs:
-#                 for (root, dirs, files) in os.walk(logFileDir): #@UnusedVariable
-#                     for partialFilePath in files:
-#                         filePath = os.path.join(root,partialFilePath)
-#                         localTrackingLogFilePaths.append(filePath)
-            localTrackingLogFilePaths = self.getAllLoadedFilenames()
+            # Which .gz JSON files are on this machine? (Could be many!):
+            # First the old locations: app<n>/tracking: 
+            oldLocalTrackingLogFileDirs = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'app*/')
+            oldLocalTrackingLogFileDirs = glob.glob(oldLocalTrackingLogFileDirs)
+ 
+            newLocalTrackingLogFileDirs = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking', 'app*/')
+            newLocalTrackingLogFileDirs = glob.glob(newLocalTrackingLogFileDirs)
+ 
+            localTrackingLogFileDirs = []
+            localTrackingLogFileDirs.extend(oldLocalTrackingLogFileDirs)
+            localTrackingLogFileDirs.extend(newLocalTrackingLogFileDirs)
+ 
+            self.logDebug("localTrackingLogFileDirs: '%s'" % localTrackingLogFileDirs)
+            localTrackingLogFilePaths = []
+            for logFileDir in localTrackingLogFileDirs:
+                for (root, dirs, files) in os.walk(logFileDir): #@UnusedVariable
+                    for partialFilePath in files:
+                        filePath = os.path.join(root,partialFilePath)
+                        localTrackingLogFilePaths.append(filePath)
+            # Add files that are already in the db (they must have been transferred
+            # before):
+            localTrackingLogFilePaths.extend(self.getAllLoadedFilenames())
 
         self.logDebug("number of localTrackingLogFilePaths: '%d'" % len(localTrackingLogFilePaths))
         # The following takes too long for many files:
@@ -717,7 +732,8 @@ class TrackLogPuller(object):
         else:
             if pullLimit is not None and pullLimit > -1:
                 #numToPull = len(rfileNamesToPull)
-                rfileNamesToPull = rfileNamesToPull[0:pullLimit]
+                # Need to convert frozenset to tuple for indexing:
+                rfileNamesToPull = tuple(rfileNamesToPull)[0:pullLimit]
                 #self.logDebug('Limiting tracking logs to pull from %d to %d' % (numToPull, len(rfileNamesToPull)))
             else:
                 self.logDebug('No pullLimit specified; will pull all %d new tracking log files.' % len(rfileNamesToPull))
@@ -878,10 +894,10 @@ class TrackLogPuller(object):
             # idiom clones:
             
             savedShellCommand = list(shellCommand)
-            #*******************
-            #chunk_size = 50
-            chunk_size = 2
-            #*******************
+            # Ask the transform shell script to transform
+            # chunk_size json files at once (else may get 
+            # arglist-to-long error:
+            chunk_size = 50
             num_chunks_done = 0
             for files in ListChunkFeeder(fileList, chunk_size):
                 self.logInfo('About to transform %s to %s of %s log files...' %\
