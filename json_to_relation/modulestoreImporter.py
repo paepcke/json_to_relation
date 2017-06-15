@@ -68,7 +68,7 @@ class ModulestoreImporter(DictMixin):
         export(). Preparations include looking for either the given file
         name, if useCache is False, or the cache file, which is a pickled
         Python dict containing OpenEdx hash codes to display_name mappings
-        is missing, then the modulestore is refreshed from S3.
+        is missing, then the modulestore is refreshed from the OpenEdX backups.
 
         :param jsonFileName: file path to JSON file that contains an excerpt
                     of modulestore, the OpenEdx course db. This file is
@@ -320,6 +320,7 @@ class ModulestoreImporter(DictMixin):
                 values = [shortCourseName,self[shortCourseName]]
                 csvWriter.writerow(values)
 
+
     # ----------------------------  Private Methods -----------------------------
 
     # ------------- Dict Methods -------------------
@@ -351,7 +352,7 @@ class ModulestoreImporter(DictMixin):
         :type jsonFileName: String
         @raise OSError: when there is a problem calling the cronRefreshModuleStore.sh script.
         '''
-        self.logInfo("About to pull module store from S3 (useCache=%s; jsonFileName=%s..." % (self.useCache, self.jsonFileName))
+        self.logInfo("About to pull module store from backup server (useCache=%s; jsonFileName=%s..." % (self.useCache, self.jsonFileName))
         thisProgsDir = os.path.dirname(__file__)
         modstoreRefreshScriptDir = os.path.join(thisProgsDir, '../scripts')
         shellCommand = [os.path.join(modstoreRefreshScriptDir, 'cronRefreshModuleStore.sh'), os.path.dirname(jsonFileName)]

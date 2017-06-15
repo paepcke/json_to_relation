@@ -79,7 +79,7 @@ TARGET_DIR=$currScriptsDir/../json_to_relation/data
 # /data/dump, with file modulestore-latest.tar.gz.
 EDX_PLATFORM_DUMP_MACHINE=jenkins.prod.class.stanford.edu
 
-LOG_FILE=/home/dataman/Data/EdX/NonTransformLogs/refreshModuleStore.log
+LOG_FILE=${HOME}/Data/EdX/NonTransformLogs/refreshModuleStore.log
 needPasswd=false
 
 MYSQL_PASSWD=''
@@ -87,11 +87,15 @@ MYSQL_USERNAME=root
 
 # Root dir of where downloaded snapshots of
 # modulestore go:
-EDXPROD_DUMP_DIR=/home/dataman/Data/FullDumps/ModulestorePlatformDbs
-
+EDXPROD_DUMP_DIR=${HOME}/Data/FullDumps/ModulestorePlatformDbs
 if [ ! -e $EDXPROD_DUMP_DIR ]
 then
-    mkdir -p $EDXPROD_DUMP_DIR
+    $(mkdir -p $EDXPROD_DUMP_DIR)
+    if [[ $? -ne 0 ]]
+    then
+        echo "Cannot create directory ${EDXPROD_DUMP_DIR} (maybe permissions?)" 
+        exit 1
+    fi
 fi
 
 
@@ -187,7 +191,10 @@ tar zxvf modulestore_location_map-latest.tar.gz
 # cd stanford-edx-prod
 
 # cp new modulestore dumps to staging directory
-mkdir modulestore_latest_stage
+if [[ ! -e modulestore_latest_stage ]]
+then
+    mkdir modulestore_latest_stage
+fi
 cd `ls -dt *store-20* | head -1`
 cp ./stanford-edx-prod/modulestore*.*son ../modulestore_latest_stage/
 cd ..
