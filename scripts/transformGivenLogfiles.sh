@@ -56,6 +56,7 @@ then
 fi
 shift
 #echo ${@}
+
 thisScriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # BSD bash seems not to pass PATH down into
