@@ -15,6 +15,9 @@ import logging
 import datetime as dt
 from ipToCountry import IpCountryDict
 
+# NOTE: if running on a machine other than datastage,
+#       (for instance within Eclipse), then set
+#       RUN_REMOTELY in pymysql_utils1 to True
 
 class QualtricsExtractor(MySQLDB):
 
@@ -54,7 +57,11 @@ class QualtricsExtractor(MySQLDB):
 
         self.lookup = IpCountryDict()
 
-        MySQLDB.__init__(self, db="EdxQualtrics", user=dbuser, passwd=dbpass)
+        #************
+        #MySQLDB.__init__(self, db="EdxQualtrics", user=dbuser, passwd=dbpass)
+        #******MySQLDB.__init__(self, port=3307, db="EdxQualtrics", user=dbuser, passwd=dbpass)
+        MySQLDB.__init__(self, port=3307,  db="EdxQualtrics", user=dbuser, passwd=dbpass)
+        #************
 
 ## Database setup helper methods for client
 
@@ -606,6 +613,13 @@ class QualtricsExtractor(MySQLDB):
 
 if __name__ == '__main__':
     qe = QualtricsExtractor()
+    #************
+    sys.argv.extend([#'-a',
+                     #'-m', 
+                     '-s', 
+                     '-r', 
+                     'i'])
+    #************
     opts, args = getopt.getopt(sys.argv[1:], 'amsrti', ['--reset', '--loadmeta', '--loadsurveys', '--loadresponses', '--responsetest', '--buildindexes'])
     for opt, arg in opts:
         if opt in ('-a', '--reset'):

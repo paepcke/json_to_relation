@@ -9,7 +9,6 @@
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 '''
 Created on Nov 9, 2013
 
@@ -92,15 +91,16 @@ import glob
 import logging
 import os
 import re
-import sets
 import socket
 import string
 import subprocess
 import sys
 import tempfile
+import shutil
 
 from pymysql_utils.pymysql_utils import MySQLDB
-
+from listChunkFeeder import ListChunkFeeder
+from fileCollection import collectFiles
 
 #import boto.connection
 # Add json_to_relation source dir to $PATH
@@ -152,6 +152,11 @@ class TrackLogPuller(object):
         LOCAL_LOG_STORE_ROOT = None
     LOG_BUCKETNAME = "stanford-edx-logs"
 
+    # File where lists of already transformed files
+    # are stored. This file is removed after a full
+    # the transformed files have been loaded:
+    TRANSFORMED_LOG_NAME_LIST_FILE = 'transformedFileList.txt'
+
     # Directory into which the executeCSVLoad.sh script that is invoked
     # from the load() method will put its log entries.
     LOAD_LOG_DIR = ''
@@ -185,9 +190,14 @@ class TrackLogPuller(object):
             TrackLogPuller.LOAD_LOG_DIR = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'Logs')
         self.logger = None
         self.setupLogging(loggingLevel, logFile)
+        
         # No connection yet to S3. That only
         # gets established when needed:
         self.tracking_log_bucket = None
+        
+        # Set of already loaded .gz JSON files not
+        # yet retrieved from the database:
+        self.loaded_file_set = None
 
     def openS3Connection(self):
         '''
@@ -262,11 +272,67 @@ class TrackLogPuller(object):
         if rLogFileKeyObjs is None:
             return rfileObjsToGet
 
+        done_files_set = self.getExistingLogFileNames(localTrackingLogFileRoot)
+        
+        # Add files loaded into the db some time ago, whose .gz files
+        # are no longer in the file system. Save those names in instance 
+        # var in case they are needed by other methods in the workflow:
+        
+        if self.loaded_file_set is None:
+            self.loaded_file_set = self.getAllLoadedFilenames()
+        done_files_set  = done_files_set.union(self.loaded_file_set)
+
+        # This logInfo call would run the same loop
+        # as the subsequent 'for' loop, just to
+        # get the number of files to examine. This 
+        # is true even with logDebug() when log level 
+        # is above 'debug'. Too expensive for routine logInfo:
+        # self.logDebug("Examining %d remote tracking log files." % self.getNumOfRemoteTrackingLogFiles())
+        
+        # Get all names of all available log files on Amazon: 
+        for rlogFileKeyObj in rLogFileKeyObjs:
+            # Get paths like:
+            #   tracking/app10/tracking.log-20130609.gzq
+            #   tracking/app10/tracking.log-20130610-errors
+            rLogPath = str(rlogFileKeyObj.name)
+            # If this isn't a tracking log file, skip:
+            if TrackLogPuller.TRACKING_LOG_FILE_NAME_PATTERN.search(rLogPath) is None:
+                continue
+            self.logDebug('Looking at remote track log file %s' % rLogPath)
+            if rLogPath in done_files_set:
+                # Already downloaded this file during an earlier download:
+                continue
+
+            rfileObjsToGet.append(rLogPath)
+            if pullLimit is not None and len(rfileObjsToGet) >= pullLimit:
+                break
+
+        return frozenset(rfileObjsToGet)
+      
+    def getExistingLogFileNames(self, localTrackingLogFileRoot):
+        '''
+        Return a list of .gz json file names that have been
+        pulled from Amazon. The paths will be relative to 
+        the given root. Example:
+           tracking/app2/foo.gz
+        
+        Returns a frozenset of the file names.
+        
+        @param localTrackingLogFileRoot: directory below which all .gz json 
+            files are stored.
+        @type localTrackingLogFileRoot: str
+        @param include_loaded_files: if true, then files aready in the database
+            are included. Those may have been pulled, transformed, and loaded
+            a long time ago, and local .gz files deleted.
+        @rtype: frozenset 
+        '''
         # Ensure trailing slash in tracking logs root dir:
         localTrackingLogFileRoot = os.path.join(localTrackingLogFileRoot,'')
         
         # Find all .gz files below the root. They are 
-        # either in app<n>/... or in tracking/app<n>...
+        # all in tracking/app<n>... The old app[1-20] directories
+        # have been removed. The sed removes the root: all
+        # up to the tracking/app<n>.
         # The slash before || is to chop off the leading
         # slash from the result: we want tracking/app1/tracking/foo.gz,
         # not /tracking/app1/tracking/foo.gz:
@@ -278,47 +344,36 @@ class TrackLogPuller(object):
         file_list = subprocess.check_output(cmd, shell=True).split('\n')
         # Turn list of file names into an immutable
         # set to speed up lookups:
-        done_files_set = frozenset([done_file for done_file in file_list if done_file != None and done_file != ''])
+        return frozenset([done_file for done_file in file_list if done_file != None and done_file != ''])
 
-        # This logInfo call would run the same loop
-        # as the subsequent 'for' loop, just to
-        # get the number of files to examine. This 
-        # is true even with logDebug() when log level 
-        # is above 'debug'. Too expensive for routine logInfo:
-        # self.logDebug("Examining %d remote tracking log files." % self.getNumOfRemoteTrackingLogFiles())
-        for rlogFileKeyObj in rLogFileKeyObjs:
-            # Get paths like:
-            #   tracking/app10/tracking.log-20130609.gzq
-            #   tracking/app10/tracking.log-20130610-errors
-            rLogPath = str(rlogFileKeyObj.name)
-            # If this isn't a tracking log file, skip:
-            if TrackLogPuller.TRACKING_LOG_FILE_NAME_PATTERN.search(rLogPath) is None:
-                continue
-            self.logDebug('Looking at remote track log file %s' % rLogPath)
-            if rLogPath in done_files_set:
-              continue
-
-            rfileObjsToGet.append(rLogPath)
-            if pullLimit is not None and len(rfileObjsToGet) >= pullLimit:
-                break
-
-        return rfileObjsToGet
-
-    def identifyNotTransformedLogFiles(self, localTrackingLogFilePaths=None, csvDestDir=None):
+    def identifyNotTransformedLogFiles(self, 
+                                       localTrackingLogFilePaths=None, 
+                                       csvDestDir=None,
+                                       count_loaded_files=True):
         '''
         Messy method: determines which of a set of OpenEdX .json files have not already
-        gone through the transform process to relations. This is done by looking at the
+        gone through the transform process to relations. Two ways to find out
+        whether a given JSON .gz file has been transformed: If a corresponding 
+        .sql file is in the CSV directory, and whether a file of that name shows
+        in the LoadInfo table. The first method is always used. Whether the second 
+        method is used is controlled by the count_loaded_files parameter.   
+        
+        Looking for .sql files is done by looking at the
         file names in the transform output directory, and matching them to the candidate
         .json files. This process works, because the transform process uses a file name
         convention: given a .json file like <root>/tracking/app10/foo.gz, the .sql file
         that the transform file generates will be named tracking.app10.foo.gz.<more pieces>.sql.
         Like this: tracking.app10.tracking.log-20131128.gz.2013-12-05T00_33_29.900465_5064.sql
+        
         @param localTrackingLogFilePaths: list of all .json files to consider for transform.
                If None, uses LOCAL_LOG_STORE_ROOT + '/app*/.../*.gz (equivalent to bash 'find')
         @type localTrackingLogFilePaths: {[String] | None}
         @param csvDestDir: directory where previous transforms have deposited their output files.
         `     If None, uses LOCAL_LOG_STORE_ROOT/CSV
         @type csvDestDir: String
+        @param count_loaded_files: look in LoadInfo table and consider files there
+            as tranformed?
+        @type count_loaded_files: bool
         @returns: array of absolute paths to OpenEdX tracking log files that need to be
                   transformed
         @rtype: [String]
@@ -331,35 +386,44 @@ class TrackLogPuller(object):
                 # Note: we check for this condition in main;
                 # nonetheless...
                 raise ValueError("If localTrackingLogFilePaths is None, then TrackLogPuller.LOCAL_LOG_STORE_ROOT must be set in manageEdxDb.py")
-            oldLocalTrackingLogFileDirs = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'app*/')
-            oldLocalTrackingLogFileDirs = glob.glob(oldLocalTrackingLogFileDirs)
-
-            newLocalTrackingLogFileDirs = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'tracking', 'app*/')
-            newLocalTrackingLogFileDirs = glob.glob(newLocalTrackingLogFileDirs)
-
-            localTrackingLogFileDirs = []
-            localTrackingLogFileDirs.extend(oldLocalTrackingLogFileDirs)
-            localTrackingLogFileDirs.extend(newLocalTrackingLogFileDirs)
-
-            self.logDebug("localTrackingLogFileDirs: '%s'" % localTrackingLogFileDirs)
-            localTrackingLogFilePaths = []
-            for logFileDir in localTrackingLogFileDirs:
-                for (root, dirs, files) in os.walk(logFileDir): #@UnusedVariable
-                    for partialFilePath in files:
-                        filePath = os.path.join(root,partialFilePath)
-                        localTrackingLogFilePaths.append(filePath)
+            # Find a list of all .gz JSON files on this machine;
+            # those are candidates for having to be transformed:
+            localTrackingLogFilePaths = self.getExistingLogFileNames(TrackLogPuller.LOCAL_LOG_STORE_ROOT)
+        elif type(localTrackingLogFilePaths) == str:   
+            # If tracking file list is a string entered on the command
+            # line, then it might include shell wildcards. Expand 
+            # that string into a file list:
+            try:
+                # After expansion, returns a list of files *that exist*:
+                localTrackingLogFilePaths = glob.glob(localTrackingLogFilePaths)
+            except TypeError:
+                # File paths were already a list; keep only ones that exist:
+                localTrackingLogFilePaths = filter(os.path.exists, localTrackingLogFilePaths)
+            except AttributeError:
+                # An empty list makes glob.glob throw
+                #    AttributeError: 'list' object has no attribute 'rfind'
+                pass
 
         self.logDebug("number of localTrackingLogFilePaths: '%d'" % len(localTrackingLogFilePaths))
-        if len(localTrackingLogFilePaths) > 3:
-            self.logDebug("three examples from localTrackingLogFilePaths: '%s,%s,%s'" % (localTrackingLogFilePaths[0],
-                                                                                   localTrackingLogFilePaths[1],
-                                                                                   localTrackingLogFilePaths[2]))
-        else:
-            self.logDebug("all of localTrackingLogFilePaths: '%s'" % localTrackingLogFilePaths)
+        # If no log files exist at all, don't need to transform anything
+        if len(localTrackingLogFilePaths) == 0:
+            return []
 
-        # The following is commented, b/c it can be a lot of output:
+        # The following takes too long for many files:
+#         if len(localTrackingLogFilePaths) > 3:
+#             self.logDebug("three examples from localTrackingLogFilePaths: '%s,%s,%s'" % (localTrackingLogFilePaths[0],
+#                                                                                    localTrackingLogFilePaths[1],
+#                                                                                    localTrackingLogFilePaths[2]))
+#         else:
+#             self.logDebug("all of localTrackingLogFilePaths: '%s'" % localTrackingLogFilePaths)
+
+        # The following line is commented, b/c it can be a lot of output:
         # self.logDebug("localTrackingLogFilePaths: '%s'" % localTrackingLogFilePaths)
 
+        # Next, gather names of files that have already 
+        # been transformed but not been loaded yet:
+        # files in the directory for transformed files 
+        # (where there are both .sql and .csv files):
         if csvDestDir is None:
             if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None:
                 # Note: we check for this condition in main;
@@ -367,63 +431,55 @@ class TrackLogPuller(object):
                 raise ValueError("If csvDestDir is None, then TrackLogPuller.LOCAL_LOG_STORE_ROOT must be set in manageEdxDb.py")
             csvDestDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'CSV')
 
-        # If tracking file list is a string (that might include shell
-        # wildcards), expand into a file list:
-        try:
-            # After expansion, returns a list of files *that exist*:
-            localTrackingLogFilePaths = glob.glob(localTrackingLogFilePaths)
-        except TypeError:
-            # File paths were already a list; keep only ones that exist:
-            localTrackingLogFilePaths = filter(os.path.exists, localTrackingLogFilePaths)
-        except AttributeError:
-            # An empty list makes glob.glob throw
-            #    AttributeError: 'list' object has no attribute 'rfind'
-            pass
-
-        # If no log files exist at all, don't need to transform anything
-        if len(localTrackingLogFilePaths) == 0:
-            return []
-
         # Next: find all .sql files among the existing .csv/.sql
         # files from already accomplished transforms:
-        try:
-            allTransformResultFiles = os.listdir(csvDestDir)
-        except OSError:
-            # Destination dir doesn't even exist: All tracking log files
-            # need to be transformed:
-            return localTrackingLogFilePaths
-        # Each transformed tracking log file has generated several .csv
-        # files, but only one .sql file, so keep only the latter in
-        # a list:
-        allTransformSQLFiles = filter(TrackLogPuller.SQL_FILE_NAME_PATTERN.search, allTransformResultFiles)
-
-        # The .sql files created by the transform module prepend
-        # the dot-separated components of the source .json file that
-        # lie between the log file root and the file, and then append
-        # filename elements to the original tracking log file
+        allTransformResultFiles = self.getAllFilesByExtension(csvDestDir, 'sql')
+        if count_loaded_files:
+            if self.loaded_file_set is None:
+                self.loaded_file_set = self.getAllLoadedFilenames()
+            allTransformResultFiles.union(self.loaded_file_set)
+        
+        # Now we need to figure out to which .gz file each .sql file
+        # corresponds. We do that via the .sql file name convention:
+        # The transform module that generates the .sql files prepends
+        # the dot-separated components of the source .gz file that
+        # lie between the log file root and the file. The module then 
+        # appends filename elements to the original tracking log file
         # name.
         # Example: for a tracking log file
+        #
         #   /home/dataman/.../tracking/app10/tracking.log-20130609.gz
+        #
         # the.sql file from a prior transform would look like this:
+        #
         #    tracking.app10.tracking.log-20130609.gz.2013-12-23T13_07_05.081102_11121.sql
+        #
         # To determine whether a given tracking log file has already
         # been transformed, we thus find all tracking log files that do not have
         # a .sql file that contains the distinguishing part of the
         # tracking log filename. For the example, we look for a .sql
-        # file name that contains 'app10.tracking.log-20130609.gz'. If
-        # none is found the respective tracking file is yet to be
+        # file name that contains 
+        #
+        #    app10.tracking.-201log30609.gz'
+        #
+        # If none is found the respective tracking file is yet to be
         # transformed:
 
-        self.logDebug("number of allTransformSQLFiles: '%d'" % len(allTransformSQLFiles))
-        if len(allTransformSQLFiles) > 3:
-            self.logDebug("three examples from allTransformSQLFiles: '%s,%s,%s'" % (allTransformSQLFiles[0],allTransformSQLFiles[1],allTransformSQLFiles[2]))
+        self.logDebug("number of allTransformSQLFiles: '%d'" % len(allTransformResultFiles))
+        if len(allTransformResultFiles) > 3:
+            self.logDebug("three examples from allTransformSQLFiles: '%s,%s,%s'" % 
+                          (tuple(allTransformResultFiles)[0],
+                           tuple(allTransformResultFiles)[1],
+                           tuple(allTransformResultFiles)[2]))
         else:
-            self.logDebug("all of allTransformSQLFiles: '%s'" % allTransformSQLFiles)
+            self.logDebug("all of allTransformSQLFiles: '%s'" % allTransformResultFiles)
 
         # Need to compute set difference between the json files
         # and the .sql files from earlier transforms. Use a
         # hash table with keys of the form:
+        #
         #     app2.tracking.log-20140626-1403785021.gz  : 1
+        #
         # Then extract from each .json gz file name the
         # portion that makes up the form of those keys.
         # If that key is a hit in the hash table, the
@@ -440,7 +496,7 @@ class TrackLogPuller(object):
         #   /home/dataman/Data/Edx/tracking/app1.tracking.tracking.log-20140608-1402247821.gz.2014-12-20T11_35_45.608695_10319.sql
         # Unify these to create keys for the table:
 
-        for sqlFile in allTransformSQLFiles:
+        for sqlFile in allTransformResultFiles:
             # Get something like
             #       'tracking.app2.tracking.tracking.log-20141008-1412767021'
             #   or  'app1.tracking.tracking.log-20140608-1402247821'
@@ -462,41 +518,50 @@ class TrackLogPuller(object):
             #print(hashKey)
             normalizedSQLFiles[hashKey] = 1
 
-        # Build the 'to-transform' list using hash table
+        # If there are transformed files in csvDir, then
+        # build the 'to-transform' list using hash table
         # misses to signal to-do files:
-        toDo = []
-        for logFile in localTrackingLogFilePaths:
-            # logFile is a full path of a .gz tracking log file.
-            # Get the normalized file name to see whether the file is
-            # in the hash table:
-
-            # Chop off the LOCAL_LOG_STORE_ROOT front-end;
-            #    so: from '/home/dataman/Data/EdX/tracking/app1/tracking/tracking.log-20141008-1412767021.gz'
-            #         get 'app1/tracking/tracking.log-20141008-1412767021.gz'
-            # while  from '/home/dataman/Data/EdX/tracking/tracking/app2/tracking/tracking.log-20140408.gz
-            #         get 'tracking/app2/tracking/tracking.log-20140408.gz'
-            relPath = os.path.relpath(logFile, TrackLogPuller.LOCAL_LOG_STORE_ROOT)
-
-            # Chop the '.gz', and replace slashes by dots:
-            dottedFilename = relPath.replace('/', '.').split('.gz')[0]
-            dottedFilenameComponents = dottedFilename.split('.')
-            if dottedFilename.startswith('app'):
-                fileElementsToKeep = [el for el in dottedFilenameComponents if el != 'tracking']
-            else:
-                fileElementsToKeep = ['tracking'] + [el for el in dottedFilenameComponents if el != 'tracking']
-
-            hashKey = '.'.join(fileElementsToKeep)
-            # If hash table contains that key, the transform
-            # was done earlier:
-            try:
-                normalizedSQLFiles[hashKey]
-            except KeyError:
-                toDo.append(logFile)
+        
+        if len(normalizedSQLFiles) == 0:
+            # No transformed files sitting in the 
+            # transform module results directory.
+            # Files to transform are whatever we
+            # found so far:
+            toDo = localTrackingLogFilePaths
+        else:
+            toDo = []
+            for logFile in localTrackingLogFilePaths:
+                # logFile is a full path of a .gz tracking log file.
+                # Get the normalized file name to see whether the file is
+                # in the hash table:
+    
+                # Chop off the LOCAL_LOG_STORE_ROOT front-end;
+                #    so: from '/home/dataman/Data/EdX/tracking/app1/tracking/tracking.log-20141008-1412767021.gz'
+                #         get 'app1/tracking/tracking.log-20141008-1412767021.gz'
+                # while  from '/home/dataman/Data/EdX/tracking/tracking/app2/tracking/tracking.log-20140408.gz
+                #         get 'tracking/app2/tracking/tracking.log-20140408.gz'
+                relPath = os.path.relpath(logFile, TrackLogPuller.LOCAL_LOG_STORE_ROOT)
+    
+                # Chop the '.gz', and replace slashes by dots:
+                dottedFilename = relPath.replace('/', '.').split('.gz')[0]
+                dottedFilenameComponents = dottedFilename.split('.')
+                if dottedFilename.startswith('app'):
+                    fileElementsToKeep = [el for el in dottedFilenameComponents if el != 'tracking']
+                else:
+                    fileElementsToKeep = ['tracking'] + [el for el in dottedFilenameComponents if el != 'tracking']
+    
+                hashKey = '.'.join(fileElementsToKeep)
+                # If hash table contains that key, the transform
+                # was done earlier:
+                try:
+                    normalizedSQLFiles[hashKey]
+                except KeyError:
+                    toDo.append(logFile)
 
         self.logDebug("toDo: '%s'" % toDo)
         self.logDebug("number of toDo: '%d'" % len(toDo))
         if len(toDo) > 3:
-            self.logDebug("three examples from toDo: '%s,%s,%s'" % (toDo[0],toDo[1],toDo[2]))
+            self.logDebug("three examples from toDo: '%s,%s,%s'" %  tuple(toDo)[0:3])
         else:
             self.logDebug("all of : '%s'" % toDo)
 
@@ -506,8 +571,24 @@ class TrackLogPuller(object):
         '''
         Returns the absolute paths of .sql files in a given transform
         output directory that need to be loaded into the tracking log
-        db. Uses the Edx.LoadInfo to see which .sql files have already
-        been loaded.
+        db. If file TrackLogPuller.TRANSFORMED_LOG_NAME_LIST_FILE
+        exists, it is expected to contain a list of file names like these:
+        
+  				  app1.tracking.tracking.log-20140609-1402348621.gz        
+				  tracking.app1.tracking.tracking.log-20150103-1420273021.gz
+        
+        Corresponding sql files in TrackLogPuller.LOCAL_LOG_STORE_ROOT
+        look like these:
+        
+          app1.tracking.tracking.log-20140609-1402348621.gz.2017-06-12T11_16_47.734532_11850.sql
+          tracking.app1.tracking.tracking.log-20150103-1420273021.gz.2017-06-12T11_16_47.734532_11850.sql
+          
+        I.e. all forward slashes are replaced with periods, and date/id
+        tags are added.  
+        
+        If file TRANSFORMED_LOG_NAME_LIST_FILE does not exist, it is first
+        created from the list of loaded files in LoadInfo.
+        
         @param csvDir: directory where previous transform runs have deposited
                their .sql and .csv files. If None, LOCAL_LOG_STORE_ROOT/CSV'
                is assumed.
@@ -516,7 +597,6 @@ class TrackLogPuller(object):
                  not yet been loaded into the OpenEdX tracking log relational
                  db.
         '''
-
         self.logDebug("Method identifySQLToLoad()  called with csvDir='%s'" % csvDir)
 
         if csvDir is None:
@@ -525,85 +605,136 @@ class TrackLogPuller(object):
             if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None:
                 raise ValueError("Since TrackLogPuller.LOCAL_LOG_STORE_ROOT is not customized in manageEdxDb.py, you need to specify --csvDest.")
             csvDir = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'CSV')
-        # Get content of LoadInfo file names in MySQL db Edx:
+            
+        # If no .sql files are in the csvDir, then
+        # nothing needs to/can be loaded:
+        if not self.atLeastOneFile(csvDir, 'sql'):
+            return frozenset([])
+            
+        # If file with list of just-transformed files exists,
+        # use that:
+        list_file = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 
+                 TrackLogPuller.TRANSFORMED_LOG_NAME_LIST_FILE)
+        if os.access(list_file, os.R_OK):
+            with open(list_file, 'r') as fd:
+                transformedJSONFiles = frozenset([file_name.strip() for file_name in fd if len(file_name) > 0]) 
+        else:
+            # Assume that all previously loaded files
+            # have been transformed already and don't 
+            # need to be redone: 
+
+            # Get content of LoadInfo file names in MySQL db Edx
+            # if that wasn't done in an ealier step:
+            if self.loaded_file_set is None:
+                self.loaded_file_set = self.getAllLoadedFilenames()
+            
+            transformedJSONFiles = self.loaded_file_set
+            
+        # All files in the CSV directory are results of
+        # prior transforms: 
+        all_sql_files = self.getAllFilesByExtension(csvDir, 'sql')
+        
+        # JSON .gz files to transform are ones that are
+        # on this machine minus the ones that were already
+        # transformed:
+         
+        sqlFilesToLoad = all_sql_files - transformedJSONFiles
+        return(sqlFilesToLoad)
+
+    def atLeastOneFile(self, the_dir, the_extension):
+        '''
+        Return True if given directory contains at least
+        one file with extension the_extension.
+        
+        @param the_dir: directory to check
+        @type the_dir: string
+        @param the_extension: file extension to look for 
+        @type the_extension: string
+        @return: True if at least one file with given extension found, else False
+        @rtype: boolean
+        '''
+        
+        # Unix command: find . -name *.gz -print -quit
+        # finds one match, then quits:
+        find_cmd = ['find', '%s'%the_dir, '-name', '*.%s'%the_extension, '-print', '-quit']
+        res = subprocess.check_output(find_cmd)
+        if len(res) == 0:
+            return False
+        else:
+            return True
+
+    def getAllFilesByExtension(self, root_dir, extension):
+        '''
+        Given a root directory and file extension, return
+        a frozenset of all files with that extension, relative
+        to the given root.
+        
+        @param root_dir: directory relative to which to look for files.
+        @type root_dir: str
+        @param extension: file extension to find
+        @type extension: str
+        @return: set of file paths
+        @rtype: frozenset(str)
+        '''
+        
+        find_cmd = ['find', root_dir, '-name', '*.%s'%extension]
+        # Subprocess call returns one big string 
+        # with file paths separated by '\n':
+        all_files_with_ext = set(subprocess.check_output(find_cmd).split('\n'))
+        # There is sometimes an empty str at the end:
+        try:
+            all_files_with_ext.remove('')
+        except KeyError:
+            pass
+        return(frozenset(all_files_with_ext))
+        
+
+    def getAllLoadedFilenames(self):
+        '''
+        Query the Edx.LoadInfo table for all loaded JSON .gz file
+        names. Return a frozenset of the names. The returned names
+        will be relative to the load root. For example, the file
+        names in LoadInfo look like:
+        
+           file:///home/dataman/Data/EdX/tracking/tracking/app1/tracking/tracking.log-20150114-1421255821.g
+        
+        or file:///home/dataman/Data/EdX/tracking/app2/tracking/tracking.log-20140626-1403785021.gz
+        
+        We only want the part after our root:
+        
+           tracking/app1/tracking/tracking.log-20150114-1421255821.g
+        or app2/tracking/tracking.log-20140626-1403785021.gz
+        
+        :returns set of file names that have been loaded
+        :rtype frozenset
+        '''
+        # Get content of LoadInfo file names in MySQL db Edx.
         if self.pwd:
             mysqldb = MySQLDB(user=self.user, passwd=self.pwd, db='Edx')
         else:
             mysqldb = MySQLDB(user=self.user, db='Edx')
+            
         loadedJSONFiles = []
+
+        # Remove the junk before the load root
+        # The '+ 1' chops off the leading '/':
+
+        # Get just the trailing subpath below the root
+        query = '''SELECT
+                       SUBSTRING(load_file FROM POSITION('EdX/tracking' IN load_file) + LENGTH('EdX/tracking') + 1) AS file_name
+                     FROM LoadInfo;
+                 '''
         try:
-            for jsonFileName in mysqldb.query("SELECT load_file FROM LoadInfo"):
+            for jsonFileName in mysqldb.query(query):
                 # jsonFileName is a one-tuple, like: ('/foo/bar.gz',); Get the str itself:
-                loadedJSONFiles.append(jsonFileName[0])
+                loadedJSONFiles.append(jsonFileName)
         except Exception as e:
             self.logErr("Failed to inspect LoadInfo table for previously loaded materials: %s" % `e`)
             return []
         finally:
             mysqldb.close()
-        # Get all the .sql file names from the CSV directory:
-        try:
-            allTransformResultFiles = os.listdir(csvDir)
-        except OSError:
-            # The csvDir doesn't exist:
-            self.logWarn('Method identifySQLToLoad called with csvDir=%s, but that dir does not exist.' % csvDir)
-            return []
-        # Each transformed tracking log file has generated several .csv
-        # files, but only one .sql file, so keep only the latter in
-        # a list:
-        allTransformSQLFiles = filter(TrackLogPuller.SQL_FILE_NAME_PATTERN.search, allTransformResultFiles)
-        # If no files have been loaded into the db yet, easy:
-        if len(loadedJSONFiles) == 0:
-            # Make each file name into an absolute path, using that pythonic,
-            # but kind of hard to read list comprehension mechanism:
-            allTransformSQLFiles = [os.path.join(csvDir,sqlBaseName) for sqlBaseName in allTransformSQLFiles]
-            return allTransformSQLFiles
-        # Now need to compare the list of loaded files from the LoadInfo
-        # table with the list of .sql file names in the directory of transform
-        # results.
 
-        # Elements in allTransformSQLFiles are of the
-        # form 'tracking.app10.tracking.log-20130609.gz.2013-12-23T16_14_02.335147_17587.sql'
-        # So, they start with a subtree from LOCAL_LOG_STORE_ROOT, with
-        # slashes replaced by dots, followed by the .json file name for
-        # which the .sql file is a transform result.
-        #
-        # To compare the list of already loaded files with the list of .sql files,
-        # given this file name convention: we first replace
-        # the slashes in the json file names from the LoadInfo
-        # table with dots, turning something like
-        # 'file:///home/dataman/Data/EdX/tracking/app11/tracking.log-20131128.gz'
-        # into: 'file:...home.dataman.Data.EdX.tracking.app10.tracking.log-20130609.gz'
-        #
-        # Then we drop everything after the json file name in each allTransformSQLFiles
-        # to go from:
-        # 'tracking.app10.tracking.log-20130609.gz.2013-12-23T16_14_02.335147_17587.sql' to
-        # 'tracking.app10.tracking.log-20130609.gz'.
-        # Finally we can check whether any of the names of already loaded files ends
-        # with that json file name.
-
-        sqlFilesToSkip = []
-        for sqlFileName in allTransformSQLFiles:
-            # Keep only the part up to .gz from the sqlFileName:
-            gzPos = sqlFileName.find('.gz')
-            if gzPos < 0:
-                self.logErr("One of the .sql file names in %s is non-standard: %s" % (csvDir, sqlFileName))
-                continue
-            sqlFileNameJSONFilePartOnly = sqlFileName[0:gzPos + len('.gz')]
-            # Have 'tracking.app10.tracking.log-20130609.gz' from the CSV directory's .sql file name
-            for loadedFileName in loadedJSONFiles:
-                # Replace '/' with '.' in the already-loaded file name:
-                loadedFileName = re.sub('/', '.', loadedFileName)
-                # have '...home.dataman.Data.EdX.tracking.app10.tracking.log-20130609.gz'
-                if loadedFileName.endswith(sqlFileNameJSONFilePartOnly):
-                    sqlFilesToSkip.append(sqlFileName)
-        # We now know which .sql to *skip*, but need the ones we do need to load.
-        # Use set difference for that:
-        sqlFilesToLoadSet = sets.Set(allTransformSQLFiles).difference(sets.Set(sqlFilesToSkip))
-        # Make each file name into an absolute path, using that pythonic,
-        # but kind of hard to read list comprehension mechanism:
-        sqlFilesToLoad = [os.path.join(csvDir,sqlBaseName) for sqlBaseName in sqlFilesToLoadSet]
-        return sqlFilesToLoad
-
+        return frozenset(loadedJSONFiles)      
 
     def pullNewFiles(self, localTrackingLogFileRoot=None, destDir=None, pullLimit=None, dryRun=False):
         '''
@@ -624,7 +755,7 @@ class TrackLogPuller(object):
         @type pullLimit: int
         @param dryRun: if True, only log what *would* be done. Cause no actual changes.
         @type dryRun: Bool
-        @return: list of full-path file names that have been downloaded. They have not been transformed and loaded yet.
+        @return: frozenset of full-path file names that have been downloaded. They have not been transformed and loaded yet.
         @rtype: [String]
         @raise: IOError if connection to S3 cannot be established.
         '''
@@ -638,13 +769,15 @@ class TrackLogPuller(object):
             localTrackingLogFileRoot = TrackLogPuller.LOCAL_LOG_STORE_ROOT
 
         # Identify log files at S3 that we have not pulled yet.
+        # Returns a frozenset of names like: 'tracking/app<n>/foo.gz':
         rfileNamesToPull = self.identifyNewLogFiles(localTrackingLogFileRoot, pullLimit=pullLimit)
         if len(rfileNamesToPull) == 0:
             self.logInfo("No openEdx files to pull.")
         else:
             if pullLimit is not None and pullLimit > -1:
                 #numToPull = len(rfileNamesToPull)
-                rfileNamesToPull = rfileNamesToPull[0:pullLimit]
+                # Need to convert frozenset to tuple for indexing:
+                rfileNamesToPull = tuple(rfileNamesToPull)[0:pullLimit]
                 #self.logDebug('Limiting tracking logs to pull from %d to %d' % (numToPull, len(rfileNamesToPull)))
             else:
                 self.logDebug('No pullLimit specified; will pull all %d new tracking log files.' % len(rfileNamesToPull))
@@ -716,6 +849,11 @@ class TrackLogPuller(object):
 
         self.logDebug("Method transform() called with logFilePathsOrDir='%s'; csvDestDir='%s'" % (logFilePathsOrDir,csvDestDir))
 
+        if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None:
+            # Note: we check for this condition in main;
+            # nonetheless...
+            raise ValueError("If localTrackingLogFilePaths is None, then TrackLogPuller.LOCAL_LOG_STORE_ROOT must be set in manageEdxDb.py")
+
         if csvDestDir is None:
             if TrackLogPuller.LOCAL_LOG_STORE_ROOT is None:
                 # Note: we check for this condition in main;
@@ -751,12 +889,9 @@ class TrackLogPuller(object):
         # Add the logfiles as arguments; if that's a wildcard expression,
         # i.e. string, just append. Else it's assumed to an array of
         # strings that need to be concatted:
+        fileList = []
         if not processOnCluster:
-            if isinstance(logFilePathsOrDir, basestring):
-                shellCommand.append(logFilePathsOrDir)
-            else:
-                shellCommand.extend(logFilePathsOrDir)
-
+            
             # If file list is a shell glob, expand into a file list
             # to show the file names in logs and dryRun output below;
             # the actual command is executed in a shell and does its
@@ -783,26 +918,83 @@ class TrackLogPuller(object):
             # of "scriptName ['foo.log', bar.log']" make it: "scriptName foo.log bar.log"
             # by removing the brackets, commas, and quotes normally produced by
             # str(someList):
-            logFilePathsForPrint = str(logFilePathsOrDir).strip('[]')
-            logFilePathsForPrint = string.replace(logFilePathsForPrint, ',', ' ')
-            logFilePathsForPrint = string.replace(logFilePathsForPrint, "'", "")
+#             logFilePathsForPrint = str(fileList).strip('[]')
+#             logFilePathsForPrint = string.replace(fileList, ',', ' ')
+#             logFilePathsForPrint = string.replace(fileList, "'", "")
             if processOnCluster:
                 self.logInfo("Would call shell script transformGivenLogfilesOnCluster.sh %s %s" %
-                             (logFilePathsOrDir, csvDestDir))
+                             (fileList, csvDestDir))
             else:
-                self.logInfo("Would call shell script transformGivenLogfiles.sh %s %s" %
-                             (csvDestDir,logFilePathsForPrint))
+                self.logInfo("Would call shell script transformGivenLogfiles.sh %s %s..." %
+                             (csvDestDir,fileList[0:10]))
                             #(csvDestDir, map(os.path.basename, logFilePathsOrDir)))
             self.logInfo('Would be done transforming %d newly downloaded tracklog file(s)...' % len(fileList))
         else:
             if processOnCluster:
-                self.logInfo('Starting to transform tracklog files below directories app<int> in %s ' % logFilePathsOrDir)
+                self.logInfo('Starting to transform tracklog files below directories app<int> in [%s]... ' % fileList[0:10])
             else:
                 self.logInfo('Starting to transform %d tracklog files...' % len(fileList))
-            self.logDebug('Calling Bash with %s' % shellCommand)
-            subprocess.call(shellCommand)
+            # self.logDebug('Calling Bash with %s' % shellCommand)
+            # There could be thousands of files to transform.
+            # The underlying shell script would complain about
+            # too many arguments. So transform 50 at a time
+            # First save the shell cmd stub (currently [<scriptName>, csvDir]
+            # for re-use during each iteration. The list(<list>)
+            # idiom clones:
+            
+            savedShellCommand = list(shellCommand)
+            # Ask the transform shell script to transform
+            # chunk_size json files at once (else may get 
+            # arglist-to-long error:
+            chunk_size = 50
+            num_chunks_done = 0
+            for files in ListChunkFeeder(fileList, chunk_size):
+                self.logInfo('About to transform %s to %s of %s log files...' %\
+                             (num_chunks_done*chunk_size,
+                              min(num_chunks_done*chunk_size + chunk_size, len(fileList)),
+                              len(fileList)
+                              )
+                             )
+                # Get a fresh *copy* of the shell cmd 
+                # stub (i.e. of <scriptPath> csvDir):
+                shellCommand = list(savedShellCommand)
+                # Turn each partial path to a .gz file
+                # into a full path:
+                files = [os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, oneLogFile) for oneLogFile in files]
+                shellCommand.extend(files)
+                
+                #*************************
+                # Production code is the following subprocess
+                # call. It uses a shell script to launch multiple
+                # .gz transforms at once, using multiple cores.
+                # To debug while staying with this process (e.g.
+                # in Eclipse), comment the subprocess line,
+                # and uncomment up to the "#******"
+                #***********
+                subprocess.call(shellCommand)
+                
+#                 from input_source import InURI                
+#                 from json_to_relation import JSONToRelation
+#                 from edxTrackLogJSONParser import EdXTrackLogJSONParser
+#                 from output_disposition import OutputDisposition, OutputFile
+#                 
+#                 jsonConverter = JSONToRelation(InURI(files[0]),
+#                                OutputFile('testTablePrefix', OutputDisposition.OutputFormat.CSV),  #outSQLFile,
+#                                mainTableName='EdxTrackEvent',
+#     			               logFile='/tmp/logTmp.txt' # logFile
+#                         )
+#                 jsonConverter.setParser(EdXTrackLogJSONParser(jsonConverter,
+#         								  'EdxTrackEvent',
+#         			 						  replaceTables=False,
+#          			 						  dbName='Edx',
+#         			               useDisplayNameCache=True
+#         						  ))
+#                 
+#                 jsonConverter.convert()
+                #*************************
+                num_chunks_done += 1
             if processOnCluster:
-                self.logInfo('Done transforming newly downloaded tracklog file(s) below directories app<int> in %s' % logFilePathsOrDir)
+                self.logInfo('Done transforming newly downloaded tracklog file(s) below directories app<int> in [%s]' % logFilePathsOrDir[0:10])
             else:
                 self.logInfo('Done transforming %d newly downloaded tracklog file(s)...' % len(fileList))
 
@@ -876,7 +1068,7 @@ class TrackLogPuller(object):
         tmpFilePrefix = 'batchLoad' + timestamp + '_'
         batchLoadFile = tempfile.NamedTemporaryFile(prefix=tmpFilePrefix, suffix='.sql', delete=False)
         batchMakerScriptPath = os.path.join(currDir, 'createBatchLoadFileForMyISAM.sh')
-        scriptCmd = [batchMakerScriptPath] + sqlFilesToLoad
+        scriptCmd = [batchMakerScriptPath] + list(sqlFilesToLoad)
         try:
             subprocess.call(scriptCmd, stdout=batchLoadFile)
         finally:
@@ -900,7 +1092,19 @@ class TrackLogPuller(object):
         else:
             self.logInfo('Starting to load %d transformed files' % len(sqlFilesToLoad))
             self.logDebug('Calling Bash with %s' % shadowCmd)
-            subprocess.call(shellCommand)
+            ret_code = subprocess.call(shellCommand)
+            if ret_code == 0:
+                # Loaded the files, so remove the record of
+                # just-transformed files, and empty the
+                # CSV directory:
+                try:
+                    os.remove(os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT,
+                                           TrackLogPuller.TRANSFORMED_LOG_NAME_LIST_FILE))
+                except OSError:
+                    pass
+                if os.path.exists(csvDir):
+                    shutil.rmtree(csvDir)
+                    os.makedirs(csvDir)
 
         # Finally, update the pre-computed table that stores
         # all of the course_display_names from EventXtract, and
@@ -1004,6 +1208,8 @@ class TrackLogPuller(object):
         self.logger.error(msg)
 
     def isGzippedFile(self, filename):
+        if not os.path.isfile(filename):
+            return False
         return filename.endswith('.gz')
 
     def checkFilesIdentical(self, s3FileKeyObj, localFilePath):
@@ -1296,27 +1502,9 @@ if __name__ == '__main__':
                 # exist:
                 allLogFiles = []
                 for fileOrDir in logFilesOrDirs:
-                    # Whether file or directory: either must be readable:
                     if not os.access(fileOrDir, os.R_OK):
-                        tblCreator.logErr("Tracking log file or directory '%s' not readable or non-existent; ignored." % fileOrDir)
-                        continue
-                    if os.path.isdir(fileOrDir):
-                        # For directories in the args, ensure that
-                        # each gzipped file within is readable. Find
-                        # All gzipped files at any level below the
-                        # directory:
-                        for (root, dirs, files) in os.walk(fileOrDir): #@UnusedVariable
-                            for partialFilePath in files:
-                                fullTrackLogPath = os.path.join(root,partialFilePath)
-                                if not tblCreator.isGzippedFile(fullTrackLogPath):
-                                    continue
-                                if not os.access(fullTrackLogPath, os.R_OK):
-                                    tblCreator.logErr("Tracking log file '%s' not readable or non-existent; ignored." % fullTrackLogPath)
-                                    continue
-                                allLogFiles.append(fullTrackLogPath)
-                    else: # arg not a directory:
-                        if tblCreator.isGzippedFile(fileOrDir):
-                            allLogFiles.append(fileOrDir)
+                        raise ValueError('Given .gz JSON file %s does not exist or is not readable' % fileOrDir)
+                    allLogFiles.extend(collectFiles(fileOrDir, 'gz', skip_non_readable=True))
             else:
                 allLogFiles = None
 
@@ -1337,44 +1525,31 @@ if __name__ == '__main__':
 
     if args.toDo == 'load' or args.toDo == 'transformLoad' or args.toDo == 'pullTransformLoad':
         # For loading, args.sqlSrc must be None, or a readable directory, or a sequence of readable .sql files.
-        sqlFilesToLoad = None
+        sqlFilesToLoad = []
         if args.sqlSrc is not None:
-            try:
-                if os.path.isdir(args.sqlSrc):
-                    allFiles = os.listdir(args.sqlSrc)
-                    allSqlFiles = filter(lambda fileName: os.path.splitext(fileName)[1] == '.sql', allFiles)
-                    allSqlFilesFullPaths = [os.path.join(args.sqlSrc, oneFile) for oneFile in allSqlFiles]
-                    args.sqlSrc = ' '.join(allSqlFilesFullPaths)
-            except:
-                pass
-            # args.sqlSrc must be a string containing
-            # one or more .sql file paths:
-            try:
-                sqlFilesToLoad = args.sqlSrc.split(' ')
-                # Remove any empty strings that result from
-                # file names being separated by more than one
-                # space:
-                sqlFilesToLoad = [oneFile for oneFile in sqlFilesToLoad if len(oneFile) > 0]
-            except AttributeError:
-                tblCreator.logErr("For load the '--sqlSrc' option value  must be string listing full paths of .sql files to load, separated by spaces.")
-                sys.exit(1)
-            # All files must exist:
-            trueFalseList = map(os.path.exists, sqlFilesToLoad)
-            ok = True
-            for i in range(len(trueFalseList)):
-                if not trueFalseList[i]:
-                    tblCreator.logErr("File % does not exist." %  sqlFilesToLoad[i])
-                    ok = False
-                if not os.access(sqlFilesToLoad[i], os.R_OK):
-                    tblCreator.logErr("File % exists, but is not readable." % sqlFilesToLoad[i])
-                    ok = False
-            if not ok:
-                tblCreator.logErr("Command aborted, no action was taken.")
-                sys.exit(1)
+            sqlLocs = args.sqlSrc
+            # On the commandline the --sqlSrc option will have a string
+            # of either comma- or space-separated directories and/or files.
+            # Get a Python list from that:
+            sqlFilesOrDirs = re.split('[\s,]', sqlLocs)
+            # Remove empty strings that come from use of commas *and* spaces in
+            # the cmd line option:
+            sqlFilesOrDirs = [sqlLoc for sqlLoc in sqlFilesOrDirs if len(sqlLoc) > 0]
+
+            # If some of the srcFiles arguments are directories, replace those with arrays
+            # of .sql files in those directories; for files in the argument, ensure they
+            # exist:
+            allSqlFiles = []
+            for fileOrDir in sqlFilesOrDirs:
+                if not os.access(fileOrDir, os.R_OK):
+                    raise ValueError('Given sql file %s does not exist or is not readable' % fileOrDir)
+                allSqlFiles.extend(collectFiles(fileOrDir, 'sql', skip_non_readable=True))
+        else:
+            allSqlFiles = None
 
         # For DB ops need DB root pwd, which was
         # put into tblCreator.pwd above by various means:
-        tblCreator.load(mysqlPWD=tblCreator.pwd, sqlFilesToLoad=sqlFilesToLoad, logDir=os.path.dirname(args.errLogFile), dryRun=args.dryRun)
+        tblCreator.load(mysqlPWD=tblCreator.pwd, sqlFilesToLoad=allSqlFiles, logDir=os.path.dirname(args.errLogFile), dryRun=args.dryRun)
 
     tblCreator.logInfo('Processing %s done.' % args.toDo)
     sys.exit(0)

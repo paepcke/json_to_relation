@@ -197,10 +197,16 @@ if __name__ == "__main__":
     				               logFile=logFile
                                    )
     try:
+        # Setting useDisplayNameCache to True prevents guaranteed
+        # pulling of Modulestore from the backup---and expensive
+        # operation. Note that cronRefreshModulestore.sh will
+        # cause the cache to be refreshed:
+
         jsonConverter.setParser(EdXTrackLogJSONParser(jsonConverter,
         						  'EdxTrackEvent',
         						  replaceTables=args.dropTables,
-        						  dbName='Edx'
+        						  dbName='Edx',
+                      useDisplayNameCache=True
         						  ))
     except Exception as e:
         with open(logFile, 'w') as fd:

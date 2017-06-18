@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
 # Copyright (c) 2014, Stanford University
 # All rights reserved.
 #
@@ -9,28 +10,23 @@
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
-# Takes a destination dir and a list of track log
-# files. Transforms the log files, and places the
-# resulting .sql and .csv files in the destination dir.
-# Invokes json2sql.py with '-t csv', causing one
-# .sql file for each log file to be created, plus
-# as many .csv files for each log file as there are
-# tables. The .sql file contains statements that loads 
-# the .csv files. The loading is done after transform
-# via executeCSVLoad.sh
+############################################################################
 #
-# Assumes that json2sql.py is in same directory
-# as this script. But this script can be called
-# from anywhere.
+# Given a filename, print its last-modified date as
+# yyyy-mm-dd hh:mm:ss, whether on Linux or MacOS
+#
+# If file does not exists, return string 'null'
+#
+############################################################################
 
-USAGE="Usage: "`basename $0`" sqlDestDir trackingLogFile1 trackingLogFile2..."
-
-if [ $# -lt 2 ]
+if [[ $# != 1 ]]
 then
-    echo $USAGE
+    echo "Usage: $(basename $0) filename"
     exit 1
 fi
+
+
+filename=$1
 
 # Determine if this is a Mac. Some bash
 # commands are not available there:
@@ -47,28 +43,29 @@ else
     PLATFORM='other'
 fi    
 
-destDir=$1
-#echo $destDir
-if [ ! -d $destDir ]
+# Two ways to find the modification date of
+# a directory/file, depending on OS. Either
+# way, output will be of the form
+#
+#   2017-06-14 17:22:17   for MacOS
+#
+# or
+#
+#   2017-06-14 17:44:16.876790023 -0700 for Linux
+
+
+
+if [[ ! -e $filename ]]
 then
-    echo "First argument must be a directory; $USAGE"
-    exit 1
-fi
-shift
-#echo ${@}
-
-thisScriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-# BSD bash seems not to pass PATH down into
-# subshells; so hard-code parallel's location
-# for the MacOS case:
-
-echo "Transform-only start transform: `date`" >> /tmp/transformOnly.txt
-if [[ $PLATFORM == 'macos' ]]
-then   
-    time /usr/local/bin/parallel --gnu --progress $thisScriptDir/json2sql.py  -t csv $destDir ::: ${@};
+    echo 'null'
 else
-    time parallel --gnu --progress $thisScriptDir/json2sql.py  -t csv $destDir ::: ${@};
-fi    
-echo "Transform-only transform done: `date`" >> /tmp/transformOnly.txt
-
+    if [[ $PLATFORM == 'macos' ]]
+    then
+        echo $(stat -f "%Sm" -t "%Y-%m-%d %H:%M:%S" $filename)
+    else
+        # Chop off all past the "." to make both outputs look like
+        # the Mac output. The -r is for extended regexp that allows
+        # use of capture group parens without backslashes:
+        echo $(stat -c %y $filename) | sed -rn  's/([^.]*).*/\1/p'
+    fi
+fi

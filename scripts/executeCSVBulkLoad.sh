@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Copyright (c) 2014, Stanford University
 # All rights reserved.
 #
@@ -35,8 +35,35 @@
 
 usage="Usage: "`basename $0`" [-u username][-p][-w rootpass] logDir bulkLoadSqlFile # You may be asked for MySQL root pwd."
 
-# Get MySQL version on this machine
-MYSQL_VERSION=$(mysql --version | sed -ne 's/.*Distrib \([0-9][.][0-9]\).*/\1/p')
+# Determine if this is a Mac. Some bash
+# commands are not available there:
+if [[ $(echo $OSTYPE | cut -c 1-6) == 'darwin' ]]
+then
+    PLATFORM='macos'
+    BASH_VERSION=$(echo $(bash --version) | sed -n 's/[^0-9]*version \([0-9]\).*/\1/p')
+    if [[ $BASH_VERSION < 4 ]]
+    then
+        echo "On MacOS Bash version must be 4.0 or higher."
+        exit 1
+    fi
+else
+    PLATFORM='other'
+fi    
+
+# Get MySQL version on this machine.
+# Cannot get PATH to be inherited by
+# subshell on MacOS, so must hardcode
+# the mysql executable...
+
+if [[ $PLATFORM == 'macos' ]]
+then
+    MYSQL_BIN=/usr/local/bin/mysql
+    MYSQL_VERSION=$($MYSQL_BIN --version | sed -ne 's/.*Distrib \([0-9][.][0-9]\).*/\1/p')
+else
+    MYSQL_BIN=$(which mysql)
+    MYSQL_VERSION=$(${MYSQL_BIN} --version | sed -ne 's/.*Distrib \([0-9][.][0-9]\).*/\1/p')
+fi
+
 if [[ $MYSQL_VERSION > 5.5 ]]
 then
     MYSQL_VERSION='5.6+'
@@ -105,7 +132,12 @@ elif [ -z $password ]
 then
     # Get home directory of whichever user will
     # log into MySQL:
-    HOME_DIR=$(getent passwd $USERNAME | cut -d: -f6)
+    if [[ $PLATFORM == 'macos' ]]
+    then
+        HOME_DIR=$(dscacheutil -q user -a name $USERNAME | sed -n 's/dir: \(.*$\).*/\1/p')
+    else
+        HOME_DIR=$(getent passwd $USERNAME | cut -d: -f6)
+    fi
     # If the home dir has a readable file called mysql_root in its .ssh
     # subdir, then pull the pwd from there:
     if test -f $HOME_DIR/.ssh/mysql_root && test -r $HOME_DIR/.ssh/mysql_root
@@ -177,13 +209,13 @@ echo "`date`: Disable indexing on all tables..."  >> $LOG_FILE 2>&1
 for table in ${!allTables[*]}
 do
   echo "    `date`: Disable indexing on ${allTables[$table]}.${table}..."  >> $LOG_FILE 2>&1
-  mysql $MYSQL_AUTH -e "ALTER TABLE ${allTables[$table]}.${table} DISABLE KEYS;" >> $LOG_FILE 2>&1
+  ${MYSQL_BIN} $MYSQL_AUTH -e "ALTER TABLE ${allTables[$table]}.${table} DISABLE KEYS;" >> $LOG_FILE 2>&1
 done
 echo "`date`: Done disabling indexing on all tables..."  >> $LOG_FILE 2>&1
 
 # Now load the big file:
 echo "`date`: Start loading from $bulkLoadFile..."  >> $LOG_FILE 2>&1
-mysql $MYSQL_AUTH -f --local_infile=1 < "${bulkLoadFile}" >> "${LOG_FILE}" 2>&1
+${MYSQL_BIN} $MYSQL_AUTH -f --local_infile=1 < "${bulkLoadFile}" >> "${LOG_FILE}" 2>&1
 echo "`date`: done loading from $bulkLoadFile"  >> $LOG_FILE 2>&1
 
 # Re-build the indexes:
@@ -201,7 +233,7 @@ do
   #echo "Re-index cmd: '$MYSQL_CMD'"
   #********************
   echo "    `date`: Rebuilding index on ${allTables[$table]}.${table}..."  >> $LOG_FILE 2>&1
-  mysql $MYSQL_AUTH -e "$MYSQL_CMD" >> $LOG_FILE 2>&1
+  ${MYSQL_BIN} $MYSQL_AUTH -e "$MYSQL_CMD" >> $LOG_FILE 2>&1
   echo "    `date`: Done rebuilding index on ${allTables[$table]}.${table}..."  >> $LOG_FILE 2>&1
 done
 
@@ -209,8 +241,8 @@ echo "`date`: Enable indexing on all tables..."  >> $LOG_FILE 2>&1
 for table in ${!allTables[*]}
 do
   echo "    `date`: Enable indexing on ${allTables[$table]}.${table}..."  >> $LOG_FILE 2>&1
-  mysql $MYSQL_AUTH -e "ALTER TABLE ${allTables[$table]}.${table} ENABLE KEYS;" >> $LOG_FILE 2>&1
+  ${MYSQL_BIN} $MYSQL_AUTH -e "ALTER TABLE ${allTables[$table]}.${table} ENABLE KEYS;" >> $LOG_FILE 2>&1
 done
 echo "`date`: Done enabling indexing on all tables..."  >> $LOG_FILE 2>&1
 
-exit
+exit 0
