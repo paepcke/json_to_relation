@@ -100,6 +100,7 @@ import shutil
 
 from pymysql_utils.pymysql_utils import MySQLDB
 from listChunkFeeder import ListChunkFeeder
+from fileCollection import collectFiles
 
 #import boto.connection
 # Add json_to_relation source dir to $PATH
@@ -189,9 +190,14 @@ class TrackLogPuller(object):
             TrackLogPuller.LOAD_LOG_DIR = os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, 'Logs')
         self.logger = None
         self.setupLogging(loggingLevel, logFile)
+        
         # No connection yet to S3. That only
         # gets established when needed:
         self.tracking_log_bucket = None
+        
+        # Set of already loaded .gz JSON files not
+        # yet retrieved from the database:
+        self.loaded_file_set = None
 
     def openS3Connection(self):
         '''
@@ -267,9 +273,14 @@ class TrackLogPuller(object):
             return rfileObjsToGet
 
         done_files_set = self.getExistingLogFileNames(localTrackingLogFileRoot)
+        
         # Add files loaded into the db some time ago, whose .gz files
-        # are no longer in the file system:
-        done_files_set = done_files_set.union(self.getAllLoadedFilenames())
+        # are no longer in the file system. Save those names in instance 
+        # var in case they are needed by other methods in the workflow:
+        
+        if self.loaded_file_set is None:
+            self.loaded_file_set = self.getAllLoadedFilenames()
+        done_files_set  = done_files_set.union(self.loaded_file_set)
 
         # This logInfo call would run the same loop
         # as the subsequent 'for' loop, just to
@@ -335,21 +346,34 @@ class TrackLogPuller(object):
         # set to speed up lookups:
         return frozenset([done_file for done_file in file_list if done_file != None and done_file != ''])
 
-    def identifyNotTransformedLogFiles(self, localTrackingLogFilePaths=None, csvDestDir=None):
+    def identifyNotTransformedLogFiles(self, 
+                                       localTrackingLogFilePaths=None, 
+                                       csvDestDir=None,
+                                       count_loaded_files=True):
         '''
         Messy method: determines which of a set of OpenEdX .json files have not already
-        gone through the transform process to relations. This is done by looking at the
+        gone through the transform process to relations. Two ways to find out
+        whether a given JSON .gz file has been transformed: If a corresponding 
+        .sql file is in the CSV directory, and whether a file of that name shows
+        in the LoadInfo table. The first method is always used. Whether the second 
+        method is used is controlled by the count_loaded_files parameter.   
+        
+        Looking for .sql files is done by looking at the
         file names in the transform output directory, and matching them to the candidate
         .json files. This process works, because the transform process uses a file name
         convention: given a .json file like <root>/tracking/app10/foo.gz, the .sql file
         that the transform file generates will be named tracking.app10.foo.gz.<more pieces>.sql.
         Like this: tracking.app10.tracking.log-20131128.gz.2013-12-05T00_33_29.900465_5064.sql
+        
         @param localTrackingLogFilePaths: list of all .json files to consider for transform.
                If None, uses LOCAL_LOG_STORE_ROOT + '/app*/.../*.gz (equivalent to bash 'find')
         @type localTrackingLogFilePaths: {[String] | None}
         @param csvDestDir: directory where previous transforms have deposited their output files.
         `     If None, uses LOCAL_LOG_STORE_ROOT/CSV
         @type csvDestDir: String
+        @param count_loaded_files: look in LoadInfo table and consider files there
+            as tranformed?
+        @type count_loaded_files: bool
         @returns: array of absolute paths to OpenEdX tracking log files that need to be
                   transformed
         @rtype: [String]
@@ -410,6 +434,10 @@ class TrackLogPuller(object):
         # Next: find all .sql files among the existing .csv/.sql
         # files from already accomplished transforms:
         allTransformResultFiles = self.getAllFilesByExtension(csvDestDir, 'sql')
+        if count_loaded_files:
+            if self.loaded_file_set is None:
+                self.loaded_file_set = self.getAllLoadedFilenames()
+            allTransformResultFiles.union(self.loaded_file_set)
         
         # Now we need to figure out to which .gz file each .sql file
         # corresponds. We do that via the .sql file name convention:
@@ -595,12 +623,16 @@ class TrackLogPuller(object):
             # have been transformed already and don't 
             # need to be redone: 
 
-            # Get content of LoadInfo file names in MySQL db Edx:
-            transformedJSONFiles = self.getAllLoadedFilenames()
+            # Get content of LoadInfo file names in MySQL db Edx
+            # if that wasn't done in an ealier step:
+            if self.loaded_file_set is None:
+                self.loaded_file_set = self.getAllLoadedFilenames()
+            
+            transformedJSONFiles = self.loaded_file_set
             
         # All files in the CSV directory are results of
         # prior transforms: 
-        all_sql_files = self.getAllFilesByExtension(self, csvDir, 'sql')
+        all_sql_files = self.getAllFilesByExtension(csvDir, 'sql')
         
         # JSON .gz files to transform are ones that are
         # on this machine minus the ones that were already
@@ -893,7 +925,7 @@ class TrackLogPuller(object):
                 self.logInfo("Would call shell script transformGivenLogfilesOnCluster.sh %s %s" %
                              (fileList, csvDestDir))
             else:
-                self.logInfo("Would call shell script transformGivenLogfiles.sh %s [%s]..." %
+                self.logInfo("Would call shell script transformGivenLogfiles.sh %s %s..." %
                              (csvDestDir,fileList[0:10]))
                             #(csvDestDir, map(os.path.basename, logFilePathsOrDir)))
             self.logInfo('Would be done transforming %d newly downloaded tracklog file(s)...' % len(fileList))
@@ -919,7 +951,7 @@ class TrackLogPuller(object):
             for files in ListChunkFeeder(fileList, chunk_size):
                 self.logInfo('About to transform %s to %s of %s log files...' %\
                              (num_chunks_done*chunk_size,
-                              num_chunks_done*chunk_size + chunk_size,
+                              min(num_chunks_done*chunk_size + chunk_size, len(fileList)),
                               len(fileList)
                               )
                              )
@@ -930,6 +962,7 @@ class TrackLogPuller(object):
                 # into a full path:
                 files = [os.path.join(TrackLogPuller.LOCAL_LOG_STORE_ROOT, oneLogFile) for oneLogFile in files]
                 shellCommand.extend(files)
+                
                 #*************************
                 # Production code is the following subprocess
                 # call. It uses a shell script to launch multiple
@@ -937,6 +970,7 @@ class TrackLogPuller(object):
                 # To debug while staying with this process (e.g.
                 # in Eclipse), comment the subprocess line,
                 # and uncomment up to the "#******"
+                #***********
                 subprocess.call(shellCommand)
                 
 #                 from input_source import InURI                
@@ -1174,6 +1208,8 @@ class TrackLogPuller(object):
         self.logger.error(msg)
 
     def isGzippedFile(self, filename):
+        if not os.path.isfile(filename):
+            return False
         return filename.endswith('.gz')
 
     def checkFilesIdentical(self, s3FileKeyObj, localFilePath):
@@ -1466,27 +1502,9 @@ if __name__ == '__main__':
                 # exist:
                 allLogFiles = []
                 for fileOrDir in logFilesOrDirs:
-                    # Whether file or directory: either must be readable:
                     if not os.access(fileOrDir, os.R_OK):
-                        tblCreator.logErr("Tracking log file or directory '%s' not readable or non-existent; ignored." % fileOrDir)
-                        continue
-                    if os.path.isdir(fileOrDir):
-                        # For directories in the args, ensure that
-                        # each gzipped file within is readable. Find
-                        # All gzipped files at any level below the
-                        # directory:
-                        for (root, dirs, files) in os.walk(fileOrDir): #@UnusedVariable
-                            for partialFilePath in files:
-                                fullTrackLogPath = os.path.join(root,partialFilePath)
-                                if not tblCreator.isGzippedFile(fullTrackLogPath):
-                                    continue
-                                if not os.access(fullTrackLogPath, os.R_OK):
-                                    tblCreator.logErr("Tracking log file '%s' not readable or non-existent; ignored." % fullTrackLogPath)
-                                    continue
-                                allLogFiles.append(fullTrackLogPath)
-                    else: # arg not a directory:
-                        if tblCreator.isGzippedFile(fileOrDir):
-                            allLogFiles.append(fileOrDir)
+                        raise ValueError('Given .gz JSON file %s does not exist or is not readable' % fileOrDir)
+                    allLogFiles.extend(collectFiles(fileOrDir, 'gz', skip_non_readable=True))
             else:
                 allLogFiles = None
 
@@ -1507,44 +1525,31 @@ if __name__ == '__main__':
 
     if args.toDo == 'load' or args.toDo == 'transformLoad' or args.toDo == 'pullTransformLoad':
         # For loading, args.sqlSrc must be None, or a readable directory, or a sequence of readable .sql files.
-        sqlFilesToLoad = None
+        sqlFilesToLoad = []
         if args.sqlSrc is not None:
-            try:
-                if os.path.isdir(args.sqlSrc):
-                    allFiles = os.listdir(args.sqlSrc)
-                    allSqlFiles = filter(lambda fileName: os.path.splitext(fileName)[1] == '.sql', allFiles)
-                    allSqlFilesFullPaths = [os.path.join(args.sqlSrc, oneFile) for oneFile in allSqlFiles]
-                    args.sqlSrc = ' '.join(allSqlFilesFullPaths)
-            except:
-                pass
-            # args.sqlSrc must be a string containing
-            # one or more .sql file paths:
-            try:
-                sqlFilesToLoad = args.sqlSrc.split(' ')
-                # Remove any empty strings that result from
-                # file names being separated by more than one
-                # space:
-                sqlFilesToLoad = [oneFile for oneFile in sqlFilesToLoad if len(oneFile) > 0]
-            except AttributeError:
-                tblCreator.logErr("For load the '--sqlSrc' option value  must be string listing full paths of .sql files to load, separated by spaces.")
-                sys.exit(1)
-            # All files must exist:
-            trueFalseList = map(os.path.exists, sqlFilesToLoad)
-            ok = True
-            for i in range(len(trueFalseList)):
-                if not trueFalseList[i]:
-                    tblCreator.logErr("File % does not exist." %  sqlFilesToLoad[i])
-                    ok = False
-                if not os.access(sqlFilesToLoad[i], os.R_OK):
-                    tblCreator.logErr("File % exists, but is not readable." % sqlFilesToLoad[i])
-                    ok = False
-            if not ok:
-                tblCreator.logErr("Command aborted, no action was taken.")
-                sys.exit(1)
+            sqlLocs = args.sqlSrc
+            # On the commandline the --sqlSrc option will have a string
+            # of either comma- or space-separated directories and/or files.
+            # Get a Python list from that:
+            sqlFilesOrDirs = re.split('[\s,]', sqlLocs)
+            # Remove empty strings that come from use of commas *and* spaces in
+            # the cmd line option:
+            sqlFilesOrDirs = [sqlLoc for sqlLoc in sqlFilesOrDirs if len(sqlLoc) > 0]
+
+            # If some of the srcFiles arguments are directories, replace those with arrays
+            # of .sql files in those directories; for files in the argument, ensure they
+            # exist:
+            allSqlFiles = []
+            for fileOrDir in sqlFilesOrDirs:
+                if not os.access(fileOrDir, os.R_OK):
+                    raise ValueError('Given sql file %s does not exist or is not readable' % fileOrDir)
+                allSqlFiles.extend(collectFiles(fileOrDir, 'sql', skip_non_readable=True))
+        else:
+            allSqlFiles = None
 
         # For DB ops need DB root pwd, which was
         # put into tblCreator.pwd above by various means:
-        tblCreator.load(mysqlPWD=tblCreator.pwd, sqlFilesToLoad=sqlFilesToLoad, logDir=os.path.dirname(args.errLogFile), dryRun=args.dryRun)
+        tblCreator.load(mysqlPWD=tblCreator.pwd, sqlFilesToLoad=allSqlFiles, logDir=os.path.dirname(args.errLogFile), dryRun=args.dryRun)
 
     tblCreator.logInfo('Processing %s done.' % args.toDo)
     sys.exit(0)

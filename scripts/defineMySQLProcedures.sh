@@ -58,13 +58,12 @@ FORUM_KEY_PASSPHRASE=`cat $THIS_SCRIPT_DIR/forumKeyPassphrase.txt`
 # pwd string:
 
 for arg in $@
-do
-   # The sed -r option enables extended regex, which
-   # makes the '+' metachar wor. The -n option
-   # says to print only if pattern matches:
-   PASSWD=`echo $arg | sed -r -n 's/-p(.+)/\1/p'`
-   if [ -z $PASSWD ]
-   then
+ do
+	# The sed -n option
+	# says to print only if pattern matches:
+	PASSWD=$(echo $arg | sed -n 's/-p\([^ ]*\)/\1/p')
+	if [ -z $PASSWD ]
+	then
        continue
    else
        #************

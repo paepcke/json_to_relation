@@ -18,6 +18,22 @@
 
 usage="Usage: "`basename $0`" [-u username][-p][-n noindexex]"
 
+
+# Determine if this is a Mac. Some bash
+# commands are not available there:
+if [[ $(echo $OSTYPE | cut -c 1-6) == 'darwin' ]]
+then
+    PLATFORM='macos'
+    BASH_VERSION=$(echo $(bash --version) | sed -n 's/[^0-9]*version \([0-9]\).*/\1/p')
+    if [[ $BASH_VERSION < 4 ]]
+    then
+        echo "On MacOS Bash version must be 4.0 or higher."
+        exit 1
+    fi
+else
+    PLATFORM='other'
+fi    
+
 # Get MySQL version on this machine
 MYSQL_VERSION=$(mysql --version | sed -ne 's/.*Distrib \([0-9][.][0-9]\).*/\1/p')
 if [[ $MYSQL_VERSION > 5.5 ]]
@@ -49,18 +65,17 @@ fi
 # pwd string:
 
 for arg in $@
-do
-   # The sed -r option enables extended regex, which
-   # makes the '+' metachar wor. The -n option
-   # says to print only if pattern matches:
-   PASSWD=`echo $arg | sed -r -n 's/-p(.+)/\1/p'`
-   if [ -z $PASSWD ]
-   then
-       continue
-   else
+ do
+	# The sed -n option
+	# says to print only if pattern matches:
+	PASSWD=$(echo $arg | sed -n 's/-p\([^ ]*\)/\1/p')
+	if [ -z $PASSWD ]
+	then
+    		continue
+	else
        #echo "Pwd is:"$PASSWD
        break
-   fi
+	fi
 done
 
 
@@ -110,8 +125,17 @@ then
 elif [ -z $PASSWD ]
 then
     # Get home directory of whichever user will
+	if [[ $PLATFORM == 'macos' ]]
+	 then
+		# MacOS dcacheutil outputs multiple /etc/passwd related 
+		# lines for given user: name, uid, gid. Etc. The one we
+		# want is: "dir: /Users/theUser". Use awk to find
+		# the line, and extract the 2nd field (i.e. the home dir:
+		HOME_DIR=$(dscacheutil -q user -a name $USERNAME | awk '/dir:/ {print $2}')
+	 else	
+		HOME_DIR=$(getent passwd $USERNAME | cut -d: -f6)
+	 fi
     # log into MySQL:
-    HOME_DIR=$(getent passwd $USERNAME | cut -d: -f6)
     # If the home dir has a readable file called mysql_root in its .ssh
     # subdir, then pull the pwd from there:
     if test -f $HOME_DIR/.ssh/mysql_root && test -r $HOME_DIR/.ssh/mysql_root
@@ -121,9 +145,9 @@ then
 fi
 
 #**************
- echo 'UID of script caller: '$USERNAME
- echo 'UID used for MySQL operations: root'
- echo 'MySQL root password: '$PASSWD
+ #echo 'UID of script caller: '$USERNAME
+ #echo 'UID used for MySQL operations: root'
+ #echo 'MySQL root password: '$PASSWD
 # exit 0
 #**************
 
