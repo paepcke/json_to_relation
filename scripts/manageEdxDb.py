@@ -337,11 +337,22 @@ class TrackLogPuller(object):
         # slash from the result: we want tracking/app1/tracking/foo.gz,
         # not /tracking/app1/tracking/foo.gz:
         
-        cmd = "find %s -name '*.gz' | sed -n 's|%s/||p'" % (localTrackingLogFileRoot,localTrackingLogFileRoot)
+        # Make sure the log root directory has no trailing slash. We
+        # do this by first ensuring that a slash is present, and then
+        # taking it away:
+        log_root = os.path.join(localTrackingLogFileRoot, '')[:-1]
         
+        # Get from full paths to paths relative to the log root:
+        #   From /home/dataman/EdX/tracking/tracking/app1/...
+        #     to tracking/tracking/app1/...
+        cmd = "find %s -name '*.gz' | sed -n 's|%s/\(.*\)$|\\1|p'" %\
+                (log_root,log_root)
+                
         # The split('\n') is needed b/c check_output returns
         # letter by letter:
-        file_list = subprocess.check_output(cmd, shell=True).split('\n')
+                
+        file_list = subprocess.check_output(cmd, shell=True).split('\n')                
+        
         # Turn list of file names into an immutable
         # set to speed up lookups:
         return frozenset([done_file for done_file in file_list if done_file != None and done_file != ''])
