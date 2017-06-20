@@ -448,7 +448,7 @@ class TrackLogPuller(object):
         if count_loaded_files:
             if self.loaded_file_set is None:
                 self.loaded_file_set = self.getAllLoadedFilenames()
-            allTransformResultFiles.union(self.loaded_file_set)
+            allTransformResultFiles = allTransformResultFiles.union(self.loaded_file_set)
         
         # Now we need to figure out to which .gz file each .sql file
         # corresponds. We do that via the .sql file name convention:
