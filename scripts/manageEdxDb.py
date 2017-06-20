@@ -445,10 +445,6 @@ class TrackLogPuller(object):
         # Next: find all .sql files among the existing .csv/.sql
         # files from already accomplished transforms:
         allTransformResultFiles = self.getAllFilesByExtension(csvDestDir, 'sql')
-        if count_loaded_files:
-            if self.loaded_file_set is None:
-                self.loaded_file_set = self.getAllLoadedFilenames()
-            allTransformResultFiles = allTransformResultFiles.union(self.loaded_file_set)
         
         # Now we need to figure out to which .gz file each .sql file
         # corresponds. We do that via the .sql file name convention:
@@ -508,17 +504,30 @@ class TrackLogPuller(object):
         # Unify these to create keys for the table:
 
         for sqlFile in allTransformResultFiles:
-            # Get something like
+            # From:
+            #   /home/dataman/Data/EdX/tracking/CSV/tracking.app2.tracking.tracking.log-20141008-1412767021.gz.2017-06-12T11_16_47.734532_11850.sql
+            # or
+            #   /home/dataman/Data/EdX/tracking/CSV/app2/tracking.tracking.tracking.log-20141008-1412767021.gz.2017-06-12T11_16_47.734532_11850.sql
+            # Get(respectively) something like:
+            #
             #       'tracking.app2.tracking.tracking.log-20141008-1412767021'
-            #   or  'app1.tracking.tracking.log-20140608-1402247821'
+            #   or  'app1.tracking.tracking.log-20141008-1412767021'
+            #
+            
+            # First get /home/dataman/Data/EdX/tracking/CSV/tracking.app2.tracking.tracking.log-20141008-1412767021
             gzFilePart = sqlFile.split('.gz')[0]
-            # Get this: ['tracking', 'app2', 'tracking', 'tracking', 'log-20141008-1412767021']
-            #       or: ['app1', 'tracking', 'tracking', 'log-20140608-1402247821']
-            fileComponents = gzFilePart.split('.')
+            
+            # Now get:
+            #           ['tracking', 'app2', 'tracking', 'tracking', 'log-20141008-1412767021']
+            #       or: ['app2', 'tracking', 'tracking', 'log-20141008-1412767021]
+            fileComponents = gzFilePart.split('.')[1:]
 
             # Normalize those two types of names into
             #    tracking/appX/log-20140608-1402247821
             # or appX/log-20140608-1402247821
+            # So: from 
+            #   /home/dataman/Data/EdX/tracking/CSV/tracking.app1.tracking.tracking.log-20131221.gz.2017-06-12T11_16_47.734532_11850.sql
+            # get {app1, tracking, tracking, log-2013...
             firstFileEl = fileComponents[0]
             if firstFileEl.startswith('app'):
                 fileElementsToKeep = [el for el in fileComponents if el != 'tracking']
@@ -540,9 +549,9 @@ class TrackLogPuller(object):
             # found so far:
             toDo = localTrackingLogFilePaths
         else:
-            toDo = []
-            for logFile in localTrackingLogFilePaths:
-                # logFile is a full path of a .gz tracking log file.
+            toDo = set()
+            for relPath in localTrackingLogFilePaths:
+                # relPath is a full path of a .gz tracking log file.
                 # Get the normalized file name to see whether the file is
                 # in the hash table:
     
@@ -551,7 +560,6 @@ class TrackLogPuller(object):
                 #         get 'app1/tracking/tracking.log-20141008-1412767021.gz'
                 # while  from '/home/dataman/Data/EdX/tracking/tracking/app2/tracking/tracking.log-20140408.gz
                 #         get 'tracking/app2/tracking/tracking.log-20140408.gz'
-                relPath = os.path.relpath(logFile, TrackLogPuller.LOCAL_LOG_STORE_ROOT)
     
                 # Chop the '.gz', and replace slashes by dots:
                 dottedFilename = relPath.replace('/', '.').split('.gz')[0]
@@ -567,8 +575,15 @@ class TrackLogPuller(object):
                 try:
                     normalizedSQLFiles[hashKey]
                 except KeyError:
-                    toDo.append(logFile)
+                    toDo.add(relPath)
 
+        if count_loaded_files:
+            if self.loaded_file_set is None:
+                self.loaded_file_set = self.getAllLoadedFilenames()
+            # None of the files found in the Edx.LoadInfo table
+            # need to be loaded again:
+            toDo = toDo - self.loaded_file_set
+        
         self.logDebug("toDo: '%s'" % toDo)
         self.logDebug("number of toDo: '%d'" % len(toDo))
         if len(toDo) > 3:
