@@ -826,9 +826,9 @@ class TrackLogPuller(object):
                     pass
                 fileKey.get_contents_to_filename(localDest)
         if dryRun:
-            self.logInfo("Would have pulled OpenEdX tracking log files from S3 as per above listings.")
+            self.logInfo("Would have pulled %s OpenEdX tracking log files from S3 as per above listings." % str(len(rfileNamesToPull)))
         else:
-            self.logInfo("Pulled OpenEdX tracking log files from S3: %s" % str(rfileNamesToPull))
+            self.logInfo("Pulled %s OpenEdX tracking log files from S3" % str(len(rfileNamesToPull)))
         return rfileNamesToPull
 
     def transform(self, logFilePathsOrDir=None, csvDestDir=None, processOnCluster=False, dryRun=False):
