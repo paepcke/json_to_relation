@@ -605,7 +605,10 @@ class ModulestoreExtractor(MySQLDB):
         Build columns tuple and list of row tuples for MySQLDB bulkInsert operation, then execute.
         We hold tables in memory to minimize query load on the receiving database.
         '''
-        columns = table[0].keys()
+        try:
+            columns = table[0].keys()
+        except KeyError:
+            print('********** Table table_name was empty when being loaded.')
 
         data = []
         for row in table:
