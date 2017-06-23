@@ -21,12 +21,11 @@
 
 
 import sys
-import json
 import math
 import os.path
 import datetime
-import getopt
-from collections import defaultdict, namedtuple
+#from collections import defaultdict, namedtuple
+from collections import namedtuple
 
 from pymysql_utils1 import MySQLDB
 import pymongo as mng
@@ -49,6 +48,12 @@ class ModulestoreExtractor(MySQLDB):
         Note: This class presumes modulestore was recently loaded to mongod.
         Class also presumes that mongod is running on localhost:27017.
         '''
+        #********************
+        courseinfo = False
+        edxproblem = False
+        edxvideo   = True
+        #********************
+        
         # FIXME: don't presume modulestore is recently loaded and running
         self.msdb = mng.MongoClient().modulestore
 
@@ -66,13 +71,12 @@ class ModulestoreExtractor(MySQLDB):
         dbFile = home + "/.ssh/mysql_user"
         if not os.path.isfile(dbFile):
             sys.exit("MySQL user credentials not found: " + dbFile)
-        dbuser = None
-        dbpass = None
+        dbuser = None #@UnusedVariable
+        dbpass = None #@UnusedVariable
         with open(dbFile, 'r') as f:
             dbuser = f.readline().rstrip()
             dbpass = f.readline().rstrip()
         MySQLDB.__init__(self, db="Edx", user=dbuser, passwd=dbpass)
-
 
     def __buildEmptyEdxProblemTable(self):
         '''
@@ -248,7 +252,7 @@ class ModulestoreExtractor(MySQLDB):
         try:
             parent_module = self.msdb.modulestore.find({"definition.children": resource_uri}).next()
         except StopIteration:
-            print resource_uri
+            # print resource_uri
             return None, -2
         parent_module_uri = self.__resolveResourceURI(parent_module)
         order = parent_module['definition']['children'].index(resource_uri) + 1  # Use 1-indexing
@@ -294,7 +298,7 @@ class ModulestoreExtractor(MySQLDB):
             data['sequential_idx'] = sequential_idx
 
             # URI for course and location of chapter
-            course_uri, chapter_idx = self.__locateModuleInParent(chapter_uri)
+            course_uri, chapter_idx = self.__locateModuleInParent(chapter_uri) #@UnusedVariable
             data['chapter_idx'] = chapter_idx
 
             # Staff-only indicator
@@ -326,11 +330,14 @@ class ModulestoreExtractor(MySQLDB):
 
             # Retrieve course structure from published branch and filter out non-problem blocks
             try:
-		structure = self.msdb['modulestore.structures'].find({"_id": cid, "blocks.block_type": "problem"}).next()  # changed from [0]
+                structure = self.msdb['modulestore.structures'].find({"_id": cid, "blocks.block_type": "problem"}).next()  # changed from [0]
             except StopIteration:
-		continue
+                continue
             for block in filter(lambda b: b['block_type'] == 'problem', structure['blocks']):
-                definition = self.msdb['modulestore.definitions'].find({"_id": block['definition']})[0]
+                try:
+                    definition = self.msdb['modulestore.definitions'].find({"_id": block['definition']}).next()
+                except StopIteration:
+                    continue
 
                 # Construct data dict and append to table list
                 data = dict()
@@ -385,7 +392,7 @@ class ModulestoreExtractor(MySQLDB):
             data['chapter_uri'] = chapter_uri
             data['sequential_idx'] = sequential_idx
 
-            course_uri, chapter_idx = self.__locateModuleInParent(chapter_uri)
+            course_uri, chapter_idx = self.__locateModuleInParent(chapter_uri) #@UnusedVariable
             data['chapter_idx'] = chapter_idx
 
             table.append(data)
@@ -410,11 +417,14 @@ class ModulestoreExtractor(MySQLDB):
 
             # Retrieve course structure from published branch and filter out non-problem blocks
             try:
-                structure = self.msdb['modulestore.structures'].find({"_id": cid, "blocks.block_type": "video"})[0]
-            except IndexError:
+                structure = self.msdb['modulestore.structures'].find({"_id": cid, "blocks.block_type": "video"}).next()
+            except StopIteration:
                 continue  # Some courses don't have any video content
             for block in filter(lambda b: b['block_type'] == 'video', structure['blocks']):
-                definition = self.msdb['modulestore.definitions'].find({"_id": block['definition']})[0]
+                try:
+                    definition = self.msdb['modulestore.definitions'].find({"_id": block['definition']}).next() #@UnusedVariable
+                except StopIteration:
+                    continue
 
                 data = dict()
                 data['video_id'] = block['block_id']
@@ -509,7 +519,7 @@ class ModulestoreExtractor(MySQLDB):
             end_date = course['metadata'].get('end', '0000-00-00T00:00:00Z')
             data['start_date'] = start_date
             data['end_date'] = end_date
-            academic_year, quarter, num_quarters = self.__lookupAYDataFromDates(start_date, end_date)
+            academic_year, quarter, num_quarters = self.__lookupAYDataFromDates(start_date, end_date) #@UnusedVariable
             data['academic_year'] = academic_year
             data['quarter'] = quarter
             # data['num_quarters'] = num_quarters
@@ -544,9 +554,16 @@ class ModulestoreExtractor(MySQLDB):
             if not cid:
                 continue  # Ignore if not a 'published' course
             # Get this course block and corresponding definition document from modulestore
-            structure = self.msdb['modulestore.structures'].find({"_id": cid, "blocks.block_type": "course"})[0]
+            try:
+                structure = self.msdb['modulestore.structures'].find({"_id": cid, "blocks.block_type": "course"}).next()
+            except StopIteration:
+                # No record found in structures:
+                continue
             block = filter(lambda b: b['block_type'] == 'course', structure['blocks'])[0]
-            definition = self.msdb['modulestore.definitions'].find({"_id": block['definition']})[0]
+            try:
+                definition = self.msdb['modulestore.definitions'].find({"_id": block['definition']}).next()
+            except StopIteration:
+                continue
 
             data = dict()
             data['course_display_name'] = "%s/%s/%s" % (course['org'], course['course'], course['run'])
@@ -558,7 +575,7 @@ class ModulestoreExtractor(MySQLDB):
             end_date = datestr(end_date) if type(end_date) is datetime.datetime else end_date
             data['start_date'] = start_date
             data['end_date'] = end_date
-            academic_year, quarter, num_quarters = self.__lookupAYDataFromDates(start_date, end_date)
+            academic_year, quarter, num_quarters = self.__lookupAYDataFromDates(start_date, end_date) #@UnusedVariable
             data['academic_year'] = academic_year
             data['quarter'] = quarter
             # data['num_quarters'] = num_quarters
