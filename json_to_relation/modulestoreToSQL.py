@@ -237,7 +237,13 @@ class ModulestoreExtractor(MySQLDB):
         definition = self.msdb.modulestore.find({"_id.category": "course",
                                                  "_id.org": org,
                                                  "_id.course": course})
-        name = definition[0]["_id"]["name"]
+        try:
+            name = definition[0]["_id"]["name"]
+        except IndexError:
+            print('********** Course display name for course %s not found.' % str(course))
+            cdn = '<Not found in Modulestore>'
+            return cdn
+
         cdn = "%s/%s/%s" % (org, course, name)
         return cdn
 
@@ -330,7 +336,7 @@ class ModulestoreExtractor(MySQLDB):
 
             # Retrieve course structure from published branch and filter out non-problem blocks
             try:
-                structure = self.msdb['modulestore.structures'].find({"_id": cid, "blocks.block_type": "problem"}).next()  # changed from [0]
+                structure = self.msdb['modulestore.structures'].find({"_id": cid, "blocks.block_type": "problem"}).next()
             except StopIteration:
                 continue
             for block in filter(lambda b: b['block_type'] == 'problem', structure['blocks']):
@@ -559,7 +565,11 @@ class ModulestoreExtractor(MySQLDB):
             except StopIteration:
                 # No record found in structures:
                 continue
-            block = filter(lambda b: b['block_type'] == 'course', structure['blocks'])[0]
+            try:
+                block = filter(lambda b: b['block_type'] == 'course', structure['blocks'])[0]
+            except IndexError:
+                print('********** No course block found for course %s' % str(course))
+                continue
             try:
                 definition = self.msdb['modulestore.definitions'].find({"_id": block['definition']}).next()
             except StopIteration:
@@ -607,7 +617,7 @@ class ModulestoreExtractor(MySQLDB):
         '''
         try:
             columns = table[0].keys()
-        except KeyError:
+        except IndexError:
             print('********** Table table_name was empty when being loaded.')
 
         data = []
