@@ -178,29 +178,40 @@ class ModulestoreExtractor(MySQLDB):
         self.__buildEmptyEdxVideoTable() if self.update_EV else None
 
         if self.split and self.update_EP:
+            print("About to ingest problem defs from new-type modulestore...")
             splitEPData = self.__extractSplitEdxProblem()
             self.__loadToSQL(splitEPData, "EdxProblem")
+            print("Done ingesting problem defs from new-type modulestore...")
 
         if self.split and self.update_CI:
+            print("About to ingest course defs from new-type modulestore...")
             splitCIData = self.__extractSplitCourseInfo()
             self.__loadToSQL(splitCIData, "CourseInfo")
+            print("Done ingesting course defs from new-type modulestore...")
 
         if self.split and self.update_EV:
+            print("About to ingest video defs from new-type modulestore...")
             splitEVData = self.__extractSplitEdxVideo()
             self.__loadToSQL(splitEVData, "EdxVideo")
+            print("Done ingesting video defs from new-type modulestore...")
 
         if self.old and self.update_EP:
+            print("About to ingest problem defs from old-type modulestore...")
             oldEPData = self.__extractOldEdxProblem()
             self.__loadToSQL(oldEPData, "EdxProblem")
+            print("Done ingesting problem defs from old-type modulestore...")
 
         if self.old and self.update_CI:
+            print("About to ingest course defs from old-type modulestore...")            
             oldCIData = self.__extractOldCourseInfo()
             self.__loadToSQL(oldCIData, "CourseInfo")
+            print("Done ingesting course defs from new-type modulestore...")
 
         if self.old and self.update_EV:
+            print("About to ingest video defs from old-type modulestore...")
             oldEVData = self.__extractOldEdxVideo()
             self.__loadToSQL(oldEVData, "EdxVideo")
-
+            print("Done ingesting video defs from old-type modulestore...")
 
     @staticmethod
     def __resolveResourceURI(problem):
