@@ -24,6 +24,7 @@ import sys
 import math
 import os.path
 import datetime
+import re
 #from collections import defaultdict, namedtuple
 from collections import namedtuple
 
@@ -37,8 +38,14 @@ Quarter = namedtuple('Quarter', ['start_date', 'end_date', 'quarter'])
 # Class variables for determining internal status of course
 SU_ENROLLMENT_DOMAIN = "shib:https://idp.stanford.edu/"
 INTERNAL_ORGS = ['ohsx', 'ohs']
-VALID_AYS = [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019]
 
+TEST_COURSE_NAME_PATTERN = re.compile(r'[Ss]andbox|TESTTEST')
+# When courses are created, OpenEdx gives them a run date
+# of 2030. Only when they are finalized do they
+# get a real run-date. So create a list with valid
+# academic years: 2012 up to current year + 5:
+
+VALID_AYS = [ay for ay in range(2012, datetime.datetime.today().year + 6)]
 
 class ModulestoreExtractor(MySQLDB):
 
@@ -48,11 +55,6 @@ class ModulestoreExtractor(MySQLDB):
         Note: This class presumes modulestore was recently loaded to mongod.
         Class also presumes that mongod is running on localhost:27017.
         '''
-        #********************
-        courseinfo = False
-        edxproblem = False
-        edxvideo   = True
-        #********************
         
         # FIXME: don't presume modulestore is recently loaded and running
         self.msdb = mng.MongoClient().modulestore
@@ -278,6 +280,9 @@ class ModulestoreExtractor(MySQLDB):
             data['problem_id'] = problem['_id'].get('name', 'False')
             data['problem_display_name'] = problem['metadata'].get('display_name', 'False')
             data['course_display_name'] = self.__resolveCDN(problem)
+            # Is this a test course?
+            if TEST_COURSE_NAME_PATTERN.search(data['course_display_name']) is not None:
+                continue
             data['problem_text'] = problem['definition'].get('data', 'False')
             data['date'] = self.__resolveTimestamp(problem)
             data['weight'] = problem['metadata'].get('weight', -1)
@@ -379,6 +384,9 @@ class ModulestoreExtractor(MySQLDB):
             data['video_id'] = video['_id'].get('name', 'NA')
             data['video_display_name'] = video['metadata'].get('display_name', 'NA')
             data['course_display_name'] = self.__resolveCDN(video)
+            # Is this a test course?
+            if TEST_COURSE_NAME_PATTERN.search(data['course_display_name']) is not None:
+                continue
             data['video_uri'] = video['metadata'].get('html5_sources', 'NA')
             data['video_code'] = video['metadata'].get('youtube_id_1_0', 'NA')
 
@@ -520,6 +528,9 @@ class ModulestoreExtractor(MySQLDB):
         for course in courses:
             data = dict()
             data['course_display_name'] = self.__resolveCDN(course)
+            # Is this a test course?
+            if TEST_COURSE_NAME_PATTERN.search(data['course_display_name']) is not None:
+                continue
             data['course_catalog_name'] = course['metadata']['display_name']
             start_date = course['metadata'].get('start', '0000-00-00T00:00:00Z')
             end_date = course['metadata'].get('end', '0000-00-00T00:00:00Z')

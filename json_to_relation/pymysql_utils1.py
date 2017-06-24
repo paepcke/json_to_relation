@@ -40,7 +40,7 @@ class MySQLDB(object):
     # a machine other than datastage, for instance
     # inside of Eclipse. Normally this code is
     # run as part of a CRON job on datastage:
-    RUN_REMOTELY = True
+    RUN_REMOTELY = False
 
     def __init__(self, host='127.0.0.1', port=3306, user='root', passwd='', db='mysql'):
         '''
