@@ -32,7 +32,11 @@ from ipToCountry import IpCountryDict
 
 class UserCountryTableCreator(object):
 
-    DEST_TABLE = 'UserCountry'
+    DEST_TABLE       = 'UserCountry'
+    # Number of anon ids-country-2-letter-3-letter
+    # tuples to accumulate before inserting into
+    # UserCountry: 
+    INSERT_BULK_SIZE = 15000
     
     def __init__(self, user, pwd):
         self.ipCountryXlater = IpCountryDict()
@@ -46,7 +50,63 @@ class UserCountryTableCreator(object):
                                             'three_letter_country' : 'varchar(3) NOT NULL DEFAULT ""',
                                             'country' : 'varchar(255) NOT NULL DEFAULT ""'}))
         
-    def fillTable(self):
+    def fillTableFromScratch(self):
+
+#***************************
+        
+#         # Create a table with just event id and anon.
+#         # Takes 1.5hrs:
+#         self.db.createTable('tmp_evt_ids_anon',
+#                             OrderedDict({'event_table_id'   : varchar(40),
+#                                          'anon_screen_name' : varchar(40)})),
+#                                          
+#         # The following takes about 1.5hrs:
+#         self.db.execute('''INSERT INTO tmp_evt_ids_anon
+#               			   SELECT _id AS event_table_id, anon_screen_name
+#             				     FROM EdxTrackEvent;
+#             				''')
+#         
+#         # The following: ~50 minutes:
+#         self.db.execute('CREATE INDEX evntIdIndx ON tmp_evt_ids_anon (event_table_id);')
+#***************************
+        
+        query = '''SELECT anon_screen_name, event_ip
+                     FROM tmp_evt_ids_anon JOIN EdxPrivate.EventIp
+                    USING(event_table_id);
+                '''
+
+        query_res_it = self.db.query(query)
+        done = False
+        # Order of columns for insert:
+        colNameTuple = ('anon_screen_name','two_letter_country','three_letter_country','country')
+        
+        while not done: 
+            values = []            
+            for _ in range(UserCountryTableCreator.INSERT_BULK_SIZE):
+                try:
+                    (anon_screen_name, event_ip) = query_res_it.next();
+                except StopIteration:
+                    done = True
+                    break
+                # Try translating:
+                try:
+                    (twoLetterCode, threeLetterCode, country) = self.ipCountryXlater.lookupIP(event_ip)
+                except (ValueError,TypeError,KeyError) as e:
+                    sys.stderr.write("Could not look up one country for %s (%s)\n" % (event_ip, `e`))
+                    values.append('%s'%anon_screen_name,'XX','XXX','Not in lookup tbl')
+                    continue
+                values.append(tuple(['%s'%anon_screen_name,'%s'%twoLetterCode,'%s'%threeLetterCode,'%s'%country]))
+
+            # Filled INSERT_BULK_SIZE rows for UserCountry
+            # or fewer for the last batch:
+            if len(values) > 0:
+                self.db.bulkInsert(UserCountryTableCreator.DEST_TABLE, colNameTuple, values)
+            
+#**************            
+#        self.db.dropTable('tmp_evt_ids_anon')
+#**************                    
+
+    def fillTable(self):        
         values = []
         for (user, ip3LetterCountry) in self.db.query("SELECT DISTINCT anon_screen_name, ip_country FROM EventXtract"):
             try:
@@ -67,7 +127,9 @@ class UserCountryTableCreator(object):
         self.db.close()
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]), formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]), 
+                                     formatter_class=argparse.RawTextHelpFormatter,
+                                     description='Create table UserCountry: learner IDs --> country via IP address')
     parser.add_argument('-u', '--user',
                         action='store',
                         help='For load: User ID that is to log into MySQL. Default: the user who is invoking this script.')
@@ -77,6 +139,9 @@ if __name__ == '__main__':
                              '    default: content of scriptInvokingUser$Home/.ssh/mysql if --user is unspecified,\n' +\
                              '    or, if specified user is root, then the content of scriptInvokingUser$Home/.ssh/mysql_root.'
                         )
+    parser.add_argument('-l', '--long',
+                        action='store_true',
+                        help='Recreate UserCountry from scratch (~2.5hrs')
     
     args = parser.parse_args();
     if args.user is None:
@@ -106,6 +171,9 @@ if __name__ == '__main__':
                 # No .ssh subdir of user's home, or no mysql inside .ssh:
                 pwd = ''
     tblCreator = UserCountryTableCreator(user, pwd)
-    tblCreator.fillTable()
+    if args.long:
+        tblCreator.fillTableFromScratch()
+    else:
+        tblCreator.fillTable()
     tblCreator.makeIndex()
     tblCreator.close()
