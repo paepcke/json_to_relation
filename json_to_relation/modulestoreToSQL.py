@@ -179,7 +179,13 @@ class ModulestoreExtractor(MySQLDB):
 
         if self.split and self.update_EP:
             print("About to ingest problem defs from new-type modulestore...")
+            #*******
+            print("About to call __extractSplitEdxProblem...")
+            #*******
             splitEPData = self.__extractSplitEdxProblem()
+            #*******
+            print("Done calling __extractSplitEdxProblem...")
+            #*******
             self.__loadToSQL(splitEPData, "EdxProblem")
             print("Done ingesting problem defs from new-type modulestore...")
 

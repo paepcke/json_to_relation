@@ -2181,6 +2181,14 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         :param event:
         :type event:
         '''
+        # #*********************
+        # self.logWarn("*******record: %s (%s)(%s) " %\
+        #              (record, self.jsonToRelationConverter.makeFileCitation(), str(event)))        
+        # self.logWarn("*******row: %s (%s)(%s) " %\
+        #              (row, self.jsonToRelationConverter.makeFileCitation(), str(event)))
+        # self.logWarn("*******event: %s (%s)(%s) " %\
+        #              (event, self.jsonToRelationConverter.makeFileCitation(), str(event)))                  
+        # #*********************        
         if event is None:
             self.logWarn("Track log line %s: missing event text in event type problem_reset." %\
                          (self.jsonToRelationConverter.makeFileCitation()))
@@ -2209,6 +2217,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         except KeyError:
             self.logWarn("Track log line %s with event type problem_reset contains event without problem ID array: '%s'" %
                          (self.jsonToRelationConverter.makeFileCitation(), event))
+            return row
         self.setValInRow(row, 'problem_id', problemIDs)
         # Try to look up the human readable display name
         # of the problem, and insert it into the main
