@@ -52,23 +52,21 @@ class UserCountryTableCreator(object):
         
     def fillTableFromScratch(self):
 
-#***************************
-        
-#         # Create a table with just event id and anon.
-#         # Takes 1.5hrs:
-#         self.db.createTable('tmp_evt_ids_anon',
-#                             OrderedDict({'event_table_id'   : varchar(40),
-#                                          'anon_screen_name' : varchar(40)})),
-#                                          
-#         # The following takes about 1.5hrs:
-#         self.db.execute('''INSERT INTO tmp_evt_ids_anon
-#               			   SELECT _id AS event_table_id, anon_screen_name
-#             				     FROM EdxTrackEvent;
-#             				''')
-#         
-#         # The following: ~50 minutes:
-#         self.db.execute('CREATE INDEX evntIdIndx ON tmp_evt_ids_anon (event_table_id);')
-#***************************
+        self.db.dropTable('tmp_evt_ids_anon')
+        # Create a table with just event id and anon.
+        # Takes 1.5hrs:
+        self.db.createTable('tmp_evt_ids_anon',
+                            OrderedDict({'event_table_id'   : 'varchar(40)',
+                                         'anon_screen_name' : 'varchar(40)'})),
+                                          
+        # The following takes about 1.5hrs:
+        self.db.execute('''INSERT INTO tmp_evt_ids_anon
+              			   SELECT _id AS event_table_id, anon_screen_name
+            				     FROM EdxTrackEvent;
+            				''')
+         
+        # The following: ~50 minutes:
+        self.db.execute('CREATE INDEX evntIdIndx ON tmp_evt_ids_anon (event_table_id);')
         
         query = '''SELECT anon_screen_name, event_ip
                      FROM tmp_evt_ids_anon JOIN EdxPrivate.EventIp
