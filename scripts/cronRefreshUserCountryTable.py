@@ -110,9 +110,18 @@ class UserCountryTableCreator(object):
         for (user, ip3LetterCountry) in self.db.query("SELECT DISTINCT anon_screen_name, ip_country FROM EventXtract"):
             try:
                 (twoLetterCode, threeLetterCode, country) = self.ipCountryXlater.getBy3LetterCode(ip3LetterCountry)
-            except (ValueError,TypeError,KeyError) as e:
-                sys.stderr.write("Could not look up one country from (%s/%s): %s\n" % (user, ip3LetterCountry,`e`))
-                continue
+            except (ValueError,TypeError,KeyError):
+                # They changed Romania's three-letter code from ROM to RUM 
+                # at some point:
+                if ip3LetterCountry == 'ROM':
+                    twoLetterCode   = 'RO'
+                    threeLetterCode = 'ROU'
+                    country         = 'Romania'
+                else:
+                    twoLetterCode   = 'XX'
+                    threeLetterCode = 'XXX'
+                    country         = 'Not in lookup tbl'
+                    #sys.stderr.write("Could not look up one country from (%s/%s): %s\n" % (user, ip3LetterCountry,`e`))
             values.append(tuple(['%s'%user,'%s'%twoLetterCode,'%s'%threeLetterCode,'%s'%country]))
         
         colNameTuple = ('anon_screen_name','two_letter_country','three_letter_country','country')
