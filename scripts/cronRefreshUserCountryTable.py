@@ -19,6 +19,7 @@ from collections import OrderedDict
 import getpass
 import os
 import sys
+import datetime
 
 from pymysql_utils.pymysql_utils import MySQLDB
 
@@ -50,82 +51,37 @@ class UserCountryTableCreator(object):
                                             'three_letter_country' : 'varchar(3) NOT NULL DEFAULT ""',
                                             'country' : 'varchar(255) NOT NULL DEFAULT ""'}))
         
-    def fillTableFromScratch(self):
-
-#*******************
-#         self.db.dropTable('tmp_evt_ids_anon')
-#         # Create a table with just event id and anon.
-#         # Takes 1.5hrs:
-#         self.db.createTable('tmp_evt_ids_anon',
-#                             OrderedDict({'event_table_id'   : 'varchar(40)',
-#                                          'anon_screen_name' : 'varchar(40)'})),
-#                                           
-#         # The following takes about 1.5hrs:
-#         self.db.execute('''INSERT INTO tmp_evt_ids_anon
-#               			   SELECT _id AS event_table_id, anon_screen_name
-#             				     FROM EdxTrackEvent;
-#             				''')
-#          
-#         # The following: ~50 minutes:
-#         self.db.execute('CREATE INDEX evntIdIndx ON tmp_evt_ids_anon (event_table_id);')
-#*******************
-        
-        query = '''SELECT anon_screen_name, event_ip
-                     FROM tmp_evt_ids_anon JOIN EdxPrivate.EventIp
-                    USING(event_table_id);
-                '''
+    def fillTable(self):
+        query = "SELECT DISTINCT anon_screen_name, ip_country FROM EventXtract"
         query_res_it = self.db.query(query)
         done = False
         # Order of columns for insert:
         colNameTuple = ('anon_screen_name','two_letter_country','three_letter_country','country')
-        
+
         while not done: 
-            values = []            
+            values = []
+            print("%s: Starting one set of %s lookups..." % (str(datetime.datetime.today()), UserCountryTableCreator.INSERT_BULK_SIZE))
             for _ in range(UserCountryTableCreator.INSERT_BULK_SIZE):
                 try:
-                    (anon_screen_name, event_ip) = query_res_it.next();
+                    (anon_screen_name, ip3LetterCountry) = query_res_it.next();
                 except StopIteration:
                     done = True
                     break
                 # Try translating:
                 try:
-                    (twoLetterCode, threeLetterCode, country) = self.ipCountryXlater.lookupIP(event_ip)
-                except (ValueError,TypeError,KeyError) as e:
-                    sys.stderr.write("Could not look up one country for %s (%s)\n" % (event_ip, `e`))
-                    values.append('%s'%anon_screen_name,'XX','XXX','Not in lookup tbl')
-                    continue
-                values.append(tuple(['%s'%anon_screen_name,'%s'%twoLetterCode,'%s'%threeLetterCode,'%s'%country]))
-
-            # Filled INSERT_BULK_SIZE rows for UserCountry
-            # or fewer for the last batch:
-            if len(values) > 0:
-                self.db.bulkInsert(UserCountryTableCreator.DEST_TABLE, colNameTuple, values)
-            
-#**************            
-#        self.db.dropTable('tmp_evt_ids_anon')
-#**************                    
-
-    def fillTable(self):        
-        values = []
-        for (user, ip3LetterCountry) in self.db.query("SELECT DISTINCT anon_screen_name, ip_country FROM EventXtract"):
-            try:
-                (twoLetterCode, threeLetterCode, country) = self.ipCountryXlater.getBy3LetterCode(ip3LetterCountry)
-            except (ValueError,TypeError,KeyError):
-                # They changed Romania's three-letter code from ROM to RUM 
-                # at some point:
-                if ip3LetterCountry == 'ROM':
-                    twoLetterCode   = 'RO'
-                    threeLetterCode = 'ROU'
-                    country         = 'Romania'
-                else:
+                    (twoLetterCode, threeLetterCode, country) = self.ipCountryXlater.getBy3LetterCode(ip3LetterCountry)
+                except (ValueError,TypeError,KeyError):
                     twoLetterCode   = 'XX'
                     threeLetterCode = 'XXX'
                     country         = 'Not in lookup tbl'
                     #sys.stderr.write("Could not look up one country from (%s/%s): %s\n" % (user, ip3LetterCountry,`e`))
-            values.append(tuple(['%s'%user,'%s'%twoLetterCode,'%s'%threeLetterCode,'%s'%country]))
-        
-        colNameTuple = ('anon_screen_name','two_letter_country','three_letter_country','country')
-        self.db.bulkInsert(UserCountryTableCreator.DEST_TABLE, colNameTuple, values)
+                values.append(tuple(['%s'%anon_screen_name,'%s'%twoLetterCode,'%s'%threeLetterCode,'%s'%country]))
+
+            # Insert this chunk into the UserCountry table
+            print("%s: Inserting %s rows into UserCountry table..." % (str(datetime.datetime.today()), len(values)))        
+            self.db.bulkInsert(UserCountryTableCreator.DEST_TABLE, colNameTuple, values)
+            print("%s: Done inserting %s rows into UserCountry table..." % (str(datetime.datetime.today()), len(values)))                    
+            # ... and loop to process the next INSERT_BULK_SIZE batch
 
     def makeIndex(self):
         self.db.execute("CALL createIndexIfNotExists('UserCountryAnonIdx', 'UserCountry', 'anon_screen_name', 40);")
@@ -147,9 +103,6 @@ if __name__ == '__main__':
                              '    default: content of scriptInvokingUser$Home/.ssh/mysql if --user is unspecified,\n' +\
                              '    or, if specified user is root, then the content of scriptInvokingUser$Home/.ssh/mysql_root.'
                         )
-    parser.add_argument('-l', '--long',
-                        action='store_true',
-                        help='Recreate UserCountry from scratch (~2.5hrs')
     
     args = parser.parse_args();
     if args.user is None:
@@ -179,9 +132,10 @@ if __name__ == '__main__':
                 # No .ssh subdir of user's home, or no mysql inside .ssh:
                 pwd = ''
     tblCreator = UserCountryTableCreator(user, pwd)
-    if args.long:
-        tblCreator.fillTableFromScratch()
-    else:
-        tblCreator.fillTable()
+    print("%s: Filling UserCountry table..." % str(datetime.datetime.today()))
+    tblCreator.fillTable()
+    print("%s: Done filling UserCountry table..." % str(datetime.datetime.today()))
+    print("%s: Indexing table..." % str(datetime.datetime.today()))
     tblCreator.makeIndex()
+    print("%s: Done indexing table..." % str(datetime.datetime.today()))
     tblCreator.close()
