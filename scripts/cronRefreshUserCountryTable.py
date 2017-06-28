@@ -79,7 +79,13 @@ class UserCountryTableCreator(object):
 
             # Insert this chunk into the UserCountry table
             print("%s: Inserting %s rows into UserCountry table..." % (str(datetime.datetime.today()), len(values)))        
-            self.db.bulkInsert(UserCountryTableCreator.DEST_TABLE, colNameTuple, values)
+            (errors, warnings) = self.db.bulkInsert(UserCountryTableCreator.DEST_TABLE, colNameTuple, values)
+            if errors is not None:
+                print('Error(s) during UserCountry insert: %s' % errors)
+                sys.exit(1)
+            if warnings is not None:
+                print('Warning(s) during UserCountry insert: %s' % warnings)
+                
             print("%s: Done inserting %s rows into UserCountry table..." % (str(datetime.datetime.today()), len(values)))                    
             # ... and loop to process the next INSERT_BULK_SIZE batch
 
