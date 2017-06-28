@@ -31,7 +31,19 @@
 
 EDX_PLATFORM_DUMP_MACHINE=jenkins.prod.class.stanford.edu
 
-USAGE='Usage: '`basename $0`' [-u localUbuntuUser][-p][-pLocalMySQLRootPwd][-n]'
+# Called in some ways (maybe via cron?)
+# $0 is not a script name, but "-bash".
+# The leading "-" fools basename into
+# thinking a switch "-b" is being passed
+# to it. Take care of that to avoid an
+# error mst:
+
+if [[ $0 =~ ^- ]]
+then
+    USAGE='Called via source: non-interactive'
+else    
+    USAGE='Usage: '`basename $0`' [-u localUbuntuUser][-p][-pLocalMySQLRootPwd][-n]'
+fi    
 
 # Get MySQL version on this machine
 MYSQL_VERSION=$(mysql --version | sed -ne 's/.*Distrib \([0-9][.][0-9]\).*/\1/p')

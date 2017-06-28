@@ -311,7 +311,7 @@ class AnonAndModIDAdder(object):
         # Many state entries are not student problem result 
         # submissions, but of the form "{'postion': 4}".
         # Weed those out:
-        if jsonStateStr.find('correct_map') == -1:
+        if jsonStateStr is None or jsonStateStr.find('correct_map') == -1:
             #return (successResults, badAnswers, numAttempts)
             return (successResults, answers, numAttempts)
         
