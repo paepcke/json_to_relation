@@ -406,10 +406,10 @@ class TrackLogPuller(object):
             # that string into a file list:
             try:
                 # After expansion, returns a list of files *that exist*:
-                localTrackingLogFilePaths = glob.glob(localTrackingLogFilePaths)
+                localTrackingLogFilePaths = frozenset(glob.glob(localTrackingLogFilePaths))
             except TypeError:
                 # File paths were already a list; keep only ones that exist:
-                localTrackingLogFilePaths = filter(os.path.exists, localTrackingLogFilePaths)
+                localTrackingLogFilePaths = frozenset(filter(os.path.exists, localTrackingLogFilePaths))
             except AttributeError:
                 # An empty list makes glob.glob throw
                 #    AttributeError: 'list' object has no attribute 'rfind'
