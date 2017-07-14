@@ -19,6 +19,7 @@ from collections import OrderedDict
 import getpass
 import os
 import sys
+import datetime
 
 from pymysql_utils.pymysql_utils import MySQLDB
 
@@ -32,7 +33,11 @@ from ipToCountry import IpCountryDict
 
 class UserCountryTableCreator(object):
 
-    DEST_TABLE = 'UserCountry'
+    DEST_TABLE       = 'UserCountry'
+    # Number of anon ids-country-2-letter-3-letter
+    # tuples to accumulate before inserting into
+    # UserCountry: 
+    INSERT_BULK_SIZE = 15000
     
     def __init__(self, user, pwd):
         self.ipCountryXlater = IpCountryDict()
@@ -47,17 +52,42 @@ class UserCountryTableCreator(object):
                                             'country' : 'varchar(255) NOT NULL DEFAULT ""'}))
         
     def fillTable(self):
-        values = []
-        for (user, ip3LetterCountry) in self.db.query("SELECT DISTINCT anon_screen_name, ip_country FROM EventXtract"):
-            try:
-                (twoLetterCode, threeLetterCode, country) = self.ipCountryXlater.getBy3LetterCode(ip3LetterCountry)
-            except (ValueError,TypeError,KeyError) as e:
-                sys.stderr.write("Could not look up one country from (%s/%s): %s\n" % (user, ip3LetterCountry,`e`))
-                continue
-            values.append(tuple(['%s'%user,'%s'%twoLetterCode,'%s'%threeLetterCode,'%s'%country]))
-        
+        query = "SELECT DISTINCT anon_screen_name, ip_country FROM EventXtract"
+        query_res_it = self.db.query(query)
+        done = False
+        # Order of columns for insert:
         colNameTuple = ('anon_screen_name','two_letter_country','three_letter_country','country')
-        self.db.bulkInsert(UserCountryTableCreator.DEST_TABLE, colNameTuple, values)
+
+        while not done: 
+            values = []
+            print("%s: Starting one set of %s lookups..." % (str(datetime.datetime.today()), UserCountryTableCreator.INSERT_BULK_SIZE))
+            for _ in range(UserCountryTableCreator.INSERT_BULK_SIZE):
+                try:
+                    (anon_screen_name, ip3LetterCountry) = query_res_it.next();
+                except StopIteration:
+                    done = True
+                    break
+                # Try translating:
+                try:
+                    (twoLetterCode, threeLetterCode, country) = self.ipCountryXlater.getBy3LetterCode(ip3LetterCountry)
+                except (ValueError,TypeError,KeyError):
+                    twoLetterCode   = 'XX'
+                    threeLetterCode = 'XXX'
+                    country         = 'Not in lookup tbl'
+                    #sys.stderr.write("Could not look up one country from (%s/%s): %s\n" % (user, ip3LetterCountry,`e`))
+                values.append(tuple(['%s'%anon_screen_name,'%s'%twoLetterCode,'%s'%threeLetterCode,'%s'%country]))
+
+            # Insert this chunk into the UserCountry table
+            print("%s: Inserting %s rows into UserCountry table..." % (str(datetime.datetime.today()), len(values)))        
+            (errors, warnings) = self.db.bulkInsert(UserCountryTableCreator.DEST_TABLE, colNameTuple, values)
+            if errors is not None:
+                print('Error(s) during UserCountry insert: %s' % errors)
+                sys.exit(1)
+            if warnings is not None:
+                print('Warning(s) during UserCountry insert: %s' % warnings)
+                
+            print("%s: Done inserting %s rows into UserCountry table..." % (str(datetime.datetime.today()), len(values)))                    
+            # ... and loop to process the next INSERT_BULK_SIZE batch
 
     def makeIndex(self):
         self.db.execute("CALL createIndexIfNotExists('UserCountryAnonIdx', 'UserCountry', 'anon_screen_name', 40);")
@@ -67,7 +97,9 @@ class UserCountryTableCreator(object):
         self.db.close()
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]), formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]), 
+                                     formatter_class=argparse.RawTextHelpFormatter,
+                                     description='Create table UserCountry: learner IDs --> country via IP address')
     parser.add_argument('-u', '--user',
                         action='store',
                         help='For load: User ID that is to log into MySQL. Default: the user who is invoking this script.')
@@ -106,6 +138,10 @@ if __name__ == '__main__':
                 # No .ssh subdir of user's home, or no mysql inside .ssh:
                 pwd = ''
     tblCreator = UserCountryTableCreator(user, pwd)
+    print("%s: Filling UserCountry table..." % str(datetime.datetime.today()))
     tblCreator.fillTable()
+    print("%s: Done filling UserCountry table..." % str(datetime.datetime.today()))
+    print("%s: Indexing table..." % str(datetime.datetime.today()))
     tblCreator.makeIndex()
+    print("%s: Done indexing table..." % str(datetime.datetime.today()))
     tblCreator.close()

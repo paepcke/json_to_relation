@@ -21,12 +21,12 @@
 
 
 import sys
-import json
 import math
 import os.path
 import datetime
-import getopt
-from collections import defaultdict, namedtuple
+import re
+#from collections import defaultdict, namedtuple
+from collections import namedtuple
 
 from pymysql_utils1 import MySQLDB
 import pymongo as mng
@@ -38,8 +38,14 @@ Quarter = namedtuple('Quarter', ['start_date', 'end_date', 'quarter'])
 # Class variables for determining internal status of course
 SU_ENROLLMENT_DOMAIN = "shib:https://idp.stanford.edu/"
 INTERNAL_ORGS = ['ohsx', 'ohs']
-VALID_AYS = [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019]
 
+TEST_COURSE_NAME_PATTERN = re.compile(r'[Ss]andbox|TESTTEST')
+# When courses are created, OpenEdx gives them a run date
+# of 2030. Only when they are finalized do they
+# get a real run-date. So create a list with valid
+# academic years: 2012 up to current year + 5:
+
+VALID_AYS = [ay for ay in range(2012, datetime.datetime.today().year + 6)]
 
 class ModulestoreExtractor(MySQLDB):
 
@@ -49,6 +55,7 @@ class ModulestoreExtractor(MySQLDB):
         Note: This class presumes modulestore was recently loaded to mongod.
         Class also presumes that mongod is running on localhost:27017.
         '''
+        
         # FIXME: don't presume modulestore is recently loaded and running
         self.msdb = mng.MongoClient().modulestore
 
@@ -66,13 +73,12 @@ class ModulestoreExtractor(MySQLDB):
         dbFile = home + "/.ssh/mysql_user"
         if not os.path.isfile(dbFile):
             sys.exit("MySQL user credentials not found: " + dbFile)
-        dbuser = None
-        dbpass = None
+        dbuser = None #@UnusedVariable
+        dbpass = None #@UnusedVariable
         with open(dbFile, 'r') as f:
             dbuser = f.readline().rstrip()
             dbpass = f.readline().rstrip()
         MySQLDB.__init__(self, db="Edx", user=dbuser, passwd=dbpass)
-
 
     def __buildEmptyEdxProblemTable(self):
         '''
@@ -172,29 +178,46 @@ class ModulestoreExtractor(MySQLDB):
         self.__buildEmptyEdxVideoTable() if self.update_EV else None
 
         if self.split and self.update_EP:
+            print("About to ingest problem defs from new-type modulestore...")
+            #*******
+            print("About to call __extractSplitEdxProblem...")
+            #*******
             splitEPData = self.__extractSplitEdxProblem()
+            #*******
+            print("Done calling __extractSplitEdxProblem...")
+            #*******
             self.__loadToSQL(splitEPData, "EdxProblem")
+            print("Done ingesting problem defs from new-type modulestore...")
 
         if self.split and self.update_CI:
+            print("About to ingest course defs from new-type modulestore...")
             splitCIData = self.__extractSplitCourseInfo()
             self.__loadToSQL(splitCIData, "CourseInfo")
+            print("Done ingesting course defs from new-type modulestore...")
 
         if self.split and self.update_EV:
+            print("About to ingest video defs from new-type modulestore...")
             splitEVData = self.__extractSplitEdxVideo()
             self.__loadToSQL(splitEVData, "EdxVideo")
+            print("Done ingesting video defs from new-type modulestore...")
 
         if self.old and self.update_EP:
+            print("About to ingest problem defs from old-type modulestore...")
             oldEPData = self.__extractOldEdxProblem()
             self.__loadToSQL(oldEPData, "EdxProblem")
+            print("Done ingesting problem defs from old-type modulestore...")
 
         if self.old and self.update_CI:
+            print("About to ingest course defs from old-type modulestore...")            
             oldCIData = self.__extractOldCourseInfo()
             self.__loadToSQL(oldCIData, "CourseInfo")
+            print("Done ingesting course defs from new-type modulestore...")
 
         if self.old and self.update_EV:
+            print("About to ingest video defs from old-type modulestore...")
             oldEVData = self.__extractOldEdxVideo()
             self.__loadToSQL(oldEVData, "EdxVideo")
-
+            print("Done ingesting video defs from old-type modulestore...")
 
     @staticmethod
     def __resolveResourceURI(problem):
@@ -233,7 +256,13 @@ class ModulestoreExtractor(MySQLDB):
         definition = self.msdb.modulestore.find({"_id.category": "course",
                                                  "_id.org": org,
                                                  "_id.course": course})
-        name = definition[0]["_id"]["name"]
+        try:
+            name = definition[0]["_id"]["name"]
+        except IndexError:
+            print('********** Course display name for course %s not found.' % str(course))
+            cdn = '<Not found in Modulestore>'
+            return cdn
+
         cdn = "%s/%s/%s" % (org, course, name)
         return cdn
 
@@ -248,7 +277,7 @@ class ModulestoreExtractor(MySQLDB):
         try:
             parent_module = self.msdb.modulestore.find({"definition.children": resource_uri}).next()
         except StopIteration:
-            print resource_uri
+            # print resource_uri
             return None, -2
         parent_module_uri = self.__resolveResourceURI(parent_module)
         order = parent_module['definition']['children'].index(resource_uri) + 1  # Use 1-indexing
@@ -268,6 +297,9 @@ class ModulestoreExtractor(MySQLDB):
             data['problem_id'] = problem['_id'].get('name', 'False')
             data['problem_display_name'] = problem['metadata'].get('display_name', 'False')
             data['course_display_name'] = self.__resolveCDN(problem)
+            # Is this a test course?
+            if TEST_COURSE_NAME_PATTERN.search(data['course_display_name']) is not None:
+                continue
             data['problem_text'] = problem['definition'].get('data', 'False')
             data['date'] = self.__resolveTimestamp(problem)
             data['weight'] = problem['metadata'].get('weight', -1)
@@ -294,7 +326,7 @@ class ModulestoreExtractor(MySQLDB):
             data['sequential_idx'] = sequential_idx
 
             # URI for course and location of chapter
-            course_uri, chapter_idx = self.__locateModuleInParent(chapter_uri)
+            course_uri, chapter_idx = self.__locateModuleInParent(chapter_uri) #@UnusedVariable
             data['chapter_idx'] = chapter_idx
 
             # Staff-only indicator
@@ -326,11 +358,14 @@ class ModulestoreExtractor(MySQLDB):
 
             # Retrieve course structure from published branch and filter out non-problem blocks
             try:
-		structure = self.msdb['modulestore.structures'].find({"_id": cid, "blocks.block_type": "problem"}).next()  # changed from [0]
+                structure = self.msdb['modulestore.structures'].find({"_id": cid, "blocks.block_type": "problem"}).next()
             except StopIteration:
-		continue
+                continue
             for block in filter(lambda b: b['block_type'] == 'problem', structure['blocks']):
-                definition = self.msdb['modulestore.definitions'].find({"_id": block['definition']})[0]
+                try:
+                    definition = self.msdb['modulestore.definitions'].find({"_id": block['definition']}).next()
+                except StopIteration:
+                    continue
 
                 # Construct data dict and append to table list
                 data = dict()
@@ -366,6 +401,9 @@ class ModulestoreExtractor(MySQLDB):
             data['video_id'] = video['_id'].get('name', 'NA')
             data['video_display_name'] = video['metadata'].get('display_name', 'NA')
             data['course_display_name'] = self.__resolveCDN(video)
+            # Is this a test course?
+            if TEST_COURSE_NAME_PATTERN.search(data['course_display_name']) is not None:
+                continue
             data['video_uri'] = video['metadata'].get('html5_sources', 'NA')
             data['video_code'] = video['metadata'].get('youtube_id_1_0', 'NA')
 
@@ -385,7 +423,7 @@ class ModulestoreExtractor(MySQLDB):
             data['chapter_uri'] = chapter_uri
             data['sequential_idx'] = sequential_idx
 
-            course_uri, chapter_idx = self.__locateModuleInParent(chapter_uri)
+            course_uri, chapter_idx = self.__locateModuleInParent(chapter_uri) #@UnusedVariable
             data['chapter_idx'] = chapter_idx
 
             table.append(data)
@@ -410,11 +448,14 @@ class ModulestoreExtractor(MySQLDB):
 
             # Retrieve course structure from published branch and filter out non-problem blocks
             try:
-                structure = self.msdb['modulestore.structures'].find({"_id": cid, "blocks.block_type": "video"})[0]
-            except IndexError:
+                structure = self.msdb['modulestore.structures'].find({"_id": cid, "blocks.block_type": "video"}).next()
+            except StopIteration:
                 continue  # Some courses don't have any video content
             for block in filter(lambda b: b['block_type'] == 'video', structure['blocks']):
-                definition = self.msdb['modulestore.definitions'].find({"_id": block['definition']})[0]
+                try:
+                    definition = self.msdb['modulestore.definitions'].find({"_id": block['definition']}).next() #@UnusedVariable
+                except StopIteration:
+                    continue
 
                 data = dict()
                 data['video_id'] = block['block_id']
@@ -504,12 +545,15 @@ class ModulestoreExtractor(MySQLDB):
         for course in courses:
             data = dict()
             data['course_display_name'] = self.__resolveCDN(course)
+            # Is this a test course?
+            if TEST_COURSE_NAME_PATTERN.search(data['course_display_name']) is not None:
+                continue
             data['course_catalog_name'] = course['metadata']['display_name']
             start_date = course['metadata'].get('start', '0000-00-00T00:00:00Z')
             end_date = course['metadata'].get('end', '0000-00-00T00:00:00Z')
             data['start_date'] = start_date
             data['end_date'] = end_date
-            academic_year, quarter, num_quarters = self.__lookupAYDataFromDates(start_date, end_date)
+            academic_year, quarter, num_quarters = self.__lookupAYDataFromDates(start_date, end_date) #@UnusedVariable
             data['academic_year'] = academic_year
             data['quarter'] = quarter
             # data['num_quarters'] = num_quarters
@@ -544,9 +588,20 @@ class ModulestoreExtractor(MySQLDB):
             if not cid:
                 continue  # Ignore if not a 'published' course
             # Get this course block and corresponding definition document from modulestore
-            structure = self.msdb['modulestore.structures'].find({"_id": cid, "blocks.block_type": "course"})[0]
-            block = filter(lambda b: b['block_type'] == 'course', structure['blocks'])[0]
-            definition = self.msdb['modulestore.definitions'].find({"_id": block['definition']})[0]
+            try:
+                structure = self.msdb['modulestore.structures'].find({"_id": cid, "blocks.block_type": "course"}).next()
+            except StopIteration:
+                # No record found in structures:
+                continue
+            try:
+                block = filter(lambda b: b['block_type'] == 'course', structure['blocks'])[0]
+            except IndexError:
+                print('********** No course block found for course %s' % str(course))
+                continue
+            try:
+                definition = self.msdb['modulestore.definitions'].find({"_id": block['definition']}).next()
+            except StopIteration:
+                continue
 
             data = dict()
             data['course_display_name'] = "%s/%s/%s" % (course['org'], course['course'], course['run'])
@@ -558,7 +613,7 @@ class ModulestoreExtractor(MySQLDB):
             end_date = datestr(end_date) if type(end_date) is datetime.datetime else end_date
             data['start_date'] = start_date
             data['end_date'] = end_date
-            academic_year, quarter, num_quarters = self.__lookupAYDataFromDates(start_date, end_date)
+            academic_year, quarter, num_quarters = self.__lookupAYDataFromDates(start_date, end_date) #@UnusedVariable
             data['academic_year'] = academic_year
             data['quarter'] = quarter
             # data['num_quarters'] = num_quarters
@@ -588,7 +643,10 @@ class ModulestoreExtractor(MySQLDB):
         Build columns tuple and list of row tuples for MySQLDB bulkInsert operation, then execute.
         We hold tables in memory to minimize query load on the receiving database.
         '''
-        columns = table[0].keys()
+        try:
+            columns = table[0].keys()
+        except IndexError:
+            print('********** Table table_name was empty when being loaded.')
 
         data = []
         for row in table:

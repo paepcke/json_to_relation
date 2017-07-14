@@ -21,10 +21,7 @@ Modifications:
 #import MySQLdb
 
 import csv
-import os
-import re
 import subprocess
-import sys
 import tempfile
 
 import MySQLdb
@@ -43,7 +40,7 @@ class MySQLDB(object):
     # a machine other than datastage, for instance
     # inside of Eclipse. Normally this code is
     # run as part of a CRON job on datastage:
-    RUN_REMOTELY = True
+    RUN_REMOTELY = False
 
     def __init__(self, host='127.0.0.1', port=3306, user='root', passwd='', db='mysql'):
         '''
@@ -188,21 +185,21 @@ class MySQLDB(object):
         tmpCSVFile.flush()
 
         if MySQLDB.RUN_REMOTELY:
-          # For running surveyextractor.py (e.g. in Eclipse) on non-datastage machine,
-          # need to copy the temp file over to datastage:
-          subprocess.call(["scp", tmpCSVFile.name, '%s@datastage:/tmp' % self.user])
-          subprocess.call(["ssh", "%s@datastage" % self.user, "chmod a+r %s" % tmpCSVFile.name]) 
+            # For running surveyextractor.py (e.g. in Eclipse) on non-datastage machine,
+            # need to copy the temp file over to datastage:
+            subprocess.call(["scp", tmpCSVFile.name, '%s@datastage:/tmp' % self.user])
+            subprocess.call(["ssh", "%s@datastage" % self.user, "chmod a+r %s" % tmpCSVFile.name]) 
 
         try:
-          mySQLCmd = '''
-          USE %s;
-          LOAD DATA LOCAL INFILE '%s'
-            INTO TABLE %s
-            FIELDS TERMINATED BY ','
-            LINES TERMINATED BY '\n';
-          commit; 
-          ''' % (self.db, tmpCSVFile.name, tblName)
-          subprocess.call(['ssh', '%s@datastage' % self.user, 'mysql --login-path=%s -e "%s"' % (self.user, mySQLCmd)])
+            mySQLCmd = '''
+              USE %s;
+              LOAD DATA LOCAL INFILE '%s'
+                INTO TABLE %s
+                FIELDS TERMINATED BY ','
+                LINES TERMINATED BY '\n';
+              commit; 
+            ''' % (self.db, tmpCSVFile.name, tblName)
+            subprocess.call(['ssh', '%s@datastage' % self.user, 'mysql --login-path=%s -e "%s"' % (self.user, mySQLCmd)])
         finally:
             tmpCSVFile.close()
 

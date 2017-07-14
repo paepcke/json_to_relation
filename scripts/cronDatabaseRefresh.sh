@@ -13,7 +13,11 @@
 ### Master shell script to be executed by cron on a weekly basis.
 
 # Ensure in correct directory and activate virtualenv
-source /home/dataman/.virtualenvs/json_to_relation/bin/activate
+#source /home/dataman/.virtualenvs/json_to_relation/bin/activate
+
+echo `date`": Activating Anaconda json_to_relation environment..."
+source /home/dataman/anaconda2/bin/activate json_to_relation
+echo `date`": Activating Anaconda json_to_relation environment..."
 cd /home/dataman/Code/json_to_relation/scripts/
 
 # Execute refresh scripts.
@@ -21,10 +25,15 @@ cd /home/dataman/Code/json_to_relation/scripts/
 # Python scripts use #!/usr/bin/env python to let virtualenv work correctly.
 /home/dataman/Code/json_to_relation/scripts/manageEdxDb.py pullTransformLoad >> /home/dataman/cronlog/manageEdxDb.txt 2>&1
 source /home/dataman/Code/json_to_relation/scripts/cronRefreshEdxprod.sh >> /home/dataman/cronlog/cronRefreshEdxprod.txt 2>&1
-source /home/dataman/Code/json_to_relation/scripts/cronRefreshModuleStore.sh >> /home/dataman/cronlog/cronRefreshModuleStore.txt 2>&1
-/home/dataman/Code/json_to_relation/json_to_relation/modulestoreToSQL.py >> /home/dataman/cronlog/modulestoreToSQL.txt
+
+# The cronRefreshModuleStore.sh and modulestoreToSQL.py scripts
+# are now executed with their own CRON entry for parallelism:
+
+   #source /home/dataman/Code/json_to_relation/scripts/cronRefreshModuleStore.sh >> /home/dataman/cronlog/cronRefreshModuleStore.txt 2>&1
+   #/home/dataman/Code/json_to_relation/json_to_relation/modulestoreToSQL.py >> /home/dataman/cronlog/modulestoreToSQL.txt
+
 source /home/dataman/Code/json_to_relation/scripts/cronRefreshActivityGrade.sh >> /home/dataman/cronlog/cronRefreshActivityGrade.txt 2>&1
 source /home/dataman/Code/json_to_relation/scripts/cronRefreshGrades.sh >> /home/dataman/cronlog/cronRefreshGrades.txt 2>&1
 /home/dataman/Code/json_to_relation/scripts/cronRefreshUserCountryTable.py >> /home/dataman/cronlog/cronRefreshUserCountryTable.txt 2>&1
 source /home/dataman/Code/json_to_relation/scripts/cronRefreshEdxForum.sh >> /home/dataman/cronlog/cronRefreshEdxForum.txt 2>&1
-/home/dataman/Code/json_to_relation/qualtrics_etl/src/qualtrics_etl/surveyextractor.py -amsri >> /home/dataman/cronlog/cronRefreshEdxQualtrics.txt 2>&1
+/home/dataman/Code/mooc_data_request_processing/src/data_req_etl/surveyextractor.py -amsri >> /home/dataman/cronlog/cronRefreshEdxQualtrics.txt 2>&1

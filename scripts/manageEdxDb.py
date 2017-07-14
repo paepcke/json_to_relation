@@ -337,11 +337,22 @@ class TrackLogPuller(object):
         # slash from the result: we want tracking/app1/tracking/foo.gz,
         # not /tracking/app1/tracking/foo.gz:
         
-        cmd = "find %s -name '*.gz' | sed -n 's|%s/||p'" % (localTrackingLogFileRoot,localTrackingLogFileRoot)
+        # Make sure the log root directory has no trailing slash. We
+        # do this by first ensuring that a slash is present, and then
+        # taking it away:
+        log_root = os.path.join(localTrackingLogFileRoot, '')[:-1]
         
+        # Get from full paths to paths relative to the log root:
+        #   From /home/dataman/EdX/tracking/tracking/app1/...
+        #     to tracking/tracking/app1/...
+        cmd = "find %s -name '*.gz' | sed -n 's|%s/\(.*\)$|\\1|p'" %\
+                (log_root,log_root)
+                
         # The split('\n') is needed b/c check_output returns
         # letter by letter:
-        file_list = subprocess.check_output(cmd, shell=True).split('\n')
+                
+        file_list = subprocess.check_output(cmd, shell=True).split('\n')                
+        
         # Turn list of file names into an immutable
         # set to speed up lookups:
         return frozenset([done_file for done_file in file_list if done_file != None and done_file != ''])
@@ -395,10 +406,10 @@ class TrackLogPuller(object):
             # that string into a file list:
             try:
                 # After expansion, returns a list of files *that exist*:
-                localTrackingLogFilePaths = glob.glob(localTrackingLogFilePaths)
+                localTrackingLogFilePaths = frozenset(glob.glob(localTrackingLogFilePaths))
             except TypeError:
                 # File paths were already a list; keep only ones that exist:
-                localTrackingLogFilePaths = filter(os.path.exists, localTrackingLogFilePaths)
+                localTrackingLogFilePaths = frozenset(filter(os.path.exists, localTrackingLogFilePaths))
             except AttributeError:
                 # An empty list makes glob.glob throw
                 #    AttributeError: 'list' object has no attribute 'rfind'
@@ -434,10 +445,6 @@ class TrackLogPuller(object):
         # Next: find all .sql files among the existing .csv/.sql
         # files from already accomplished transforms:
         allTransformResultFiles = self.getAllFilesByExtension(csvDestDir, 'sql')
-        if count_loaded_files:
-            if self.loaded_file_set is None:
-                self.loaded_file_set = self.getAllLoadedFilenames()
-            allTransformResultFiles.union(self.loaded_file_set)
         
         # Now we need to figure out to which .gz file each .sql file
         # corresponds. We do that via the .sql file name convention:
@@ -497,17 +504,30 @@ class TrackLogPuller(object):
         # Unify these to create keys for the table:
 
         for sqlFile in allTransformResultFiles:
-            # Get something like
+            # From:
+            #   /home/dataman/Data/EdX/tracking/CSV/tracking.app2.tracking.tracking.log-20141008-1412767021.gz.2017-06-12T11_16_47.734532_11850.sql
+            # or
+            #   /home/dataman/Data/EdX/tracking/CSV/app2/tracking.tracking.tracking.log-20141008-1412767021.gz.2017-06-12T11_16_47.734532_11850.sql
+            # Get(respectively) something like:
+            #
             #       'tracking.app2.tracking.tracking.log-20141008-1412767021'
-            #   or  'app1.tracking.tracking.log-20140608-1402247821'
+            #   or  'app1.tracking.tracking.log-20141008-1412767021'
+            #
+            
+            # First get /home/dataman/Data/EdX/tracking/CSV/tracking.app2.tracking.tracking.log-20141008-1412767021
             gzFilePart = sqlFile.split('.gz')[0]
-            # Get this: ['tracking', 'app2', 'tracking', 'tracking', 'log-20141008-1412767021']
-            #       or: ['app1', 'tracking', 'tracking', 'log-20140608-1402247821']
-            fileComponents = gzFilePart.split('.')
+            
+            # Now get:
+            #           ['tracking', 'app2', 'tracking', 'tracking', 'log-20141008-1412767021']
+            #       or: ['app2', 'tracking', 'tracking', 'log-20141008-1412767021]
+            fileComponents = gzFilePart.split('.')[1:]
 
             # Normalize those two types of names into
             #    tracking/appX/log-20140608-1402247821
             # or appX/log-20140608-1402247821
+            # So: from 
+            #   /home/dataman/Data/EdX/tracking/CSV/tracking.app1.tracking.tracking.log-20131221.gz.2017-06-12T11_16_47.734532_11850.sql
+            # get {app1, tracking, tracking, log-2013...
             firstFileEl = fileComponents[0]
             if firstFileEl.startswith('app'):
                 fileElementsToKeep = [el for el in fileComponents if el != 'tracking']
@@ -529,9 +549,9 @@ class TrackLogPuller(object):
             # found so far:
             toDo = localTrackingLogFilePaths
         else:
-            toDo = []
-            for logFile in localTrackingLogFilePaths:
-                # logFile is a full path of a .gz tracking log file.
+            toDo = set()
+            for relPath in localTrackingLogFilePaths:
+                # relPath is a full path of a .gz tracking log file.
                 # Get the normalized file name to see whether the file is
                 # in the hash table:
     
@@ -540,7 +560,6 @@ class TrackLogPuller(object):
                 #         get 'app1/tracking/tracking.log-20141008-1412767021.gz'
                 # while  from '/home/dataman/Data/EdX/tracking/tracking/app2/tracking/tracking.log-20140408.gz
                 #         get 'tracking/app2/tracking/tracking.log-20140408.gz'
-                relPath = os.path.relpath(logFile, TrackLogPuller.LOCAL_LOG_STORE_ROOT)
     
                 # Chop the '.gz', and replace slashes by dots:
                 dottedFilename = relPath.replace('/', '.').split('.gz')[0]
@@ -556,8 +575,15 @@ class TrackLogPuller(object):
                 try:
                     normalizedSQLFiles[hashKey]
                 except KeyError:
-                    toDo.append(logFile)
+                    toDo.add(relPath)
 
+        if count_loaded_files:
+            if self.loaded_file_set is None:
+                self.loaded_file_set = self.getAllLoadedFilenames()
+            # None of the files found in the Edx.LoadInfo table
+            # need to be loaded again:
+            toDo = toDo - self.loaded_file_set
+        
         self.logDebug("toDo: '%s'" % toDo)
         self.logDebug("number of toDo: '%d'" % len(toDo))
         if len(toDo) > 3:
@@ -815,9 +841,9 @@ class TrackLogPuller(object):
                     pass
                 fileKey.get_contents_to_filename(localDest)
         if dryRun:
-            self.logInfo("Would have pulled OpenEdX tracking log files from S3 as per above listings.")
+            self.logInfo("Would have pulled %s OpenEdX tracking log files from S3 as per above listings." % str(len(rfileNamesToPull)))
         else:
-            self.logInfo("Pulled OpenEdX tracking log files from S3: %s" % str(rfileNamesToPull))
+            self.logInfo("Pulled %s OpenEdX tracking log files from S3" % str(len(rfileNamesToPull)))
         return rfileNamesToPull
 
     def transform(self, logFilePathsOrDir=None, csvDestDir=None, processOnCluster=False, dryRun=False):
