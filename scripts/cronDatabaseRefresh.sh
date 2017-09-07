@@ -17,7 +17,7 @@
 
 echo `date`": Activating Anaconda json_to_relation environment..."
 source /home/dataman/anaconda2/bin/activate json_to_relation
-echo `date`": Activating Anaconda json_to_relation environment..."
+echo `date`": Done activating Anaconda json_to_relation environment..."
 cd /home/dataman/Code/json_to_relation/scripts/
 
 # Execute refresh scripts.

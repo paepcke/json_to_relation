@@ -207,6 +207,7 @@ then
     echo `date`": Begin copying edxapp-latest.sql.gz from backup server."
     scp $EDX_PLATFORM_DUMP_MACHINE:/data/dump/edxapp-latest.sql.gz \
 	$EDXPROD_DUMP_DIR/
+    echo `date`": Done copying edxapp-latest.sql.gz from backup server."
 fi
 
 # ------------------ Ensure Existence of Local Database -------------------
