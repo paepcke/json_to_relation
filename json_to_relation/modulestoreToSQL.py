@@ -49,6 +49,8 @@ VALID_AYS = [ay for ay in range(2012, datetime.datetime.today().year + 6)]
 
 class ModulestoreExtractor(MySQLDB):
 
+    BULK_INSERT_NUM_ROWS = 10000
+    
     def __init__(self, split=True, old=True, edxproblem=True, courseinfo=True, edxvideo=True):
         '''
         Get interface to modulestore backup.
@@ -65,8 +67,10 @@ class ModulestoreExtractor(MySQLDB):
 
         # Switch for updating EdxProblem and CourseInfo separately (useful for testing)
         self.update_EP = edxproblem
-        self.update_CI = courseinfo
-        self.update_EV = edxvideo
+        #*****self.update_CI = courseinfo
+        self.update_CI = False
+        #*****self.update_EV = edxvideo
+        self.update_EV = False
 
         # Initialize MySQL connection from config file
         home = os.path.expanduser('~')
@@ -182,11 +186,10 @@ class ModulestoreExtractor(MySQLDB):
             #*******
             print("About to call __extractSplitEdxProblem...")
             #*******
-            splitEPData = self.__extractSplitEdxProblem()
+            self.__extractSplitEdxProblem()
             #*******
             print("Done calling __extractSplitEdxProblem...")
             #*******
-            self.__loadToSQL(splitEPData, "EdxProblem")
             print("Done ingesting problem defs from new-type modulestore...")
 
         if self.split and self.update_CI:
@@ -211,7 +214,7 @@ class ModulestoreExtractor(MySQLDB):
             print("About to ingest course defs from old-type modulestore...")            
             oldCIData = self.__extractOldCourseInfo()
             self.__loadToSQL(oldCIData, "CourseInfo")
-            print("Done ingesting course defs from new-type modulestore...")
+            print("Done ingesting course defs from old-type modulestore...")
 
         if self.old and self.update_EV:
             print("About to ingest video defs from old-type modulestore...")
@@ -347,9 +350,26 @@ class ModulestoreExtractor(MySQLDB):
         SQL load method expects a list of dicts mapping column names to data.
         '''
         table = []
+        
+        # Empty current EdxProblem table:
+        self.truncateTable('EdxProblem')
 
         # Get a course generator and iterate through
         courses = self.msdb['modulestore.active_versions'].find()
+
+        col_names     = ['problem_id',
+                         'problem_display_name',
+                         'course_display_name',
+                         'problem_text',
+                         'date',
+                         'weight',
+                         'revision',
+                         'max_attempts',
+                         'trackevent_hook'
+                         ]
+        #********
+        num_pulled = 0
+        #********
         for course in courses:
             cdn = "%s/%s/%s" % (course['org'], course['course'], course['run'])
             cid = course['versions'].get('published-branch', None)
@@ -368,22 +388,28 @@ class ModulestoreExtractor(MySQLDB):
                     continue
 
                 # Construct data dict and append to table list
-                data = dict()
-                data['problem_id'] = block['block_id']
-                data['problem_display_name'] = block['fields'].get('display_name', "NA")
-                data['course_display_name'] = cdn
-                data['problem_text'] = definition['fields']['data']
-
+                data = (block['block_id'],                         # problem_id
+                        block['fields'].get('display_name', "NA"), # problem_display_name 
+                        cdn,                                       # course_display_name
+                        definition['fields']['data'],              # problem_text
                 # TODO: Test the below on real course data from split modulestore
                 # TODO: Add context metadata
-                data['date'] = False
-                data['weight'] = -1
-                data['revision'] = False
-                data['max_attempts'] = -1
-                data['trackevent_hook'] = False
+                        False,      							   # date                         
+                        -1,         							   # weight
+                        False,      							   # revision
+                        -1,         							   # max_attempts
+                        False         							   # trackeventhook
+                        )
                 table.append(data)
-
-        return table
+                if len(table) >= ModulestoreExtractor.BULK_INSERT_NUM_ROWS:
+                    self.__loadToSQL('EdxProblem', col_names, table)
+                    #***********
+                    num_pulled += len(table)
+                    print('Pulled: %s' % num_pulled)
+                    #***********
+                    table = []
+        if len(table) > 0:
+            self.__loadToSQL('EdxProblem', col_names, table)
 
 
     def __extractOldEdxVideo(self):
@@ -638,22 +664,12 @@ class ModulestoreExtractor(MySQLDB):
         return table
 
 
-    def __loadToSQL(self, table, table_name):
+    def __loadToSQL(self, table_name, columns, arr_of_tuples):
         '''
         Build columns tuple and list of row tuples for MySQLDB bulkInsert operation, then execute.
         We hold tables in memory to minimize query load on the receiving database.
         '''
-        try:
-            columns = table[0].keys()
-        except IndexError:
-            print('********** Table table_name was empty when being loaded.')
-
-        data = []
-        for row in table:
-            values = tuple(row.values())  # Convert each dict value set to tuple for loading
-            data.append(values)
-
-        self.bulkInsert(table_name, columns, data)
+        self.bulkInsert(table_name, columns, arr_of_tuples)
 
 
 

@@ -196,6 +196,7 @@ class MySQLDB(object):
               LOAD DATA LOCAL INFILE '%s'
                 INTO TABLE %s
                 FIELDS TERMINATED BY ','
+                OPTIONALLY ENCLOSED BY '\\"'
                 LINES TERMINATED BY '\n';
               commit; 
             ''' % (self.db, tmpCSVFile.name, tblName)
