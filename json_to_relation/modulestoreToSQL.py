@@ -66,9 +66,9 @@ class ModulestoreExtractor(MySQLDB):
         self.old = old
 
         # Switch for updating EdxProblem and CourseInfo separately (useful for testing)
-        self.update_EP = edxproblem
-        #*****self.update_CI = courseinfo
-        self.update_CI = False
+        #*********self.update_EP = edxproblem
+        self.update_EP = False
+        self.update_CI = courseinfo
         #*****self.update_EV = edxvideo
         self.update_EV = False
 
@@ -194,8 +194,7 @@ class ModulestoreExtractor(MySQLDB):
 
         if self.split and self.update_CI:
             print("About to ingest course defs from new-type modulestore...")
-            splitCIData = self.__extractSplitCourseInfo()
-            self.__loadToSQL(splitCIData, "CourseInfo")
+            self.__extractSplitCourseInfo()
             print("Done ingesting course defs from new-type modulestore...")
 
         if self.split and self.update_EV:
@@ -290,60 +289,81 @@ class ModulestoreExtractor(MySQLDB):
     def __extractOldEdxProblem(self):
         '''
         Extract problem data from old-style MongoDB modulestore.
-        SQL load method expects a list of dicts mapping column names to data.
+        Inserts data into EdxProblem.
         '''
         problems = self.msdb.modulestore.find({"_id.category": "problem"}).batch_size(20)
+        col_names     = ['problem_id',
+                         'problem_display_name',
+                         'course_display_name',
+                         'problem_text',
+                         'date',
+                         'weight',
+                         'revision',
+                         'max_attempts',
+                         'trackevent_hook'
+                         ]
+        
+        
         table = []
+        
         for problem in problems:
             # Each row in the table is a dictionary
-            data = dict()
-            data['problem_id'] = problem['_id'].get('name', 'False')
-            data['problem_display_name'] = problem['metadata'].get('display_name', 'False')
-            data['course_display_name'] = self.__resolveCDN(problem)
+            course_display_name = self.__resolveCDN(problem)
             # Is this a test course?
-            if TEST_COURSE_NAME_PATTERN.search(data['course_display_name']) is not None:
-                continue
-            data['problem_text'] = problem['definition'].get('data', 'False')
-            data['date'] = self.__resolveTimestamp(problem)
-            data['weight'] = problem['metadata'].get('weight', -1)
-            data['revision'] = problem['_id'].get('revision', 'False')
-            data['max_attempts'] = problem['metadata'].get('max_attempts', -1)
-
+            if TEST_COURSE_NAME_PATTERN.search(course_display_name) is not None:
+                continue            
+            
             # Reconstruct URI for problem
             problem_uri = self.__resolveResourceURI(problem)
-            data['trackevent_hook'] = problem_uri
-
+            
             # Get URI for enclosing vertical and location of problem therein
             vertical_uri, problem_idx = self.__locateModuleInParent(problem_uri)
-            data['vertical_uri'] = vertical_uri
-            data['problem_idx'] = problem_idx
+            # Get URI for enclosing sequential and location of vertical therein
+            sequential_uri, vertical_idx = self.__locateModuleInParent(vertical_uri)
+            
+            staff_name = vertical_uri.split('/')[5]
+            # Staff-only indicator
+            if not vertical_uri:
+                staff_only = False
+            else:
+                staff_only = self.msdb.modulestore.find({"_id.name": staff_name}).next()['metadata'].get('visible_to_staff_only', False)
+            
+            # URI for enclosing chapter and location of sequential
+            chapter_uri, sequential_idx = self.__locateModuleInParent(sequential_uri)
 
             # Get URI for enclosing sequential and location of vertical therein
             sequential_uri, vertical_idx = self.__locateModuleInParent(vertical_uri)
-            data['sequential_uri'] = sequential_uri
-            data['vertical_idx'] = vertical_idx
-
-            # URI for enclosing chapter and location of sequential
-            chapter_uri, sequential_idx = self.__locateModuleInParent(sequential_uri)
-            data['chapter_uri'] = chapter_uri
-            data['sequential_idx'] = sequential_idx
 
             # URI for course and location of chapter
             course_uri, chapter_idx = self.__locateModuleInParent(chapter_uri) #@UnusedVariable
-            data['chapter_idx'] = chapter_idx
 
-            # Staff-only indicator
-            if not vertical_uri:
-                data['staff_only'] = False
-            else:
-                name = vertical_uri.split('/')[5]
-                data['staff_only'] = self.msdb.modulestore.find({"_id.name": name}).next()['metadata'].get('visible_to_staff_only', False)
-
+            data = (problem['_id'].get('name', 'False'), # problem_id
+                    problem['metadata'].get('display_name', 'False'), # problem_display_name
+                    course_display_name, # course_display_name
+                    problem['definition'].get('data', 'False'), # problem_text
+                    self.__resolveTimestamp(problem), # date
+                    problem['metadata'].get('weight', -1), # weight
+                    problem['_id'].get('revision', 'False'), # revision
+                    problem['metadata'].get('max_attempts', -1), # max_attempts
+                    problem_uri, # trackevent_hook
+                    vertical_uri, # vertical_uri
+                    problem_idx, # problem_idx
+                    sequential_uri, # sequential_uri
+                    vertical_idx, # vertical_idx
+                    chapter_uri, # chapter_uri
+                    sequential_idx, # sequential_idx
+                    chapter_idx, # chapter_idx
+                    staff_only # staff_only
+                    )
+            
             table.append(data)
-
-        return table
-
-
+            if len(table) >= ModulestoreExtractor.BULK_INSERT_NUM_ROWS:
+                self.__loadToSQL('EdxProblem', col_names, table)
+                table = []
+                
+        if len(table) > 0:
+            self.__loadToSQL('EdxProblem', col_names, table)
+            
     def __extractSplitEdxProblem(self):
         '''
         Extract problem data from Split MongoDB modulestore.
@@ -351,9 +371,6 @@ class ModulestoreExtractor(MySQLDB):
         '''
         table = []
         
-        # Empty current EdxProblem table:
-        self.truncateTable('EdxProblem')
-
         # Get a course generator and iterate through
         courses = self.msdb['modulestore.active_versions'].find()
 
@@ -403,10 +420,6 @@ class ModulestoreExtractor(MySQLDB):
                 table.append(data)
                 if len(table) >= ModulestoreExtractor.BULK_INSERT_NUM_ROWS:
                     self.__loadToSQL('EdxProblem', col_names, table)
-                    #***********
-                    num_pulled += len(table)
-                    print('Pulled: %s' % num_pulled)
-                    #***********
                     table = []
         if len(table) > 0:
             self.__loadToSQL('EdxProblem', col_names, table)
@@ -420,41 +433,57 @@ class ModulestoreExtractor(MySQLDB):
         table = []
 
         videos = self.msdb.modulestore.find({"_id.category": "video"}).batch_size(20)
+
+        col_names     = ['video_id',
+                         'video_display_name',
+                         'course_display_name',
+                         'video_uri',
+                         'video_code',
+                         'trackevent_hook',
+                         'vertical_uri',
+                         'problem_idx',
+                         'sequential_uri',
+                         'vertical_idx'
+                         'chapter_uri',
+                         'sequential_idx',
+                         'chapter_idx'
+                         ]
+        
         for video in videos:
-            data = dict()
-
-            # Identifiers
-            data['video_id'] = video['_id'].get('name', 'NA')
-            data['video_display_name'] = video['metadata'].get('display_name', 'NA')
-            data['course_display_name'] = self.__resolveCDN(video)
+            course_display_name = self.__resolveCDN(video)
             # Is this a test course?
-            if TEST_COURSE_NAME_PATTERN.search(data['course_display_name']) is not None:
+            if TEST_COURSE_NAME_PATTERN.search(course_display_name) is not None:
                 continue
-            data['video_uri'] = video['metadata'].get('html5_sources', 'NA')
-            data['video_code'] = video['metadata'].get('youtube_id_1_0', 'NA')
 
-            # Context
-            video_uri = self.__resolveResourceURI(video)
-            data['trackevent_hook'] = video_uri
-
+            video_uri = self.__resolveResourceURI(video)                     
             vertical_uri, problem_idx = self.__locateModuleInParent(video_uri)
-            data['vertical_uri'] = vertical_uri
-            data['problem_idx'] = problem_idx
-
             sequential_uri, vertical_idx = self.__locateModuleInParent(vertical_uri)
-            data['sequential_uri'] = sequential_uri
-            data['vertical_idx'] = vertical_idx
-
-            chapter_uri, sequential_idx = self.__locateModuleInParent(sequential_uri)
-            data['chapter_uri'] = chapter_uri
-            data['sequential_idx'] = sequential_idx
-
-            course_uri, chapter_idx = self.__locateModuleInParent(chapter_uri) #@UnusedVariable
-            data['chapter_idx'] = chapter_idx
+            chapter_uri, sequential_idx = self.__locateModuleInParent(sequential_uri)                                    
+            course_uri, chapter_idx = self.__locateModuleInParent(chapter_uri) #@UnusedVariable            
+            
+                    # Identifiers:
+            data = (video['_id'].get('name', 'NA'), # video_id
+                    video['metadata'].get('display_name', 'NA'), # video_display_name
+                    self.__resolveCDN(video), # course_display_name
+                    video['metadata'].get('html5_sources', 'NA'), # video_uri
+                    video['metadata'].get('youtube_id_1_0', 'NA'), # video_code
+                    # Context
+                    video_uri, # trackevent_hook
+                    vertical_uri, # vertical_uri
+                    problem_idx, # problem_idx
+                    sequential_uri, # sequential_uri
+                    vertical_idx, # vertical_idx
+                    chapter_uri, # chapter_uri
+                    sequential_idx, # sequential_idx
+                    chapter_idx # chapter_idx
+                    )
 
             table.append(data)
-
-        return table
+            if len(table) >= ModulestoreExtractor.BULK_INSERT_NUM_ROWS:
+                self.__loadToSQL('EdxVideo', col_names, table)
+                table = []
+        if len(table) > 0:
+            self.__loadToSQL('EdxVideo', col_names, table)
 
 
     def __extractSplitEdxVideo(self):
@@ -466,6 +495,22 @@ class ModulestoreExtractor(MySQLDB):
 
         # Get a course generator and iterate through
         courses = self.msdb['modulestore.active_versions'].find()
+        
+        col_names     = ['video_id',
+                         'video_display_name',
+                         'course_display_name',
+                         'video_uri',
+                         'video_code',
+                         'trackevent_hook',
+                         'vertical_uri',
+                         'problem_idx',
+                         'sequential_uri',
+                         'vertical_idx'
+                         'chapter_uri',
+                         'sequential_idx',
+                         'chapter_idx'
+                         ]
+        
         for course in courses:
             cdn = "%s/%s/%s" % (course['org'], course['course'], course['run'])
             cid = course['versions'].get('published-branch', None)
@@ -483,16 +528,19 @@ class ModulestoreExtractor(MySQLDB):
                 except StopIteration:
                     continue
 
-                data = dict()
-                data['video_id'] = block['block_id']
-                data['video_display_name'] = block['fields'].get('display_name', 'NA')
-                data['course_display_name'] = cdn
-                data['video_uri'] = block['fields'].get('html5_sources', 'NA')
-                data['video_code'] = block['fields'].get('youtube_id_1_0', 'NA')
+                data = (block['block_id'], # video_id'
+                        block['fields'].get('display_name', 'NA'), # video_display_name
+                        cdn, # course_display_name
+                        block['fields'].get('html5_sources', 'NA'), # video_uri
+                        block['fields'].get('youtube_id_1_0', 'NA') # video_code
+                        )
+                
                 table.append(data)
-
-        return table
-
+                if len(table) >= ModulestoreExtractor.BULK_INSERT_NUM_ROWS:
+                    self.__loadToSQL('EdxVideo', col_names, table)
+                    table = []
+        if len(table) > 0:
+            self.__loadToSQL('EdxVideo', col_names, table)
 
     @staticmethod
     def inRange(date, quarter):
@@ -562,51 +610,85 @@ class ModulestoreExtractor(MySQLDB):
     def __extractOldCourseInfo(self):
         '''
         Extract course metadata from old-style MongoDB modulestore.
-        Returns a list of dicts mapping column names to data.
+        Inserts all into CourseInfo table.
         '''
         table = []
+        
+        col_names     = ['course_display_name',
+                         'course_catalog_name',
+                         'start_date',
+                         'end_date',
+                         'academic_year',
+                         'quarter',
+                         'is_internal',
+                         'enrollment_start',
+                         'enrollment_end',
+                         'grade_policy',
+                         'certs_policy'
+                         ]
 
         # Iterate through all 'course' type documents in modulestore
         courses = self.msdb.modulestore.find({"_id.category": "course"})
+        
         for course in courses:
-            data = dict()
-            data['course_display_name'] = self.__resolveCDN(course)
+            course_display_name = self.__resolveCDN(course) 
             # Is this a test course?
-            if TEST_COURSE_NAME_PATTERN.search(data['course_display_name']) is not None:
+            if TEST_COURSE_NAME_PATTERN.search(course_display_name) is not None:
                 continue
-            data['course_catalog_name'] = course['metadata']['display_name']
+            
             start_date = course['metadata'].get('start', '0000-00-00T00:00:00Z')
             end_date = course['metadata'].get('end', '0000-00-00T00:00:00Z')
-            data['start_date'] = start_date
-            data['end_date'] = end_date
+            
             academic_year, quarter, num_quarters = self.__lookupAYDataFromDates(start_date, end_date) #@UnusedVariable
-            data['academic_year'] = academic_year
-            data['quarter'] = quarter
-            # data['num_quarters'] = num_quarters
-            data['is_internal'] = self.isInternal(course['metadata'].get('enrollment_domain', 'NA'), course['_id']['org'])
-            data['enrollment_start'] = course['metadata'].get('enrollment_start', '0000-00-00T00:00:00Z')
-            data['enrollment_end'] = course['metadata'].get('enrollment_end', '0000-00-00T00:00:00Z')
-            try:
-                data['grade_policy'] = str(course['definition']['data'].get('grading_policy', 'NA').get('GRADER', 'NA'))
-                data['certs_policy'] = str(course['definition']['data'].get('grading_policy', 'NA').get('GRADE_CUTOFFS', 'NA'))
-            except AttributeError:
-                data['grade_policy'] = 'NA'
-                data['certs_policy'] = 'NA'
-
-            if data['academic_year'] not in VALID_AYS:
+            if academic_year not in VALID_AYS:
                 continue
+            try:
+                grade_policy = str(course['definition']['data'].get('grading_policy', 'NA').get('GRADER', 'NA'))
+                certs_policy = str(course['definition']['data'].get('grading_policy', 'NA').get('GRADE_CUTOFFS', 'NA'))
+            except AttributeError:
+                grade_policy = 'NA'
+                certs_policy = 'NA'
+            
+            data = (course_display_name, # course_display_name
+                    course['metadata']['display_name'], # course_catalog_name
+                    start_date, # start_date'
+                    end_date, # end_date
+                    academic_year, # academic_year
+                    quarter, # quarter
+                    self.isInternal(course['metadata'].get('enrollment_domain', 'NA'), course['_id']['org']), # is_internal
+                    course['metadata'].get('enrollment_start', '0000-00-00T00:00:00Z'), # enrollment_start
+                    course['metadata'].get('enrollment_end', '0000-00-00T00:00:00Z'), # enrollment_end
+                    grade_policy, # grade_policy
+                    certs_policy # certs_policy
+                    )
+
             table.append(data)
-
-        return table
-
+            if len(table) >= ModulestoreExtractor.BULK_INSERT_NUM_ROWS:
+                self.__loadToSQL('EdxProblem', col_names, table)
+                table = []
+        if len(table) > 0:
+            self.__loadToSQL('EdxProblem', col_names, table)
 
     def __extractSplitCourseInfo(self):
         '''
         Extract course metadata from Split MongoDB modulestore.
-        Returns a list of dicts mapping column names to data.
+        Inserts results in table CourseInfo.
         '''
         table = []
-
+        
+        col_names     = ['course_display_name',
+                         'course_catalog_name',
+                         'start_date',
+                         'end_date',
+                         'academic_year',
+                         'quarter',
+                         'is_internal',
+                         'enrollment_start',
+                         'enrollment_end',
+                         'grade_policy',
+                         'certs_policy'
+                         ]
+        
         # Get all most recent versions of 'course' type documents from modulestore
         courses = self.msdb['modulestore.active_versions'].find()
         for course in courses:
@@ -629,40 +711,48 @@ class ModulestoreExtractor(MySQLDB):
             except StopIteration:
                 continue
 
-            data = dict()
-            data['course_display_name'] = "%s/%s/%s" % (course['org'], course['course'], course['run'])
-            data['course_catalog_name'] = block['fields']['display_name']
             datestr = lambda d: datetime.datetime.strftime(d, "%Y-%m-%dT%H:%M:%SZ")
+            
             start_date = block['fields'].get('start', '0000-00-00T00:00:00Z')
             end_date = block['fields'].get('end', '0000-00-00T00:00:00Z')
             start_date = datestr(start_date) if type(start_date) is datetime.datetime else start_date
             end_date = datestr(end_date) if type(end_date) is datetime.datetime else end_date
-            data['start_date'] = start_date
-            data['end_date'] = end_date
             academic_year, quarter, num_quarters = self.__lookupAYDataFromDates(start_date, end_date) #@UnusedVariable
-            data['academic_year'] = academic_year
-            data['quarter'] = quarter
-            # data['num_quarters'] = num_quarters
-            data['is_internal'] = self.isInternal("", course['org'])
+            
+            if academic_year not in VALID_AYS:
+                continue
+            
             enrollment_start = block['fields'].get('enrollment_start', '0000-00-00T00:00:00Z')
             enrollment_end = block['fields'].get('enrollment_end', '0000-00-00T00:00:00Z')
             enrollment_start = datestr(enrollment_start) if type(enrollment_start) is datetime.datetime else enrollment_start
             enrollment_end = datestr(enrollment_end) if type(enrollment_end) is datetime.datetime else enrollment_end
-            data['enrollment_start'] = enrollment_start
-            data['enrollment_end'] = enrollment_end
+            
             try:
-                data['grade_policy'] = str(definition['fields'].get('grading_policy').get('GRADER', 'NA'))
-                data['certs_policy'] = ("minimum_grade_credit: %s certificate_policy: " % block['fields'].get('minimum_grade_credit', 'NA')) + str(definition['fields'].get('grading_policy').get('GRADE_CUTOFFS', 'NA'))
+                grade_policy = str(definition['fields'].get('grading_policy').get('GRADER', 'NA'))
+                certs_policy = ("minimum_grade_credit: %s certificate_policy: " % block['fields'].get('minimum_grade_credit', 'NA')) + str(definition['fields'].get('grading_policy').get('GRADE_CUTOFFS', 'NA'))
             except AttributeError:
-                data['grade_policy'] = 'NA'
-                data['certs_policy'] = 'NA'
+                grade_policy = 'NA'
+                certs_policy = 'NA'
+                        
+            data = ("%s/%s/%s" % (course['org'], course['course'], course['run']), # course_display_name
+                    block['fields']['display_name'], # course_catalog_name
+                    start_date, # start_date
+                    end_date,   # end_date
+                    academic_year, # academic_year
+                    quarter, # quarter
+                    self.isInternal("", course['org']), # is_internal
+                    enrollment_start, # enrollment_start
+                    enrollment_end, # enrollment_end
+                    grade_policy, # grade_policy
+                    certs_policy # certs_policy
+                    )
 
-            if data['academic_year'] not in VALID_AYS:
-                continue
             table.append(data)
-
-        return table
-
+            if len(table) >= ModulestoreExtractor.BULK_INSERT_NUM_ROWS:
+                self.__loadToSQL('CourseInfo', col_names, table)
+                table = []
+        if len(table) > 0:
+            self.__loadToSQL('CourseInfo', col_names, table)
 
     def __loadToSQL(self, table_name, columns, arr_of_tuples):
         '''
