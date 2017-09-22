@@ -20,18 +20,19 @@
 ##  either modulestore case.
 
 
-import sys
+from collections import namedtuple
+import datetime
+import logging
 import math
 import os.path
-import datetime
 import re
-#from collections import defaultdict, namedtuple
-from collections import namedtuple
+import sys
 
-from pymysql_utils1 import MySQLDB
 import pymongo as mng
+from pymysql_utils1 import MySQLDB
 
 
+#from collections import defaultdict, namedtuple
 # Data type for AY_[quarter][year] date ranges
 Quarter = namedtuple('Quarter', ['start_date', 'end_date', 'quarter'])
 
@@ -49,9 +50,17 @@ VALID_AYS = [ay for ay in range(2012, datetime.datetime.today().year + 6)]
 
 class ModulestoreExtractor(MySQLDB):
 
+    # Max number of collection records 
+    # to import before doing a bulk
+    # import:
     BULK_INSERT_NUM_ROWS = 10000
     
-    def __init__(self, split=True, old=True, edxproblem=True, courseinfo=True, edxvideo=True):
+    # For logging: print how many rows have 
+    # been ingested every REPORT_EVERY_N_ROWS 
+    # rows:
+    REPORT_EVERY_N_ROWS  = 10000
+    
+    def __init__(self, split=True, old=True, edxproblem=True, courseinfo=True, edxvideo=True, verbose=False):
         '''
         Get interface to modulestore backup.
         Note: This class presumes modulestore was recently loaded to mongod.
@@ -61,14 +70,19 @@ class ModulestoreExtractor(MySQLDB):
         # FIXME: don't presume modulestore is recently loaded and running
         self.msdb = mng.MongoClient().modulestore
 
+        if verbose:
+            self.setupLogging(logging.INFO, logFile=None)
+        else:        
+            self.setupLogging(logging.WARN, logFile=None)        
+
         # Need to handle Split and Old modulestore cases
         self.split = split
         self.old = old
 
         # Switch for updating EdxProblem and CourseInfo separately (useful for testing)
-        #*********self.update_EP = edxproblem
-        self.update_EP = False
-        self.update_CI = courseinfo
+        self.update_EP = edxproblem
+        #*****self.update_CI = courseinfo
+        self.update_CI = False
         #*****self.update_EV = edxvideo
         self.update_EV = False
 
@@ -182,44 +196,34 @@ class ModulestoreExtractor(MySQLDB):
         self.__buildEmptyEdxVideoTable() if self.update_EV else None
 
         if self.split and self.update_EP:
-            print("About to ingest problem defs from new-type modulestore...")
-            #*******
-            print("About to call __extractSplitEdxProblem...")
-            #*******
+            self.logInfo("About to ingest problem defs from new-type modulestore...")
             self.__extractSplitEdxProblem()
-            #*******
-            print("Done calling __extractSplitEdxProblem...")
-            #*******
-            print("Done ingesting problem defs from new-type modulestore...")
+            self.logInfo("Done ingesting problem defs from new-type modulestore...")
 
         if self.split and self.update_CI:
-            print("About to ingest course defs from new-type modulestore...")
+            self.logInfo("About to ingest course defs from new-type modulestore...")
             self.__extractSplitCourseInfo()
-            print("Done ingesting course defs from new-type modulestore...")
+            self.logInfo("Done ingesting course defs from new-type modulestore...")
 
         if self.split and self.update_EV:
-            print("About to ingest video defs from new-type modulestore...")
-            splitEVData = self.__extractSplitEdxVideo()
-            self.__loadToSQL(splitEVData, "EdxVideo")
-            print("Done ingesting video defs from new-type modulestore...")
+            self.logInfo("About to ingest video defs from new-type modulestore...")
+            self.__extractSplitEdxVideo()
+            self.logInfo("Done ingesting video defs from new-type modulestore...")
 
         if self.old and self.update_EP:
-            print("About to ingest problem defs from old-type modulestore...")
-            oldEPData = self.__extractOldEdxProblem()
-            self.__loadToSQL(oldEPData, "EdxProblem")
-            print("Done ingesting problem defs from old-type modulestore...")
+            self.logInfo("About to ingest problem defs from old-type modulestore...")
+            self.__extractOldEdxProblem()
+            self.logInfo("Done ingesting problem defs from old-type modulestore...")
 
         if self.old and self.update_CI:
-            print("About to ingest course defs from old-type modulestore...")            
-            oldCIData = self.__extractOldCourseInfo()
-            self.__loadToSQL(oldCIData, "CourseInfo")
-            print("Done ingesting course defs from old-type modulestore...")
+            self.logInfo("About to ingest course defs from old-type modulestore...")            
+            self.__extractOldCourseInfo()
+            self.logInfo("Done ingesting course defs from old-type modulestore...")
 
         if self.old and self.update_EV:
-            print("About to ingest video defs from old-type modulestore...")
-            oldEVData = self.__extractOldEdxVideo()
-            self.__loadToSQL(oldEVData, "EdxVideo")
-            print("Done ingesting video defs from old-type modulestore...")
+            self.logInfo("About to ingest video defs from old-type modulestore...")
+            self.__extractOldEdxVideo()
+            self.logInfo("Done ingesting video defs from old-type modulestore...")
 
     @staticmethod
     def __resolveResourceURI(problem):
@@ -261,7 +265,7 @@ class ModulestoreExtractor(MySQLDB):
         try:
             name = definition[0]["_id"]["name"]
         except IndexError:
-            print('********** Course display name for course %s not found.' % str(course))
+            self.logError('********** Course display name for course %s not found.' % str(course))
             cdn = '<Not found in Modulestore>'
             return cdn
 
@@ -305,6 +309,7 @@ class ModulestoreExtractor(MySQLDB):
         
         
         table = []
+        num_pulled = 0        
         
         for problem in problems:
             # Each row in the table is a dictionary
@@ -359,10 +364,16 @@ class ModulestoreExtractor(MySQLDB):
             table.append(data)
             if len(table) >= ModulestoreExtractor.BULK_INSERT_NUM_ROWS:
                 self.__loadToSQL('EdxProblem', col_names, table)
+                num_pulled += len(table)
+                if num_pulled > ModulestoreExtractor.REPORT_EVERY_N_ROWS:
+                    self.logInfo("Ingested %s rows of old-modulestore problems." % num_pulled)
+                
                 table = []
                 
         if len(table) > 0:
             self.__loadToSQL('EdxProblem', col_names, table)
+            num_pulled += len(table)            
+            self.logInfo("Ingested %s rows of old-modulestore problems." % num_pulled)
             
     def __extractSplitEdxProblem(self):
         '''
@@ -384,9 +395,8 @@ class ModulestoreExtractor(MySQLDB):
                          'max_attempts',
                          'trackevent_hook'
                          ]
-        #********
         num_pulled = 0
-        #********
+
         for course in courses:
             cdn = "%s/%s/%s" % (course['org'], course['course'], course['run'])
             cid = course['versions'].get('published-branch', None)
@@ -420,10 +430,14 @@ class ModulestoreExtractor(MySQLDB):
                 table.append(data)
                 if len(table) >= ModulestoreExtractor.BULK_INSERT_NUM_ROWS:
                     self.__loadToSQL('EdxProblem', col_names, table)
+                    num_pulled += len(table)
+                    if num_pulled > ModulestoreExtractor.REPORT_EVERY_N_ROWS:
+                        self.logInfo("Ingested %s rows of new-modulestore problems." % num_pulled)
                     table = []
         if len(table) > 0:
             self.__loadToSQL('EdxProblem', col_names, table)
-
+            num_pulled += len(table)
+            self.logInfo("Ingested %s rows of new-modulestore problems." % num_pulled)            
 
     def __extractOldEdxVideo(self):
         '''
@@ -431,6 +445,7 @@ class ModulestoreExtractor(MySQLDB):
         More or less identical to EdxProblem extract, but with different metadata.
         '''
         table = []
+        num_pulled = 0        
 
         videos = self.msdb.modulestore.find({"_id.category": "video"}).batch_size(20)
 
@@ -481,10 +496,15 @@ class ModulestoreExtractor(MySQLDB):
             table.append(data)
             if len(table) >= ModulestoreExtractor.BULK_INSERT_NUM_ROWS:
                 self.__loadToSQL('EdxVideo', col_names, table)
+                num_pulled += len(table)
+                if num_pulled > ModulestoreExtractor.REPORT_EVERY_N_ROWS:
+                    self.logInfo("Ingested %s rows of old-modulestore videos." % num_pulled)
+                
                 table = []
         if len(table) > 0:
             self.__loadToSQL('EdxVideo', col_names, table)
-
+            num_pulled += len(table)            
+            self.logInfo("Ingested %s rows of old-modulestore videos." % num_pulled)
 
     def __extractSplitEdxVideo(self):
         '''
@@ -492,7 +512,8 @@ class ModulestoreExtractor(MySQLDB):
         More or less identical to EdxProblem extract, but with different metadata.
         '''
         table = []
-
+        num_pulled = 0
+        
         # Get a course generator and iterate through
         courses = self.msdb['modulestore.active_versions'].find()
         
@@ -538,10 +559,16 @@ class ModulestoreExtractor(MySQLDB):
                 table.append(data)
                 if len(table) >= ModulestoreExtractor.BULK_INSERT_NUM_ROWS:
                     self.__loadToSQL('EdxVideo', col_names, table)
+                    num_pulled += len(table)
+                    if num_pulled > ModulestoreExtractor.REPORT_EVERY_N_ROWS:
+                        self.logInfo("Ingested %s rows of new-modulestore videos." % num_pulled)
+                        
                     table = []
         if len(table) > 0:
             self.__loadToSQL('EdxVideo', col_names, table)
-
+            num_pulled += len(table)            
+            self.logInfo("Ingested %s rows of new-modulestore videos." % num_pulled)
+            
     @staticmethod
     def inRange(date, quarter):
         '''
@@ -613,6 +640,7 @@ class ModulestoreExtractor(MySQLDB):
         Inserts all into CourseInfo table.
         '''
         table = []
+        num_pulled = 0
         
         col_names     = ['course_display_name',
                          'course_catalog_name',
@@ -665,9 +693,15 @@ class ModulestoreExtractor(MySQLDB):
             table.append(data)
             if len(table) >= ModulestoreExtractor.BULK_INSERT_NUM_ROWS:
                 self.__loadToSQL('EdxProblem', col_names, table)
+                num_pulled += len(table)
+                if num_pulled > ModulestoreExtractor.REPORT_EVERY_N_ROWS:
+                    self.logInfo("Ingested %s rows of old-modulestore course info." % num_pulled)
+                
                 table = []
         if len(table) > 0:
             self.__loadToSQL('EdxProblem', col_names, table)
+            num_pulled += len(table)            
+            self.logInfo("Ingested %s rows of old-modulestore course info." % num_pulled)
 
     def __extractSplitCourseInfo(self):
         '''
@@ -675,6 +709,7 @@ class ModulestoreExtractor(MySQLDB):
         Inserts results in table CourseInfo.
         '''
         table = []
+        num_pulled = 0
         
         col_names     = ['course_display_name',
                          'course_catalog_name',
@@ -704,7 +739,7 @@ class ModulestoreExtractor(MySQLDB):
             try:
                 block = filter(lambda b: b['block_type'] == 'course', structure['blocks'])[0]
             except IndexError:
-                print('********** No course block found for course %s' % str(course))
+                self.logError('********** No course block found for course %s' % str(course))
                 continue
             try:
                 definition = self.msdb['modulestore.definitions'].find({"_id": block['definition']}).next()
@@ -750,9 +785,18 @@ class ModulestoreExtractor(MySQLDB):
             table.append(data)
             if len(table) >= ModulestoreExtractor.BULK_INSERT_NUM_ROWS:
                 self.__loadToSQL('CourseInfo', col_names, table)
+                num_pulled += len(table)
+                if num_pulled > ModulestoreExtractor.REPORT_EVERY_N_ROWS:
+                    self.logInfo("Ingested %s rows of new-modulestore course info." % num_pulled)
+                
                 table = []
         if len(table) > 0:
             self.__loadToSQL('CourseInfo', col_names, table)
+            num_pulled += len(table)
+            self.logInfo("Ingested %s rows of new-modulestore course info." % num_pulled)
+
+    # ----------------------- Utilities -------------------
+
 
     def __loadToSQL(self, table_name, columns, arr_of_tuples):
         '''
@@ -761,8 +805,52 @@ class ModulestoreExtractor(MySQLDB):
         '''
         self.bulkInsert(table_name, columns, arr_of_tuples)
 
+    #-------------------------
+    # setupLogging
+    #--------------
+    
+    def setupLogging(self, loggingLevel, logFile=None):
+        # Set up logging:
+        self.logger = logging.getLogger('newEvalIntake')
+        self.logger.setLevel(loggingLevel)
+        # Create file handler if requested:
+        if logFile is not None:
+            handler = logging.FileHandler(logFile)
+        else:
+            # Create console handler:
+            handler = logging.StreamHandler()
+        handler.setLevel(loggingLevel)
+        # Add the handler to the logger
+        self.logger.addHandler(handler)
+
+    #-------------------------
+    # logInfo
+    #--------------
+
+    def logInfo(self, msg):
+        self.logger.info(msg)
+    
+    #-------------------------
+    # logError 
+    #--------------
+        
+    def logError(self, msg):
+        self.logger.error(msg)
+    
+    #-------------------------
+    # logWarn
+    #--------------
+        
+    def logWarn(self, msg):
+        self.logger.warning(msg)
 
 
 if __name__ == '__main__':
-    extractor = ModulestoreExtractor()
+    
+    # Allow the --verbose argument
+    if len(sys.argv) > 1 and (sys.argv[1] == '-v' or sys.argv[1] == '--verbose'):
+        verbose = True
+    else:
+        verbose = False
+    extractor = ModulestoreExtractor(verbose=verbose)
     extractor.export()
