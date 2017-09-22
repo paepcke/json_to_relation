@@ -326,11 +326,11 @@ class ModulestoreExtractor(MySQLDB):
             # Get URI for enclosing sequential and location of vertical therein
             sequential_uri, vertical_idx = self.__locateModuleInParent(vertical_uri)
             
-            staff_name = vertical_uri.split('/')[5]
             # Staff-only indicator
             if not vertical_uri:
                 staff_only = False
             else:
+                staff_name = vertical_uri.split('/')[5]
                 staff_only = self.msdb.modulestore.find({"_id.name": staff_name}).next()['metadata'].get('visible_to_staff_only', False)
             
             # URI for enclosing chapter and location of sequential
