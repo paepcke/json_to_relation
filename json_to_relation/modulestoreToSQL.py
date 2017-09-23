@@ -20,6 +20,7 @@
 ##  either modulestore case.
 
 
+import argparse
 from collections import namedtuple
 import datetime
 import logging
@@ -293,8 +294,22 @@ class ModulestoreExtractor(MySQLDB):
     def __extractOldEdxProblem(self):
         '''
         Extract problem data from old-style MongoDB modulestore.
-        Inserts data into EdxProblem.
+        Inserts data into EdxProblem. Since pulling from the old
+        part of modulestore is slow: takes about 8hrs, we have table
+        EdxOldModstoreProblemArchive. It holds all the old data.
+        If that table is present and not empty, we copy from it
+        to the EdxProblem table and are done. Else we run the
+        actual extraction.
         '''
+        try:
+            it = self.query('SELECT COUNT(*) FROM EdxOldModstoreProblemArchive')
+            num_rows = it.next()
+            if num_rows > 0:
+                self.execute('INSERT INTO EdxProblem SELECT * FROM EdxOldModstoreProblemArchive')
+                return
+        except ValueError:
+            self.logInfo("EdxOldModstoreProblemArchive not present; extracting 'old-modulestore' problem defs from Mongodb.")
+
         problems = self.msdb.modulestore.find({"_id.category": "problem"}).batch_size(20)
         col_names     = ['problem_id',
                          'problem_display_name',
@@ -443,7 +458,21 @@ class ModulestoreExtractor(MySQLDB):
         '''
         Extract video metadata from old MongoDB modulestore.
         More or less identical to EdxProblem extract, but with different metadata.
+        Since pulling from the old part of modulestore is slow: takes about 8hrs, 
+        we have table EdxOldModstoreVideoArchive. It holds all the old data.
+        If that table is present and not empty, we copy from it to the EdxVideo
+        table and are done. Else we run the actual extraction.        
         '''
+        
+        try:
+            it = self.query('SELECT COUNT(*) FROM EdxOldModstoreVideoArchive')
+            num_rows = it.next()
+            if num_rows > 0:
+                self.execute('INSERT INTO EdxVideo SELECT * FROM EdxOldModstoreVideoArchive')
+                return
+        except ValueError:
+            self.logInfo("EdxOldModstoreVideoArchive not present; extracting 'old-modulestore' video defs from Mongodb.")
+        
         table = []
         num_pulled = 0        
 
@@ -692,14 +721,14 @@ class ModulestoreExtractor(MySQLDB):
 
             table.append(data)
             if len(table) >= ModulestoreExtractor.BULK_INSERT_NUM_ROWS:
-                self.__loadToSQL('EdxProblem', col_names, table)
+                self.__loadToSQL('CourseInfo', col_names, table)
                 num_pulled += len(table)
                 if num_pulled > ModulestoreExtractor.REPORT_EVERY_N_ROWS:
                     self.logInfo("Ingested %s rows of old-modulestore course info." % num_pulled)
                 
                 table = []
         if len(table) > 0:
-            self.__loadToSQL('EdxProblem', col_names, table)
+            self.__loadToSQL('CourseInfo', col_names, table)
             num_pulled += len(table)            
             self.logInfo("Ingested %s rows of old-modulestore course info." % num_pulled)
 
@@ -844,13 +873,19 @@ class ModulestoreExtractor(MySQLDB):
     def logWarn(self, msg):
         self.logger.warning(msg)
 
-
 if __name__ == '__main__':
     
-    # Allow the --verbose argument
-    if len(sys.argv) > 1 and (sys.argv[1] == '-v' or sys.argv[1] == '--verbose'):
-        verbose = True
-    else:
-        verbose = False
-    extractor = ModulestoreExtractor(verbose=verbose)
+    description_str = '''Pulls data from a local copy of modulestore,
+and fills tables CourseInfo, EdxProblem, and EdxVideo.'''
+    
+    parser = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]), 
+                                     formatter_class=argparse.RawTextHelpFormatter,
+                                     description=description_str)
+    parser.add_argument('-v', '--verbose',
+                        help='print operational info to log.',
+                        dest='verbose',
+                        action='store_true');
+                        
+    args = parser.parse_args();                        
+    extractor = ModulestoreExtractor(verbose=args.verbose)
     extractor.export()
