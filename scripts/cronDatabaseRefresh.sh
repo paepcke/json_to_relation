@@ -26,14 +26,16 @@ cd /home/dataman/Code/json_to_relation/scripts/
 /home/dataman/Code/json_to_relation/scripts/manageEdxDb.py pullTransformLoad >> /home/dataman/cronlog/manageEdxDb.txt 2>&1
 source /home/dataman/Code/json_to_relation/scripts/cronRefreshEdxprod.sh >> /home/dataman/cronlog/cronRefreshEdxprod.txt 2>&1
 
-# The cronRefreshModuleStore.sh and modulestoreToSQL.py scripts
-# are now executed with their own CRON entry for parallelism:
-
-   #source /home/dataman/Code/json_to_relation/scripts/cronRefreshModuleStore.sh >> /home/dataman/cronlog/cronRefreshModuleStore.txt 2>&1
-   #/home/dataman/Code/json_to_relation/json_to_relation/modulestoreToSQL.py >> /home/dataman/cronlog/modulestoreToSQL.txt
+# 3hrs:
+source /home/dataman/Code/json_to_relation/scripts/cronRefreshModuleStore.sh >> /home/dataman/cronlog/cronRefreshModuleStore.txt 2>&1
 
 source /home/dataman/Code/json_to_relation/scripts/cronRefreshActivityGrade.sh >> /home/dataman/cronlog/cronRefreshActivityGrade.txt 2>&1
+
 source /home/dataman/Code/json_to_relation/scripts/cronRefreshGrades.sh >> /home/dataman/cronlog/cronRefreshGrades.txt 2>&1
+
 /home/dataman/Code/json_to_relation/scripts/cronRefreshUserCountryTable.py >> /home/dataman/cronlog/cronRefreshUserCountryTable.txt 2>&1
+
 source /home/dataman/Code/json_to_relation/scripts/cronRefreshEdxForum.sh >> /home/dataman/cronlog/cronRefreshEdxForum.txt 2>&1
+
+# 2hrs:15min:
 /home/dataman/Code/mooc_data_request_processing/src/data_req_etl/surveyextractor.py -amsri >> /home/dataman/cronlog/cronRefreshEdxQualtrics.txt 2>&1
