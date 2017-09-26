@@ -39,8 +39,8 @@ class QualtricsExtractor(MySQLDB):
 
         self.apiuser = None
         self.apitoken = None
-        dbuser = None
-        dbpass = None
+        dbuser = None #@UnusedVariable
+        dbpass = None #@UnusedVariable
 
         with open(userFile, 'r') as f:
             self.apiuser = f.readline().rstrip()
@@ -383,7 +383,7 @@ class QualtricsExtractor(MySQLDB):
         '''
         # Get responses from Qualtrics-- try multiple times to ensure API request goes through
         rsRaw = None
-        for x in range(0, 10):
+        for _ in range(0, 10):
             try:
                 rsRaw = self.__getResponses(svID)
                 break
@@ -401,7 +401,7 @@ class QualtricsExtractor(MySQLDB):
 
         # Get total expected responses
         rq = 'SELECT `responses` FROM survey_meta WHERE SurveyID = "%s"' % svID
-        rnum = self.query(rq).next()
+        rnum = self.query(rq).next() #@UnusedVariable
 
         logging.info(" Parsing %s responses from survey %s..." % (len(rsRaw['responses']), svID))
 
@@ -623,19 +623,41 @@ if __name__ == '__main__':
     opts, args = getopt.getopt(sys.argv[1:], 'amsrti', ['--reset', '--loadmeta', '--loadsurveys', '--loadresponses', '--responsetest', '--buildindexes'])
     for opt, arg in opts:
         if opt in ('-a', '--reset'):
+            logging.info("Resetting surveys...")
             qe.resetSurveys()
+            logging.info("Done resetting surveys.")
+            logging.info("Resetting responses...")
             qe.resetResponses()
+            logging.info("Done resetting responses.")
         elif opt in ('-m', '--loadmeta'):
+            logging.info("Loading survey metadata...")
             qe.loadSurveyMetadata()
+            logging.info("Done loading survey metadata.")
         elif opt in ('-s', '--loadsurvey'):
+            logging.info("Resetting surveys...")
             qe.resetSurveys()
+            logging.info("Done resetting surveys.")
+            logging.info("Loading survey data...")
             qe.loadSurveyData()
+            logging.info("Done loading survey data.")
         elif opt in ('-r', '--loadresponses'):
+            logging.info("Loading response data...")
             qe.loadResponseData()
+            logging.info("Done loading response data.")
         elif opt in ('-t', '--responsetest'):
+            logging.info("Resetting surveys...")
             qe.resetMetadata()
+            logging.info("Done resetting surveys.")
+            logging.info("Loading survey metadata...")
             qe.loadSurveyMetadata()
+            logging.info("Done loading survey metadata.")
+            logging.info("Resetting responses...")
             qe.resetResponses()
+            logging.info("Done resetting responses.")
+            logging.info("Loading response data...")
             qe.loadResponseData()
+            logging.info("Done loading response data.")
         elif opt in ('-i', '--buildindexes'):
+            logging.info("Building indexess...")
             qe.buildIndexes()
+            logging.info("Done building indexess.")
