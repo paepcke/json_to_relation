@@ -3,6 +3,13 @@ a relational schema. Only the 'public scripts' below are of interest.
 The others are mentioned just to satisfy curiosity; they are not
 of interest to regular users.
 
+# ---------- Updates -----------
+Sep 25, 2017: the relevant cron refresh facility for Qualtrics
+              survey table refresh is at:
+      /home/dataman/Code/mooc_data_request_processing/src/data_req_etl/surveyextractor.py
+      It is called from cronDatabaseRefresh.py
+
+
 The main script of interest is manageEdxDb.py. Use it to
     o Pull OpenEdX tracking log files from S3 to localhost.
       Only files not already present at localhost are
