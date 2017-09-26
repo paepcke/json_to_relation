@@ -1632,6 +1632,101 @@ BEGIN
        AND answer_fk != '';
 END//
 
+#------------------------------
+# DATABASE_NAME
+#-------------
+
+DROP FUNCTION IF EXISTS DATABASE_NAME;
+
+CREATE FUNCTION DATABASE_NAME(table_name varchar(255))
+       RETURNS varchar(255)
+DETERMINISTIC
+
+BEGIN
+/*
+    Given either a fully qualified, or bare table name, return
+    the table's database location. If a bare table name is passed,
+    the current database is returned.
+
+    Examples:    foo.bar => foo
+                 bar     => result of DATABASE()
+
+    This function is the equivalent of the Unix dirname
+*/
+
+    IF POSITION('.' IN table_name) = 0
+    THEN
+        -- No period found, so this is just a table name;
+        -- return current db:
+        RETURN(DATABASE());
+    ELSE
+        -- Grab the string before the period:
+        RETURN SUBSTRING_INDEX(table_name, '.', 1);
+    END IF;
+END// # DATABASE_NAME
+
+
+#------------------------------
+# TABLE_BASENAME
+#-------------
+
+DROP FUNCTION IF EXISTS TABLE_BASENAME;
+
+CREATE FUNCTION TABLE_BASENAME(table_name varchar(255))
+       RETURNS varchar(255)
+DETERMINISTIC
+
+BEGIN
+/*
+    Given either a fully qualified, or bare table name, return
+    the bare table name without the database. If a bare table
+    name is passed, it is returned unchanged.
+
+    Examples:    foo.bar => bar
+                 bar     => bar
+
+This function is the equivalent of the Unix basename
+*/
+    IF POSITION('.' IN table_name) = 0
+    THEN
+        -- No period found, so this is just a table name;
+        RETURN(table_name);
+    ELSE
+        -- Grab the string after the period:
+        RETURN(SUBSTRING(table_name FROM POSITION('.' IN table_name)+1));
+    END IF;
+END// # TABLE_BASENAME
+
+#--------------------------
+# desca
+#-----------
+
+# Given a table name, list its column names in
+# alphabetical order: a 'desc' with alpha order.
+
+DROP PROCEDURE IF EXISTS desca//
+
+CREATE PROCEDURE desca(IN the_table_name varchar(255))
+BEGIN
+   DECLARE table_basename varchar(255);
+   DECLARE table_db varchar(255);
+
+   SET table_basename = TABLE_BASENAME(the_table_name);
+   SET table_db       = DATABASE_NAME(the_table_name);
+
+   SELECT distinct
+       c.column_name,
+       IF (c.character_maximum_length is not null,
+                 concat(c.data_type, '(', c.character_maximum_length, ')'),
+                 c.data_type) AS data_type
+     FROM INFORMATION_SCHEMA.COLUMNS c
+    WHERE c.table_name    = table_basename
+      AND c.table_schema  = table_db
+    ORDER BY c.column_name;
+END//
+
+
+
 # Restore standard delimiter:
 delimiter ;
 
