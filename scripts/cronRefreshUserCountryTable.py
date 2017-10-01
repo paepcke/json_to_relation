@@ -33,7 +33,7 @@ from ipToCountry import IpCountryDict
 
 class UserCountryTableCreator(object):
 
-    DEST_TABLE       = 'UserCountry'
+    DEST_TABLE               = 'UserCountry'
     # Number of anon ids-country-2-letter-3-letter
     # tuples to accumulate before inserting into
     # UserCountry: 
@@ -44,7 +44,9 @@ class UserCountryTableCreator(object):
         self.user = user
         self.pwd  = pwd
         self.db = MySQLDB(user=self.user, passwd=self.pwd, db='Edx')
-        self.db.dropTable(UserCountryTableCreator.DEST_TABLE)
+        # Make sure table exists. It should, and it should be filled
+        # with all anon_screen_name and countries up the previous
+        # load:
         self.db.createTable(UserCountryTableCreator.DEST_TABLE, 
                                            OrderedDict({'anon_screen_name' : 'varchar(40) NOT NULL DEFAULT ""',
                                             'two_letter_country' : 'varchar(2) NOT NULL DEFAULT ""',
@@ -52,7 +54,9 @@ class UserCountryTableCreator(object):
                                             'country' : 'varchar(255) NOT NULL DEFAULT ""'}))
         
     def fillTable(self):
-        query = "SELECT DISTINCT anon_screen_name, ip_country FROM EventXtract"
+        #*****************
+        #query = "SELECT DISTINCT anon_screen_name, ip_country FROM EventXtract"
+        #*****************
         query_res_it = self.db.query(query)
         done = False
         # Order of columns for insert:
@@ -60,7 +64,9 @@ class UserCountryTableCreator(object):
 
         while not done: 
             values = []
-            print("%s: Starting one set of %s lookups..." % (str(datetime.datetime.today()), UserCountryTableCreator.INSERT_BULK_SIZE))
+            print("%s: Starting one set of %s lookups..." %\
+                  (str(datetime.datetime.today()), 
+                   UserCountryTableCreator.INSERT_BULK_SIZE))
             for _ in range(UserCountryTableCreator.INSERT_BULK_SIZE):
                 try:
                     (anon_screen_name, ip3LetterCountry) = query_res_it.next();
