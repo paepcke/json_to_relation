@@ -13,12 +13,22 @@
 ### Master shell script to be executed by cron on a weekly basis.
 
 # Ensure in correct directory and activate virtualenv
-#source /home/dataman/.virtualenvs/json_to_relation/bin/activate
 
 echo `date`": Activating Anaconda json_to_relation environment..."
 source /home/dataman/anaconda2/bin/activate json_to_relation
 echo `date`": Done activating Anaconda json_to_relation environment..."
 cd /home/dataman/Code/json_to_relation/scripts/
+
+# Initialize a new row in the FullLoadDates:
+# Fill the load_start column. We will fill the
+# load_end column at the end of the script:
+
+read -r -d '' START_TIME_CMD <<EOF
+CREATE TABLE IF NOT EXISTS FullLoadDates (load_start DATETIME, load_end DATETIME);
+INSERT INTO FullLoadDates (load_start) values(NOW());
+EOF
+
+mysql --login-path=dataman Edx -e "$START_TIME_CMD"
 
 # Execute refresh scripts.
 # Call shell scripts using `source` to ensure virtualenv works.
@@ -39,3 +49,19 @@ source /home/dataman/Code/json_to_relation/scripts/cronRefreshEdxForum.sh >> /ho
 
 # 2hrs:15min:
 /home/dataman/Code/mooc_data_request_processing/src/data_req_etl/surveyextractor.py -amsri >> /home/dataman/cronlog/cronRefreshEdxQualtrics.txt 2>&1
+
+
+# Add end timestamp to this load's entry
+# in FullLoadDates:
+
+read -r -d '' END_TIME_CMD <<EOF
+UPDATE FullLoadDates
+  JOIN (SELECT MAX(load_start) AS start_time
+          FROM FullLoadDates
+       )  AS RowInfo
+  SET load_end = NOW()
+  WHERE load_start = RowInfo.start_time;
+EOF
+
+mysql --login-path=dataman Edx -e "$END_TIME_CMD"
+
