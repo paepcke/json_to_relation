@@ -177,7 +177,7 @@ class ModulestoreExtractor(MySQLDB):
                 `academic_year` int(11) DEFAULT NULL,
                 `quarter` varchar(7) DEFAULT NULL,
                 # `num_quarters` int(11) DEFAULT NULL,  # NOTE: num_quarters field deprecated 5 May 2016
-                `is_internal` tinyint DEFAULT NULL,
+                `is_internal` int DEFAULT NULL,
                 `enrollment_start` datetime DEFAULT NULL,
                 `start_date` datetime DEFAULT NULL,
                 `enrollment_end` datetime DEFAULT NULL,
@@ -735,13 +735,13 @@ class ModulestoreExtractor(MySQLDB):
         
         col_names     = ['course_display_name',
                          'course_catalog_name',
-                         'start_date',
-                         'end_date',
                          'academic_year',
                          'quarter',
                          'is_internal',
                          'enrollment_start',
+                         'start_date',
                          'enrollment_end',
+                         'end_date',
                          'grade_policy',
                          'certs_policy'
                          ]
@@ -778,13 +778,13 @@ class ModulestoreExtractor(MySQLDB):
             
             data = (cdn, # course_display_name
                     course['metadata']['display_name'], # course_catalog_name
-                    start_date, # start_date'
-                    end_date, # end_date
                     academic_year, # academic_year
                     quarter, # quarter
                     self.isInternal(course,block), # is_internal field
                     course['metadata'].get('enrollment_start', '0000-00-00T00:00:00Z'), # enrollment_start
+                    start_date, # start_date'
                     course['metadata'].get('enrollment_end', '0000-00-00T00:00:00Z'), # enrollment_end
+                    end_date, # end_date
                     grade_policy, # grade_policy
                     certs_policy # certs_policy
                     )
@@ -988,10 +988,10 @@ and fills tables CourseInfo, EdxProblem, and EdxVideo.'''
 			default='all',
 			choices=['courseinfo',
 			         'edxproblem',
-                     'edxvideo',
-                     'all'
-                     ],
-                     help='which table to extract from modulestore. \n' +\
+                                 'edxvideo',
+                                 'all'
+                                 ],
+                        help='which table to extract from modulestore. \n' +\
                           'Use any or none of these. If none: extract all three.\n')
                         
     args = parser.parse_args();
