@@ -709,15 +709,15 @@ class ModulestoreExtractor(MySQLDB):
             block_fields = block_struct.get('fields', None)
             if block_fields is not None:
                 # If field 'ispublic' is absent, we assume
-                # that course is private:
-                if not block_fields.get('ispublic', False):
+                # that course is public:
+                if not block_fields.get('ispublic', True):
                     return 1
                 # If the invitation_only field is absent,
                 # we assume public
                 if block_fields.get('invitation_only', False):
                     return 1
         else:
-            if not course_struct.get('ispublic', False):
+            if not course_struct.get('ispublic', True):
                 return 1
             if course_struct.get('invitation_only', False):
                 return 1
