@@ -210,6 +210,7 @@ class ModulestoreExtractor(MySQLDB):
             self.logInfo("About to ingest course defs from new-type modulestore...")
             self.__extractSplitCourseInfo()
             self.logInfo("Done ingesting course defs from new-type modulestore...")
+            pass
 
         if self.split and self.update_EV:
             self.logInfo("About to ingest video defs from new-type modulestore...")
@@ -754,7 +755,13 @@ class ModulestoreExtractor(MySQLDB):
             # JSON structure called 'block'. Set to None
             # to make the is_internal() method work for
             # both old and new module store:
-
+#             #*******
+#             try:
+#                 if course['_id']['course'] == '115':
+#                     print("In old.")
+#             except KeyError:
+#                 pass
+#             #*******
             block = None
 
             cdn = self.__resolveCDN(course) 
@@ -767,8 +774,14 @@ class ModulestoreExtractor(MySQLDB):
             end_date = course['metadata'].get('end', '0000-00-00T00:00:00Z')
             
             academic_year, quarter, num_quarters = self.__lookupAYDataFromDates(start_date, end_date) #@UnusedVariable
-            if academic_year not in VALID_AYS:
-                continue
+            # The following would check for start/end dates in the far
+            # future. But we decided rather to have the courses in CourseInfo
+            # and filter 'bad' dates during queries:
+            
+            #if academic_year not in VALID_AYS and\
+            #   course['_id']['name'] != 'SelfPaced' and\
+            #   academic_year != 0:  # Happens when start_date is not entered, as e.g. for Law courses and Medicine
+            #    continue
             try:
                 grade_policy = str(course['definition']['data'].get('grading_policy', 'NA').get('GRADER', 'NA'))
                 certs_policy = str(course['definition']['data'].get('grading_policy', 'NA').get('GRADE_CUTOFFS', 'NA'))
@@ -807,6 +820,7 @@ class ModulestoreExtractor(MySQLDB):
         Extract course metadata from Split MongoDB modulestore.
         Inserts results in table CourseInfo.
         '''
+
         table = []
         num_pulled = 0
         
@@ -826,7 +840,15 @@ class ModulestoreExtractor(MySQLDB):
         # Get all most recent versions of 'course' type documents from modulestore
         courses = self.msdb['modulestore.active_versions'].find()
         for course in courses:
-            cdn = "%s/%s/%s" % (course['org'], course['course'], course['run'])
+#             #*******
+#             try:
+#                 if course['course'] == '115':
+#                     print("In new.")
+#             except KeyError:
+#                 pass
+#             #*******
+            cdn = "course-V%s:%s+%s+%s" %\
+                (course['schema_version'],course['org'], course['course'], course['run'])
             if self.is_test_name(cdn):
                 continue
 
@@ -857,8 +879,10 @@ class ModulestoreExtractor(MySQLDB):
             end_date = datestr(end_date) if type(end_date) is datetime.datetime else end_date
             academic_year, quarter, num_quarters = self.__lookupAYDataFromDates(start_date, end_date) #@UnusedVariable
             
-            if academic_year not in VALID_AYS:
-                continue
+            # We decided rather to have all courses in CourseInfo,
+            # even ones with 'bad' start/end dates:
+            #if academic_year not in VALID_AYS:
+            #    continue
             
             enrollment_start = block['fields'].get('enrollment_start', '0000-00-00T00:00:00Z')
             enrollment_end   = block['fields'].get('enrollment_end', '0000-00-00T00:00:00Z')
