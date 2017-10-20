@@ -180,6 +180,10 @@ echo `date`": Running modulestoreToSQL.py..."  | tee --append $LOG_FILE
 /home/dataman/Code/json_to_relation/json_to_relation/modulestoreToSQL.py -v >> /home/dataman/cronlog/modulestoreToSQL.txt
 echo `date`": Done running modulestoreToSQL.py..."  | tee --append $LOG_FILE
 
+echo `date`": Indexing CourseInfo using cronRefreshModuleStoreMkIndexes.sql..."  | tee --append $LOG_FILE
+mysql --login-path=$(whoami) Edx < /home/dataman/Code/json_to_relation/scripts/cronRefreshModuleStoreMkIndexes.sql
+echo `date`": Done indexing CourseInfo..."  | tee --append $LOG_FILE
+
 # ------------------ Signout -------------------
 echo `date`": Finished updating table modulestore extract."  | tee --append $LOG_FILE
 echo "----------"
