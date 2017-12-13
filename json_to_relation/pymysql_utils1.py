@@ -26,6 +26,10 @@ import tempfile
 
 import MySQLdb
 
+from warnings import filterwarnings, resetwarnings
+from MySQLdb import Warning as db_warning
+from contextlib import contextmanager
+
 
 class MySQLDB(object):
     '''
@@ -318,3 +322,13 @@ class MySQLDB(object):
                 yield(str(element))
             except UnicodeEncodeError:
                 yield element.encode('UTF-8','ignore')
+
+
+# ----------------------- Context Managers -------------------------    
+
+
+@contextmanager
+def no_db_warnings():
+    filterwarnings('ignore', category=db_warning)
+    yield
+    resetwarnings()
