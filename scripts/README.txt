@@ -135,3 +135,7 @@ by cronRefreshActivityGrade.sh.
 
 The testAllTruthFiles.py script is used to ensure that all unittest
 gold .sql files work. 
+
+removeTestCourses.sh and removeTestCourses.awk are used by
+    cronRefreshActivityGrade.sh to remove test courses.
+   
