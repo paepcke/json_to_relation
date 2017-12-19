@@ -11,19 +11,34 @@
 
 
 # Copies the latest modulestore tar ball from Stanford's backup server.
+# Time: ~3hrs, of which all but a minute is transferring and loading
+# the latest modulestore.
+
 # Does the following:
 #   - imports the entire store into the local MongoDB
 #   - queries the local MongoDB, retrieving the information needed
-#     for table CourseInfo. Truncates that table, and re-loads
-#     it with the query result.
-#   - queries the local MongoDB store again to extract a
+#     for tables CourseInfo, EdxProblem, and EdxVideo.
+#   - Pulling the JSON modulestore from Lagunita's backup
+#     server, and installing it in the local MongoDB is
+#     done by cronRefreshModuleStore_Helper.sh.
+#   - Filling the tables is done by modulestoreToSQL.py.
+#     That table may be called separately to renew the three
+#     tables with the existing version of modulestore.
+#     Run modulestoreToSQL.py --help for options: All or
+#     any of the three tables may be regenerated separately.
+
+
+#   - OLD (modulestoreImporter.py no longer relevant.)
+#     queries the local MongoDB store again to extract a
 #     .json file with infomration needed by modulestoreImporter.py.
 #     That information holds mappings from OpenEdX 32-bit hashes
 #     to human-readable strings. The file is named with datetime, and
 #     goes into <projRoot>/json_to_relation/data. It is linked to
 #     modulestore_latest.json in that same directory.
 #
-# The JSON file looks like this:
+# The old-styleJSON file looks like this, though Edx splitthe structure
+# into multiple pieces since. The loader, modulestoreToSQL.py handles
+# information from both versions.
 #
 # [
 #  	{
@@ -162,7 +177,7 @@ echo `date`": Done running cronRefreshModuleStore_Helper.sh..."  | tee --append 
 # ------------------ Update CourseInfo, EdxProblem, EdxVideo  -------------------
 
 echo `date`": Running modulestoreToSQL.py..."  | tee --append $LOG_FILE
-/home/dataman/Code/json_to_relation/json_to_relation/modulestoreToSQL.py >> /home/dataman/cronlog/modulestoreToSQL.txt
+/home/dataman/Code/json_to_relation/json_to_relation/modulestoreToSQL.py -v >> /home/dataman/cronlog/modulestoreToSQL.txt
 echo `date`": Done running modulestoreToSQL.py..."  | tee --append $LOG_FILE
 
 # ------------------ Signout -------------------

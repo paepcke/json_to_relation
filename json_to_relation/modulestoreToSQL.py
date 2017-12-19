@@ -41,7 +41,14 @@ Quarter = namedtuple('Quarter', ['start_date', 'end_date', 'quarter'])
 SU_ENROLLMENT_DOMAIN = "shib:https://idp.stanford.edu/"
 INTERNAL_ORGS = ['ohsx', 'ohs']
 
-TEST_COURSE_NAME_PATTERN = re.compile(r'[Ss]andbox|TESTTEST')
+TEST_COURSE_NAME_PATTERN  = re.compile(r'[Ss]and[bB]ox|TESTTEST|/[tT][eE][sS][tT]/|[tT]esting|' +\
+                'DisplayTest|GSB-test|Test_course|JosephTest|LoadTest|' +\
+                'ABTest|EmailTest|LiveTest|TestEDUC2000C|EXP1/Experimental_Assessment_Test|' +\
+                'Stanford/shib_only|SPCS_test_course1|VPTL/TEST_|eqptest|wikitest|' +\
+                'Wadhwani_test_course|Test/stv_Medicine|Test_VPTL1|SANDBOX|G3U/IVHT/Feb2016|' +\
+                '^Demo[s]*/|/Demo[s]*$|/Sdemo|Medicine/Demo/Anesthesia_Illustrated|^DemoX|' +\
+                'DEMO-MedStats|SampleUniversity|MonX/AB123/Fall201|^MonX')
+
 # When courses are created, OpenEdx gives them a run date
 # of 2030. Only when they are finalized do they
 # get a real run-date. So create a list with valid
@@ -67,7 +74,7 @@ class ModulestoreExtractor(MySQLDB):
         Note: This class presumes modulestore was recently loaded to mongod.
         Class also presumes that mongod is running on localhost:27017.
         '''
-        
+
         # FIXME: don't presume modulestore is recently loaded and running
         self.msdb = mng.MongoClient().modulestore
 
@@ -82,10 +89,8 @@ class ModulestoreExtractor(MySQLDB):
 
         # Switch for updating EdxProblem and CourseInfo separately (useful for testing)
         self.update_EP = edxproblem
-        #*****self.update_CI = courseinfo
-        self.update_CI = False
-        #*****self.update_EV = edxvideo
-        self.update_EV = False
+        self.update_CI = courseinfo
+        self.update_EV = edxvideo
 
         # Initialize MySQL connection from config file
         home = os.path.expanduser('~')
@@ -172,7 +177,7 @@ class ModulestoreExtractor(MySQLDB):
                 `academic_year` int(11) DEFAULT NULL,
                 `quarter` varchar(7) DEFAULT NULL,
                 # `num_quarters` int(11) DEFAULT NULL,  # NOTE: num_quarters field deprecated 5 May 2016
-                `is_internal` tinyint(4) DEFAULT NULL,
+                `is_internal` tinyint DEFAULT NULL,
                 `enrollment_start` datetime DEFAULT NULL,
                 `start_date` datetime DEFAULT NULL,
                 `enrollment_end` datetime DEFAULT NULL,
@@ -266,7 +271,7 @@ class ModulestoreExtractor(MySQLDB):
         try:
             name = definition[0]["_id"]["name"]
         except IndexError:
-            self.logError('********** Course display name for course %s not found.' % str(course))
+            self.logError('Course display name for course %s not found.' % str(course))
             cdn = '<Not found in Modulestore>'
             return cdn
 
@@ -302,10 +307,14 @@ class ModulestoreExtractor(MySQLDB):
         actual extraction.
         '''
         try:
+            self.logInfo('Checking whether EdxOldModstoreProblemArchive exists and non-empty...')
             it = self.query('SELECT COUNT(*) FROM EdxOldModstoreProblemArchive')
             num_rows = it.next()
+            self.logInfo('Found %s rows in EdxOldModstoreProblemArchive exists.' % num_rows)
             if num_rows > 0:
+                self.logInfo("Copying rows from EdxOldModstoreProblemArchive to EdxProblem...")
                 self.execute('INSERT INTO EdxProblem SELECT * FROM EdxOldModstoreProblemArchive')
+                self.logInfo("Done copying rows from EdxOldModstoreProblemArchive to EdxProblem.")
                 return
         except ValueError:
             self.logInfo("EdxOldModstoreProblemArchive not present; extracting 'old-modulestore' problem defs from Mongodb.")
@@ -328,10 +337,10 @@ class ModulestoreExtractor(MySQLDB):
         
         for problem in problems:
             # Each row in the table is a dictionary
-            course_display_name = self.__resolveCDN(problem)
+            cdn = self.__resolveCDN(problem)
             # Is this a test course?
-            if TEST_COURSE_NAME_PATTERN.search(course_display_name) is not None:
-                continue            
+            if self.is_test_name(cdn):
+                continue
             
             # Reconstruct URI for problem
             problem_uri = self.__resolveResourceURI(problem)
@@ -346,7 +355,8 @@ class ModulestoreExtractor(MySQLDB):
                 staff_only = False
             else:
                 staff_name = vertical_uri.split('/')[5]
-                staff_only = self.msdb.modulestore.find({"_id.name": staff_name}).next()['metadata'].get('visible_to_staff_only', False)
+                staff_only = self.msdb.modulestore.find({"_id.name": staff_name}).next()['metadata']\
+                             .get('visible_to_staff_only', False)
             
             # URI for enclosing chapter and location of sequential
             chapter_uri, sequential_idx = self.__locateModuleInParent(sequential_uri)
@@ -359,7 +369,7 @@ class ModulestoreExtractor(MySQLDB):
 
             data = (problem['_id'].get('name', 'False'), # problem_id
                     problem['metadata'].get('display_name', 'False'), # problem_display_name
-                    course_display_name, # course_display_name
+                    cdn, # course_display_name
                     problem['definition'].get('data', 'False'), # problem_text
                     self.__resolveTimestamp(problem), # date
                     problem['metadata'].get('weight', -1), # weight
@@ -414,6 +424,8 @@ class ModulestoreExtractor(MySQLDB):
 
         for course in courses:
             cdn = "%s/%s/%s" % (course['org'], course['course'], course['run'])
+            if self.is_test_name(cdn):
+                continue
             cid = course['versions'].get('published-branch', None)
             if not cid:
                 continue
@@ -465,10 +477,15 @@ class ModulestoreExtractor(MySQLDB):
         '''
         
         try:
+            self.logInfo('Checking whether EdxOldModstoreVideoArchive exists and non-empty...')
             it = self.query('SELECT COUNT(*) FROM EdxOldModstoreVideoArchive')
             num_rows = it.next()
+            self.logInfo('Found %s rows in EdxOldModstoreVideoArchive exists.' % num_rows)
+
             if num_rows > 0:
+                self.logInfo("Copying rows from EdxOldModstoreVideoArchive to EdxProblem...")
                 self.execute('INSERT INTO EdxVideo SELECT * FROM EdxOldModstoreVideoArchive')
+                self.logInfo("Done copying rows from EdxOldModstoreVideoArchive to EdxProblem.")
                 return
         except ValueError:
             self.logInfo("EdxOldModstoreVideoArchive not present; extracting 'old-modulestore' video defs from Mongodb.")
@@ -494,11 +511,10 @@ class ModulestoreExtractor(MySQLDB):
                          ]
         
         for video in videos:
-            course_display_name = self.__resolveCDN(video)
+            cdn = self.__resolveCDN(video)
             # Is this a test course?
-            if TEST_COURSE_NAME_PATTERN.search(course_display_name) is not None:
+            if self.is_test_name(cdn):
                 continue
-
             video_uri = self.__resolveResourceURI(video)                     
             vertical_uri, problem_idx = self.__locateModuleInParent(video_uri)
             sequential_uri, vertical_idx = self.__locateModuleInParent(vertical_uri)
@@ -508,7 +524,7 @@ class ModulestoreExtractor(MySQLDB):
                     # Identifiers:
             data = (video['_id'].get('name', 'NA'), # video_id
                     video['metadata'].get('display_name', 'NA'), # video_display_name
-                    self.__resolveCDN(video), # course_display_name
+                    cdn, # course_display_name
                     video['metadata'].get('html5_sources', 'NA'), # video_uri
                     video['metadata'].get('youtube_id_1_0', 'NA'), # video_code
                     # Context
@@ -563,6 +579,9 @@ class ModulestoreExtractor(MySQLDB):
         
         for course in courses:
             cdn = "%s/%s/%s" % (course['org'], course['course'], course['run'])
+            if self.is_test_name(cdn):
+                continue
+
             cid = course['versions'].get('published-branch', None)
             if not cid:
                 continue
@@ -642,7 +661,10 @@ class ModulestoreExtractor(MySQLDB):
         # Generate quarters given start date and determine starting quarter
         start_ay = str(year(start_date)) if month(start_date) >= 9 else str(year(start_date) - 1)
         sFall, sWinter, sSpring, sSummer = self.genQuartersForAY(start_ay)
-        start_quarter = self.inRange(start_date, sFall) or self.inRange(start_date, sWinter) or self.inRange(start_date, sSpring) or self.inRange(start_date, sSummer)
+        start_quarter = self.inRange(start_date, sFall) or\
+                        self.inRange(start_date, sWinter) or\
+                        self.inRange(start_date, sSpring) or\
+                        self.inRange(start_date, sSummer)
 
         # Calculate number of quarters
         months_passed = (year(end_date) - year(start_date)) * 12 + (month(end_date) - month(start_date))
@@ -656,12 +678,52 @@ class ModulestoreExtractor(MySQLDB):
 
 
     @staticmethod
-    def isInternal(enroll_domain, org):
+    def isInternal(course_struct, block_struct):
         '''
-        Return boolean indicating whether course is internal.
+        Return 1 or 0 indicating whether course is internal
+	    because it is offered inside Stanford or by other
+        internal organizations. The two parameters are messy
+        JSON extracted by the new and old course info extract 
+        methods.
         '''
-        return 1 if (enroll_domain == SU_ENROLLMENT_DOMAIN) or (org in INTERNAL_ORGS) else 0
 
+        # Be extremely defensive: be prepared for any field
+        # not being present.
+
+        # Check the organization that offers the course:
+
+        course_metadata = course_struct.get('metadata', None)
+        if course_metadata is not None:
+            enroll_domain = course_metadata.get('enrollment_domain', 'NA')
+        else:
+            enroll_domain = None
+        course_org = course_struct.get('org', None)
+
+        if (enroll_domain == SU_ENROLLMENT_DOMAIN) or (course_org in INTERNAL_ORGS):
+            return 1
+
+        # Now the explicit prohibitions: by_invitation and isprivate:
+
+        if block_struct is not None:
+            # Likely a new-type modulestore record:
+            block_fields = block_struct.get('fields', None)
+            if block_fields is not None:
+                # If field 'ispublic' is absent, we assume
+                # that course is private:
+                if not block_fields.get('ispublic', False):
+                    return 1
+                # If the invitation_only field is absent,
+                # we assume public
+                if block_fields.get('invitation_only', False):
+                    return 1
+        else:
+            if not course_struct.get('ispublic', False):
+                return 1
+            if course_struct.get('invitation_only', False):
+                return 1
+
+        # None of the privat-course criteria hold:
+        return 0
 
     def __extractOldCourseInfo(self):
         '''
@@ -688,9 +750,17 @@ class ModulestoreExtractor(MySQLDB):
         courses = self.msdb.modulestore.find({"_id.category": "course"})
         
         for course in courses:
-            course_display_name = self.__resolveCDN(course) 
+            # For old modstore format, there was no inner
+            # JSON structure called 'block'. Set to None
+            # to make the is_internal() method work for
+            # both old and new module store:
+
+            block = None
+
+            cdn = self.__resolveCDN(course) 
+
             # Is this a test course?
-            if TEST_COURSE_NAME_PATTERN.search(course_display_name) is not None:
+            if self.is_test_name(cdn):
                 continue
             
             start_date = course['metadata'].get('start', '0000-00-00T00:00:00Z')
@@ -706,13 +776,13 @@ class ModulestoreExtractor(MySQLDB):
                 grade_policy = 'NA'
                 certs_policy = 'NA'
             
-            data = (course_display_name, # course_display_name
+            data = (cdn, # course_display_name
                     course['metadata']['display_name'], # course_catalog_name
                     start_date, # start_date'
                     end_date, # end_date
                     academic_year, # academic_year
                     quarter, # quarter
-                    self.isInternal(course['metadata'].get('enrollment_domain', 'NA'), course['_id']['org']), # is_internal
+                    self.isInternal(course,block), # is_internal field
                     course['metadata'].get('enrollment_start', '0000-00-00T00:00:00Z'), # enrollment_start
                     course['metadata'].get('enrollment_end', '0000-00-00T00:00:00Z'), # enrollment_end
                     grade_policy, # grade_policy
@@ -756,6 +826,10 @@ class ModulestoreExtractor(MySQLDB):
         # Get all most recent versions of 'course' type documents from modulestore
         courses = self.msdb['modulestore.active_versions'].find()
         for course in courses:
+            cdn = "%s/%s/%s" % (course['org'], course['course'], course['run'])
+            if self.is_test_name(cdn):
+                continue
+
             cid = course['versions'].get('published-branch', None)
             if not cid:
                 continue  # Ignore if not a 'published' course
@@ -768,7 +842,7 @@ class ModulestoreExtractor(MySQLDB):
             try:
                 block = filter(lambda b: b['block_type'] == 'course', structure['blocks'])[0]
             except IndexError:
-                self.logError('********** No course block found for course %s' % str(course))
+                self.logError('No course block found for course %s' % str(course))
                 continue
             try:
                 definition = self.msdb['modulestore.definitions'].find({"_id": block['definition']}).next()
@@ -787,26 +861,28 @@ class ModulestoreExtractor(MySQLDB):
                 continue
             
             enrollment_start = block['fields'].get('enrollment_start', '0000-00-00T00:00:00Z')
-            enrollment_end = block['fields'].get('enrollment_end', '0000-00-00T00:00:00Z')
+            enrollment_end   = block['fields'].get('enrollment_end', '0000-00-00T00:00:00Z')
             enrollment_start = datestr(enrollment_start) if type(enrollment_start) is datetime.datetime else enrollment_start
-            enrollment_end = datestr(enrollment_end) if type(enrollment_end) is datetime.datetime else enrollment_end
+            enrollment_end   = datestr(enrollment_end) if type(enrollment_end) is datetime.datetime else enrollment_end
             
             try:
                 grade_policy = str(definition['fields'].get('grading_policy').get('GRADER', 'NA'))
-                certs_policy = ("minimum_grade_credit: %s certificate_policy: " % block['fields'].get('minimum_grade_credit', 'NA')) + str(definition['fields'].get('grading_policy').get('GRADE_CUTOFFS', 'NA'))
+                certs_policy = ("minimum_grade_credit: %s certificate_policy: " %\
+                                block['fields'].get('minimum_grade_credit', 'NA')) +\
+                                str(definition['fields'].get('grading_policy').get('GRADE_CUTOFFS', 'NA'))
             except AttributeError:
                 grade_policy = 'NA'
                 certs_policy = 'NA'
                         
-            data = ("%s/%s/%s" % (course['org'], course['course'], course['run']), # course_display_name
+            data = (cdn, # course_display_name
                     block['fields']['display_name'], # course_catalog_name
-                    start_date, # start_date
-                    end_date,   # end_date
                     academic_year, # academic_year
                     quarter, # quarter
-                    self.isInternal("", course['org']), # is_internal
+                    self.isInternal(course,block), # is_internal
                     enrollment_start, # enrollment_start
+                    start_date, # start_date
                     enrollment_end, # enrollment_end
+                    end_date,   # end_date
                     grade_policy, # grade_policy
                     certs_policy # certs_policy
                     )
@@ -826,6 +902,27 @@ class ModulestoreExtractor(MySQLDB):
 
     # ----------------------- Utilities -------------------
 
+
+    #-------------------------
+    # is_test_name
+    #--------------
+
+    def is_test_name(self, course_display_name):
+        '''
+        Given a course name, return True if
+        it appears to be the name of aa test 
+        course.
+        '''
+
+        if TEST_COURSE_NAME_PATTERN.search(course_display_name) is not None:
+            return True
+        else:
+            return False
+
+
+    #-------------------------
+    # __loadToSQL
+    #--------------
 
     def __loadToSQL(self, table_name, columns, arr_of_tuples):
         '''
@@ -864,7 +961,7 @@ class ModulestoreExtractor(MySQLDB):
     #--------------
         
     def logError(self, msg):
-        self.logger.error(msg)
+        self.logger.error('***** ' + msg)
     
     #-------------------------
     # logWarn
@@ -885,7 +982,31 @@ and fills tables CourseInfo, EdxProblem, and EdxVideo.'''
                         help='print operational info to log.',
                         dest='verbose',
                         action='store_true');
+    parser.add_argument('to_load',
+                        action='store',
+			nargs='*',
+			default='all',
+			choices=['courseinfo',
+			         'edxproblem',
+                     'edxvideo',
+                     'all'
+                     ],
+                     help='which table to extract from modulestore. \n' +\
+                          'Use any or none of these. If none: extract all three.\n')
                         
-    args = parser.parse_args();                        
-    extractor = ModulestoreExtractor(verbose=args.verbose)
+    args = parser.parse_args();
+
+    # Ensure that tables-to-load info is an array:
+
+    if args.to_load == 'all' or 'all' in args.to_load:
+        to_load = ['courseinfo', 'edxproblem', 'edxvideo']
+    elif type(args.to_load) == list:
+        to_load = args.to_load
+    else:
+        to_load = [args.to_load]
+      
+    extractor = ModulestoreExtractor(edxproblem=True if 'edxproblem' in to_load else False,
+				     edxvideo=True if 'edxvideo' in to_load else False,
+				     courseinfo=True if 'courseinfo' in to_load else False,
+				     verbose=args.verbose)
     extractor.export()

@@ -58,9 +58,9 @@ class QualtricsExtractor(MySQLDB):
         self.lookup = IpCountryDict()
 
         #************
-        #MySQLDB.__init__(self, db="EdxQualtrics", user=dbuser, passwd=dbpass)
+        MySQLDB.__init__(self, db="EdxQualtrics", user=dbuser, passwd=dbpass)
         #******MySQLDB.__init__(self, port=3307, db="EdxQualtrics", user=dbuser, passwd=dbpass)
-        MySQLDB.__init__(self, port=3307,  db="EdxQualtrics", user=dbuser, passwd=dbpass)
+        #MySQLDB.__init__(self, port=3307,  db="EdxQualtrics", user=dbuser, passwd=dbpass)
         #************
 
 ## Database setup helper methods for client
@@ -131,7 +131,7 @@ class QualtricsExtractor(MySQLDB):
                             """)
 
         respondentView = ("""
-                            CREATE VIEW IF NOT EXISTS `RespondentMetadata` (
+                            CREATE OR REPLACE VIEW `RespondentMetadata`
                                 (SurveyId, ResponseId, anon_screen_name, Country, StartDate, EndDate)
                             AS SELECT
                                 SurveyID AS SurveyId,
