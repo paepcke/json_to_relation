@@ -191,36 +191,145 @@ echo "LATEST_DATE in current ActivityGrade: '$LATEST_DATE'" | tee --append $LOG_
 #     o cronRefreshActivityGradeCrTable.sql and
 #     o addAnonToActivityGradeTable.py
       
-echo `date`": About to query for courseware_studentmodule"  | tee --append $LOG_FILE
+# Output just created date and course name from
+# courseware_studentmodule to CSV:
+
+TMP_FILE=$(mktemp /tmp/removeTestCourses_XXXXXXXXXXX.csv)
+
+# But at this point, remove file so that MySQL won't complain about
+# its existence. This is a race condition if we run this script in
+# multiple simultaneous copies, which we won't:
+
+rm ${TMP_FILE}
+
+# Ensure that at least the temporary clean-up .csv file is removed
+# on exit (cleanly or otherwise):
+
+function cleanup {
+
+    # The $TMP_FILE is writen by MySQL, so
+    # this user cannot remove it from /tmp,
+    # which generally has the sticky bit set
+    # (ls -l shows .......t). So only owner
+    # can write even though rw for all:
+    
+    #if [[ -e ${TMP_FILE} ]]
+    #then
+    #    rm ${TMP_FILE}
+    #fi
+    
+    if [[ -e ${CLEANED_FILE} ]]
+    then
+        rm ${CLEANED_FILE}
+    fi
+}
+
+trap cleanup EXIT
+
+# Export from courseware_studentmodule:
+# test courses:
+
+read -rd '' TBL_EXPORT_CMD <<EOF
+SELECT created,course_id FROM edxprod.courseware_studentmodule
+  where modified > '${LATEST_DATE}'
+  INTO OUTFILE '${TMP_FILE}'
+  FIELDS TERMINATED BY "," OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n';
+EOF
+
+#***********
+echo "TBL_EXPORT_CMD: ${TBL_EXPORT_CMD}"
+#***********
+
+echo `date`": Export new created/course_id pairs from courseware_studentmodule..."  | tee --append $LOG_FILE
+if [[ $MYSQL_VERSION == '5.6+' ]]
+then
+    mysql --login-path=root -e "$TBL_EXPORT_CMD"
+else
+    if [ -z $MYSQL_PWD ]
+    then
+        mysql -u $USERNAME -e "$TBL_EXPORT_CMD"
+    else
+        mysql -u $USERNAME -p$MYSQL_PWD -e "$TBL_EXPORT_CMD"
+    fi
+fi
+echo `date`": Done exporting new created/course_id pairs from courseware_studentmodule."  | tee --append $LOG_FILE
+
+# Use AWK to filter out the created-date/course-name pairs
+# in which the course name is a test file.
+# Create a temporary .csv file name for AWK to write the
+redacted result to:
+
+CLEANED_FILE=/tmp/$(basename ${TMP_FILE} .csv)_Cleaned.csv
+
+#*********
+echo "CLEANED_FILE: '${CLEANED_FILE}'"
+#*********
+
+# Pump the dirty .csv file through AWK into the new .csv file:
+echo `date`": Using AWK to remove entries for test courses..."  | tee --append $LOG_FILE
+cat ${TMP_FILE} | awk -v COURSE_NAME_INDEX=${CRSE_NAME_INDEX} -f ${CURR_SCRIPTS_DIR}/removeTestCourses.awk > ${CLEANED_FILE}
+echo `date`": Done using AWK to remove entries for test courses."  | tee --append $LOG_FILE
+
+# Load the new file into a newly created
+# table:
+
+read -rd '' TBL_IMPORT_CMD <<EOF
+DROP TABLE if exists TMP_FILTER_TABLE;
+CREATE TABLE TMP_FILTER_TABLE (modified datetime, course_display_name varchar(255);
+LOAD DATA LOCAL INFILE '${CLEANED_FILE}'
+  INTO TABLE TMP_FILTER_TABLE
+   FIELDS TERMINATED BY "," OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n';
+EOF
+
+echo `date`": Loading valid created/course-name pairs..."  | tee --append $LOG_FILE
+if [[ $MYSQL_VERSION == '5.6+' ]]
+then
+    mysql --login-path=root -e "$TBL_IMPORT_CMD"
+else
+    if [ -z $MYSQL_PWD ]
+    then
+        mysql -u $USERNAME -e "$TBL_IMPORT_CMD"
+    else
+        mysql -u $USERNAME -p$MYSQL_PWD -e "$TBL_IMPORT_CMD"
+    fi
+fi
+
+echo `date`": Done loading valid created/course-name pairs."  | tee --append $LOG_FILE
+
+echo `date`": About to pull from courseware_studentmodule"  | tee --append $LOG_FILE
 
 # Create a temporary table to hold the result;
 # the table's name 'StudentmoduleExcerpt' is significant;
 # script addAnonToActivityGradeTable.py assumes
 # this name:
 
-tmpTableCmd="SET @emptyStr:=''; \
-SET @floatPlaceholder:=-1.0; \
-SET @intPlaceholder:=-1; \
-USE edxprod; \
-DROP TABLE IF EXISTS StudentmoduleExcerpt; \
-CREATE TABLE StudentmoduleExcerpt (activity_grade_id INT) ENGINE=MyISAM \
-SELECT id AS activity_grade_id, \
-       student_id, \
-       course_id AS course_display_name, \
-       grade, \
-       max_grade, \
-       @floatPlaceholder AS percent_grade, \
-       state AS parts_correctness, \
-       @emptyStr AS answers, \
-       @intPlaceholder AS num_attempts, \
-       created AS first_submit, \
-       modified AS last_submit, \
-       module_type, \
-       @emptyStr AS anon_screen_name, \
-       @emptyStr AS resource_display_name, \
+read -rd '' tmpTableCmd <<EOF
+tmpTableCmd="SET @emptyStr:='';
+SET @floatPlaceholder:=-1.0;
+SET @intPlaceholder:=-1;
+USE edxprod;
+DROP TABLE IF EXISTS StudentmoduleExcerpt;
+CREATE TABLE StudentmoduleExcerpt (activity_grade_id INT) ENGINE=MyISAM
+SELECT id AS activity_grade_id,
+       student_id,
+       course_id AS course_display_name,
+       grade,
+       max_grade,
+       @floatPlaceholder AS percent_grade,
+       state AS parts_correctness,
+       @emptyStr AS answers,
+       @intPlaceholder AS num_attempts,
+       created AS first_submit,
+       modified AS last_submit,
+       module_type,
+       @emptyStr AS anon_screen_name,
+       @emptyStr AS resource_display_name,
        module_id
-FROM edxprod.courseware_studentmodule \
-WHERE modified > '"$LATEST_DATE"'; "
+FROM TMP_FILTER_TABLE LEFT JOIN edxprod.courseware_studentmodule
+     ON TMP_FILTER_TABLE.modified = edxprod.courseware_studentmodule.modified
+    AND TMP_FILTER_TABLE.course_display_name = edxprod.courseware_studentmodule.course_id;
+DROP TABLE if exists TMP_FILTER_TABLE;
+EOF
 
 echo `date`": About to create auxiliary table StudentmoduleExcerpt in prep of addAnonToActivityGradeTable.py..."  | tee --append $LOG_FILE
 if [[ $MYSQL_VERSION == '5.6+' ]]
