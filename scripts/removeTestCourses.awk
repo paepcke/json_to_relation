@@ -1,3 +1,5 @@
+#! /bin/awk -f
+
 #------------------------------------------
 #
 # AWK script to remove .csv file lines that
@@ -15,7 +17,6 @@
 #          escapes.
 #------------------------------------------
 
-#! /bin/awk -f
    { FS = "," };
    { $"${COURSE_NAME_INDEX}" = tolower($"${COURSE_NAME_INDEX}") }
    $"${COURSE_NAME_INDEX}"   ~ /^[0-9]/ {next}
