@@ -37,7 +37,7 @@
 #          it knows naught of text columns that contain commas.
 #          Use only for tables that have no commas in their columns.
 #          To fix this shortcoming: edit removeTestCourses.awk.
-
+#
 # Possible Test table:
 # 
 #  SELECT * FROM VideoInteraction;
@@ -98,6 +98,9 @@ fi
 # echo "NEW_TBL_NAME    : ${NEW_TBL_NAME}"
 # echo "SELECT_CONDITION: ${SELECT_CONDITION}"
 #****************
+
+# Where this script is running:
+CURR_SCRIPTS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Ensure that src and dest have database names:
 # such as MyDb.myTable:
@@ -169,7 +172,7 @@ CLEANED_FILE=/tmp/$(basename ${TMP_FILE} .csv)_Cleaned.csv
 #*********
 
 # Pump the dirty .csv file through AWK into the new .csv file:
-cat ${TMP_FILE} | awk -v COURSE_NAME_INDEX=${CRSE_NAME_INDEX} -f removeTestCourses.awk > ${CLEANED_FILE}
+cat ${TMP_FILE} | awk -v COURSE_NAME_INDEX=${CRSE_NAME_INDEX} -f ${CURR_SCRIPTS_DIR}/removeTestCourses.awk > ${CLEANED_FILE}
 
 # Load the new file into a newly created
 # table:
