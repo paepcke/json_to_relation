@@ -41,10 +41,13 @@ source /home/dataman/Code/json_to_relation/scripts/cronRefreshModuleStore.sh >> 
 
 source /home/dataman/Code/json_to_relation/scripts/cronRefreshActivityGrade.sh >> /home/dataman/cronlog/cronRefreshActivityGrade.txt 2>&1
 
+# ~8 min:
 source /home/dataman/Code/json_to_relation/scripts/cronRefreshGrades.sh >> /home/dataman/cronlog/cronRefreshGrades.txt 2>&1
 
+# ~ 3hrs:
 /home/dataman/Code/json_to_relation/scripts/cronRefreshUserCountryTable.py >> /home/dataman/cronlog/cronRefreshUserCountryTable.txt 2>&1
 
+# ~17min:
 source /home/dataman/Code/json_to_relation/scripts/cronRefreshEdxForum.sh >> /home/dataman/cronlog/cronRefreshEdxForum.txt 2>&1
 
 # 2hrs:15min:
