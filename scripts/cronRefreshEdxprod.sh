@@ -26,6 +26,8 @@
 #   1. In array variable TABLE, add name of new table
 #
 # This script uses service script extractTableFromDump.sh
+# and incremental_update_CWSMH.sh.
+#
 # Stats:
 #    courseware_studentmodule loading: ~1hr45min (w/o index building)
 
@@ -206,7 +208,7 @@ if [[ COPY_FROM_PLATFORM_BACKUP -eq 1 ]]
 then
     echo `date`": Begin copying edxapp-latest.sql.gz from backup server."
     scp $EDX_PLATFORM_DUMP_MACHINE:/data/dump/edxapp-latest.sql.gz \
-	$EDXPROD_DUMP_DIR/
+      	$EDXPROD_DUMP_DIR/
     echo `date`": Done copying edxapp-latest.sql.gz from backup server."
 fi
 
@@ -232,6 +234,15 @@ DUMP_FILE=$EDXPROD_DUMP_DIR/edxapp-latest.sql.gz
 
 for TABLE in ${TABLES[@]} 
 do
+    if [[ $TABLE == 'courseware_studentmodulehistory' ]]
+    then
+        # courseware_studentmodulehistory is updated incrementally.
+        # Handle that in a different script.
+        $currScriptsDir/incremental_update_CWSMH.sh
+        # Next table:
+        continue
+    fi
+
     echo `date`": Extracting table $TABLE."  | tee --append $LOG_FILE
     $currScriptsDir/extractTableFromDump.sh $DUMP_FILE $TABLE > $EDXPROD_DUMP_DIR/$TABLE.sql
 
@@ -246,29 +257,29 @@ do
     # load that tmp file, rather than the original:
     if [[ $TABLE == 'courseware_studentmodule' ]]
     then
-	echo "Removing PRIMARY/UNIQUE/CONSTRAINTS decls from courseware_studentmodule.sql file..." | tee --append $LOG_FILE
-	cat $EDXPROD_DUMP_DIR/courseware_studentmodule.sql | awk -f $currScriptsDir/stripUniquePrimaryConstraintsFromCreateTable.awk \
+	      echo "Removing PRIMARY/UNIQUE/CONSTRAINTS decls from courseware_studentmodule.sql file..." | tee --append $LOG_FILE
+	      cat $EDXPROD_DUMP_DIR/courseware_studentmodule.sql | awk -f $currScriptsDir/stripUniquePrimaryConstraintsFromCreateTable.awk \
                   > $EDXPROD_DUMP_DIR/courseware_studentmoduleNoPrimaryIndex.sql
         TABLE=courseware_studentmoduleNoPrimaryIndex
-	echo `date`": Done adding the PRIMARY/UNIQUE/CONSTRAINTS removal." | tee --append $LOG_FILE
+	      echo `date`": Done adding the PRIMARY/UNIQUE/CONSTRAINTS removal." | tee --append $LOG_FILE
     fi
 
     # Same with courseware_studentmodulehistory:
     if [[ $TABLE == 'courseware_studentmodulehistory' ]]
     then
-	echo "Removing PRIMARY/UNIQUE/CONSTRAINTS decls from courseware_studentmodule.sql file..." | tee --append $LOG_FILE
-	cat $EDXPROD_DUMP_DIR/courseware_studentmodulehistory.sql | awk -f $currScriptsDir/stripUniquePrimaryConstraintsFromCreateTable.awk \
+	      echo "Removing PRIMARY/UNIQUE/CONSTRAINTS decls from courseware_studentmodule.sql file..." | tee --append $LOG_FILE
+	      cat $EDXPROD_DUMP_DIR/courseware_studentmodulehistory.sql | awk -f $currScriptsDir/stripUniquePrimaryConstraintsFromCreateTable.awk \
                   > $EDXPROD_DUMP_DIR/courseware_studentmodulehistoryNoPrimaryIndex.sql
         TABLE=courseware_studentmodulehistoryNoPrimaryIndex
-	echo `date`": Done adding the PRIMARY/UNIQUE/CONSTRAINTS removal." | tee --append $LOG_FILE
+	      echo `date`": Done adding the PRIMARY/UNIQUE/CONSTRAINTS removal." | tee --append $LOG_FILE
     fi
 
     echo `date`": Loading table $TABLE."  | tee --append $LOG_FILE
     if [[ $MYSQL_VERSION == '5.6+' ]]
     then
-	mysql --login-path=root edxprod < $EDXPROD_DUMP_DIR/$TABLE.sql
+	      mysql --login-path=root edxprod < $EDXPROD_DUMP_DIR/$TABLE.sql
     else
-	mysql -u root -p$MYSQL_PASSWD edxprod < $EDXPROD_DUMP_DIR/$TABLE.sql
+	      mysql -u root -p$MYSQL_PASSWD edxprod < $EDXPROD_DUMP_DIR/$TABLE.sql
     fi  
 
 done
