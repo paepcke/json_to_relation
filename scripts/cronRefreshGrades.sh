@@ -335,6 +335,88 @@ else
     fi
 fi
 
+# ------------------ Build the universal learner ID table -------------------
+
+
+# ~16min:
+read -rd '' UniversalIdXlateCmd <<EOF
+DROP TABLE IF EXISTS LearnerIdXlation;
+CREATE TABLE LearnerIdXlation (anon_screen_name varchar(40),
+                               user_int_id int,
+                               lti_global_id varchar(32),
+                               lti_course_dependent_id varchar(32),
+                               course_display_name varchar(255)
+                              ) ENGINE MyISAM;
+
+INSERT INTO LearnerIdXlation(anon_screen_name,
+                             user_int_id,
+                             lti_global_id,
+                             lti_course_dependent_id,
+                             course_display_name
+                            )
+SELECT distinct anon_screen_name,
+       user_int_id,
+       global_lti_id AS lti_global_id,
+       lti_id AS lti_course_dependent_id,
+       student_anonymoususerid.course_id as course_display_name
+  FROM EdxPrivate.UserGrade LEFT JOIN edxprod.Lti2Anon using(anon_screen_name)
+    LEFT JOIN edxprod.Lti2GlobalLti
+        ON lti_id = course_dependent_lti_id
+    LEFT JOIN edxprod.student_anonymoususerid
+        ON lti_id = anonymous_user_id
+EOF
+
+if [ ! -z $MYSQL_PASSWD ]
+then
+    echo `date`": About to create and fill LearnerIdXlate table..." | tee --append $LOG_FILE
+    if [[ $MYSQL_VERSION == '5.6+' ]]
+    then
+	mysql --login-path=root EdxPrivate -e "${UniversalIdXlateCmd}"
+    else
+	mysql -u $MYSQL_USERNAME -p$MYSQL_PASSWD EdxPrivate-e "${UniversalIdXlateCmd}"
+    fi
+    echo `date`": Done creating and filling LearnerIdXlate table." | tee --append $LOG_FILE
+else
+    echo `date`": About to create and fill LearnerIdXlate table..." | tee --append $LOG_FILE
+    if [[ $MYSQL_VERSION == '5.6+' ]]
+    then
+	mysql --login-path=root EdxPrivate -e "${UniversalIdXlateCmd}"
+    else
+	mysql -u $MYSQL_USERNAME EdxPrivate -e "${UniversalIdXlateCmd}"
+    fi
+    echo `date`": Done creating and filling LearnerIdXlate table." | tee --append $LOG_FILE
+fi
+
+read -rd '' IndxCmd <<EOF
+create index anonIndx on LearnerIdXlation(anon_screen_name);
+create index usrIntIndx on LearnerIdXlation(user_int_id);
+create index ltiGlbIndx on LearnerIdXlation(lti_global_id);
+create index ltiCrsDpntIndx on LearnerIdXlation(lti_course_dependent_id);
+create index crseIndx on LearnerIdXlation(course_display_name);
+EOF
+
+if [ ! -z $MYSQL_PASSWD ]
+then
+    echo `date`": About to index LearnerIdXlate columns..." | tee --append $LOG_FILE
+    if [[ $MYSQL_VERSION == '5.6+' ]]
+    then
+	mysql --login-path=root EdxPrivate -e "${IndxCmd}"
+    else
+	mysql -u $MYSQL_USERNAME -p$MYSQL_PASSWD EdxPrivate-e "${IndxCmd}"
+    fi
+    echo `date`": Done indexing LearnerIdXlate columns." | tee --append $LOG_FILE
+else
+    echo `date`": About to index LearnerIdXlate columns..." | tee --append $LOG_FILE
+    if [[ $MYSQL_VERSION == '5.6+' ]]
+    then
+	mysql --login-path=root EdxPrivate -e "${IndxCmd}"
+    else
+	mysql -u $MYSQL_USERNAME EdxPrivate -e "${IndxCmd}"
+    fi
+    echo `date`": Done indexing LearnerIdXlate columns." | tee --append $LOG_FILE
+fi
+
+
 # ------------------ Cleanup -------------------
 
 rm $targetFile

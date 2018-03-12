@@ -195,8 +195,11 @@ then
     for (( i=0; i<${#INCREMENTALS_DATES[@]}; i++ ))
     do
         FILE_DATE=${INCREMENTALS_DATES[i]}
+        #**********
+        echo "FILE_DATE: '${FILE_DATE}'"
+        #**********
         # Is incremental file older than the most recently loaded file?
-        if [[ ${MOST_RECENT} >= ${FILE_DATE} ]]
+        if [[ ${MOST_RECENT} -ge ${FILE_DATE} ]]
         then
             # Already loaded this file:
             continue
@@ -210,6 +213,43 @@ then
         scp ${EDX_PLATFORM_DUMP_MACHINE}:${REMOTE_BACKUP_DIR}/${FILENAME} ${EDXPROD_DUMP_DIR}
 
         # Load this file:
-        zcat ${EDXPROD_DUMP_DIR}/{FILENAME} | mysql --login-path=${MYSQL_USERNAME} edxprod
+        echo `date`": Loading file ${FILENAME}..."
+        zcat ${EDXPROD_DUMP_DIR}/${FILENAME} | mysql --login-path=${MYSQL_USERNAME} edxprod
+        if [[ $? != 0 ]]
+        then
+            echo `date`": ********* Could not load ${FILENAME}."
+            exit 1
+        else
+            echo `date`": Done loading ${FILENAME}."
+        fi
 
+        #**********
+        echo `date`": Would insert new entries..."
+        
+        read -rd '' HISTORY_INSERT_CMD <<EOF
+        INSERT IGNORE INTO courseware_studentmodulehistory
+        select id,student_module_id, version, created, state, grade, max_grade,course_id
+          from coursewarehistoryextended_studentmodulehistoryextended;
+EOF
+
+        echo "TMP: HISTORY_INSERT_CMD: '${HISTORY_INSERT_CMD}'"
+        #****mysql --login-path=${MYSQL_USERNAME} edxprod -e "${HISTORY_INSERT_CMD}"
+
+
+        DATE_WITH_DASHES=$( echo ${FILE_DATE} | sed -rn 's/([0-9]{4,4})([0-9]{2,2})([0-9]{2,2})/\1-\2-\3/p' )
+        read -rd '' DATE_INSERT_CMD <<EOF
+        INSERT INTO CrseWareStdntModHistLoadDates VALUES ('${DATE_WITH_DASHES}');
+EOF
+        echo "TMP: DATE_INSERT_CMD: ${DATE_INSERT_CMD}"
+
+        echo `date`": Would insert update of latest increment-date record..."
+
+        #****mysql --login-path=${MYSQL_USERNAME} edxprod -e "${DATE_INSERT_CMD}"
+
+        echo `date`": Dropping incremental table..."
+        mysql --login-path=${MYSQL_USERNAME} edxprod -e "DROP TABLE coursewarehistoryextended_studentmodulehistoryextended;"
+        echo `date`": Done dropping incremental table..."
+        
+        #**********
+    done
 fi
