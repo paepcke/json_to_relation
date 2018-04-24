@@ -66,7 +66,7 @@ class IpCountryStateDict(unittest.TestCase):
         self.ipToCountryDict = {currKey : []}
         self.twoLetterKeyedDict = {}
         if ipTablePath is None:
-            tableSubPath = os.path.join('data/', 'ipToCountrySoftware77DotNet.csv')
+            tableSubPath = os.path.join('data/', 'IP2LOCATION-LITE-DB3.CSV')
             ipTablePath = os.path.join(os.path.dirname(__file__), tableSubPath)
         with open(ipTablePath, 'r') as fd:
             for line in csv.reader(fd):
