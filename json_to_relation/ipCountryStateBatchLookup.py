@@ -10,7 +10,7 @@ import os
 import sys
 
 from ipToCountryState import IpCountryStateDict
-
+                            
 
 class IpCountryStateBatchLookup(object):
     '''
@@ -115,10 +115,11 @@ class IpCountryStateBatchLookup(object):
         # The actual work:        
         for row in rows:
             try:
-                (twoLetter,threeLetter,country) = self.country_dict.lookupIP(row[ip_position]) #@UnusedVariable
+                (twoLetter,country,region,city) = \
+                    self.country_dict.lookupIP(row[ip_position]) #@UnusedVariable
             except ValueError:
                 country = 'Bad ip %s' % row[ip_position]
-            row.append(country)
+            row.extend([twoLetter,country,region,city])
             the_output_file.write(','.join(row) + '\n')
         
         # If output_file parameter was a string, we
@@ -129,16 +130,20 @@ class IpCountryStateBatchLookup(object):
 if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(description='Look up countries from many IP addresses in bulk.')
-    parser.add_argument('--passthrough_lines', type=int,
+    parser.add_argument('--passthrough_lines', 
+                        type=int,
                         default=0,
                     help="Number of header lines to copy to output without looking for an IP address. " +
-                          "String 'country' will be added to each line. Default is 0.")
+                          "String 'country,region,city' will be added to each line. Default is 0.")
     parser.add_argument('infile', type=str,
                     help='CSV file path with rows that include an IP addresss column')
     parser.add_argument('ipPos', type=int,
                     help='Index of column with IP address (0-origin)')
 
-    args = parser.parse_args()
-    resolver = IpCountryStateDict(args.infile, args.ipPos, ignore_lines=args.passthrough_lines)
+#****    args = parser.parse_args()
+#****    resolver = IpCountryStateDict(args.infile, args.ipPos, ignore_lines=args.passthrough_lines)
+    resolver = IpCountryStateBatchLookup('allIPsApril_23_2018.txt', 0, ignore_lines=1)
+        
+
     
             
