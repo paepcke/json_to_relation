@@ -30,9 +30,6 @@ import csv
 import os
 import unittest
 
-from pip._vendor.pyparsing import dblQuotedString
-
-
 class IpCountryStateDict(unittest.TestCase):
     '''
     Implements lookup mapping IP to country.
@@ -40,10 +37,9 @@ class IpCountryStateDict(unittest.TestCase):
     START_IP_POS = 0
     END_IP_POS   = 1
     TWO_LETTER_POS = 2
-    THREE_LETTER_POS = 3
-    COUNTRY_POS = 4
-    STATE_POS = 5
-    CITY_POS = 6
+    COUNTRY_POS = 3
+    STATE_POS = 4
+    CITY_POS = 5
 
     def __init__(self, ipTablePath=None):
         '''
@@ -124,12 +120,11 @@ class IpCountryStateDict(unittest.TestCase):
     def lookupIP(self,ipStr):
         '''
         Top level lookup: pass an IP string, get a
-        triplet: two-letter country code, three-letter country code,
-        and full country.
+        four-tuple: two-letter country code, full country name, region, and city:
         :param ipStr: string of an IP address
         :type ipStr: string
-        :return: 2-letter country code, 3-letter country code, and country string
-        :rtype: (str,str,str)
+        :return: 2-letter country code, country, region, city
+        :rtype: (str,str,str,str)
         :raise ValueError: when given IP address is None
         :raise KeyError: when the country for the given IP is not found. 
         '''
@@ -156,8 +151,10 @@ class IpCountryStateDict(unittest.TestCase):
             if ipNum > ipInfo[IpCountryStateDict.END_IP_POS]:
                 continue
             return(ipInfo[IpCountryStateDict.TWO_LETTER_POS], 
-                   ipInfo[IpCountryStateDict.THREE_LETTER_POS],
-                   ipInfo[IpCountryStateDict.COUNTRY_POS])
+                   ipInfo[IpCountryStateDict.COUNTRY_POS],
+                   ipInfo[IpCountryStateDict.STATE_POS],
+                   ipInfo[IpCountryStateDict.CITY_POS],
+                   )
         # If we get here, the IP is in a range in which
         # the IP-->Country table has a hole:
         return('ZZ','ZZZ','unknown')
@@ -196,8 +193,8 @@ if __name__ == '__main__':
     
     #lookup = IpCountryStateDict('ipToCountrySoftware77DotNet.csv')
     lookup = IpCountryStateDict(dbPath)
-    (twoLetter,threeLetter,country) = lookup.lookupIP(ipAddr)
-    print('%s; %s; %s' % (twoLetter,threeLetter,country))
+    (twoLetter,country,region,city) = lookup.lookupIP(ipAddr)
+    print('%s; %s; %s; %s' % (twoLetter,country,region,city))
     
     #(ip,lookupKey) = lookup.ipStrToIntAndKey('171.64.64.64')
     #(twoLetter,threeLetter,country) = lookup.lookupIP('171.64.75.96')

@@ -46,7 +46,7 @@ class IpBatchLookup(object):
         
         # Get lines to pass through, and array of row-arrays:
         (headers, rows) = self.read_csvlines(input_file, ignore_lines)
-        self.write_countries(headers, rows, ip_position, output_file)
+        self.write_country_state_city(headers, rows, ip_position, output_file)
     
     def read_csvlines(self, input_file, ignore_lines):
         '''
@@ -81,7 +81,7 @@ class IpBatchLookup(object):
             rows = [row for row in csv_reader]
             return (headers, rows)
             
-    def write_countries(self, header_rows, rows, ip_position, output_file):
+    def write_country_state_city(self, header_rows, rows, ip_position, output_file):
         '''
         The actual lookup:
         
