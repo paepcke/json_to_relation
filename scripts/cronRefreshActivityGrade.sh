@@ -173,6 +173,13 @@ else
     fi
 fi
 
+if [[ $? != 0 ]]
+then
+    echo `date`": Error reading latest last_submit field from ActivityGrade."  | tee --append $LOG_FILE
+    exit 1
+fi
+
+
 if [ "${LATEST_DATE}" == "NULL" ]
 then
     # No dated entry in ActivityGrade at all (likely table is empty):
@@ -240,7 +247,7 @@ EOF
 echo "TBL_EXPORT_CMD: ${TBL_EXPORT_CMD}"
 #***********
 
-echo `date`": Export new created/course_id pairs from courseware_studentmodule..."  | tee --append $LOG_FILE
+echo `date`": Export new modified/course_id pairs from courseware_studentmodule..."  | tee --append $LOG_FILE
 if [[ $MYSQL_VERSION == '5.6+' ]]
 then
     mysql --login-path=root -e "$TBL_EXPORT_CMD"
@@ -252,12 +259,19 @@ else
         mysql -u $USERNAME -p$MYSQL_PWD -e "$TBL_EXPORT_CMD"
     fi
 fi
-echo `date`": Done exporting new created/course_id pairs from courseware_studentmodule."  | tee --append $LOG_FILE
+
+if [[ $? != 0 ]]
+then
+    echo `date`": Error during modified/course-name export from courseware_studentmodule."  | tee --append $LOG_FILE
+    exit 1
+fi
+
+echo `date`": Done exporting new modified/course_id pairs from courseware_studentmodule."  | tee --append $LOG_FILE
 
 # Use AWK to filter out the created-date/course-name pairs
 # in which the course name is a test file.
 # Create a temporary .csv file name for AWK to write the
-redacted result to:
+# redacted result to:
 
 CLEANED_FILE=/tmp/$(basename ${TMP_FILE} .csv)_Cleaned.csv
 
@@ -267,21 +281,22 @@ echo "CLEANED_FILE: '${CLEANED_FILE}'"
 
 # Pump the dirty .csv file through AWK into the new .csv file:
 echo `date`": Using AWK to remove entries for test courses..."  | tee --append $LOG_FILE
-cat ${TMP_FILE} | awk -v COURSE_NAME_INDEX=${CRSE_NAME_INDEX} -f ${CURR_SCRIPTS_DIR}/removeTestCourses.awk > ${CLEANED_FILE}
+cat ${TMP_FILE} | awk -v COURSE_NAME_INDEX=${CRSE_NAME_INDEX} -f ${currScriptsDir}/removeTestCourses.awk > ${CLEANED_FILE}
 echo `date`": Done using AWK to remove entries for test courses."  | tee --append $LOG_FILE
 
 # Load the new file into a newly created
 # table:
 
 read -rd '' TBL_IMPORT_CMD <<EOF
+USE edxprod;
 DROP TABLE if exists TMP_FILTER_TABLE;
-CREATE TABLE TMP_FILTER_TABLE (modified datetime, course_display_name varchar(255);
+CREATE TABLE TMP_FILTER_TABLE (modified datetime, course_display_name varchar(255));
 LOAD DATA LOCAL INFILE '${CLEANED_FILE}'
   INTO TABLE TMP_FILTER_TABLE
    FIELDS TERMINATED BY "," OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n';
 EOF
 
-echo `date`": Loading valid created/course-name pairs..."  | tee --append $LOG_FILE
+echo `date`": Loading valid modified/course-name pairs..."  | tee --append $LOG_FILE
 if [[ $MYSQL_VERSION == '5.6+' ]]
 then
     mysql --login-path=root -e "$TBL_IMPORT_CMD"
@@ -294,17 +309,26 @@ else
     fi
 fi
 
-echo `date`": Done loading valid created/course-name pairs."  | tee --append $LOG_FILE
+if [[ $? != 0 ]]
+then
+    echo `date`": Error during modified/course-name pairs"  | tee --append $LOG_FILE
+    exit 1
+fi
+
+
+echo `date`": Done loading valid modified/course-name pairs."  | tee --append $LOG_FILE
 
 echo `date`": About to pull from courseware_studentmodule"  | tee --append $LOG_FILE
 
 # Create a temporary table to hold the result;
 # the table's name 'StudentmoduleExcerpt' is significant;
 # script addAnonToActivityGradeTable.py assumes
-# this name:
+# this name. The @foo names below sneak in columns
+# that are not in courseware_studentmodule where we
+# pull the courses. 
 
 read -rd '' tmpTableCmd <<EOF
-tmpTableCmd="SET @emptyStr:='';
+SET @emptyStr:='';
 SET @floatPlaceholder:=-1.0;
 SET @intPlaceholder:=-1;
 USE edxprod;
@@ -320,14 +344,14 @@ SELECT id AS activity_grade_id,
        @emptyStr AS answers,
        @intPlaceholder AS num_attempts,
        created AS first_submit,
-       modified AS last_submit,
+       courseware_studentmodule.modified AS last_submit,
        module_type,
        @emptyStr AS anon_screen_name,
        @emptyStr AS resource_display_name,
        module_id
-FROM TMP_FILTER_TABLE LEFT JOIN edxprod.courseware_studentmodule
-     ON TMP_FILTER_TABLE.modified = edxprod.courseware_studentmodule.modified
-    AND TMP_FILTER_TABLE.course_display_name = edxprod.courseware_studentmodule.course_id;
+FROM TMP_FILTER_TABLE LEFT JOIN courseware_studentmodule
+     ON TMP_FILTER_TABLE.modified = courseware_studentmodule.modified
+    AND TMP_FILTER_TABLE.course_display_name = courseware_studentmodule.course_id;
 DROP TABLE if exists TMP_FILTER_TABLE;
 EOF
 
@@ -338,11 +362,18 @@ then
 else
     if [ -z $MYSQL_PWD ]
     then
-        mysql -u $USERNAME -e "$tmpTableCmd"
+        mysql -u $USERNAME  -e "$tmpTableCmd"
     else
-        mysql -u $USERNAME -p$MYSQL_PWD -e "$tmpTableCmd"
+        mysql -u $USERNAME  -p$MYSQL_PWD -e "$tmpTableCmd"
     fi
 fi
+
+if [[ $? != 0 ]]
+then
+    echo `date`": Error during creation/loading of aux tbl edxprod.StudentmoduleExcerpt"  | tee --append $LOG_FILE
+    exit 1
+fi
+
 
 echo `date`": Done creating auxiliary table."  | tee --append $LOG_FILE
 
@@ -354,6 +385,12 @@ if [[ $MYSQL_VERSION == '5.6+' ]]
 then
     echo "    "`date`": Begin disable ActivityGrade indexing."  | tee --append $LOG_FILE
     mysql --login-path=root -e "ALTER TABLE Edx.ActivityGrade DISABLE KEYS;"
+    if [[ $? != 0 ]]
+    then
+        echo `date`": Error disabling indexing on ActivityGrade."  | tee --append $LOG_FILE
+        exit 1
+    fi
+
     echo "    "`date`": Done done disable ActivityGrade indexing."  | tee --append $LOG_FILE
     KEYS_DISABLED=1
 else
@@ -367,15 +404,25 @@ then
     then
 	echo "    "`date`": Begin disable ActivityGrade indexing."  | tee --append $LOG_FILE
 	mysql -u $USERNAME -w $MYSQL_PWD -e "ALTER TABLE Edx.ActivityGrade DISABLE KEYS;"
-	echo "    "`date`": Done done disable ActivityGrade indexing."  | tee --append $LOG_FILE
-    fi
-    $currScriptsDir/addAnonToActivityGradeTable.py -u $USERNAME -w $MYSQL_PWD
+        if [[ $? != 0 ]]
+        then
+            echo `date`": Error "  | tee --append $LOG_FILE
+            exit 1
+        fi
+            echo "    "`date`": Done done disable ActivityGrade indexing."  | tee --append $LOG_FILE
+        fi
+        $currScriptsDir/addAnonToActivityGradeTable.py -u $USERNAME -w $MYSQL_PWD
 else
     # Turn off indexing while bulk-adding:
     if [[ $KEYS_DISABLED == 0 ]]
     then
         echo "    "`date`": Begin disable ActivityGrade indexing."  | tee --append $LOG_FILE
 	mysql -u $USERNAME -e "ALTER TABLE Edx.ActivityGrade DISABLE KEYS;"
+        if [[ $? != 0 ]]
+        then
+            echo `date`": Error "  | tee --append $LOG_FILE
+            exit 1
+        fi
         echo "    "`date`": Done done disable ActivityGrade indexing."  | tee --append $LOG_FILE
     fi
     $currScriptsDir/addAnonToActivityGradeTable.py -u $USERNAME
@@ -394,6 +441,11 @@ else
     else
         mysql -u $USERNAME -e "ALTER TABLE Edx.ActivityGrade ENABLE KEYS;"
     fi
+fi
+if [[ $? != 0 ]]
+then
+    echo `date`": Error re-enabling indexing on ActivityGrade."  | tee --append $LOG_FILE
+    exit 1
 fi
 
 echo `date`": Done adding percent_grade, ..."  | tee --append $LOG_FILE

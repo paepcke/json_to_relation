@@ -332,7 +332,10 @@ echo `date`": Done creating true_courseenrollment."
 
 echo `date`": Creating Lti2Anon."
 newTblCmd="DROP TABLE IF EXISTS Lti2Anon;
-           CREATE TABLE Lti2Anon (lti_id varchar(32), anon_screen_name varchar(40))
+           CREATE TABLE Lti2Anon (lti_id varchar(32), 
+                                  anon_screen_name varchar(40) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL
+                                 ) 
+                               ENGINE=MyISAM
            SELECT anonymous_user_id AS lti_id, anon_screen_name
              FROM edxprod.student_anonymoususerid LEFT JOIN EdxPrivate.UserGrade 
                ON edxprod.student_anonymoususerid.user_id = EdxPrivate.UserGrade.user_int_id;
@@ -361,7 +364,7 @@ echo `date`": Done creating Lti2Anon."
 echo `date`": Creating Lti2GlobalLti."
 newTblCmd="DROP TABLE IF EXISTS Lti2GlobalLti;
 	   CREATE TABLE Lti2GlobalLti (course_dependent_lti_id varchar(32),
-	           	     	       global_lti_id varchar(32)) 
+	           	     	       global_lti_id varchar(32)) ENGINE=MyISAM
 	   SELECT anonymous_user_id AS course_dependent_lti_id, 
 	          IntIdGlobalLti.global_lti_id
 	     FROM edxprod.student_anonymoususerid,

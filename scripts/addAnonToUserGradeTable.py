@@ -33,7 +33,14 @@ source_dir.extend(sys.path)
 sys.path = source_dir
 
 from edxTrackLogJSONParser import EdXTrackLogJSONParser
-from mysqldb import MySQLDB
+
+# NOTE: I don't think the following 
+#   import of either mysqldb or pymysql_utils
+#   is needed, b/c the db is opened in __init__()
+#   but never used. Leaving it only from laziness:
+
+#from mysqldb import MySQLDB
+from pymysql_utils.pymysql_utils import MySQLDB
 
 class AnonAdder(object):
     

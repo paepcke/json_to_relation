@@ -39,7 +39,7 @@ Quarter = namedtuple('Quarter', ['start_date', 'end_date', 'quarter'])
 
 # Class variables for determining internal status of course
 SU_ENROLLMENT_DOMAIN = "shib:https://idp.stanford.edu/"
-INTERNAL_ORGS = ['ohsx', 'ohs']
+INTERNAL_ORGS = ['ohsx', 'ohs', 'oli']
 
 TEST_COURSE_NAME_PATTERN  = re.compile(r'[Ss]and[bB]ox|TESTTEST|/[tT][eE][sS][tT]/|[tT]esting|' +\
                 'DisplayTest|GSB-test|Test_course|JosephTest|LoadTest|' +\

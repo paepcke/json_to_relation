@@ -54,9 +54,7 @@ class UserCountryTableCreator(object):
                                             'country' : 'varchar(255) NOT NULL DEFAULT ""'}))
         
     def fillTable(self):
-        #*****************
-        #query = "SELECT DISTINCT anon_screen_name, ip_country FROM EventXtract"
-        #*****************
+        query = "SELECT DISTINCT anon_screen_name, ip_country FROM EventXtract"
         query_res_it = self.db.query(query)
         done = False
         # Order of columns for insert:
