@@ -140,9 +140,8 @@ if __name__ == '__main__':
     parser.add_argument('ipPos', type=int,
                     help='Index of column with IP address (0-origin)')
 
-#****    args = parser.parse_args()
-#****    resolver = IpCountryStateDict(args.infile, args.ipPos, ignore_lines=args.passthrough_lines)
-    resolver = IpCountryStateBatchLookup('allIPsApril_23_2018.txt', 0, ignore_lines=1)
+    args = parser.parse_args()
+    resolver = IpCountryStateDict(args.infile, args.ipPos, ignore_lines=args.passthrough_lines)
         
 
     
