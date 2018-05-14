@@ -152,9 +152,9 @@ class AnonAndModIDAdder(object):
                                                         ON unittest.StudentmoduleExcerpt.student_id = unittest.UserGrade.user_int_id;")
         else:
             queryIt = self.mysqldbStudModule.query("SELECT student_id AS user_int_id, \
-                                                           EdxPrivate.UserGrade.anon_screen_name \
-                                                      FROM edxprod.StudentmoduleExcerpt LEFT JOIN EdxPrivate.UserGrade \
-                                                        ON edxprod.StudentmoduleExcerpt.student_id = EdxPrivate.UserGrade.user_int_id;")
+                                                           EdxPrivate.LearnerIdXlation.anon_screen_name \
+                                                      FROM edxprod.StudentmoduleExcerpt LEFT JOIN EdxPrivate.LearnerIdXlation \
+                                                        ON edxprod.StudentmoduleExcerpt.student_id = EdxPrivate.LearnerIdXlation.user_int_id;")
         for user_int_id, anon_screen_name in queryIt:
             self.int2AnonCache[user_int_id] = anon_screen_name;
 
