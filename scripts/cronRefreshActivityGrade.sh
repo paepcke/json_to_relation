@@ -239,6 +239,7 @@ trap cleanup EXIT
 read -rd '' TBL_EXPORT_CMD <<EOF
 SELECT created,course_id FROM edxprod.courseware_studentmodule
   where modified > '${LATEST_DATE}'
+    and grade is not null
   INTO OUTFILE '${TMP_FILE}'
   FIELDS TERMINATED BY "," OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n';
 EOF
