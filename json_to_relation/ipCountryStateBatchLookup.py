@@ -119,7 +119,11 @@ class IpCountryStateBatchLookup(object):
                     self.country_dict.lookupIP(row[ip_position]) #@UnusedVariable
             except ValueError:
                 country = 'Bad ip %s' % row[ip_position]
-            row.extend([twoLetter,country,region,city])
+            row.extend([twoLetter,
+                        '"' + country + '"',
+                        '"' + region + '"',
+                        '"' + city + '"']
+                       )
             the_output_file.write(','.join(row) + '\n')
         
         # If output_file parameter was a string, we
@@ -141,7 +145,7 @@ if __name__ == '__main__':
                     help='Index of column with IP address (0-origin)')
 
     args = parser.parse_args()
-    resolver = IpCountryStateDict(args.infile, args.ipPos, ignore_lines=args.passthrough_lines)
+    resolver = IpCountryStateBatchLookup(args.infile, args.ipPos, ignore_lines=args.passthrough_lines)
         
 
     
