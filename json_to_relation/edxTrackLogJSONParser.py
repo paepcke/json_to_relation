@@ -15,6 +15,7 @@ Created on Oct 2, 2013
 
 Modifications:
 
+* May 14, 2018: For selected events, use REGEXP to recognize.
 * Dec 19, 2014: Fixed treatment of AB experiment related events.
 * Oct 22, 2014: Added quarter column to EdxTrackEvent in support
 *               horizontal partitioning.
@@ -728,7 +729,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 doRecordHeartbeat = True
 
 
-            if eventType == '/heartbeat':
+            if eventType.endswith('/heartbeat'):
                 # Handled heartbeat above, we don't transfer the heartbeats
                 # themselves into the relational world. If a server
                 # downtime was detected from the timestamp of this
@@ -781,9 +782,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                     raise ValueError('Bad JSON; saved in col badlyFormatted: event_type %s (%s)' % (eventType, `e1`))
                     return
 
-            if eventType == 'seq_goto' or\
-               eventType == 'seq_next' or\
-               eventType == 'seq_prev':
+            if eventType.endswith('seq_goto') or\
+               eventType.endswith('seq_next')' or\
+               eventType.endswith('seq_prev'):
 
                 row = self.handleSeqNav(record, row, event, eventType)
                 return
@@ -796,20 +797,20 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 row = self.handleAjaxLogin(record, row, event, eventType)
                 return
 
-            elif eventType == 'problem_check':
+            elif eventType.endswith('problem_check'):
                 # Note: some problem_check cases are also handled in handleAjaxLogin()
                 row = self.handleProblemCheck(record, row, event)
                 return
 
-            elif eventType == 'problem_reset':
+            elif eventType.endswith('problem_reset'):
                 row = self.handleProblemReset(record, row, event)
                 return
 
-            elif eventType == 'problem_show':
+            elif eventType.endswith('problem_show'):
                 row = self.handleProblemShow(record, row, event)
                 return
 
-            elif eventType == 'problem_save':
+            elif eventType.endswith('problem_save'):
                 row = self.handleProblemSave(record, row, event)
                 return
 
@@ -846,18 +847,18 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                 row = self.handleShowHideTranscript(record, row, event)
                 return
 
-            elif eventType == 'play_video' or\
-                 eventType == 'pause_video' or\
-                 eventType == 'stop_video' or\
-                 eventType == 'load_video':
+            elif eventType.endswith('play_video') or\
+                 eventType.endswith('pause_video') or\
+                 eventType.endswith('stop_video') or\
+                 eventType.endswith('load_video'):
                 row = self.handleVideoPlayPause(record, row, event)
                 return
 
-            elif eventType == 'seek_video':
+            elif eventType.endswith('seek_video'):
                 row = self.handleVideoSeek(record, row, event)
                 return
 
-            elif eventType == 'speed_change_video':
+            elif eventType.endswith('speed_change_video'):
                 row = self.handleVideoSpeedChange(record, row, event)
                 return
 
