@@ -783,7 +783,7 @@ class EdXTrackLogJSONParser(GenericJSONParser):
                     return
 
             if eventType.endswith('seq_goto') or\
-               eventType.endswith('seq_next')' or\
+               eventType.endswith('seq_next') or\
                eventType.endswith('seq_prev'):
 
                 row = self.handleSeqNav(record, row, event, eventType)
