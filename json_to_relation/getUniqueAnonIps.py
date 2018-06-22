@@ -19,7 +19,7 @@ class UniqueAnonIpExtractor(object):
     BATCH_SIZE = 50000
     # *******BATCH_SIZE = 2
 
-    def __init__(self, db, table, totalRows=None):
+    def __init__(self, user, db, table, totalRows=None):
         '''
         Constructor
         '''
@@ -27,7 +27,7 @@ class UniqueAnonIpExtractor(object):
         with open(os.path.join(home, '.ssh/mysql')) as pwdFd:
             pwd = pwdFd.read().strip()
                         
-        db = MySQLDB(db=db, user='paepcke', passwd=pwd)
+        db = MySQLDB(db=db, user=user, passwd=pwd)
         # Number of rows pulled from EventIp:
         rowCount = 0
         
@@ -47,8 +47,11 @@ class UniqueAnonIpExtractor(object):
                 for (anon_screen_name, ip)  in db.query('SELECT anon_screen_name, event_ip from EventIp LIMIT %s,%s' % \
                                                         (nextBatchStartRow, UniqueAnonIpExtractor.BATCH_SIZE)):
                     if UniqueAnonIpExtractor.seenAnons.get(anon_screen_name, None) is None:
-                        fd.write(anon_screen_name + ',' + ip + '\n')
-                        UniqueAnonIpExtractor.seenAnons[anon_screen_name] = 1
+                        # The anon_screen_name in the db could actually be NULL, a.k.a. None.
+                        # Ignore those:
+                        if anon_screen_name is not None:
+                            fd.write(anon_screen_name + ',' + ip + '\n')
+                            UniqueAnonIpExtractor.seenAnons[anon_screen_name] = 1
                     rowCount += 1
                     if (rowCount % UniqueAnonIpExtractor.BATCH_SIZE) == 0:
                         print("Did %s rows." % rowCount)
@@ -68,6 +71,6 @@ if __name__ == '__main__':
             sys.exit()
     else:
         totalRows = None
-    UniqueAnonIpExtractor('EdxPrivate', 'EventIp', totalRows=totalRows)
+    UniqueAnonIpExtractor('dataman', 'EdxPrivate', 'EventIp', totalRows=totalRows)
     
     
