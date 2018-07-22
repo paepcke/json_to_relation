@@ -47,11 +47,17 @@ class UserCountryTableCreator(object):
         # Make sure table exists. It should, and it should be filled
         # with all anon_screen_name and countries up the previous
         # load:
-        self.db.createTable(UserCountryTableCreator.DEST_TABLE, 
-                                           OrderedDict({'anon_screen_name' : 'varchar(40) NOT NULL DEFAULT ""',
-                                            'two_letter_country' : 'varchar(2) NOT NULL DEFAULT ""',
-                                            'three_letter_country' : 'varchar(3) NOT NULL DEFAULT ""',
-                                            'country' : 'varchar(255) NOT NULL DEFAULT ""'}))
+        createCmd = '''CREATE TABLE UserCountry (
+                         anon_screen_name varchar(40) NOT NULL DEFAULT "",
+                         two_letter_country varchar(2) NOT NULL DEFAULT "",
+                         three_letter_country varchar(3) NOT NULL DEFAULT "",
+                         country varchar(255) NOT NULL DEFAULT ""
+                         ) ENGINE=MyISAM;
+                         '''
+        self.db.dropTable('UserCountry')
+        print("Creating table UserCountry...")
+        self.db.execute(createCmd)
+        print("Done creating table UserCountry.")
         
     def fillTable(self):
         query = "SELECT DISTINCT anon_screen_name, ip_country FROM EventXtract"
