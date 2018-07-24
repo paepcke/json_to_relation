@@ -15,6 +15,7 @@ Created on Oct 2, 2013
 
 Modifications:
 
+* Jun 24, 2018: In findHashPattern(): deal with idStr not being a str.
 * May 14, 2018: For selected events, use REGEXP to recognize.
 * Dec 19, 2014: Fixed treatment of AB experiment related events.
 * Oct 22, 2014: Added quarter column to EdxTrackEvent in support
@@ -5168,7 +5169,10 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         '''
         if idStr is None:
             return None
-        match = EdXTrackLogJSONParser.findHashPattern.search(idStr)
+        try:
+            match = EdXTrackLogJSONParser.findHashPattern.search(idStr)
+        except TypeError as e:
+            return None # Could not find hash pattern.
         if match is not None:
             return match.group(1)
         else:
@@ -5219,6 +5223,9 @@ class EdXTrackLogJSONParser(GenericJSONParser):
         if openEdxHash is not None and len(openEdxHash) > 0:
             # Fish out the actual 32-bit hash:
             hashNum = self.extractOpenEdxHash(openEdxHash)
+            if hashNum is None:
+                displayName = ''
+                return displayName
             # Get display name and add to main table as resource_display_name:
             displayName = self.hashMapper.getDisplayName(hashNum)
             if displayName is None:
