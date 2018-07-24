@@ -995,6 +995,36 @@ BEGIN
 END;//
 
 #--------------------------
+# isEngineering
+#-----------
+
+# Return 1 if a given course name is an engineering
+# course. Else return 0. Earth Science is not considered
+# engineering here.
+
+DROP FUNCTION IF EXISTS isEngineering;
+CREATE FUNCTION isEngineering(course_display_name varchar(255)) RETURNS tinyint
+DETERMINISTIC
+BEGIN
+    IF (course_display_name LIKE '%computer%')
+    THEN
+        RETURN 1;
+    ELSEIF (course_display_name LIKE '%engineering%')
+    THEN
+        RETURN 1;
+    ELSEIF (course_display_name LIKE 'DB%')
+    THEN
+        RETURN 1;
+    ELSEIF (course_display_name LIKE '%database%')
+    THEN
+        RETURN 1;
+    ELSE
+        RETURN 0;
+    END IF;
+END//
+
+
+#--------------------------
 # isEngagementEvent
 #-----------
 
