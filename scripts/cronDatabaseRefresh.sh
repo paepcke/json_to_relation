@@ -24,7 +24,7 @@ cd /home/dataman/Code/json_to_relation/scripts/
 # load_end column at the end of the script:
 
 read -r -d '' START_TIME_CMD <<EOF
-CREATE TABLE IF NOT EXISTS FullLoadDates (load_start DATETIME, load_end DATETIME);
+CREATE TABLE IF NOT EXISTS FullLoadDates (load_start DATETIME, load_end DATETIME) ENGINE=MyISAM;
 INSERT INTO FullLoadDates (load_start) values(NOW());
 EOF
 
