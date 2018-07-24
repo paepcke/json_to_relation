@@ -153,7 +153,7 @@ fi
 # Create table EdxPrivate.Keys, whose forumKey column 
 # will hold the key used for the Forum UID creation.
 KEY_INSTALL_CMD="DROP TABLE IF EXISTS EdxPrivate.Keys; \
-                 CREATE TABLE EdxPrivate.Keys (forumKey varchar(255) DEFAULT ''); \
+                 CREATE TABLE EdxPrivate.Keys (forumKey varchar(255) DEFAULT '') engine=MyISAM; \
                  INSERT INTO EdxPrivate.Keys SET forumKey = (SELECT SHA2('"$FORUM_KEY_PASSPHRASE"',224) AS forumKey);"
 
 #*****************
