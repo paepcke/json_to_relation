@@ -33,25 +33,43 @@ mysql --login-path=dataman Edx -e "$START_TIME_CMD"
 # Execute refresh scripts.
 # Call shell scripts using `source` to ensure virtualenv works.
 # Python scripts use #!/usr/bin/env python to let virtualenv work correctly.
+
+echo `date`"Starting clickstream processing..."
 /home/dataman/Code/json_to_relation/scripts/manageEdxDb.py pullTransformLoad >> /home/dataman/cronlog/manageEdxDb.txt 2>&1
+echo `date`"Done clickstream processing..."
+
+echo `date`"Edxprod processing..."
 source /home/dataman/Code/json_to_relation/scripts/cronRefreshEdxprod.sh >> /home/dataman/cronlog/cronRefreshEdxprod.txt 2>&1
+echo `date`"Done edxprod processing..."
 
 # 3hrs:
+echo `date`"Modulestore processing..."
 source /home/dataman/Code/json_to_relation/scripts/cronRefreshModuleStore.sh >> /home/dataman/cronlog/cronRefreshModuleStore.txt 2>&1
+echo `date`"Done modulestore processing..."
 
+echo `date`"ActivityGrade creation..."
 source /home/dataman/Code/json_to_relation/scripts/cronRefreshActivityGrade.sh >> /home/dataman/cronlog/cronRefreshActivityGrade.txt 2>&1
+echo `date`"Done ActivityGrade creation..."
 
 # ~8 min:
+echo `date`"Grades table creation..."
 source /home/dataman/Code/json_to_relation/scripts/cronRefreshGrades.sh >> /home/dataman/cronlog/cronRefreshGrades.txt 2>&1
+echo `date`"Done grades table creation..."
 
 # ~ 3hrs:
+echo `date`"UserCountry table creation..."
 /home/dataman/Code/json_to_relation/scripts/cronRefreshUserCountryTable.py >> /home/dataman/cronlog/cronRefreshUserCountryTable.txt 2>&1
+echo `date`"Done UserCountry table creation..."
 
 # ~17min:
+echo `date`"EdxForum table creation..."
 source /home/dataman/Code/json_to_relation/scripts/cronRefreshEdxForum.sh >> /home/dataman/cronlog/cronRefreshEdxForum.txt 2>&1
+echo `date`"Done EdxForum table creation..."
 
 # 2hrs:15min:
+echo `date`"Qualtrics survey table creation..."
 /home/dataman/Code/mooc_data_request_processing/src/data_req_etl/surveyextractor.py -amsri >> /home/dataman/cronlog/cronRefreshEdxQualtrics.txt 2>&1
+echo `date`"Done Qualtrics survey table creation..."
 
 
 # Add end timestamp to this load's entry
